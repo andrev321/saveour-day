@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 
 type WeddingHeaderProps = {
   date: string;
+  subtitle?: string;
 };
 
 const Header = styled.header`
@@ -10,27 +11,50 @@ const Header = styled.header`
 `;
 
 const Title = styled.h1`
-  color: #a68b5b;
-  font-size: clamp(2rem, 8vw, 2.8rem);
+  font-family: var(--font-serif, 'Georgia', serif);
+  color: var(--gold, #b08d57);
+  font-size: 36px;
   font-weight: 600;
-  line-height: 1.1;
+  line-height: 1.08;
+  margin: 0 0 10px;
+  text-shadow:
+    0 0 24px rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(62, 48, 28, 0.18);
+`;
+
+const HeartRow = styled.p`
   margin: 0 0 8px;
-  text-shadow: 0 2px 14px rgba(249, 246, 242, 0.25);
+  font-size: 16px;
+  color: var(--gold, #b08d57);
+  letter-spacing: 0.12em;
+  opacity: 0.88;
 `;
 
 const DateText = styled.p`
-  font-size: clamp(1.55rem, 5.2vw, 1.85rem);
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-size: 22px;
   margin: 0;
   font-weight: 600;
-  color: #555;
-  text-shadow: 0 2px 14px rgba(249, 246, 242, 0.25);
+  color: #5a534a;
 `;
 
-const WeddingHeader: React.FC<WeddingHeaderProps> = ({ date }) => {
+const SubtitleText = styled.p`
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-size: 15px;
+  margin: 10px 0 0;
+  font-weight: 500;
+  color: #6b645c;
+  line-height: 1.4;
+`;
+
+const WeddingHeader: React.FC<WeddingHeaderProps> = ({ date, subtitle }) => {
   return (
     <Header>
-      <Title>Aleksandra & Andrzej</Title>
+      <Title>Aleksandra 
+        <br />& Andrzej</Title>
+      <HeartRow aria-hidden>♥</HeartRow>
       <DateText>{date}</DateText>
+      {subtitle ? <SubtitleText>{subtitle}</SubtitleText> : null}
     </Header>
   );
 };
