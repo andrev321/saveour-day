@@ -1,10 +1,16 @@
+export type VenuePlace = {
+  /** Nazwa miejsca (np. świątynia, restauracja) */
+  venueName: string;
+  /** Adres (ulica, kod, miasto) */
+  address: string;
+};
+
 export type CeremonyDetails = {
   date: string;
-  location: string;
   description: string;
   mapSrc: string;
   phone: string;
-};
+} & VenuePlace;
 
 export type TimelineItem = {
   time: string;
@@ -14,14 +20,13 @@ export type TimelineItem = {
 export type PartyBlock = {
   sectionTitle: string;
   description: string;
-  location: string;
   mapSrc: string;
-};
+} & VenuePlace;
 
 export type RoutePageConfig = {
   ceremony: CeremonyDetails;
   timeline: TimelineItem[];
   party: PartyBlock | null;
-  /** Dodatkowa linia pod datą w hero (np. data grilla) */
-  heroSubtitle?: string;
+  /** Data w hero — tylko trasa /grill, z `VITE_GRILL_HERO_DATE`; inaczej `ceremony.date`. */
+  heroDate?: string;
 };

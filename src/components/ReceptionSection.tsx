@@ -1,20 +1,31 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { mapsSearchQuery } from '../config/weddingEnv';
 import { Card, CardKicker } from './layout';
 
 type ReceptionSectionProps = {
   sectionTitle?: string;
   description: string;
-  location: string;
+  venueName: string;
+  address: string;
   mapSrc: string;
 };
+
+const SectionHeading = styled.h3`
+  font-family: var(--font-serif, 'Georgia', serif);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text, #3f3a34);
+  margin: 0 0 12px;
+  line-height: 1.25;
+`;
 
 const Description = styled.p`
   font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 16px;
   line-height: 1.55;
   font-weight: 400;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
   color: var(--text-muted, #6b645c);
 `;
 
@@ -33,9 +44,9 @@ const Copy = styled.div`
   min-width: 0;
 `;
 
-const VenueTitle = styled.h3`
+const VenueTitle = styled.h4`
   font-family: var(--font-serif, 'Georgia', serif);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--text, #3f3a34);
   margin: 0 0 8px;
@@ -46,7 +57,7 @@ const Address = styled.p`
   font-family: var(--font-sans, 'Inter', sans-serif);
   font-size: 14px;
   color: var(--text-muted, #6b645c);
-  margin: 0;
+  margin: 0 0 12px;
   line-height: 1.45;
 `;
 
@@ -72,7 +83,7 @@ const NavButton = styled.a`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 16px;
+  margin-top: 4px;
   padding: 10px 18px;
   border-radius: 999px;
   border: 1.5px solid var(--gold, #b08d57);
@@ -90,25 +101,30 @@ const NavButton = styled.a`
   }
 `;
 
-const mapSearchUrl = (address: string) =>
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const mapSearchUrl = (query: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
 const ReceptionSection: React.FC<ReceptionSectionProps> = ({
   sectionTitle = 'Poczęstunek',
   description,
-  location,
+  venueName,
+  address,
   mapSrc,
 }) => {
-  const mapsHref = mapSearchUrl(location);
+  if (!sectionTitle || !description || !venueName || !address || !mapSrc) return null;
+  const v = venueName.trim();
+  const a = address.trim();
+  const placeTitle = v || a || 'Lokalizacja wkrótce';
+  const addressLine = v && a ? a : '';
+  const mapsHref = mapSearchUrl(mapsSearchQuery(venueName, address));
 
   return (
     <Card>
-      <CardKicker>Miejsce spotkania</CardKicker>
-      <VenueTitle>{sectionTitle}</VenueTitle>
+      <CardKicker>{sectionTitle}</CardKicker>
       <Grid>
         <Copy>
-          <Description>{description}</Description>
-          <Address>{location}</Address>
+          <VenueTitle>{placeTitle}</VenueTitle>
+          {addressLine ? <Address>{addressLine}</Address> : null}
           <NavButton href={mapsHref} target="_blank" rel="noopener noreferrer">
             Nawiguj
           </NavButton>

@@ -1,5 +1,4 @@
 import React from 'react';
-import CeremonySection from '../components/CeremonySection';
 import LocationSection from '../components/LocationSection';
 import ReceptionSection from '../components/ReceptionSection';
 import HeroWaves from '../components/HeroWaves';
@@ -16,7 +15,7 @@ type WeddingRoutePageProps = {
 };
 
 const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSrc }) => {
-  const { ceremony, timeline, party, heroSubtitle } = config;
+  const { ceremony, timeline, party, heroDate } = config;
 
   return (
     <Page>
@@ -25,19 +24,23 @@ const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSr
         <HeroReadability />
         <HeroWaves />
         <HeroContent>
-          <WeddingHeader date={ceremony.date} subtitle={heroSubtitle} />
+          <WeddingHeader date={heroDate ?? ceremony.date} />
         </HeroContent>
       </HeroSection>
       <Main>
         <RouteNav />
         <TimelineSection items={timeline} />
-        <CeremonySection description={ceremony.description} />
-        <LocationSection location={ceremony.location} mapSrc={ceremony.mapSrc} />
+        <LocationSection
+          venueName={ceremony.venueName}
+          address={ceremony.address}
+          mapSrc={ceremony.mapSrc}
+        />
         {party ? (
           <ReceptionSection
             sectionTitle={party.sectionTitle}
             description={party.description}
-            location={party.location}
+            venueName={party.venueName}
+            address={party.address}
             mapSrc={party.mapSrc}
           />
         ) : null}
