@@ -3,7 +3,6 @@ import styled from '@emotion/styled';
 
 type WeddingHeaderProps = {
   date: string;
-  subtitle?: string;
 };
 
 const Header = styled.header`
@@ -38,23 +37,13 @@ const DateText = styled.p`
   color: #5a534a;
 `;
 
-const SubtitleText = styled.p`
-  font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 15px;
-  margin: 10px 0 0;
-  font-weight: 500;
-  color: #6b645c;
-  line-height: 1.4;
-`;
-
-const WeddingHeader: React.FC<WeddingHeaderProps> = ({ date, subtitle }) => {
+const WeddingHeader: React.FC<WeddingHeaderProps> = ({ date }) => {
   return (
     <Header>
       <Title>Aleksandra 
         <br />& Andrzej</Title>
       <HeartRow aria-hidden>♥</HeartRow>
       <DateText>{date}</DateText>
-      {subtitle ? <SubtitleText>{subtitle}</SubtitleText> : null}
     </Header>
   );
 };

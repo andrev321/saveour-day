@@ -1,9 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { mapsSearchQuery } from '../config/weddingEnv';
 import { Card, CardKicker } from './layout';
 
 type LocationSectionProps = {
-  location: string;
+  venueName: string;
+  address: string;
   mapSrc: string;
 };
 
@@ -27,8 +29,16 @@ const VenueTitle = styled.h3`
   font-size: 22px;
   font-weight: 600;
   color: var(--text, #3f3a34);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   line-height: 1.25;
+`;
+
+const Address = styled.p`
+  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-size: 14px;
+  color: var(--text-muted, #6b645c);
+  margin: 0 0 12px;
+  line-height: 1.45;
 `;
 
 const ThumbWrap = styled.div`
@@ -71,24 +81,29 @@ const NavButton = styled.a`
   }
 `;
 
-const mapSearchUrl = (address: string) =>
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const mapSearchUrl = (query: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
-const LocationSection: React.FC<LocationSectionProps> = ({ location, mapSrc }) => {
-  const mapsHref = mapSearchUrl(location);
+const LocationSection: React.FC<LocationSectionProps> = ({ venueName, address, mapSrc }) => {
+  const v = venueName.trim();
+  const a = address.trim();
+  const title = v || a || 'Lokalizacja wkrótce';
+  const addressLine = v && a ? a : '';
+  const mapsHref = mapSearchUrl(mapsSearchQuery(venueName, address));
 
   return (
     <Card>
       <CardKicker>Ceremonia</CardKicker>
       <Grid>
         <Copy>
-          <VenueTitle>{location}</VenueTitle>
+          <VenueTitle>{title}</VenueTitle>
+          {addressLine ? <Address>{addressLine}</Address> : null}
           <NavButton href={mapsHref} target="_blank" rel="noopener noreferrer">
             Nawiguj
           </NavButton>
         </Copy>
         {mapSrc ? (
-          <ThumbWrap aria-hidden={false}>
+          <ThumbWrap>
             <MapThumb src={mapSrc} title="Podgląd mapy — ceremonia" loading="lazy" />
           </ThumbWrap>
         ) : null}

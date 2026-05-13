@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import type { TimelineItem as TimelineEntry } from '../types/wedding';
-import { Card, Eyebrow } from './layout';
+import { Card } from './layout';
 
 const TimelineRoot = styled.div`
   position: relative;
@@ -70,7 +70,6 @@ type TimelineSectionProps = {
 const TimelineSection: React.FC<TimelineSectionProps> = ({ items }) => {
   return (
     <Card>
-      <Eyebrow>Plan dnia</Eyebrow>
       <TimelineRoot>
         <Rail aria-hidden />
         <Items>
