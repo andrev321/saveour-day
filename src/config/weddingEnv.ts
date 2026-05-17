@@ -66,9 +66,9 @@ function grillParty(): PartyBlock {
   };
 }
 
-function timelineCeremony(): TimelineItem {
+function timelineCeremony(grillOption?: boolean): TimelineItem {
   return {
-    time: import.meta.env.VITE_TIMELINE_CEREMONY_TIME || '14:00',
+    time: import.meta.env.VITE_TIMELINE_CEREMONY_TIME  ? (grillOption? `${import.meta.env.VITE_WEDDING_DATE}, ${import.meta.env.VITE_TIMELINE_CEREMONY_TIME}`: import.meta.env.VITE_TIMELINE_CEREMONY_TIME) :'14:00',
     label:
       import.meta.env.VITE_TIMELINE_CEREMONY_LABEL ||
       'Ceremonia — Parafia Imienia Jezus',
@@ -106,14 +106,14 @@ export function getObiadPageConfig(): RoutePageConfig {
 }
 
 export function getGrillPageConfig(): RoutePageConfig {
-  const ceremony = timelineCeremony();
-  const grillTime = import.meta.env.VITE_GRILL_TIME || '15:00';
+  const ceremony = timelineCeremony(true);
+  const grillTime = import.meta.env.VITE_GRILL_TIME? `${import.meta.env.VITE_GRILL_DATE}, ${import.meta.env.VITE_GRILL_TIME}` : '15:00';
   const grillVenue =
     import.meta.env.VITE_GRILL_VENUE_NAME?.trim() ||
     import.meta.env.VITE_GRILL_LOC?.trim() ||
     'Ogródki działkowe Dąbrowskiego';
   const grillLine: TimelineItem = {
-    time: `${grillTime} (następnego dnia)`,
+    time: grillTime,
     label:
       import.meta.env.VITE_TIMELINE_GRILL_LABEL ||
       `Grill — ${grillVenue}`,
