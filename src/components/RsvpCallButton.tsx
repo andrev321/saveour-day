@@ -14,7 +14,6 @@ const Flair = styled.p`
   margin: 0 0 10px;
   font-family: var(--font-serif, 'Georgia', serif);
   font-size: 18px;
-  font-style: italic;
   color: var(--text-muted, #6b645c);
 `;
 
@@ -87,7 +86,7 @@ const RsvpCallButton: React.FC<RsvpCallButtonProps> = ({ phone }) => {
 
   return (
     <Wrap>
-      <Flair>Nie możemy się doczekać…</Flair>
+      <Flair>Nie możemy się doczekać!</Flair>
       <Eyebrow>Potwierdź obecność</Eyebrow>
       <ButtonRow>
         <PrimaryLink href={`tel:${phone}`}>Zadzwoń</PrimaryLink>

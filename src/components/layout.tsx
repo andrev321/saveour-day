@@ -89,8 +89,8 @@ export const HeroContent = styled.div`
   }
 
   @media (min-width:320px)  { bottom: -15px }
-  @media (min-width:480px)  { bottom: -10px; width: 55%;}
-  @media (min-width:600px)  { bottom: 50px; 
+  @media (min-width:480px)  { bottom: -10px;}
+  @media (min-width:600px)  { bottom: 50px;
    &::before { top: 50%; } }
   @media (min-width:801px)  { bottom: 55px; width: 40%; }
 `;
