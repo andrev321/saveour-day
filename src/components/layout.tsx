@@ -5,7 +5,7 @@ export const Page = styled.div`
   --content-pad: 16px;
   --page-bg: #faf9f6;
   --wave-back: #efe8de;
-  --gold: #b08d57;
+  --gold:rgb(148, 114, 63);
   --gold-soft: rgba(176, 141, 87, 0.14);
   --text: #3f3a34;
   --text-muted: #6b645c;
@@ -14,7 +14,8 @@ export const Page = styled.div`
 
   background-color: var(--page-bg);
   min-height: 100vh;
-  max-width: 1920px;
+  max-width: 850px;
+  min-width: 420px;
   margin: 0 auto;
   font-family: var(--font-sans);
   color: var(--text);
@@ -50,7 +51,6 @@ export const HeroReadability = styled.div`
 export const HeroContent = styled.div`
   position: absolute;
   left: 50%;
-  bottom: 88px;
   transform: translateX(-50%);
   z-index: 3;
   width: 100%;
@@ -67,15 +67,15 @@ export const HeroContent = styled.div`
     top: 45%;
     transform: translate(-50%, -50%) scale(1.75);
     z-index: 0;
-    width: 260px;
-    height: 130px;
+    width: 60%;
+    height: 60%;
     max-width: 90%;
     pointer-events: none;
     border-radius: 50%;
     background: radial-gradient(
       ellipse 100% 100% at 50% 50%,
-      rgba(255, 255, 255, 0.98) 0%,
-      rgba(255, 255, 255, 0.55) 38%,
+      rgba(255, 255, 255, 1) 0%,
+      rgba(255, 255, 255, 0.65) 38%,
       rgba(255, 255, 255, 0.18) 62%,
       rgba(255, 255, 255, 0) 78%
     );
@@ -88,15 +88,11 @@ export const HeroContent = styled.div`
     z-index: 1;
   }
 
-  
-  @media (max-width: 900px) {
-    bottom: 50px
-  }
-
-    
-  @media (max-width: 600px) {
-    bottom: 30px
-  }
+  @media (min-width:320px)  { bottom: -15px }
+  @media (min-width:480px)  { bottom: -10px; width: 55%;}
+  @media (min-width:600px)  { bottom: 50px; 
+   &::before { top: 50%; } }
+  @media (min-width:801px)  { bottom: 55px; width: 40%; }
 `;
 
 export const Main = styled.main`
