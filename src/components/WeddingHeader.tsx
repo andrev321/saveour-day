@@ -28,8 +28,8 @@ const Title = styled.h1`
   @media (min-width:320px)  { font-size: 24px }
   @media (min-width:380px)  { font-size: 28px }
   @media (min-width:420px)  { font-size: 30px }
-  @media (min-width:600px)  { font-size: 34px; max-width:200px; }
-  @media (min-width:801px)  { font-size: 42px;  }
+  @media (min-width:600px)  { font-size: 34px; }
+  @media (min-width:801px)  { font-size: 42px; max-width:250px; }
 `;
 
 const HeartRow = styled.p`
