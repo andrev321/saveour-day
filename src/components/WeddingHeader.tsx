@@ -25,7 +25,9 @@ const Title = styled.h1`
     0 0 24px rgba(255, 255, 255, 0.95),
     0 1px 2px rgba(62, 48, 28, 0.18);
 
-  @media (min-width:320px)  { font-size: 30px }
+  @media (min-width:320px)  { font-size: 24px }
+  @media (min-width:380px)  { font-size: 28px }
+  @media (min-width:420px)  { font-size: 30px }
   @media (min-width:600px)  { font-size: 34px; max-width:200px; }
   @media (min-width:801px)  { font-size: 42px;  }
 `;
