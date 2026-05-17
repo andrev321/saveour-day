@@ -15,7 +15,7 @@ export const Page = styled.div`
   background-color: var(--page-bg);
   min-height: 100vh;
   max-width: 850px;
-  min-width: 420px;
+  min-width: 350px;
   margin: 0 auto;
   font-family: var(--font-sans);
   color: var(--text);
