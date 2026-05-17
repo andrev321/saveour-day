@@ -2,7 +2,6 @@ import React from 'react';
 import LocationSection from '../components/LocationSection';
 import ReceptionSection from '../components/ReceptionSection';
 import HeroWaves from '../components/HeroWaves';
-import RouteNav from '../components/RouteNav';
 import RsvpCallButton from '../components/RsvpCallButton';
 import TimelineSection from '../components/TimelineSection';
 import WeddingHeader from '../components/WeddingHeader';
@@ -28,7 +27,6 @@ const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSr
         </HeroContent>
       </HeroSection>
       <Main>
-        <RouteNav />
         <TimelineSection items={timeline} />
         <LocationSection
           venueName={ceremony.venueName}
