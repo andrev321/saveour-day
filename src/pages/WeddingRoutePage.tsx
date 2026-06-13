@@ -38,6 +38,7 @@ const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSr
           venueName={parking.venueName}
           address={parking.address}
           mapSrc={parking.mapSrc}
+          navigateUrl={parking.navigateUrl}
         />
         {party ? (
           <ReceptionSection

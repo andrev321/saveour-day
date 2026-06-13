@@ -43,6 +43,7 @@ const parkingConfig = parseEnvJson(import.meta.env.VITE_CONFIG_PARKING, {
   venueName: '',
   address: '',
   mapSrc: '',
+  navigateUrl: '',
 });
 
 const obiadConfig = parseEnvJson(import.meta.env.VITE_CONFIG_OBIAD, {
