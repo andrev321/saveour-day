@@ -59,7 +59,6 @@ const MapThumb = styled.iframe`
   width: 100%;
   height: 100%;
   min-height: 120px;
-  pointer-events: none;
 `;
 
 const NavButton = styled.a`
