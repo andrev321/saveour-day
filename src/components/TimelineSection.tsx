@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from '@emotion/styled';
-import type { TimelineItem as TimelineEntry } from '../types/wedding';
-import { Card } from './layout';
+import React from "react";
+import styled from "@emotion/styled";
+import type { TimelineItem as TimelineEntry } from "../types/wedding";
+import { Card } from "./layout";
 
 const TimelineRoot = styled.div`
   position: relative;
@@ -14,7 +14,11 @@ const Rail = styled.div`
   top: 10px;
   bottom: 10px;
   width: 2px;
-  background: linear-gradient(to bottom, var(--gold, #b08d57), rgba(176, 141, 87, 0.25));
+  background: linear-gradient(
+    to bottom,
+    var(--gold, #b08d57),
+    rgba(176, 141, 87, 0.25)
+  );
   border-radius: 2px;
 `;
 
@@ -47,7 +51,7 @@ const Ring = styled.span`
 
 const TimeTag = styled.span`
   display: block;
-  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-family: var(--font-sans, "Inter", sans-serif);
   font-weight: 600;
   font-size: 15px;
   color: var(--gold, #b08d57);
@@ -56,7 +60,16 @@ const TimeTag = styled.span`
 
 const EventText = styled.span`
   display: block;
-  font-family: var(--font-serif, 'Georgia', serif);
+  font-family: var(--font-serif, "Georgia", serif);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text, #3f3a34);
+  line-height: 1.35;
+`;
+
+const EventLink = styled.a`
+  display: block;
+  font-family: var(--font-serif, "Georgia", serif);
   font-size: 18px;
   font-weight: 500;
   color: var(--text, #3f3a34);
@@ -77,7 +90,11 @@ const TimelineSection: React.FC<TimelineSectionProps> = ({ items }) => {
             <Item key={`${item.time}-${item.label}`}>
               <Ring aria-hidden />
               <TimeTag>{item.time}</TimeTag>
-              <EventText>{item.label}</EventText>
+              {item.url ? (
+                <EventLink href={item.url}>{item.label}</EventLink>
+              ) : (
+                <EventText>{item.label}</EventText>
+              )}
             </Item>
           ))}
         </Items>
