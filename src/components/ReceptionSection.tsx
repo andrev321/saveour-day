@@ -1,7 +1,7 @@
-import React from 'react';
-import styled from '@emotion/styled';
-import { mapsSearchQuery } from '../config/weddingEnv';
-import { Card, CardKicker } from './layout';
+import React from "react";
+import styled from "@emotion/styled";
+import { mapsSearchQuery } from "../config/weddingEnv";
+import { Card, CardKicker } from "./layout";
 
 type ReceptionSectionProps = {
   sectionTitle?: string;
@@ -9,25 +9,8 @@ type ReceptionSectionProps = {
   venueName: string;
   address: string;
   mapSrc: string;
+  eventSrc?: string;
 };
-
-const SectionHeading = styled.h3`
-  font-family: var(--font-serif, 'Georgia', serif);
-  font-size: 22px;
-  font-weight: 600;
-  color: var(--text, #3f3a34);
-  margin: 0 0 12px;
-  line-height: 1.25;
-`;
-
-const Description = styled.p`
-  font-family: var(--font-sans, 'Inter', sans-serif);
-  font-size: 16px;
-  line-height: 1.55;
-  font-weight: 400;
-  margin: 0 0 16px;
-  color: var(--text-muted, #6b645c);
-`;
 
 const Grid = styled.div`
   display: grid;
@@ -45,7 +28,7 @@ const Copy = styled.div`
 `;
 
 const VenueTitle = styled.h4`
-  font-family: var(--font-serif, 'Georgia', serif);
+  font-family: var(--font-serif, "Georgia", serif);
   font-size: 20px;
   font-weight: 600;
   color: var(--text, #3f3a34);
@@ -54,7 +37,7 @@ const VenueTitle = styled.h4`
 `;
 
 const Address = styled.p`
-  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-family: var(--font-sans, "Inter", sans-serif);
   font-size: 14px;
   color: var(--text-muted, #6b645c);
   margin: 0 0 12px;
@@ -84,17 +67,20 @@ const NavButton = styled.a`
   align-items: center;
   justify-content: center;
   margin-top: 4px;
+  margin-right: 8px;
   padding: 10px 18px;
   border-radius: 999px;
   border: 1.5px solid var(--gold, #b08d57);
   color: var(--gold, #b08d57);
-  font-family: var(--font-sans, 'Inter', sans-serif);
+  font-family: var(--font-sans, "Inter", sans-serif);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
-  transition: background 160ms ease, color 160ms ease;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
 
   &:hover {
     background: rgba(176, 141, 87, 0.1);
@@ -105,17 +91,19 @@ const mapSearchUrl = (query: string) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 
 const ReceptionSection: React.FC<ReceptionSectionProps> = ({
-  sectionTitle = 'Poczęstunek',
+  sectionTitle = "Poczęstunek",
   description,
   venueName,
   address,
   mapSrc,
+  eventSrc,
 }) => {
-  if (!sectionTitle || !description || !venueName || !address || !mapSrc) return null;
+  if (!sectionTitle || !description || !venueName || !address || !mapSrc)
+    return null;
   const v = venueName.trim();
   const a = address.trim();
-  const placeTitle = v || a || 'Lokalizacja wkrótce';
-  const addressLine = v && a ? a : '';
+  const placeTitle = v || a || "Lokalizacja wkrótce";
+  const addressLine = v && a ? a : "";
   const mapsHref = mapSearchUrl(mapsSearchQuery(venueName, address));
 
   return (
@@ -128,10 +116,23 @@ const ReceptionSection: React.FC<ReceptionSectionProps> = ({
           <NavButton href={mapsHref} target="_blank" rel="noopener noreferrer">
             Nawiguj
           </NavButton>
+          {eventSrc && (
+            <NavButton
+              href={eventSrc}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Wydarzenie na FB
+            </NavButton>
+          )}
         </Copy>
         {mapSrc ? (
           <ThumbWrap>
-            <MapThumb src={mapSrc} title="Podgląd mapy — poczęstunek" loading="lazy" />
+            <MapThumb
+              src={mapSrc}
+              title="Podgląd mapy — poczęstunek"
+              loading="lazy"
+            />
           </ThumbWrap>
         ) : null}
       </Grid>

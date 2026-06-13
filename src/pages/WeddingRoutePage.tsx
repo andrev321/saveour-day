@@ -1,5 +1,6 @@
 import React from 'react';
 import LocationSection from '../components/LocationSection';
+import ParkingSection from '../components/ParkingSection'
 import ReceptionSection from '../components/ReceptionSection';
 import HeroWaves from '../components/HeroWaves';
 import RsvpCallButton from '../components/RsvpCallButton';
@@ -14,7 +15,7 @@ type WeddingRoutePageProps = {
 };
 
 const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSrc }) => {
-  const { ceremony, timeline, party, heroDate } = config;
+  const { ceremony, parking, timeline, party, heroDate } = config;
 
   return (
     <Page>
@@ -33,6 +34,11 @@ const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSr
           address={ceremony.address}
           mapSrc={ceremony.mapSrc}
         />
+        <ParkingSection
+          venueName={parking.venueName}
+          address={parking.address}
+          mapSrc={parking.mapSrc}
+        />
         {party ? (
           <ReceptionSection
             sectionTitle={party.sectionTitle}
@@ -40,6 +46,7 @@ const WeddingRoutePage: React.FC<WeddingRoutePageProps> = ({ config, heroImageSr
             venueName={party.venueName}
             address={party.address}
             mapSrc={party.mapSrc}
+            eventSrc={party.fbUrl}
           />
         ) : null}
         <RsvpCallButton phone={ceremony.phone} />
