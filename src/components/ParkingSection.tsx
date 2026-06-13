@@ -1,12 +1,12 @@
 import React from 'react';
 import styled from '@emotion/styled';
-import { mapsSearchQuery } from '../config/weddingEnv';
 import { Card, CardKicker } from './layout';
 
 type LocationSectionProps = {
   venueName: string;
   address: string;
   mapSrc: string;
+  navigateUrl: string;
 };
 
 const Grid = styled.div`
@@ -80,15 +80,11 @@ const NavButton = styled.a`
   }
 `;
 
-const mapSearchUrl = (query: string) =>
-  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-
-const ParkingSection: React.FC<LocationSectionProps> = ({ venueName, address, mapSrc }) => {
+const ParkingSection: React.FC<LocationSectionProps> = ({ venueName, address, mapSrc, navigateUrl }) => {
   const v = venueName.trim();
   const a = address.trim();
   const title = v || a || 'Lokalizacja wkrótce';
   const addressLine = v && a ? a : '';
-  const mapsHref = mapSearchUrl(mapsSearchQuery(venueName, address));
 
   return (
     <Card>
@@ -97,7 +93,7 @@ const ParkingSection: React.FC<LocationSectionProps> = ({ venueName, address, ma
         <Copy>
           <VenueTitle>{title}</VenueTitle>
           {addressLine ? <Address>{addressLine}</Address> : null}
-          <NavButton href={mapsHref} target="_blank" rel="noopener noreferrer">
+          <NavButton href={navigateUrl} target="_blank" rel="noopener noreferrer">
             Nawiguj
           </NavButton>
         </Copy>

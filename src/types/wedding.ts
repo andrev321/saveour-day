@@ -16,6 +16,7 @@ export type CeremonyDetails = {
 export type ParkingDetails = {
   description: string;
   mapSrc: string;
+  navigateUrl: string;
 } & VenuePlace;
 
 export type TimelineItem = {
