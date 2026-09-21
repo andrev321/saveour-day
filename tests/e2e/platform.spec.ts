@@ -32,6 +32,9 @@ test("all existing routes load directly", async ({ page }) => {
 test("admin demo edits and saves before simulated publication", async ({
   page,
 }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
   await page.goto("http://127.0.0.1:3000/demo");
   await expect(
     page.getByText("Demonstracja lokalna", { exact: true }),
@@ -55,6 +58,9 @@ test("admin demo edits and saves before simulated publication", async ({
 test("admin demo forwards custom color tokens to the preview", async ({
   page,
 }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
   await page.goto("http://127.0.0.1:3000/demo");
   await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
   await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
@@ -62,6 +68,38 @@ test("admin demo forwards custom color tokens to the preview", async ({
     "--accent",
     "#123456",
   );
+});
+test("panel language changes the untouched invitation template", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("combobox", { name: "Język panelu" }).click();
+  await page.getByRole("option", { name: "English", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Save draft" })).toBeVisible();
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Emma & Liam", exact: true }),
+  ).toBeVisible();
+});
+test("panel language preserves a customized invitation template", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByLabel("Pierwsze imię", { exact: true }).fill("Kasia");
+  await page.getByRole("combobox", { name: "Język panelu" }).click();
+  await page.getByRole("option", { name: "Deutsch", exact: true }).click();
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Kasia & Jan", exact: true }),
+  ).toBeVisible();
 });
 test("anonymous API access is denied when services are not configured", async ({
   request,

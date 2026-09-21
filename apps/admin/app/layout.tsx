@@ -9,6 +9,7 @@ import {
   ColorSchemeScript,
   mantineHtmlProps,
 } from "@mantine/core";
+import { PanelI18nProvider } from "../lib/i18n";
 export const metadata = {
   title: "Pracownia zaproszeń",
   robots: { index: false, follow: false },
@@ -20,7 +21,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <ColorSchemeScript forceColorScheme="light" />
       </head>
       <body>
-        <MantineProvider forceColorScheme="light">{children}</MantineProvider>
+        <MantineProvider forceColorScheme="light">
+          <PanelI18nProvider>{children}</PanelI18nProvider>
+        </MantineProvider>
       </body>
     </html>
   );
