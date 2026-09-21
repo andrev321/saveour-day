@@ -14,6 +14,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import type { SiteConfig } from "@wedding/domain";
+import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
 
 const labels: Record<string, string> = {
   firstName: "Pierwsze imię",
@@ -63,6 +64,107 @@ const labels: Record<string, string> = {
   ink: "Kolor tekstu",
   accent: "Kolor akcentu",
 };
+const translatedLabels: Record<
+  Exclude<PanelLanguage, "pl">,
+  Record<string, string>
+> = {
+  en: {
+    firstName: "First name",
+    secondName: "Second name",
+    eyebrow: "Text above heading",
+    title: "Title",
+    description: "Description",
+    dateLabel: "Display date",
+    layout: "Hero layout",
+    mediaId: "Hero image",
+    mobileMediaId: "Mobile image",
+    name: "Name",
+    address: "Address",
+    mapUrl: "Google Maps embed address",
+    navigationUrl: "Navigation link (optional)",
+    time: "Time",
+    date: "Event date",
+    venueId: "Venue",
+    url: "Event link",
+    slug: "Option address",
+    label: "Label",
+    eventIds: "Events",
+    sectionIds: "Sections",
+    mediaIds: "Photos",
+    phone: "Phone number",
+    body: "Content",
+    enabled: "Visible section",
+    type: "Section type",
+    indexing: "Allow indexing",
+    navigate: "Navigation button",
+    showMap: "Map button",
+    eventLink: "Event link",
+    call: "Phone button",
+    sms: "SMS button",
+    copyPhone: "Copy number",
+    copied: "Copy confirmation",
+    footer: "Footer",
+    variantLabel: "Option selector",
+    id: "Identifier",
+    alt: "Image description",
+    focalX: "Desktop crop — horizontal (%)",
+    focalY: "Desktop crop — vertical (%)",
+    mobileFocalX: "Mobile crop — horizontal (%)",
+    mobileFocalY: "Mobile crop — vertical (%)",
+    paper: "Page background",
+    surface: "Card background",
+    ink: "Text colour",
+    accent: "Accent colour",
+  },
+  de: {
+    firstName: "Vorname",
+    secondName: "Zweiter Name",
+    eyebrow: "Text über der Überschrift",
+    title: "Titel",
+    description: "Beschreibung",
+    dateLabel: "Anzeigedatum",
+    layout: "Layout des Startbereichs",
+    mediaId: "Hauptbild",
+    mobileMediaId: "Mobiles Bild",
+    name: "Name",
+    address: "Adresse",
+    mapUrl: "Google-Maps-Einbettungsadresse",
+    navigationUrl: "Navigationslink (optional)",
+    time: "Uhrzeit",
+    date: "Veranstaltungsdatum",
+    venueId: "Ort",
+    url: "Veranstaltungslink",
+    slug: "Variantenadresse",
+    label: "Beschriftung",
+    eventIds: "Ereignisse",
+    sectionIds: "Abschnitte",
+    mediaIds: "Fotos",
+    phone: "Telefonnummer",
+    body: "Inhalt",
+    enabled: "Sichtbarer Abschnitt",
+    type: "Abschnittstyp",
+    indexing: "Indexierung erlauben",
+    navigate: "Navigationsschaltfläche",
+    showMap: "Kartenschaltfläche",
+    eventLink: "Veranstaltungslink",
+    call: "Anrufschaltfläche",
+    sms: "SMS-Schaltfläche",
+    copyPhone: "Nummer kopieren",
+    copied: "Kopierbestätigung",
+    footer: "Fußzeile",
+    variantLabel: "Variantenauswahl",
+    id: "Kennung",
+    alt: "Bildbeschreibung",
+    focalX: "Desktop-Ausschnitt — horizontal (%)",
+    focalY: "Desktop-Ausschnitt — vertikal (%)",
+    mobileFocalX: "Mobiler Ausschnitt — horizontal (%)",
+    mobileFocalY: "Mobiler Ausschnitt — vertikal (%)",
+    paper: "Seitenhintergrund",
+    surface: "Kartenhintergrund",
+    ink: "Textfarbe",
+    accent: "Akzentfarbe",
+  },
+};
 export function Fields({
   value,
   onChange,
@@ -72,6 +174,7 @@ export function Fields({
   onChange: (value: Record<string, unknown>) => void;
   config: SiteConfig;
 }) {
+  const { language } = usePanelI18n();
   function update(key: string, next: unknown) {
     onChange({ ...value, [key]: next });
   }
@@ -82,7 +185,10 @@ export function Fields({
           ([key]) => !["src", "width", "height", "variants"].includes(key),
         )
         .map(([key, field]) => {
-          const label = labels[key] || key;
+          const label =
+            (language === "pl" ? labels : translatedLabels[language])[key] ||
+            labels[key] ||
+            key;
           if (typeof field === "boolean")
             return (
               <Checkbox
@@ -154,7 +260,12 @@ export function Fields({
             return (
               <Stack key={key} gap={4}>
                 <Text size="sm" fw={500}>
-                  {label} — kolejność na stronie
+                  {label} —{" "}
+                  {language === "pl"
+                    ? "kolejność na stronie"
+                    : language === "en"
+                      ? "order on the page"
+                      : "Reihenfolge auf der Seite"}
                 </Text>
                 {(field as string[]).map((id, index) => (
                   <Group key={`${id}-${index}`}>
@@ -163,7 +274,7 @@ export function Fields({
                     </Text>
                     <ActionIcon
                       variant="subtle"
-                      aria-label={`Przesuń ${id} wyżej`}
+                      aria-label={`${language === "pl" ? "Przesuń" : language === "en" ? "Move" : "Verschiebe"} ${id} ${language === "pl" ? "wyżej" : language === "en" ? "up" : "nach oben"}`}
                       disabled={index === 0}
                       onClick={() => {
                         const next = [...field];
@@ -178,7 +289,7 @@ export function Fields({
                     </ActionIcon>
                     <ActionIcon
                       variant="subtle"
-                      aria-label={`Usuń odwołanie ${id}`}
+                      aria-label={`${language === "pl" ? "Usuń odwołanie" : language === "en" ? "Remove reference" : "Verweis entfernen"} ${id}`}
                       onClick={() =>
                         update(
                           key,
@@ -191,8 +302,14 @@ export function Fields({
                   </Group>
                 ))}
                 <Select
-                  aria-label={`Dodaj: ${label}`}
-                  placeholder="Dodaj element"
+                  aria-label={`${language === "pl" ? "Dodaj" : language === "en" ? "Add" : "Hinzufügen"}: ${label}`}
+                  placeholder={
+                    language === "pl"
+                      ? "Dodaj element"
+                      : language === "en"
+                        ? "Add item"
+                        : "Element hinzufügen"
+                  }
                   value={null}
                   data={available
                     .filter((a) => !field.includes(a.id))
@@ -250,6 +367,7 @@ export function CollectionFields({
   config: SiteConfig;
   onChange: (value: SiteConfig) => void;
 }) {
+  const { language } = usePanelI18n();
   const values = config[name];
   function replace(index: number, next: Record<string, unknown>) {
     onChange({
@@ -327,18 +445,29 @@ export function CollectionFields({
                   } as SiteConfig)
                 }
               >
-                Usuń element
+                {language === "pl"
+                  ? "Usuń element"
+                  : language === "en"
+                    ? "Remove item"
+                    : "Element entfernen"}
               </Button>
             </Accordion.Panel>
           </Accordion.Item>
         ))}
       </Accordion>
       <Button variant="light" onClick={add}>
-        Dodaj element
+        {language === "pl"
+          ? "Dodaj element"
+          : language === "en"
+            ? "Add item"
+            : "Element hinzufügen"}
       </Button>
       <Text size="xs" c="dimmed">
-        Po usunięciu elementu usuń też jego odwołania w wariantach i sekcjach.
-        Walidacja wskaże pozostałe powiązania.
+        {language === "pl"
+          ? "Po usunięciu elementu usuń też jego odwołania w wariantach i sekcjach. Walidacja wskaże pozostałe powiązania."
+          : language === "en"
+            ? "After removing an item, also remove its references in options and sections. Validation will show remaining links."
+            : "Entfernen Sie nach dem Löschen eines Elements auch seine Verweise in Varianten und Abschnitten. Die Validierung zeigt verbleibende Verknüpfungen."}
       </Text>
     </Stack>
   );

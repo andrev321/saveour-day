@@ -15,6 +15,8 @@ import {
   Title,
 } from "@mantine/core";
 import { browserDb } from "../lib/browser";
+import { usePanelI18n } from "../lib/i18n";
+import { LanguageSelect } from "./LanguageSelect";
 type Site = { id: string; name: string; domain?: string };
 type SitesResponse = { sites: Site[]; admin: boolean };
 
@@ -29,10 +31,11 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
     ? await response.json()
     : {};
   if (!response.ok)
-    throw new Error(result.error || "Nie udało się wykonać operacji");
+    throw new Error(result.error || "The operation could not be completed");
   return result as T;
 }
 export function Dashboard({ configured }: { configured: boolean }) {
+  const { t } = usePanelI18n();
   const [sites, setSites] = useState<Site[]>([]),
     [admin, setAdmin] = useState(false),
     [logged, setLogged] = useState(false);
@@ -66,7 +69,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
         email,
         password,
       });
-      if (error) throw new Error("Nieprawidłowy e-mail lub hasło");
+      if (error) throw new Error(t("invalidLogin"));
       window.location.reload();
     } catch (e) {
       setMessage((e as Error).message);
@@ -82,8 +85,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
             <Text size="sm" c="dimmed">
               PRACOWNIA ZAPROSZEŃ
             </Text>
-            <Title>Twoje realizacje</Title>
+            <Title>{t("dashboard")}</Title>
           </div>
+          <LanguageSelect />
           {logged ? (
             <Button
               variant="subtle"
@@ -92,17 +96,16 @@ export function Dashboard({ configured }: { configured: boolean }) {
                 window.location.reload();
               }}
             >
-              Wyloguj
+              {t("logout")}
             </Button>
           ) : null}
         </Group>
         {!configured ? (
-          <Alert title="Panel nie jest jeszcze połączony z Supabase">
-            Ustaw środowisko według dokumentacji. Dane klientów nie są dostępne
-            bez konfiguracji kont.
+          <Alert title={t("setup")}>
+            {t("setupDescription")}
             <br />
             <Button component="a" href="/demo" mt="md">
-              Otwórz lokalną demonstrację
+              {t("demo")}
             </Button>
           </Alert>
         ) : null}
@@ -120,9 +123,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
               }}
             >
               <Stack>
-                <Title order={2}>Zaloguj się</Title>
+                <Title order={2}>{t("login")}</Title>
                 <TextInput
-                  label="E-mail"
+                  label={t("email")}
                   type="email"
                   required
                   autoComplete="email"
@@ -130,14 +133,14 @@ export function Dashboard({ configured }: { configured: boolean }) {
                   onChange={(e) => setEmail(e.currentTarget.value)}
                 />
                 <PasswordInput
-                  label="Hasło"
+                  label={t("password")}
                   required
                   autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.currentTarget.value)}
                 />
                 <Button type="submit" loading={busy}>
-                  Zaloguj
+                  {t("login")}
                 </Button>
                 <Button
                   variant="subtle"
@@ -146,12 +149,10 @@ export function Dashboard({ configured }: { configured: boolean }) {
                     await browserDb().auth.resetPasswordForEmail(email, {
                       redirectTo: `${location.origin}/account`,
                     });
-                    setMessage(
-                      "Jeżeli konto istnieje, otrzymasz wiadomość z instrukcją.",
-                    );
+                    setMessage(t("resetSent"));
                   }}
                 >
-                  Nie pamiętam hasła
+                  {t("forgot")}
                 </Button>
               </Stack>
             </form>
@@ -161,7 +162,7 @@ export function Dashboard({ configured }: { configured: boolean }) {
           <Card withBorder>
             <Group align="end">
               <TextInput
-                label="Nazwa nowej realizacji"
+                label={t("siteName")}
                 value={name}
                 onChange={(e) => setName(e.currentTarget.value)}
               />
@@ -179,9 +180,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
                   }
                 }}
               >
-                Utwórz realizację
+                {t("createSite")}
               </Button>
-              <Badge>Administrator</Badge>
+              <Badge>{t("admin")}</Badge>
             </Group>
           </Card>
         ) : null}
@@ -192,26 +193,19 @@ export function Dashboard({ configured }: { configured: boolean }) {
                 <Title order={2} size="h3">
                   {site.name}
                 </Title>
-                <Text c="dimmed">
-                  {site.domain || "Domena nie została przypisana"}
-                </Text>
+                <Text c="dimmed">{site.domain || t("domainMissing")}</Text>
                 <Button
                   component="a"
                   href={`/sites/${site.id}`}
                   variant="light"
                 >
-                  Edytuj zaproszenie
+                  {t("edit")}
                 </Button>
               </Stack>
             </Card>
           ))}
         </SimpleGrid>
-        {logged && !sites.length ? (
-          <Text>
-            Nie masz jeszcze przypisanych realizacji. Skontaktuj się z
-            administratorem.
-          </Text>
-        ) : null}
+        {logged && !sites.length ? <Text>{t("noSites")}</Text> : null}
       </Stack>
     </Container>
   );

@@ -24,9 +24,12 @@ import {
   type SiteConfig,
   type MediaAsset,
 } from "@wedding/domain";
+import { createDemo, isUnmodifiedTemplate } from "@wedding/domain/demo";
 import { Fields, CollectionFields } from "./ConfigFields";
 import { apiFetch } from "./Dashboard";
 import { browserDb } from "../lib/browser";
+import { invitationLocaleFor, usePanelI18n } from "../lib/i18n";
+import { LanguageSelect } from "./LanguageSelect";
 type Job = {
   id: string;
   release_id: string;
@@ -60,6 +63,7 @@ export function Editor({
   admin?: boolean;
   demo?: boolean;
 }) {
+  const { language, t } = usePanelI18n();
   const [data, setData] = useState(initial),
     [config, setConfig] = useState(initial.draft.config),
     [saved, setSaved] = useState(JSON.stringify(initial.draft.config));
@@ -75,6 +79,7 @@ export function Editor({
   const dirty = JSON.stringify(config) !== saved;
   const validation = siteConfigSchema.safeParse(config);
   const preview = useRef({ config, variant, urls: data.urls });
+  const previousLanguage = useRef(language);
   preview.current = { config, variant, urls: data.urls };
   useEffect(() => {
     const handle = (e: MessageEvent) => {
@@ -97,6 +102,15 @@ export function Editor({
       location.origin,
     );
   }, [config, variant, data.urls]);
+  useEffect(() => {
+    if (previousLanguage.current === language) return;
+    previousLanguage.current = language;
+    if (!isUnmodifiedTemplate(config)) return;
+    const template = createDemo(config.id, invitationLocaleFor(language));
+    setConfig(template);
+    setVariant(template.defaultVariant);
+    setMessage(t("languageChanged"));
+  }, [config, language, t]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -145,7 +159,7 @@ export function Editor({
         ...data,
         draft: { config: parsed, revision: result.revision },
       });
-      setMessage("Szkic zapisany. Publiczna strona nie została zmieniona.");
+      setMessage(t("savedDraft"));
     });
   }
   async function publish() {
@@ -176,7 +190,7 @@ export function Editor({
             ...data.releases,
           ],
         });
-        setMessage("Symulacja zakończona. Nie utworzono wdrożenia Vercel.");
+        setMessage(t("simulationDone"));
         return;
       }
       await action(
@@ -186,18 +200,14 @@ export function Editor({
           : { releaseId: requested },
       );
       await reload();
-      setMessage("Publikacja uruchomiona. Odśwież status za chwilę.");
+      setMessage(t("publicationStarted"));
     });
   }
   async function upload(file: File | null) {
     if (!file) return;
     await task(async () => {
-      if (demo)
-        throw new Error(
-          "Upload wymaga połączenia z Supabase. Demonstracja nie wysyła plików.",
-        );
-      if (file.size > 8388608)
-        throw new Error("Maksymalny rozmiar zdjęcia: 8 MB");
+      if (demo) throw new Error(t("uploadNeedsSupabase"));
+      if (file.size > 8388608) throw new Error(t("maxPhotoSize"));
       const signed = await action<SignedUpload>("prepare-upload", {
         type: file.type,
         size: file.size,
@@ -207,7 +217,7 @@ export function Editor({
         .uploadToSignedUrl(signed.path, signed.token, file, {
           contentType: file.type,
         });
-      if (error) throw new Error("Upload nie powiódł się");
+      if (error) throw new Error(t("uploadFailed"));
       const media = await action<MediaAsset>("finalize-upload", {
         id: signed.id,
       });
@@ -236,23 +246,27 @@ export function Editor({
             <Title order={1}>{data.site.name}</Title>
           </div>
           <Group>
+            <LanguageSelect />
             <Badge color={dirty ? "orange" : "green"}>
-              {dirty ? "Niezapisane zmiany" : `Szkic #${data.draft.revision}`}
+              {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
             </Badge>
             <Button component="a" href="/" variant="subtle">
-              Realizacje
+              {t("projects")}
             </Button>
           </Group>
         </Group>
         {demo ? (
-          <Alert title="Demonstracja lokalna">
-            Zmiany są przechowywane tylko do odświeżenia strony. Publikacja jest
-            symulowana i nie łączy się z Vercel.
+          <Alert title={t("localDemo")}>
+            {language === "pl"
+              ? "Zmiany są przechowywane tylko do odświeżenia strony. Publikacja jest symulowana i nie łączy się z Vercel."
+              : language === "en"
+                ? "Changes are kept only until the page is refreshed. Publishing is simulated and does not connect to Vercel."
+                : "Änderungen bleiben nur bis zum Aktualisieren der Seite erhalten. Die Veröffentlichung wird simuliert und stellt keine Verbindung zu Vercel her."}
           </Alert>
         ) : null}
         {message ? <Alert role="status">{message}</Alert> : null}
         {!validation.success ? (
-          <Alert color="red" title="Popraw konfigurację" role="alert">
+          <Alert color="red" title={t("validation")} role="alert">
             {validation.error.issues.slice(0, 8).map((i, index) => (
               <Text size="sm" key={index}>
                 {i.path.join(".")}: {i.message}
@@ -266,14 +280,14 @@ export function Editor({
             loading={busy}
             disabled={!dirty || !validation.success}
           >
-            Zapisz szkic
+            {t("save")}
           </Button>
           <Button
             onClick={() => setConfirm("publish")}
             disabled={dirty || busy || !validation.success || active}
             color="dark"
           >
-            {demo ? "Symuluj publikację" : "Publikuj stronę"}
+            {demo ? t("simulate") : t("publish")}
           </Button>
           <Button
             variant="subtle"
@@ -289,27 +303,27 @@ export function Editor({
               URL.revokeObjectURL(url);
             }}
           >
-            Eksport konfiguracji
+            {t("export")}
           </Button>
         </Group>
         <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
           <Card withBorder p="lg">
             <Tabs defaultValue="content">
               <Tabs.List>
-                <Tabs.Tab value="content">Treści</Tabs.Tab>
-                <Tabs.Tab value="structure">Sekcje</Tabs.Tab>
-                <Tabs.Tab value="media">Zdjęcia</Tabs.Tab>
-                <Tabs.Tab value="settings">Ustawienia</Tabs.Tab>
+                <Tabs.Tab value="content">{t("content")}</Tabs.Tab>
+                <Tabs.Tab value="structure">{t("structure")}</Tabs.Tab>
+                <Tabs.Tab value="media">{t("media")}</Tabs.Tab>
+                <Tabs.Tab value="settings">{t("settings")}</Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="content" pt="lg">
                 <Stack>
-                  <Title order={3}>Para</Title>
+                  <Title order={3}>{t("couple")}</Title>
                   <Fields
                     config={config}
                     value={config.couple}
                     onChange={(v) => replace("couple", v)}
                   />
-                  <Title order={3}>Pierwszy ekran</Title>
+                  <Title order={3}>{t("hero")}</Title>
                   <Fields
                     config={config}
                     value={{
@@ -323,19 +337,19 @@ export function Editor({
                       replace("hero", v);
                     }}
                   />
-                  <Title order={3}>Miejsca</Title>
+                  <Title order={3}>{t("venues")}</Title>
                   <CollectionFields
                     name="venues"
                     config={config}
                     onChange={setConfig}
                   />
-                  <Title order={3}>Wydarzenia</Title>
+                  <Title order={3}>{t("events")}</Title>
                   <CollectionFields
                     name="events"
                     config={config}
                     onChange={setConfig}
                   />
-                  <Title order={3}>Kontakty</Title>
+                  <Title order={3}>{t("contacts")}</Title>
                   <CollectionFields
                     name="contacts"
                     config={config}
@@ -345,20 +359,20 @@ export function Editor({
               </Tabs.Panel>
               <Tabs.Panel value="structure" pt="lg">
                 <Stack>
-                  <Title order={3}>Sekcje</Title>
+                  <Title order={3}>{t("structure")}</Title>
                   <CollectionFields
                     name="sections"
                     config={config}
                     onChange={setConfig}
                   />
-                  <Title order={3}>Warianty zaproszenia</Title>
+                  <Title order={3}>{t("variants")}</Title>
                   <CollectionFields
                     name="variants"
                     config={config}
                     onChange={setConfig}
                   />
                   <Select
-                    label="Domyślny wariant"
+                    label={t("defaultVariant")}
                     data={config.variants.map((v) => ({
                       value: v.id,
                       label: v.label,
@@ -377,12 +391,20 @@ export function Editor({
                   >
                     {(props) => (
                       <Button {...props} loading={busy}>
-                        Dodaj zdjęcie
+                        {language === "pl"
+                          ? "Dodaj zdjęcie"
+                          : language === "en"
+                            ? "Add photo"
+                            : "Foto hinzufügen"}
                       </Button>
                     )}
                   </FileButton>
                   <Text size="sm" c="dimmed">
-                    JPEG, PNG lub WebP; do 8 MB i 20 megapikseli.
+                    {language === "pl"
+                      ? "JPEG, PNG lub WebP; do 8 MB i 20 megapikseli."
+                      : language === "en"
+                        ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
+                        : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
                   </Text>
                   {data.media
                     .filter((m) => !config.media.some((c) => c.id === m.id))
@@ -397,16 +419,32 @@ export function Editor({
                           })
                         }
                       >
-                        Dodaj zapisane zdjęcie {m.id.slice(0, 8)}
+                        {language === "pl"
+                          ? "Dodaj zapisane zdjęcie"
+                          : language === "en"
+                            ? "Add saved photo"
+                            : "Gespeichertes Foto hinzufügen"}{" "}
+                        {m.id.slice(0, 8)}
                       </Button>
                     ))}
                   {config.media.map((media, index) => (
                     <Card withBorder key={media.id}>
                       <Text size="sm" mb="sm">
-                        Zdjęcie {index + 1}
+                        {language === "pl"
+                          ? "Zdjęcie"
+                          : language === "en"
+                            ? "Photo"
+                            : "Foto"}{" "}
+                        {index + 1}
                       </Text>
                       <TextInput
-                        label="Opis alternatywny (pusty dla dekoracji)"
+                        label={
+                          language === "pl"
+                            ? "Opis alternatywny (pusty dla dekoracji)"
+                            : language === "en"
+                              ? "Alternative description (leave empty for decoration)"
+                              : "Alternativbeschreibung (für Dekoration leer lassen)"
+                        }
                         value={media.alt}
                         onChange={(e) => {
                           const next = structuredClone(config);
@@ -426,10 +464,10 @@ export function Editor({
                           key={key}
                           label={
                             {
-                              focalX: "Kadr desktop: poziomo",
-                              focalY: "Kadr desktop: pionowo",
-                              mobileFocalX: "Kadr mobile: poziomo",
-                              mobileFocalY: "Kadr mobile: pionowo",
+                              focalX: t("focalDesktopX"),
+                              focalY: t("focalDesktopY"),
+                              mobileFocalX: t("focalMobileX"),
+                              mobileFocalY: t("focalMobileY"),
                             }[key]
                           }
                           min={0}
@@ -449,11 +487,35 @@ export function Editor({
               <Tabs.Panel value="settings" pt="lg">
                 <Stack>
                   <Select
-                    label="Motyw kolorystyczny"
+                    label={t("theme")}
                     data={[
-                      { value: "ivory", label: "Krem i złoto" },
-                      { value: "sage", label: "Szałwia i kość słoniowa" },
-                      { value: "wine", label: "Bordo i jasne tło" },
+                      {
+                        value: "ivory",
+                        label:
+                          language === "pl"
+                            ? "Krem i złoto"
+                            : language === "en"
+                              ? "Ivory and gold"
+                              : "Elfenbein und Gold",
+                      },
+                      {
+                        value: "sage",
+                        label:
+                          language === "pl"
+                            ? "Szałwia i kość słoniowa"
+                            : language === "en"
+                              ? "Sage and ivory"
+                              : "Salbei und Elfenbein",
+                      },
+                      {
+                        value: "wine",
+                        label:
+                          language === "pl"
+                            ? "Bordo i jasne tło"
+                            : language === "en"
+                              ? "Wine and light background"
+                              : "Bordeaux und heller Hintergrund",
+                      },
                     ]}
                     value={config.theme}
                     allowDeselect={false}
@@ -467,19 +529,19 @@ export function Editor({
                       }));
                     }}
                   />
-                  <Title order={3}>Kolory motywu</Title>
+                  <Title order={3}>{t("colors")}</Title>
                   <Fields
                     config={config}
                     value={config.design}
                     onChange={(value) => replace("design", value)}
                   />
-                  <Title order={3}>Udostępnianie</Title>
+                  <Title order={3}>{t("sharing")}</Title>
                   <Fields
                     config={config}
                     value={config.metadata}
                     onChange={(v) => replace("metadata", v)}
                   />
-                  <Title order={3}>Etykiety i stopka</Title>
+                  <Title order={3}>{t("labelsFooter")}</Title>
                   <Fields
                     config={config}
                     value={config.copy}
@@ -492,7 +554,7 @@ export function Editor({
           <Stack>
             <Group>
               <Select
-                label="Podgląd wariantu"
+                label={t("preview")}
                 data={config.variants.map((v) => ({
                   value: v.id,
                   label: v.label,
@@ -501,7 +563,7 @@ export function Editor({
                 onChange={(v) => setVariant(v || config.defaultVariant)}
               />
               <Select
-                label="Szerokość ekranu"
+                label={t("screenWidth")}
                 data={["320", "390", "768", "1440"]}
                 value={width}
                 onChange={(v) => setWidth(v || "390")}
@@ -512,26 +574,31 @@ export function Editor({
                 className="admin-preview-inner"
                 style={{ width: Number(width) }}
               >
-                <iframe
-                  ref={frame}
-                  src="/preview"
-                  title="Podgląd zaproszenia"
-                />
+                <iframe ref={frame} src="/preview" title={t("preview")} />
               </div>
             </div>
             <Text size="xs" c="dimmed">
-              Podgląd korzysta z tego samego renderera co opublikowana strona.
-              Przy błędnych danych pozostaje ostatnia prawidłowa wersja.
+              {language === "pl"
+                ? "Podgląd korzysta z tego samego renderera co opublikowana strona. Przy błędnych danych pozostaje ostatnia prawidłowa wersja."
+                : language === "en"
+                  ? "The preview uses the same renderer as the published site. Invalid data leaves the last valid version visible."
+                  : "Die Vorschau verwendet denselben Renderer wie die veröffentlichte Seite. Bei ungültigen Daten bleibt die letzte gültige Version sichtbar."}
             </Text>
           </Stack>
         </SimpleGrid>
         <Card withBorder>
           <Title order={2} mb="md">
-            Historia publikacji
+            {t("history")}
           </Title>
           <Stack>
             {!data.deployments.length ? (
-              <Text c="dimmed">Nie opublikowano jeszcze żadnej wersji.</Text>
+              <Text c="dimmed">
+                {language === "pl"
+                  ? "Nie opublikowano jeszcze żadnej wersji."
+                  : language === "en"
+                    ? "No version has been published yet."
+                    : "Es wurde noch keine Version veröffentlicht."}
+              </Text>
             ) : null}
             {data.deployments.map((job) => (
               <Group key={job.id} justify="space-between">
@@ -557,7 +624,11 @@ export function Editor({
                       rel="noopener noreferrer"
                       variant="subtle"
                     >
-                      Otwórz
+                      {language === "pl"
+                        ? "Otwórz"
+                        : language === "en"
+                          ? "Open"
+                          : "Öffnen"}
                     </Button>
                   ) : null}
                   {["preparing", "building"].includes(job.status) ? (
@@ -571,7 +642,11 @@ export function Editor({
                         })
                       }
                     >
-                      Odśwież status
+                      {language === "pl"
+                        ? "Odśwież status"
+                        : language === "en"
+                          ? "Refresh status"
+                          : "Status aktualisieren"}
                     </Button>
                   ) : null}
                   {["ready", "simulation"].includes(job.status) ? (
@@ -580,7 +655,11 @@ export function Editor({
                       disabled={busy || active}
                       onClick={() => setConfirm(job.release_id)}
                     >
-                      Przywróć wydanie
+                      {language === "pl"
+                        ? "Przywróć wydanie"
+                        : language === "en"
+                          ? "Restore release"
+                          : "Version wiederherstellen"}
                     </Button>
                   ) : null}
                   {admin && job.status === "preparing" ? (
@@ -588,18 +667,14 @@ export function Editor({
                       color="red"
                       variant="subtle"
                       onClick={() => {
-                        if (
-                          window.confirm(
-                            "Czy sprawdzono Vercel i potwierdzono brak aktywnego wdrożenia?",
-                          )
-                        )
+                        if (window.confirm(t("resolveConfirm")))
                           void task(async () => {
                             await action("resolve-failed", { id: job.id });
                             await reload();
                           });
                       }}
                     >
-                      Zamknij po kontroli Vercel
+                      {t("resolveFailed")}
                     </Button>
                   ) : null}
                 </Group>
@@ -610,7 +685,7 @@ export function Editor({
         {admin && !demo ? (
           <Card withBorder>
             <Title order={2} mb="md">
-              Administracja realizacją
+              {t("administration")}
             </Title>
             <Stack>
               <Button
@@ -624,12 +699,12 @@ export function Editor({
                 }
               >
                 {data.site.vercel_project_id
-                  ? "Projekt Vercel połączony"
-                  : "Utwórz projekt Vercel"}
+                  ? t("vercelConnected")
+                  : t("createVercel")}
               </Button>
               <Group align="end">
                 <TextInput
-                  label="E-mail klienta"
+                  label={t("clientEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.currentTarget.value)}
                 />
@@ -637,16 +712,16 @@ export function Editor({
                   onClick={() =>
                     task(async () => {
                       await action("invite", { email });
-                      setMessage("Zaproszenie wysłane.");
+                      setMessage(t("invitationSent"));
                     })
                   }
                 >
-                  Zaproś klienta
+                  {t("inviteClient")}
                 </Button>
               </Group>
               <Group align="end">
                 <TextInput
-                  label="Domena klienta"
+                  label={t("clientDomain")}
                   value={domain}
                   onChange={(e) => setDomain(e.currentTarget.value)}
                 />
@@ -658,14 +733,14 @@ export function Editor({
                       });
                       setMessage(
                         result.verified
-                          ? "Domena zweryfikowana."
-                          : "Domena dodana. Dokończ konfigurację DNS w Vercel → Settings → Domains.",
+                          ? t("domainVerified")
+                          : t("domainAdded"),
                       );
                       await reload();
                     })
                   }
                 >
-                  Przypisz domenę
+                  {t("assignDomain")}
                 </Button>
               </Group>
             </Stack>
@@ -674,17 +749,12 @@ export function Editor({
         <Modal
           opened={!!confirm}
           onClose={() => setConfirm(null)}
-          title={
-            confirm === "publish" ? "Publikacja strony" : "Przywrócenie wydania"
-          }
+          title={confirm === "publish" ? t("publishTitle") : t("restoreTitle")}
         >
           <Stack>
-            <Text>
-              Treści i zdjęcia tego wydania staną się publiczne. Zmiany w
-              późniejszym szkicu nie zmienią opublikowanej wersji.
-            </Text>
+            <Text>{t("publishWarning")}</Text>
             <Button onClick={publish}>
-              {demo ? "Uruchom symulację" : "Potwierdź publikację"}
+              {demo ? t("startSimulation") : t("confirmPublish")}
             </Button>
           </Stack>
         </Modal>

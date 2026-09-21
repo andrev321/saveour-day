@@ -18,6 +18,8 @@ const hexColor = z
   .string()
   .regex(/^#[0-9a-f]{6}$/i, "Użyj koloru HEX, np. #AABBCC");
 export type ThemeName = "ivory" | "sage" | "wine";
+export type InvitationLocale = "pl-PL" | "en-GB" | "de-DE";
+export const invitationLocales = ["pl-PL", "en-GB", "de-DE"] as const;
 export type ThemeDesign = {
   paper: string;
   surface: string;
@@ -162,7 +164,7 @@ export const siteConfigSchema = z
   .object({
     schemaVersion: z.literal(1),
     id: idSchema,
-    locale: z.literal("pl-PL"),
+    locale: z.enum(invitationLocales),
     timeZone: z.literal("Europe/Warsaw"),
     couple: z.object({ firstName: text, secondName: text }).strict(),
     hero: z
