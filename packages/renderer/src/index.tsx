@@ -22,9 +22,7 @@ import {
   type MediaAsset,
 } from "@wedding/domain";
 
-const accentPalette = (
-  accent: string,
-): [
+type Palette = [
   string,
   string,
   string,
@@ -35,17 +33,32 @@ const accentPalette = (
   string,
   string,
   string,
-] => [
+];
+
+const mixHex = (color: string, target: number, amount: number) => {
+  const channels = [1, 3, 5].map((offset) =>
+    Number.parseInt(color.slice(offset, offset + 2), 16),
+  );
+  return `#${channels
+    .map((channel) =>
+      Math.round(channel + (target - channel) * amount)
+        .toString(16)
+        .padStart(2, "0"),
+    )
+    .join("")}`;
+};
+
+export const createAccentPalette = (accent: string): Palette => [
+  mixHex(accent, 255, 0.9),
+  mixHex(accent, 255, 0.75),
+  mixHex(accent, 255, 0.58),
+  mixHex(accent, 255, 0.42),
+  mixHex(accent, 255, 0.26),
+  mixHex(accent, 255, 0.12),
   accent,
-  accent,
-  accent,
-  accent,
-  accent,
-  accent,
-  accent,
-  accent,
-  accent,
-  accent,
+  mixHex(accent, 0, 0.14),
+  mixHex(accent, 0, 0.28),
+  mixHex(accent, 0, 0.42),
 ];
 
 export function InvitationProvider({
@@ -56,9 +69,9 @@ export function InvitationProvider({
   children: React.ReactNode;
 }) {
   const theme = createTheme({
-    colors: { wedding: accentPalette(config.design.accent) },
+    colors: { wedding: createAccentPalette(config.design.accent) },
     primaryColor: "wedding",
-    primaryShade: 8,
+    primaryShade: 6,
     fontFamily: "Inter, sans-serif",
     headings: {
       fontFamily: "Cormorant Garamond, Georgia, serif",
