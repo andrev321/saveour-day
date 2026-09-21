@@ -45,6 +45,12 @@ Test E2E sprawdza wszystkie warianty strony przy szerokościach 320–1920 px, b
 
 `npm.cmd run build` jest celowo buildem produkcyjnym i wymaga `RELEASE_MANIFEST_URL` oraz `RELEASE_TOKEN` albo lokalnego `SITE_CONFIG`. Nie używa danych demonstracyjnych bez jawnego wyboru, aby przypadkowo nie opublikować przykładowej realizacji.
 
+Przed wpisaniem sekretów w Vercel można sprawdzić ich kompletność bez wyświetlania wartości:
+
+```powershell
+npm.cmd run check:production-env -- apps/admin/.env.production.local
+```
+
 ## Wdrożenie
 
 Instrukcja dla pierwszego wdrożenia platformy i codziennej publikacji realizacji jest w [docs/WDROZENIE-PLATFORMY.md](docs/WDROZENIE-PLATFORMY.md). Założenia i uzasadnienie techniczne opisują [audyt](docs/AUDYT-ARCHITEKTURY-KODU-I-PRODUKTU.md) oraz [plan](docs/PLAN-ROZWOJU-I-KOMPONENTY.md).

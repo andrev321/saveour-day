@@ -1,7 +1,7 @@
 import "@mantine/core/styles.css";
-import "@fontsource/inter/400.css";
-import "@fontsource/inter/600.css";
-import "@fontsource/cormorant-garamond/500.css";
+import "@fontsource/inter/latin-ext-400.css";
+import "@fontsource/inter/latin-ext-600.css";
+import "@fontsource/cormorant-garamond/latin-ext-500.css";
 import "@wedding/renderer/styles.css";
 import "./styles.css";
 import {
