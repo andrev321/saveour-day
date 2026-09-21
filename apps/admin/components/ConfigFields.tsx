@@ -7,6 +7,7 @@ import {
   IconEye,
   IconEyeOff,
   IconGripVertical,
+  IconInfoCircle,
   IconLayoutList,
   IconMapPin,
   IconMessageCircle,
@@ -323,6 +324,7 @@ function OrderedReferences({
   available,
   language,
   editable = true,
+  hint,
   onChange,
 }: {
   ids: string[];
@@ -330,6 +332,7 @@ function OrderedReferences({
   available: Reference[];
   language: PanelLanguage;
   editable?: boolean;
+  hint?: string;
   onChange: (ids: string[]) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -354,9 +357,18 @@ function OrderedReferences({
 
   return (
     <Stack gap={4}>
-      <Text size="sm" fw={500}>
-        {label} — {order}
-      </Text>
+      <Group gap={6}>
+        <Text size="sm" fw={500}>
+          {label} — {order}
+        </Text>
+        {hint ? (
+          <Tooltip label={hint} multiline w={260}>
+            <ThemeIcon variant="light" size="sm" radius="xl" aria-label={hint}>
+              <IconInfoCircle size={15} />
+            </ThemeIcon>
+          </Tooltip>
+        ) : null}
+      </Group>
       {editable ? (
         <DndContext
           sensors={sensors}
@@ -557,6 +569,15 @@ export function Fields({
                 available={available}
                 language={language}
                 editable={referencesEditable}
+                hint={
+                  !referencesEditable && key === "sectionIds"
+                    ? language === "pl"
+                      ? "Kolejność sekcji na stronie głównej zmienisz w zakładce Sekcje."
+                      : language === "en"
+                        ? "Change the main page section order in the Sections tab."
+                        : "Die Reihenfolge der Hauptseitenabschnitte ändern Sie im Tab Abschnitte."
+                    : undefined
+                }
                 onChange={(ids) => update(key, ids)}
               />
             );
