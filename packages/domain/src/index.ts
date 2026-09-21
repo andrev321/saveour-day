@@ -45,6 +45,21 @@ const designSchema = z
     accent: hexColor,
   })
   .strict();
+const contrastRatio = (first: string, second: string) => {
+  const luminance = (color: string) => {
+    const channels = [1, 3, 5].map(
+      (offset) => Number.parseInt(color.slice(offset, offset + 2), 16) / 255,
+    );
+    const [red, green, blue] = channels.map((channel) =>
+      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
+    );
+    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+  };
+  const [lighter, darker] = [luminance(first), luminance(second)].sort(
+    (a, b) => b - a,
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+};
 const mapUrl = optionalUrl.refine((value) => {
   if (!value) return true;
   const u = new URL(value);
@@ -205,6 +220,16 @@ export const siteConfigSchema = z
   .superRefine((value, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: "custom", path, message });
+    if (contrastRatio(value.design.ink, value.design.paper) < 4.5)
+      issue(
+        ["design", "ink"],
+        "Tekst musi mieć kontrast co najmniej 4.5:1 względem tła strony",
+      );
+    if (contrastRatio(value.design.accent, value.design.paper) < 3)
+      issue(
+        ["design", "accent"],
+        "Akcent musi mieć kontrast co najmniej 3:1 względem tła strony",
+      );
     for (const collection of [
       "contacts",
       "media",

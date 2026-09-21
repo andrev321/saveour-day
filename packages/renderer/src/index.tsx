@@ -66,7 +66,9 @@ export function InvitationProvider({
     },
     defaultRadius: "lg",
     components: {
-      Button: Button.extend({ defaultProps: { radius: "xl", size: "md" } }),
+      Button: Button.extend({
+        defaultProps: { radius: "xl", size: "md", autoContrast: true },
+      }),
     },
   });
   return (

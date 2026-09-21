@@ -35,6 +35,14 @@ test("accepts custom color tokens and supplies a preset for older configurations
       }),
     /design.accent/,
   );
+  assert.throws(
+    () =>
+      parseSiteConfig({
+        ...config,
+        design: { ...config.design, ink: "#faf7f1" },
+      }),
+    /design.ink/,
+  );
 });
 test("reject malformed JSON shape and dangerous URLs with field names", () => {
   assert.throws(() => parseSiteConfig(null));
