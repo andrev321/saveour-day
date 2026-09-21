@@ -116,6 +116,8 @@ export function importLegacy(
       dateLabel: "",
       eventIds: ["ceremony", "reception"],
       sectionIds: ["timeline", "ceremony", "parking", "reception", "contact"],
+      hiddenEventIds: ["dinner", "grill"],
+      hiddenSectionIds: ["dinner", "grill"],
     },
     {
       id: "obiad",
@@ -124,6 +126,8 @@ export function importLegacy(
       dateLabel: "",
       eventIds: ["ceremony", "reception", "dinner"],
       sectionIds: ["timeline", "ceremony", "parking", "dinner", "contact"],
+      hiddenEventIds: ["grill"],
+      hiddenSectionIds: ["reception", "grill"],
     },
     {
       id: "grill",
@@ -132,6 +136,8 @@ export function importLegacy(
       dateLabel: grill.heroDate || "",
       eventIds: ["ceremony", "reception", "grill"],
       sectionIds: ["timeline", "ceremony", "parking", "grill", "contact"],
+      hiddenEventIds: ["dinner"],
+      hiddenSectionIds: ["reception", "dinner"],
     },
   ];
   config.defaultVariant = "slub";

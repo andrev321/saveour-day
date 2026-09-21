@@ -158,6 +158,8 @@ const variantSchema = z
     dateLabel: z.string().max(200).default(""),
     eventIds: z.array(idSchema).max(50),
     sectionIds: z.array(idSchema).max(30),
+    hiddenEventIds: z.array(idSchema).max(50).optional(),
+    hiddenSectionIds: z.array(idSchema).max(30).optional(),
   })
   .strict();
 export const siteConfigSchema = z
@@ -225,6 +227,41 @@ export const siteConfigSchema = z
   .transform((value) => ({
     ...value,
     design: value.design ?? themeDesigns[value.theme],
+    variants: value.variants.map((variant) => ({
+      ...variant,
+      hiddenEventIds:
+        variant.hiddenEventIds ??
+        (variant.id === value.defaultVariant
+          ? []
+          : value.events
+              .map((event) => event.id)
+              .filter((id) => !variant.eventIds.includes(id))),
+      hiddenSectionIds:
+        variant.hiddenSectionIds ??
+        (variant.id === value.defaultVariant
+          ? []
+          : value.sections
+              .map((section) => section.id)
+              .filter((id) => !variant.sectionIds.includes(id))),
+      eventIds:
+        variant.id === value.defaultVariant
+          ? value.events.map((event) => event.id)
+          : [
+              ...variant.eventIds,
+              ...value.events
+                .map((event) => event.id)
+                .filter((id) => !variant.eventIds.includes(id)),
+            ],
+      sectionIds:
+        variant.id === value.defaultVariant
+          ? value.sections.map((section) => section.id)
+          : [
+              ...variant.sectionIds,
+              ...value.sections
+                .map((section) => section.id)
+                .filter((id) => !variant.sectionIds.includes(id)),
+            ],
+    })),
   }))
   .superRefine((value, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
