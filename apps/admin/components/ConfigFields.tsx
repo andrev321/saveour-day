@@ -171,25 +171,25 @@ const translatedLabels: Record<
 
 const sectionTypes = {
   pl: [
-    { value: "timeline", label: "◷ Harmonogram dnia", icon: "◷" },
-    { value: "venue", label: "⌖ Miejsce", icon: "⌖" },
-    { value: "contact", label: "☎ Kontakt", icon: "☎" },
-    { value: "text", label: "¶ Tekst", icon: "¶" },
-    { value: "gallery", label: "▦ Galeria", icon: "▦" },
+    { value: "timeline", label: "Harmonogram dnia", icon: "◌" },
+    { value: "venue", label: "Miejsce", icon: "◇" },
+    { value: "contact", label: "Kontakt", icon: "○" },
+    { value: "text", label: "Tekst", icon: "≡" },
+    { value: "gallery", label: "Galeria", icon: "▦" },
   ],
   en: [
-    { value: "timeline", label: "◷ Schedule", icon: "◷" },
-    { value: "venue", label: "⌖ Venue", icon: "⌖" },
-    { value: "contact", label: "☎ Contact", icon: "☎" },
-    { value: "text", label: "¶ Text", icon: "¶" },
-    { value: "gallery", label: "▦ Gallery", icon: "▦" },
+    { value: "timeline", label: "Schedule", icon: "◌" },
+    { value: "venue", label: "Venue", icon: "◇" },
+    { value: "contact", label: "Contact", icon: "○" },
+    { value: "text", label: "Text", icon: "≡" },
+    { value: "gallery", label: "Gallery", icon: "▦" },
   ],
   de: [
-    { value: "timeline", label: "◷ Tagesablauf", icon: "◷" },
-    { value: "venue", label: "⌖ Ort", icon: "⌖" },
-    { value: "contact", label: "☎ Kontakt", icon: "☎" },
-    { value: "text", label: "¶ Text", icon: "¶" },
-    { value: "gallery", label: "▦ Galerie", icon: "▦" },
+    { value: "timeline", label: "Tagesablauf", icon: "◌" },
+    { value: "venue", label: "Ort", icon: "◇" },
+    { value: "contact", label: "Kontakt", icon: "○" },
+    { value: "text", label: "Text", icon: "≡" },
+    { value: "gallery", label: "Galerie", icon: "▦" },
   ],
 } as const;
 export function Fields({
@@ -236,12 +236,35 @@ export function Fields({
                 onChange={(v) => update(key, Number(v))}
               />
             );
-          const choices =
-            key === "layout"
-              ? ["overlay", "split"]
-              : key === "type"
-                ? sectionTypes[language]
-                : null;
+          if (key === "type") {
+            const types = sectionTypes[language];
+            const selected = types.find((type) => type.value === field);
+            return (
+              <Select
+                key={key}
+                label={label}
+                data={types}
+                value={String(field)}
+                allowDeselect={false}
+                leftSection={
+                  <span className="section-type-icon">{selected?.icon}</span>
+                }
+                renderOption={({ option }) => {
+                  const type = types.find(
+                    (item) => item.value === option.value,
+                  );
+                  return (
+                    <span className="section-type-option">
+                      <span className="section-type-icon">{type?.icon}</span>
+                      <span>{option.label}</span>
+                    </span>
+                  );
+                }}
+                onChange={(v) => update(key, v)}
+              />
+            );
+          }
+          const choices = key === "layout" ? ["overlay", "split"] : null;
           if (choices)
             return (
               <Select
@@ -705,7 +728,7 @@ function SectionCollection({
                   <Stack gap={0}>
                     <Text fw={600}>{section.title}</Text>
                     <Text size="xs" c="dimmed">
-                      {type.label.slice(2)}
+                      {type.label}
                     </Text>
                   </Stack>
                   <Text c="dimmed" aria-label="Przeciągnij sekcję">
