@@ -270,25 +270,11 @@ export function createDemo(
         id: "slub",
         slug: "glowna",
         label: template.variants[0],
-        eventIds: ["ceremony"],
-        sectionIds: ["timeline", "ceremony", "parking", "contact"],
-      },
-      {
-        id: "obiad",
-        slug: "pelna",
-        label: template.variants[1],
         eventIds: ["ceremony", "party"],
         sectionIds: ["timeline", "ceremony", "party", "parking", "contact"],
       },
-      {
-        id: "grill",
-        slug: "ograniczona",
-        label: template.variants[2],
-        eventIds: ["party"],
-        sectionIds: ["timeline", "party", "contact"],
-      },
     ],
-    defaultVariant: "obiad",
+    defaultVariant: "slub",
   });
 }
 
