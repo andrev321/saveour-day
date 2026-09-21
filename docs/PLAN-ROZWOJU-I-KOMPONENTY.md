@@ -38,6 +38,8 @@ Przygotować trzy ocenione wizualnie presety: krem/złoto, szałwia/kość słon
 
 Konfiguracja klienta wybiera preset i zatwierdzone nadpisania. Nie przyjmuje wykonywalnego JS ani dowolnego CSS. Zmiana motywu ma działać bez edycji JSX. Tryb ciemny nie jest wymaganiem pierwszego wydania — nie dodawać go automatycznie kosztem niezweryfikowanego wyglądu.
 
+Wdrożona konfiguracja udostępnia cztery tokeny HEX: tło strony, tło kart, tekst i akcent. Panel korzysta z `ColorInput` Mantine, a walidator odrzuca kolory bez wymaganego kontrastu. Dzięki temu preset może być punktem startowym, a projekt pozostaje bezpieczny i czytelny po dostosowaniu do identyfikacji klienta.
+
 ## 3. Docelowy podział projektu
 
 ```text
