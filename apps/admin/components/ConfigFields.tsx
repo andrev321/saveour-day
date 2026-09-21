@@ -844,7 +844,6 @@ function SortableSection({
     transform,
     transition,
     isDragging,
-    isOver,
   } = useSortable({ id: section.id });
   const type = sectionTypes[language].find(
     (option) => option.value === section.type,
@@ -852,15 +851,6 @@ function SortableSection({
   const Icon = type.icon;
   return (
     <>
-      {isOver && !isDragging ? (
-        <div className="section-drop-placeholder" aria-hidden>
-          {language === "pl"
-            ? "Upuść sekcję tutaj"
-            : language === "en"
-              ? "Drop section here"
-              : "Abschnitt hier ablegen"}
-        </div>
-      ) : null}
       <Accordion.Item
         ref={setNodeRef}
         value={section.id}
