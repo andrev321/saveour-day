@@ -20,3 +20,26 @@ body {
   width: 100%;
   height: 720px;
 }
+.expanded-preview-modal {
+  height: calc(100vh - 4rem);
+}
+.expanded-preview-modal-body {
+  height: calc(100% - 4rem);
+}
+.expanded-preview-frame {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 16px;
+  background: #e8eaed;
+}
+.expanded-preview-frame > div {
+  height: 100%;
+  margin: auto;
+  background: white;
+}
+.expanded-preview-frame iframe {
+  border: 0;
+  width: 100%;
+  height: 100%;
+}
