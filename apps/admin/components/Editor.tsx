@@ -594,21 +594,47 @@ export function Editor({
           opened={previewOpen}
           onClose={() => setPreviewOpen(false)}
           title={t("preview")}
-          fullScreen
+          size="calc(100vw - 4rem)"
+          yOffset="2rem"
+          xOffset="2rem"
+          classNames={{
+            content: "expanded-preview-modal",
+            body: "expanded-preview-modal-body",
+          }}
+          overlayProps={{ backgroundOpacity: 0.24, blur: 1 }}
+          transitionProps={{ transition: "pop", duration: 180 }}
         >
-          <iframe
-            ref={expandedFrame}
-            src="/preview"
-            title={t("preview")}
-            style={{ border: 0, height: "calc(100vh - 5.5rem)", width: "100%" }}
-          />
-          <Button
-            mt="sm"
-            variant="subtle"
-            onClick={() => setPreviewOpen(false)}
-          >
-            {t("closePreview")}
-          </Button>
+          <Stack h="100%" gap="sm">
+            <Group>
+              <Select
+                label={t("preview")}
+                data={config.variants.map((page) => ({
+                  value: page.id,
+                  label: page.label,
+                }))}
+                value={variant}
+                onChange={(value) => setVariant(value || config.defaultVariant)}
+              />
+              <Select
+                label={t("screenWidth")}
+                data={["320", "390", "768", "1024", "1440"]}
+                value={width}
+                onChange={(value) => setWidth(value || "390")}
+              />
+              <Button variant="subtle" onClick={() => setPreviewOpen(false)}>
+                {t("closePreview")}
+              </Button>
+            </Group>
+            <div className="expanded-preview-frame">
+              <div style={{ width: Number(width) }}>
+                <iframe
+                  ref={expandedFrame}
+                  src="/preview"
+                  title={t("preview")}
+                />
+              </div>
+            </div>
+          </Stack>
         </Modal>
         <Card withBorder>
           <Title order={2} mb="md">
