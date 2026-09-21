@@ -1,73 +1,50 @@
-# React + TypeScript + Vite
+# Wedding Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Platforma do obsługi wielu, niezależnych zaproszeń ślubnych. Publiczna strona jest statycznym artefaktem przypisanym do jednej realizacji; panel administracyjny przechowuje dane, media, wersje i prowadzi publikację do osobnego projektu Vercel.
 
-Currently, two official plugins are available:
+## Aplikacje
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- `apps/site` — publiczna, responsywna strona Vite. W buildzie otrzymuje tylko manifest jednej wersji zaproszenia.
+- `apps/admin` — panel Next.js dla administratora i klientów.
+- `packages/domain` — schemat Zod, walidacja danych oraz dane demonstracyjne.
+- `packages/renderer` — wspólny renderer React/Mantine używany przez stronę i podgląd w panelu.
+- `supabase/migrations` — baza, reguły RLS i procedury wersjonowania.
 
-## React Compiler
+Projekt wymaga Node.js 22 LTS i npm 11.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Uruchomienie lokalne
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+npm.cmd ci
+Copy-Item apps/admin/.env.example apps/admin/.env.local
+npm.cmd run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Panel uruchomisz osobno poleceniem `npm.cmd run dev:admin`. Bez zmiennych Supabase dostępny jest wyłącznie ekran demonstracyjny pod `/demo`; interfejs nie udaje wtedy zapisu do bazy.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Do migracji poprzedniej strony użyj:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```powershell
+npm.cmd run import:legacy -- "Imię 1" "Imię 2"
 ```
+
+Skrypt tworzy lokalny, ignorowany przez Git katalog `.local/legacy`. Przed publikacją sprawdź treść i zdjęcie w panelu.
+
+## Kontrola jakości
+
+```powershell
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd test
+npm.cmd run build:demo
+npm.cmd run build:admin
+npm.cmd run test:e2e
+```
+
+Test E2E sprawdza wszystkie warianty strony przy szerokościach 320–1920 px, bezpośrednie ścieżki oraz demonstracyjny panel.
+
+`npm.cmd run build` jest celowo buildem produkcyjnym i wymaga `RELEASE_MANIFEST_URL` oraz `RELEASE_TOKEN` albo lokalnego `SITE_CONFIG`. Nie używa danych demonstracyjnych bez jawnego wyboru, aby przypadkowo nie opublikować przykładowej realizacji.
+
+## Wdrożenie
+
+Instrukcja dla pierwszego wdrożenia platformy i codziennej publikacji realizacji jest w [docs/WDROZENIE-PLATFORMY.md](docs/WDROZENIE-PLATFORMY.md). Założenia i uzasadnienie techniczne opisują [audyt](docs/AUDYT-ARCHITEKTURY-KODU-I-PRODUKTU.md) oraz [plan](docs/PLAN-ROZWOJU-I-KOMPONENTY.md).

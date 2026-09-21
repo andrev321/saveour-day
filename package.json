@@ -4,20 +4,38 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "npm run dev --workspace @wedding/site",
+    "dev:admin": "npm run dev --workspace @wedding/admin",
+    "build": "npm run typecheck && npm run build --workspace @wedding/site",
+    "build:admin": "npm run build --workspace @wedding/admin",
+    "build:demo": "tsx scripts/build-demo.ts",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json",
+    "lint": "eslint apps packages scripts tests",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "playwright test",
+    "import:legacy": "tsx scripts/import-legacy.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@fontsource/cormorant-garamond": "5.3.0",
+    "@fontsource/inter": "5.3.0",
+    "@mantine/core": "9.6.1",
+    "@mantine/form": "9.6.1",
+    "@mantine/hooks": "9.6.1",
+    "@supabase/ssr": "0.12.7",
+    "@supabase/supabase-js": "2.116.0",
+    "next": "16.3.5",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-router-dom": "^7.15.0"
+    "react-router-dom": "^7.15.0",
+    "sharp": "0.35.4",
+    "zod": "4.6.5"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "1.63.0",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -26,8 +44,14 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "prettier": "3.9.8",
+    "tsx": "4.23.15",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.10"
-  }
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }

@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 .env.local
+.env
+.env.*
+!.env.example
+.vercel/
+.local/
+.next/
+test-results/
+playwright-report/
+*.tsbuildinfo
 
 # Editor directories and files
 .vscode/*
