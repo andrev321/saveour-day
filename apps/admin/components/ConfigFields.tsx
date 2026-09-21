@@ -1,6 +1,18 @@
 "use client";
 import { useState } from "react";
 import {
+  IconCalendarTime,
+  IconChevronDown,
+  IconChevronUp,
+  IconGripVertical,
+  IconLayoutList,
+  IconMapPin,
+  IconMessageCircle,
+  IconPhoto,
+  IconPlus,
+  IconTrash,
+} from "@tabler/icons-react";
+import {
   DndContext,
   DragOverlay,
   KeyboardSensor,
@@ -188,25 +200,25 @@ const translatedLabels: Record<
 
 const sectionTypes = {
   pl: [
-    { value: "timeline", label: "Harmonogram dnia", icon: "◌" },
-    { value: "venue", label: "Miejsce", icon: "◇" },
-    { value: "contact", label: "Kontakt", icon: "○" },
-    { value: "text", label: "Tekst", icon: "≡" },
-    { value: "gallery", label: "Galeria", icon: "▦" },
+    { value: "timeline", label: "Harmonogram dnia", icon: IconCalendarTime },
+    { value: "venue", label: "Miejsce", icon: IconMapPin },
+    { value: "contact", label: "Kontakt", icon: IconMessageCircle },
+    { value: "text", label: "Tekst", icon: IconLayoutList },
+    { value: "gallery", label: "Galeria", icon: IconPhoto },
   ],
   en: [
-    { value: "timeline", label: "Schedule", icon: "◌" },
-    { value: "venue", label: "Venue", icon: "◇" },
-    { value: "contact", label: "Contact", icon: "○" },
-    { value: "text", label: "Text", icon: "≡" },
-    { value: "gallery", label: "Gallery", icon: "▦" },
+    { value: "timeline", label: "Schedule", icon: IconCalendarTime },
+    { value: "venue", label: "Venue", icon: IconMapPin },
+    { value: "contact", label: "Contact", icon: IconMessageCircle },
+    { value: "text", label: "Text", icon: IconLayoutList },
+    { value: "gallery", label: "Gallery", icon: IconPhoto },
   ],
   de: [
-    { value: "timeline", label: "Tagesablauf", icon: "◌" },
-    { value: "venue", label: "Ort", icon: "◇" },
-    { value: "contact", label: "Kontakt", icon: "○" },
-    { value: "text", label: "Text", icon: "≡" },
-    { value: "gallery", label: "Galerie", icon: "▦" },
+    { value: "timeline", label: "Tagesablauf", icon: IconCalendarTime },
+    { value: "venue", label: "Ort", icon: IconMapPin },
+    { value: "contact", label: "Kontakt", icon: IconMessageCircle },
+    { value: "text", label: "Text", icon: IconLayoutList },
+    { value: "gallery", label: "Galerie", icon: IconPhoto },
   ],
 } as const;
 export function Fields({
@@ -256,6 +268,7 @@ export function Fields({
           if (key === "type") {
             const types = sectionTypes[language];
             const selected = types.find((type) => type.value === field);
+            const SelectedIcon = selected?.icon;
             return (
               <Select
                 key={key}
@@ -264,15 +277,22 @@ export function Fields({
                 value={String(field)}
                 allowDeselect={false}
                 leftSection={
-                  <span className="section-type-icon">{selected?.icon}</span>
+                  <span className="section-type-icon">
+                    {SelectedIcon ? (
+                      <SelectedIcon size={16} stroke={1.75} />
+                    ) : null}
+                  </span>
                 }
                 renderOption={({ option }) => {
                   const type = types.find(
                     (item) => item.value === option.value,
                   );
+                  const Icon = type?.icon;
                   return (
                     <span className="section-type-option">
-                      <span className="section-type-icon">{type?.icon}</span>
+                      <span className="section-type-icon">
+                        {Icon ? <Icon size={16} stroke={1.75} /> : null}
+                      </span>
                       <span>{option.label}</span>
                     </span>
                   );
@@ -505,6 +525,7 @@ export function CollectionFields({
                 mt="md"
                 color="red"
                 variant="subtle"
+                leftSection={<IconTrash size={16} />}
                 onClick={() =>
                   onChange({
                     ...config,
@@ -522,7 +543,11 @@ export function CollectionFields({
           </Accordion.Item>
         ))}
       </Accordion>
-      <Button variant="light" onClick={add}>
+      <Button
+        variant="light"
+        onClick={add}
+        leftSection={<IconPlus size={16} />}
+      >
         {language === "pl"
           ? "Dodaj element"
           : language === "en"
@@ -613,6 +638,7 @@ function PageCollection({
                 mt="md"
                 color="red"
                 variant="subtle"
+                leftSection={<IconTrash size={16} />}
                 disabled={pages.length === 1}
                 onClick={() => remove(page.id)}
               >
@@ -628,6 +654,7 @@ function PageCollection({
       </Accordion>
       <Button
         variant="light"
+        leftSection={<IconPlus size={16} />}
         onClick={() => {
           const id = `page-${crypto.randomUUID().slice(0, 8)}`;
           onChange({
@@ -822,6 +849,7 @@ function SortableSection({
   const type = sectionTypes[language].find(
     (option) => option.value === section.type,
   )!;
+  const Icon = type.icon;
   return (
     <>
       {isOver && !isDragging ? (
@@ -852,7 +880,7 @@ function SortableSection({
               size={36}
               aria-hidden
             >
-              {type.icon}
+              <Icon size={18} stroke={1.75} />
             </ThemeIcon>
           }
         >
@@ -871,7 +899,7 @@ function SortableSection({
               {...attributes}
               {...listeners}
             >
-              ⠿
+              <IconGripVertical size={18} stroke={1.75} />
             </Text>
           </Group>
         </Accordion.Control>
@@ -891,7 +919,7 @@ function SortableSection({
                   onReorder(section.id, config.sections[index - 1]!.id)
                 }
               >
-                ↑
+                <IconChevronUp size={18} />
               </ActionIcon>
               <ActionIcon
                 variant="subtle"
@@ -901,10 +929,15 @@ function SortableSection({
                   onReorder(section.id, config.sections[index + 1]!.id)
                 }
               >
-                ↓
+                <IconChevronDown size={18} />
               </ActionIcon>
             </Group>
-            <Button color="red" variant="subtle" onClick={onRemove}>
+            <Button
+              color="red"
+              variant="subtle"
+              leftSection={<IconTrash size={16} />}
+              onClick={onRemove}
+            >
               {language === "pl"
                 ? "Usuń sekcję"
                 : language === "en"
@@ -928,10 +961,11 @@ function SectionDragGhost({
   const type = sectionTypes[language].find(
     (option) => option.value === section.type,
   )!;
+  const Icon = type.icon;
   return (
     <div className="section-drag-ghost">
       <ThemeIcon variant="light" radius="xl" aria-hidden>
-        {type.icon}
+        <Icon size={18} stroke={1.75} />
       </ThemeIcon>
       <div>
         <Text fw={600}>{section.title}</Text>
