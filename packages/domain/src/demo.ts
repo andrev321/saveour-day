@@ -74,7 +74,7 @@ const templates: Record<InvitationLocale, Template> = {
       "Jak dojechać",
       "Dajcie znać, że będziecie",
     ],
-    variants: ["Ślub", "Ślub i przyjęcie", "Spotkanie z bliskimi"],
+    variants: ["Główna", "Pełna", "Ograniczona"],
   },
   "en-GB": {
     couple: ["Emma", "Liam"],
@@ -118,11 +118,7 @@ const templates: Record<InvitationLocale, Template> = {
       "Getting there",
       "Let us know you are coming",
     ],
-    variants: [
-      "Ceremony",
-      "Ceremony and reception",
-      "Gathering with loved ones",
-    ],
+    variants: ["Main", "Full", "Limited"],
   },
   "de-DE": {
     couple: ["Lena", "Jonas"],
@@ -166,11 +162,7 @@ const templates: Record<InvitationLocale, Template> = {
       "Anreise",
       "Gebt uns Bescheid",
     ],
-    variants: [
-      "Trauung",
-      "Trauung und Feier",
-      "Treffen mit Familie und Freunden",
-    ],
+    variants: ["Hauptseite", "Vollständig", "Eingeschränkt"],
   },
 };
 
@@ -276,21 +268,21 @@ export function createDemo(
     variants: [
       {
         id: "slub",
-        slug: "slub",
+        slug: "glowna",
         label: template.variants[0],
         eventIds: ["ceremony"],
         sectionIds: ["timeline", "ceremony", "parking", "contact"],
       },
       {
         id: "obiad",
-        slug: "obiad",
+        slug: "pelna",
         label: template.variants[1],
         eventIds: ["ceremony", "party"],
         sectionIds: ["timeline", "ceremony", "party", "parking", "contact"],
       },
       {
         id: "grill",
-        slug: "grill",
+        slug: "ograniczona",
         label: template.variants[2],
         eventIds: ["party"],
         sectionIds: ["timeline", "party", "contact"],

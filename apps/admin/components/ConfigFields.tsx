@@ -14,6 +14,7 @@ import {
   Textarea,
   TextInput,
   ThemeIcon,
+  Tooltip,
 } from "@mantine/core";
 import type { SiteConfig } from "@wedding/domain";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
@@ -36,7 +37,7 @@ const labels: Record<string, string> = {
   date: "Data wydarzenia",
   venueId: "Miejsce",
   url: "Link wydarzenia",
-  slug: "Adres wariantu",
+  slug: "Adres URL podstrony",
   label: "Etykieta",
   eventIds: "Wydarzenia",
   sectionIds: "Sekcje",
@@ -88,7 +89,7 @@ const translatedLabels: Record<
     date: "Event date",
     venueId: "Venue",
     url: "Event link",
-    slug: "Option address",
+    slug: "Page URL address",
     label: "Label",
     eventIds: "Events",
     sectionIds: "Sections",
@@ -136,7 +137,7 @@ const translatedLabels: Record<
     date: "Veranstaltungsdatum",
     venueId: "Ort",
     url: "Veranstaltungslink",
-    slug: "Variantenadresse",
+    slug: "URL-Adresse der Unterseite",
     label: "Beschriftung",
     eventIds: "Ereignisse",
     sectionIds: "Abschnitte",
@@ -396,6 +397,8 @@ export function CollectionFields({
   const { language } = usePanelI18n();
   if (name === "sections")
     return <SectionCollection config={config} onChange={onChange} />;
+  if (name === "variants")
+    return <PageCollection config={config} onChange={onChange} />;
   const values = config[name];
   function replace(index: number, next: Record<string, unknown>) {
     onChange({
@@ -450,11 +453,7 @@ export function CollectionFields({
         {values.map((item, index) => (
           <Accordion.Item key={`${name}-${index}`} value={String(index)}>
             <Accordion.Control>
-              {"name" in item
-                ? item.name
-                : "title" in item
-                  ? item.title
-                  : item.label}
+              {"name" in item ? item.name : item.title}
             </Accordion.Control>
             <Accordion.Panel>
               <Fields
@@ -497,6 +496,127 @@ export function CollectionFields({
             ? "After removing an item, also remove its references in options and sections. Validation will show remaining links."
             : "Entfernen Sie nach dem Löschen eines Elements auch seine Verweise in Varianten und Abschnitten. Die Validierung zeigt verbleibende Verknüpfungen."}
       </Text>
+    </Stack>
+  );
+}
+
+function PageCollection({
+  config,
+  onChange,
+}: {
+  config: SiteConfig;
+  onChange: (value: SiteConfig) => void;
+}) {
+  const { language, t } = usePanelI18n();
+  const pages = config.variants;
+
+  function replace(index: number, next: Record<string, unknown>) {
+    onChange({
+      ...config,
+      variants: pages.map((page, current) =>
+        current === index ? next : page,
+      ) as SiteConfig["variants"],
+    });
+  }
+
+  function remove(id: string) {
+    if (pages.length === 1) return;
+    const variants = pages.filter((page) => page.id !== id);
+    onChange({
+      ...config,
+      variants,
+      defaultVariant:
+        config.defaultVariant === id ? variants[0]!.id : config.defaultVariant,
+    });
+  }
+
+  return (
+    <Stack>
+      <Tooltip label={t("pagesHelp")} multiline w={280}>
+        <ThemeIcon
+          variant="light"
+          radius="xl"
+          size="sm"
+          aria-label={t("pagesHelp")}
+        >
+          i
+        </ThemeIcon>
+      </Tooltip>
+      <Accordion variant="separated">
+        {pages.map((page, index) => (
+          <Accordion.Item key={page.id} value={page.id}>
+            <Accordion.Control>
+              <Group gap="sm">
+                <ThemeIcon variant="light" radius="xl" aria-hidden>
+                  ⧉
+                </ThemeIcon>
+                <div>
+                  <Text fw={600}>{page.label}</Text>
+                  <Text size="xs" c="dimmed">
+                    /{page.slug}
+                  </Text>
+                </div>
+              </Group>
+            </Accordion.Control>
+            <Accordion.Panel>
+              <Fields
+                value={{
+                  label: page.label,
+                  slug: page.slug,
+                  eventIds: page.eventIds,
+                  sectionIds: page.sectionIds,
+                }}
+                config={config}
+                onChange={(next) => replace(index, { ...page, ...next })}
+              />
+              <Button
+                mt="md"
+                color="red"
+                variant="subtle"
+                disabled={pages.length === 1}
+                onClick={() => remove(page.id)}
+              >
+                {language === "pl"
+                  ? "Usuń podstronę"
+                  : language === "en"
+                    ? "Remove page"
+                    : "Unterseite entfernen"}
+              </Button>
+            </Accordion.Panel>
+          </Accordion.Item>
+        ))}
+      </Accordion>
+      <Button
+        variant="light"
+        onClick={() => {
+          const id = `page-${crypto.randomUUID().slice(0, 8)}`;
+          onChange({
+            ...config,
+            variants: [
+              ...pages,
+              {
+                id,
+                slug: id,
+                label:
+                  language === "pl"
+                    ? "Nowa podstrona"
+                    : language === "en"
+                      ? "New page"
+                      : "Neue Unterseite",
+                dateLabel: "",
+                eventIds: [],
+                sectionIds: [],
+              },
+            ],
+          });
+        }}
+      >
+        {language === "pl"
+          ? "Dodaj podstronę"
+          : language === "en"
+            ? "Add page"
+            : "Unterseite hinzufügen"}
+      </Button>
     </Stack>
   );
 }
