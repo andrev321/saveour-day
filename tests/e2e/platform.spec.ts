@@ -120,7 +120,7 @@ test("section editor uses Polish section names and supports reordering", async (
   await handle.press("Space");
   await expect(page.locator(".section-drag-ghost")).toBeVisible();
   await handle.press("ArrowUp");
-  await expect(page.locator(".section-drop-placeholder")).toBeVisible();
+  await expect(page.locator(".section-drag-ghost")).toBeVisible();
   await handle.press("Space");
   await expect(
     page.getByRole("button", { name: "Zapisz szkic" }),

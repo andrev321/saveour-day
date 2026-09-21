@@ -57,17 +57,6 @@ body {
   font-size: 0.9rem;
   line-height: 1;
 }
-.section-drop-placeholder {
-  display: grid;
-  min-height: 3.5rem;
-  place-items: center;
-  margin: 0.5rem 0;
-  border: 1px dashed #4c6ef5;
-  border-radius: 0.5rem;
-  color: #4263eb;
-  background: color-mix(in srgb, #edf2ff 72%, transparent);
-  font-size: 0.8rem;
-}
 .section-drag-ghost {
   display: flex;
   align-items: center;
