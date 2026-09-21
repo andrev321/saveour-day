@@ -1,6 +1,18 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import {
+  IconDeviceFloppy,
+  IconDownload,
+  IconFileText,
+  IconLayoutList,
+  IconMaximize,
+  IconFiles,
+  IconPhoto,
+  IconRocket,
+  IconSettings,
+  IconUpload,
+} from "@tabler/icons-react";
+import {
   Alert,
   Badge,
   Button,
@@ -256,7 +268,12 @@ export function Editor({
             <Badge color={dirty ? "orange" : "green"}>
               {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
             </Badge>
-            <Button component="a" href="/" variant="subtle">
+            <Button
+              component="a"
+              href="/"
+              variant="subtle"
+              leftSection={<IconLayoutList size={16} />}
+            >
               {t("projects")}
             </Button>
           </Group>
@@ -285,6 +302,7 @@ export function Editor({
             onClick={save}
             loading={busy}
             disabled={!dirty || !validation.success}
+            leftSection={<IconDeviceFloppy size={16} />}
           >
             {t("save")}
           </Button>
@@ -292,11 +310,13 @@ export function Editor({
             onClick={() => setConfirm("publish")}
             disabled={dirty || busy || !validation.success || active}
             color="dark"
+            leftSection={<IconRocket size={16} />}
           >
             {demo ? t("simulate") : t("publish")}
           </Button>
           <Button
             variant="subtle"
+            leftSection={<IconDownload size={16} />}
             onClick={() => {
               const blob = new Blob([JSON.stringify(config, null, 2)], {
                 type: "application/json",
@@ -316,11 +336,27 @@ export function Editor({
           <Card withBorder p="lg">
             <Tabs defaultValue="page">
               <Tabs.List>
-                <Tabs.Tab value="page">{t("page")}</Tabs.Tab>
-                <Tabs.Tab value="sections">{t("structure")}</Tabs.Tab>
-                <Tabs.Tab value="pages">{t("pages")}</Tabs.Tab>
-                <Tabs.Tab value="media">{t("media")}</Tabs.Tab>
-                <Tabs.Tab value="settings">{t("settings")}</Tabs.Tab>
+                <Tabs.Tab value="page" leftSection={<IconFileText size={15} />}>
+                  {t("page")}
+                </Tabs.Tab>
+                <Tabs.Tab
+                  value="sections"
+                  leftSection={<IconLayoutList size={15} />}
+                >
+                  {t("structure")}
+                </Tabs.Tab>
+                <Tabs.Tab value="pages" leftSection={<IconFiles size={15} />}>
+                  {t("pages")}
+                </Tabs.Tab>
+                <Tabs.Tab value="media" leftSection={<IconPhoto size={15} />}>
+                  {t("media")}
+                </Tabs.Tab>
+                <Tabs.Tab
+                  value="settings"
+                  leftSection={<IconSettings size={15} />}
+                >
+                  {t("settings")}
+                </Tabs.Tab>
               </Tabs.List>
               <Tabs.Panel value="page" pt="lg">
                 <Stack>
@@ -401,7 +437,11 @@ export function Editor({
                     accept="image/png,image/jpeg,image/webp"
                   >
                     {(props) => (
-                      <Button {...props} loading={busy}>
+                      <Button
+                        {...props}
+                        loading={busy}
+                        leftSection={<IconUpload size={16} />}
+                      >
                         {language === "pl"
                           ? "Dodaj zdjęcie"
                           : language === "en"
@@ -579,7 +619,11 @@ export function Editor({
                 value={width}
                 onChange={(v) => setWidth(v || "390")}
               />
-              <Button variant="light" onClick={() => setPreviewOpen(true)}>
+              <Button
+                variant="light"
+                onClick={() => setPreviewOpen(true)}
+                leftSection={<IconMaximize size={16} />}
+              >
                 {t("openPreview")}
               </Button>
             </Group>
