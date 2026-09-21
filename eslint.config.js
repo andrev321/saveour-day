@@ -19,7 +19,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["apps/site/**/*.tsx", "src/**/*.tsx"],
+    files: ["apps/site/**/*.tsx"],
     extends: [reactRefresh.configs.vite],
   },
 ]);
