@@ -1,4 +1,4 @@
-import { parseSiteConfig } from "./index.ts";
+import { parseSiteConfig, themeDesigns } from "./index.ts";
 
 export function createDemo(id = "demo-ivory") {
   const second = id === "demo-sage";
@@ -20,6 +20,7 @@ export function createDemo(id = "demo-ivory") {
       layout: "split",
     },
     theme: second ? "sage" : "ivory",
+    design: themeDesigns[second ? "sage" : "ivory"],
     metadata: {
       title: "Nasze zaproszenie",
       description: "Dołączcie do nas w wyjątkowym dniu.",

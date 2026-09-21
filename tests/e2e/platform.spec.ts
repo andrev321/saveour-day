@@ -52,6 +52,17 @@ test("admin demo edits and saves before simulated publication", async ({
       .getByRole("heading", { name: "Zmieniona & Jan", exact: true }),
   ).toBeVisible();
 });
+test("admin demo forwards custom color tokens to the preview", async ({
+  page,
+}) => {
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
+  await expect(page.frameLocator("iframe").locator(".invitation")).toHaveCSS(
+    "--accent",
+    "#123456",
+  );
+});
 test("anonymous API access is denied when services are not configured", async ({
   request,
 }) => {
