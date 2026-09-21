@@ -114,12 +114,18 @@ test("section editor uses Polish section names and supports reordering", async (
       exact: false,
     }),
   ).toBeVisible();
-  const sections = page.locator('[draggable="true"]');
-  await sections.nth(3).dragTo(sections.nth(0));
+  const parking = page.getByTestId("section-parking");
+  const handle = page.getByTestId("drag-handle-parking");
+  await handle.focus();
+  await handle.press("Space");
+  await expect(page.locator(".section-drag-ghost")).toBeVisible();
+  await handle.press("ArrowUp");
+  await expect(page.locator(".section-drop-placeholder")).toBeVisible();
+  await handle.press("Space");
   await expect(
     page.getByRole("button", { name: "Zapisz szkic" }),
   ).toBeEnabled();
-  await sections.nth(0).getByRole("button").click();
+  await parking.getByRole("button").first().click();
   await page.getByRole("combobox", { name: "Rodzaj sekcji" }).click();
   await expect(
     page.getByRole("option", { name: "◇ Miejsce", exact: true }),

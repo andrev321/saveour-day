@@ -1,6 +1,22 @@
 "use client";
 import { useState } from "react";
 import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Accordion,
   ActionIcon,
   Button,
@@ -652,7 +668,13 @@ function SectionCollection({
   onChange: (value: SiteConfig) => void;
 }) {
   const { language } = usePanelI18n();
-  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
   const sections = config.sections;
 
   function reorder(activeId: string, overId: string) {
@@ -697,98 +719,48 @@ function SectionCollection({
             ? "Drag sections to set the order used by invitation options."
             : "Ziehen Sie die Abschnitte, um die Reihenfolge der Einladungsvarianten festzulegen."}
       </Text>
-      <Accordion variant="separated">
-        {sections.map((section, index) => {
-          const type = sectionTypes[language].find(
-            (option) => option.value === section.type,
-          )!;
-          return (
-            <Accordion.Item
-              key={section.id}
-              value={section.id}
-              draggable
-              style={{ opacity: draggedId === section.id ? 0.55 : 1 }}
-              onDragStart={() => setDraggedId(section.id)}
-              onDragEnd={() => setDraggedId(null)}
-              onDragOver={(event) => event.preventDefault()}
-              onDrop={(event) => {
-                event.preventDefault();
-                if (draggedId) reorder(draggedId, section.id);
-                setDraggedId(null);
-              }}
-            >
-              <Accordion.Control
-                icon={
-                  <ThemeIcon variant="light" radius="xl" aria-hidden>
-                    {type.icon}
-                  </ThemeIcon>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => setActiveId(String(active.id))}
+        onDragCancel={() => setActiveId(null)}
+        onDragEnd={({ active, over }) => {
+          setActiveId(null);
+          if (over) reorder(String(active.id), String(over.id));
+        }}
+      >
+        <SortableContext
+          items={sections.map((section) => section.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Accordion variant="separated">
+            {sections.map((section, index) => (
+              <SortableSection
+                key={section.id}
+                section={section}
+                index={index}
+                config={config}
+                onUpdate={update}
+                onReorder={reorder}
+                onRemove={() =>
+                  onChange({
+                    ...config,
+                    sections: sections.filter((item) => item.id !== section.id),
+                  })
                 }
-              >
-                <Group justify="space-between" wrap="nowrap" mr="sm">
-                  <Stack gap={0}>
-                    <Text fw={600}>{section.title}</Text>
-                    <Text size="xs" c="dimmed">
-                      {type.label}
-                    </Text>
-                  </Stack>
-                  <Text c="dimmed" aria-label="Przeciągnij sekcję">
-                    ⠿
-                  </Text>
-                </Group>
-              </Accordion.Control>
-              <Accordion.Panel>
-                <Fields
-                  value={section as unknown as Record<string, unknown>}
-                  config={config}
-                  onChange={(next) => update(index, next)}
-                />
-                <Group mt="md" justify="space-between">
-                  <Group gap="xs">
-                    <ActionIcon
-                      variant="subtle"
-                      aria-label="Przesuń sekcję wyżej"
-                      disabled={index === 0}
-                      onClick={() =>
-                        reorder(section.id, sections[index - 1]!.id)
-                      }
-                    >
-                      ↑
-                    </ActionIcon>
-                    <ActionIcon
-                      variant="subtle"
-                      aria-label="Przesuń sekcję niżej"
-                      disabled={index === sections.length - 1}
-                      onClick={() =>
-                        reorder(section.id, sections[index + 1]!.id)
-                      }
-                    >
-                      ↓
-                    </ActionIcon>
-                  </Group>
-                  <Button
-                    color="red"
-                    variant="subtle"
-                    onClick={() =>
-                      onChange({
-                        ...config,
-                        sections: sections.filter(
-                          (item) => item.id !== section.id,
-                        ),
-                      })
-                    }
-                  >
-                    {language === "pl"
-                      ? "Usuń sekcję"
-                      : language === "en"
-                        ? "Remove section"
-                        : "Abschnitt entfernen"}
-                  </Button>
-                </Group>
-              </Accordion.Panel>
-            </Accordion.Item>
-          );
-        })}
-      </Accordion>
+              />
+            ))}
+          </Accordion>
+        </SortableContext>
+        <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
+          {activeId ? (
+            <SectionDragGhost
+              section={sections.find((section) => section.id === activeId)!}
+              language={language}
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
       <Button
         variant="light"
         onClick={() => {
@@ -821,5 +793,148 @@ function SectionCollection({
             : "Abschnitt hinzufügen"}
       </Button>
     </Stack>
+  );
+}
+
+function SortableSection({
+  section,
+  index,
+  config,
+  onUpdate,
+  onReorder,
+  onRemove,
+}: {
+  section: SiteConfig["sections"][number];
+  index: number;
+  config: SiteConfig;
+  onUpdate: (index: number, next: Record<string, unknown>) => void;
+  onReorder: (activeId: string, overId: string) => void;
+  onRemove: () => void;
+}) {
+  const { language } = usePanelI18n();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+    isOver,
+  } = useSortable({ id: section.id });
+  const type = sectionTypes[language].find(
+    (option) => option.value === section.type,
+  )!;
+  return (
+    <>
+      {isOver && !isDragging ? (
+        <div className="section-drop-placeholder" aria-hidden>
+          {language === "pl"
+            ? "Upuść sekcję tutaj"
+            : language === "en"
+              ? "Drop section here"
+              : "Abschnitt hier ablegen"}
+        </div>
+      ) : null}
+      <Accordion.Item
+        ref={setNodeRef}
+        value={section.id}
+        data-testid={`section-${section.id}`}
+        style={{
+          opacity: isDragging ? 0.25 : 1,
+          transform: CSS.Transform.toString(transform),
+          transition,
+        }}
+      >
+        <Accordion.Control
+          icon={
+            <ThemeIcon variant="light" radius="xl" aria-hidden>
+              {type.icon}
+            </ThemeIcon>
+          }
+        >
+          <Group justify="space-between" wrap="nowrap" mr="sm">
+            <Stack gap={0}>
+              <Text fw={600}>{section.title}</Text>
+              <Text size="xs" c="dimmed">
+                {type.label}
+              </Text>
+            </Stack>
+            <Text
+              c="dimmed"
+              className="section-drag-handle"
+              data-testid={`drag-handle-${section.id}`}
+              aria-label="Przeciągnij sekcję"
+              {...attributes}
+              {...listeners}
+            >
+              ⠿
+            </Text>
+          </Group>
+        </Accordion.Control>
+        <Accordion.Panel>
+          <Fields
+            value={section as unknown as Record<string, unknown>}
+            config={config}
+            onChange={(next) => onUpdate(index, next)}
+          />
+          <Group mt="md" justify="space-between">
+            <Group gap="xs">
+              <ActionIcon
+                variant="subtle"
+                aria-label="Przesuń sekcję wyżej"
+                disabled={index === 0}
+                onClick={() =>
+                  onReorder(section.id, config.sections[index - 1]!.id)
+                }
+              >
+                ↑
+              </ActionIcon>
+              <ActionIcon
+                variant="subtle"
+                aria-label="Przesuń sekcję niżej"
+                disabled={index === config.sections.length - 1}
+                onClick={() =>
+                  onReorder(section.id, config.sections[index + 1]!.id)
+                }
+              >
+                ↓
+              </ActionIcon>
+            </Group>
+            <Button color="red" variant="subtle" onClick={onRemove}>
+              {language === "pl"
+                ? "Usuń sekcję"
+                : language === "en"
+                  ? "Remove section"
+                  : "Abschnitt entfernen"}
+            </Button>
+          </Group>
+        </Accordion.Panel>
+      </Accordion.Item>
+    </>
+  );
+}
+
+function SectionDragGhost({
+  section,
+  language,
+}: {
+  section: SiteConfig["sections"][number];
+  language: PanelLanguage;
+}) {
+  const type = sectionTypes[language].find(
+    (option) => option.value === section.type,
+  )!;
+  return (
+    <div className="section-drag-ghost">
+      <ThemeIcon variant="light" radius="xl" aria-hidden>
+        {type.icon}
+      </ThemeIcon>
+      <div>
+        <Text fw={600}>{section.title}</Text>
+        <Text size="xs" c="dimmed">
+          {type.label}
+        </Text>
+      </div>
+    </div>
   );
 }
