@@ -455,7 +455,8 @@ export function Fields({
     <Stack gap="sm">
       {Object.entries(value)
         .filter(
-          ([key]) => !["src", "width", "height", "variants"].includes(key),
+          ([key]) =>
+            !["id", "src", "width", "height", "variants"].includes(key),
         )
         .map(([key, field]) => {
           const label =
