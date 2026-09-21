@@ -119,16 +119,27 @@ test("section editor uses Polish section names and supports reordering", async (
   await handle.focus();
   await handle.press("Space");
   await expect(page.locator(".section-drag-ghost")).toBeVisible();
-  await handle.press("ArrowUp");
-  await expect(page.locator(".section-drag-ghost")).toBeVisible();
-  await handle.press("Space");
+  await handle.press("Escape");
+  await expect(page.locator(".section-drag-ghost")).toBeHidden();
+  await parking.getByRole("button").first().click();
+  await page.getByRole("button", { name: "Przesuń sekcję wyżej" }).click();
   await expect(
     page.getByRole("button", { name: "Zapisz szkic" }),
   ).toBeEnabled();
-  await parking.getByRole("button").first().click();
   await page.getByRole("combobox", { name: "Rodzaj sekcji" }).click();
   await expect(
     page.getByRole("option", { name: "Miejsce", exact: true }),
+  ).toBeVisible();
+});
+test("new text sections are visible in the preview", async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
+  await page.getByRole("button", { name: "Dodaj sekcję" }).click();
+  await expect(
+    page.frameLocator("iframe").getByText("Nowa sekcja", { exact: true }),
   ).toBeVisible();
 });
 test("editor manages named pages with URLs", async ({ page }) => {
