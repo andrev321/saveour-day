@@ -235,10 +235,16 @@ export function Invitation({
       : variant.sectionIds.map((id) =>
           config.sections.find((s) => s.id === id)!,
         )
-  ).filter((s) => s.enabled);
+  ).filter(
+    (section) =>
+      section.enabled &&
+      (isMainPage || !variant.hiddenSectionIds.includes(section.id)),
+  );
   const events = isMainPage
     ? config.events
-    : variant.eventIds.map((id) => config.events.find((e) => e.id === id)!);
+    : variant.eventIds
+        .map((id) => config.events.find((e) => e.id === id)!)
+        .filter((event) => !variant.hiddenEventIds.includes(event.id));
   return (
     <InvitationProvider config={config}>
       <Box

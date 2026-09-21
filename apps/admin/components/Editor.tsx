@@ -417,6 +417,7 @@ export function Editor({
                     name="variants"
                     config={config}
                     onChange={setConfig}
+                    onPageSelect={setVariant}
                   />
                   <Select
                     label={t("mainPage")}

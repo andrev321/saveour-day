@@ -320,6 +320,7 @@ function SortableReference({
 
 function OrderedReferences({
   ids,
+  hiddenIds = [],
   label,
   available,
   language,
@@ -328,12 +329,13 @@ function OrderedReferences({
   onChange,
 }: {
   ids: string[];
+  hiddenIds?: string[];
   label: string;
   available: Reference[];
   language: PanelLanguage;
   editable?: boolean;
   hint?: string;
-  onChange: (ids: string[]) => void;
+  onChange: (ids: string[], hiddenIds: string[]) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const sensors = useSensors(
@@ -348,12 +350,7 @@ function OrderedReferences({
       : language === "en"
         ? "order on the page"
         : "Reihenfolge auf der Seite";
-  const displayedIds = editable
-    ? [
-        ...ids,
-        ...available.map((item) => item.id).filter((id) => !ids.includes(id)),
-      ]
-    : available.map((item) => item.id);
+  const displayedIds = editable ? ids : available.map((item) => item.id);
 
   return (
     <Stack gap={4}>
@@ -385,6 +382,7 @@ function OrderedReferences({
                 arrayMove(displayedIds, from, to).filter((id) =>
                   ids.includes(id),
                 ),
+                hiddenIds,
               );
           }}
         >
@@ -401,12 +399,13 @@ function OrderedReferences({
                     id={id}
                     name={name}
                     language={language}
-                    visible={ids.includes(id)}
+                    visible={!hiddenIds.includes(id)}
                     onVisibilityChange={() =>
                       onChange(
-                        ids.includes(id)
-                          ? ids.filter((item) => item !== id)
-                          : [...ids, id],
+                        ids,
+                        hiddenIds.includes(id)
+                          ? hiddenIds.filter((item) => item !== id)
+                          : [...hiddenIds, id],
                       )
                     }
                   />
@@ -441,11 +440,13 @@ export function Fields({
   onChange,
   config,
   referencesEditable = true,
+  hiddenReferenceIds = {},
 }: {
   value: Record<string, unknown>;
   onChange: (value: Record<string, unknown>) => void;
   config: SiteConfig;
   referencesEditable?: boolean;
+  hiddenReferenceIds?: Partial<Record<"eventIds" | "sectionIds", string[]>>;
 }) {
   const { language } = usePanelI18n();
   function update(key: string, next: unknown) {
@@ -456,7 +457,15 @@ export function Fields({
       {Object.entries(value)
         .filter(
           ([key]) =>
-            !["id", "src", "width", "height", "variants"].includes(key),
+            ![
+              "id",
+              "src",
+              "width",
+              "height",
+              "variants",
+              "hiddenEventIds",
+              "hiddenSectionIds",
+            ].includes(key),
         )
         .map(([key, field]) => {
           const label =
@@ -566,6 +575,7 @@ export function Fields({
               <OrderedReferences
                 key={key}
                 ids={field as string[]}
+                hiddenIds={hiddenReferenceIds[key as "eventIds" | "sectionIds"]}
                 label={label}
                 available={available}
                 language={language}
@@ -579,7 +589,15 @@ export function Fields({
                         : "Die Reihenfolge der Hauptseitenabschnitte ändern Sie im Tab Abschnitte."
                     : undefined
                 }
-                onChange={(ids) => update(key, ids)}
+                onChange={(ids, hiddenIds) =>
+                  onChange({
+                    ...value,
+                    [key]: ids,
+                    [key === "eventIds"
+                      ? "hiddenEventIds"
+                      : "hiddenSectionIds"]: hiddenIds,
+                  })
+                }
               />
             );
           }
@@ -621,16 +639,24 @@ export function CollectionFields({
   name,
   config,
   onChange,
+  onPageSelect,
 }: {
   name: Collection;
   config: SiteConfig;
   onChange: (value: SiteConfig) => void;
+  onPageSelect?: (id: string) => void;
 }) {
   const { language } = usePanelI18n();
   if (name === "sections")
     return <SectionCollection config={config} onChange={onChange} />;
   if (name === "variants")
-    return <PageCollection config={config} onChange={onChange} />;
+    return (
+      <PageCollection
+        config={config}
+        onChange={onChange}
+        onPageSelect={onPageSelect}
+      />
+    );
   const values = config[name];
   function replace(index: number, next: Record<string, unknown>) {
     onChange({
@@ -740,9 +766,11 @@ export function CollectionFields({
 function PageCollection({
   config,
   onChange,
+  onPageSelect,
 }: {
   config: SiteConfig;
   onChange: (value: SiteConfig) => void;
+  onPageSelect?: (id: string) => void;
 }) {
   const { language, t } = usePanelI18n();
   const pages = config.variants;
@@ -782,7 +810,7 @@ function PageCollection({
       <Accordion variant="separated">
         {pages.map((page, index) => (
           <Accordion.Item key={page.id} value={page.id}>
-            <Accordion.Control>
+            <Accordion.Control onClick={() => onPageSelect?.(page.id)}>
               <Group gap="sm">
                 <ThemeIcon variant="light" radius="xl" aria-hidden>
                   ⧉
@@ -840,10 +868,16 @@ function PageCollection({
                         slug: page.slug,
                         eventIds: page.eventIds,
                         sectionIds: page.sectionIds,
+                        hiddenEventIds: page.hiddenEventIds,
+                        hiddenSectionIds: page.hiddenSectionIds,
                       }
                 }
                 config={config}
                 referencesEditable={page.id !== config.defaultVariant}
+                hiddenReferenceIds={{
+                  eventIds: page.hiddenEventIds,
+                  sectionIds: page.hiddenSectionIds,
+                }}
                 onChange={(next) => replace(index, { ...page, ...next })}
               />
               <Button
@@ -885,9 +919,12 @@ function PageCollection({
                 dateLabel: "",
                 eventIds: config.events.map((event) => event.id),
                 sectionIds: config.sections.map((section) => section.id),
+                hiddenEventIds: [],
+                hiddenSectionIds: [],
               },
             ],
           });
+          onPageSelect?.(id);
         }}
       >
         {language === "pl"
