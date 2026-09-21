@@ -1107,6 +1107,7 @@ function SortableSection({
               aria-label="Przeciągnij sekcję"
               {...attributes}
               {...listeners}
+              onClick={(event) => event.stopPropagation()}
             >
               <IconGripVertical size={18} stroke={1.75} />
             </Text>

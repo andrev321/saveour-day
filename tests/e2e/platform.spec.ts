@@ -116,6 +116,8 @@ test("section editor uses Polish section names and supports reordering", async (
   ).toBeVisible();
   const parking = page.getByTestId("section-parking");
   const handle = page.getByTestId("drag-handle-parking");
+  await handle.click();
+  await expect(page.getByLabel("Identyfikator", { exact: true })).toBeHidden();
   await handle.focus();
   await handle.press("Space");
   await expect(page.locator(".section-drag-ghost")).toBeVisible();
