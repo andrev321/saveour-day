@@ -78,6 +78,11 @@ test("reject cross references, duplicate IDs and duplicate route slugs", () => {
   config.sections[1].venueId = "missing";
   assert.throws(() => parseSiteConfig(config), /venueId/);
   config.sections[1].venueId = "ceremony";
+  config.variants.push({
+    ...config.variants[0],
+    id: "additional",
+    slug: "additional",
+  });
   config.variants[1].slug = config.variants[0].slug;
   assert.throws(() => parseSiteConfig(config), /slug/);
   config.variants[1].slug = "obiad";

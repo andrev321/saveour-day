@@ -166,7 +166,8 @@ test("page editor supports dragging ordered references", async ({ page }) => {
   );
   await page.goto("http://127.0.0.1:3000/demo");
   await page.getByRole("tab", { name: "Strony", exact: true }).click();
-  await page.getByRole("button", { name: "Pełna /pelna" }).click();
+  await page.getByRole("button", { name: "Dodaj stronę" }).click();
+  await page.getByRole("button", { name: /Nowa strona/ }).click();
   const handle = page
     .getByRole("button", { name: "Przeciągnij Ceremonia" })
     .first();
@@ -175,6 +176,8 @@ test("page editor supports dragging ordered references", async ({ page }) => {
   await expect(page.locator(".reference-drag-ghost")).toBeVisible();
   await handle.press("Escape");
   await expect(page.locator(".reference-drag-ghost")).toBeHidden();
+  await page.getByRole("button", { name: "Ukryj: Ceremonia" }).first().click();
+  await expect(page.locator(".reference-row-hidden")).toHaveCount(1);
 });
 test("editor opens the current invitation in a full-screen preview", async ({
   page,
