@@ -101,6 +101,30 @@ test("panel language preserves a customized invitation template", async ({
       .getByRole("heading", { name: "Kasia & Jan", exact: true }),
   ).toBeVisible();
 });
+test("section editor uses Polish section names and supports reordering", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
+  await expect(
+    page.getByText("Przeciągnij sekcje, aby ustawić kolejność", {
+      exact: false,
+    }),
+  ).toBeVisible();
+  const sections = page.locator('[draggable="true"]');
+  await sections.nth(3).dragTo(sections.nth(0));
+  await expect(
+    page.getByRole("button", { name: "Zapisz szkic" }),
+  ).toBeEnabled();
+  await sections.nth(0).getByRole("button").click();
+  await page.getByRole("combobox", { name: "Rodzaj sekcji" }).click();
+  await expect(
+    page.getByRole("option", { name: "⌖ Miejsce", exact: true }),
+  ).toBeVisible();
+});
 test("anonymous API access is denied when services are not configured", async ({
   request,
 }) => {

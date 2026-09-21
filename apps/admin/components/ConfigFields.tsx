@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import {
   Accordion,
   ActionIcon,
@@ -12,6 +13,7 @@ import {
   Text,
   Textarea,
   TextInput,
+  ThemeIcon,
 } from "@mantine/core";
 import type { SiteConfig } from "@wedding/domain";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
@@ -165,6 +167,30 @@ const translatedLabels: Record<
     accent: "Akzentfarbe",
   },
 };
+
+const sectionTypes = {
+  pl: [
+    { value: "timeline", label: "◷ Harmonogram dnia", icon: "◷" },
+    { value: "venue", label: "⌖ Miejsce", icon: "⌖" },
+    { value: "contact", label: "☎ Kontakt", icon: "☎" },
+    { value: "text", label: "¶ Tekst", icon: "¶" },
+    { value: "gallery", label: "▦ Galeria", icon: "▦" },
+  ],
+  en: [
+    { value: "timeline", label: "◷ Schedule", icon: "◷" },
+    { value: "venue", label: "⌖ Venue", icon: "⌖" },
+    { value: "contact", label: "☎ Contact", icon: "☎" },
+    { value: "text", label: "¶ Text", icon: "¶" },
+    { value: "gallery", label: "▦ Gallery", icon: "▦" },
+  ],
+  de: [
+    { value: "timeline", label: "◷ Tagesablauf", icon: "◷" },
+    { value: "venue", label: "⌖ Ort", icon: "⌖" },
+    { value: "contact", label: "☎ Kontakt", icon: "☎" },
+    { value: "text", label: "¶ Text", icon: "¶" },
+    { value: "gallery", label: "▦ Galerie", icon: "▦" },
+  ],
+} as const;
 export function Fields({
   value,
   onChange,
@@ -213,7 +239,7 @@ export function Fields({
             key === "layout"
               ? ["overlay", "split"]
               : key === "type"
-                ? ["timeline", "venue", "contact", "text", "gallery"]
+                ? sectionTypes[language]
                 : null;
           if (choices)
             return (
@@ -368,6 +394,8 @@ export function CollectionFields({
   onChange: (value: SiteConfig) => void;
 }) {
   const { language } = usePanelI18n();
+  if (name === "sections")
+    return <SectionCollection config={config} onChange={onChange} />;
   const values = config[name];
   function replace(index: number, next: Record<string, unknown>) {
     onChange({
@@ -469,6 +497,186 @@ export function CollectionFields({
             ? "After removing an item, also remove its references in options and sections. Validation will show remaining links."
             : "Entfernen Sie nach dem Löschen eines Elements auch seine Verweise in Varianten und Abschnitten. Die Validierung zeigt verbleibende Verknüpfungen."}
       </Text>
+    </Stack>
+  );
+}
+
+function SectionCollection({
+  config,
+  onChange,
+}: {
+  config: SiteConfig;
+  onChange: (value: SiteConfig) => void;
+}) {
+  const { language } = usePanelI18n();
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const sections = config.sections;
+
+  function reorder(activeId: string, overId: string) {
+    if (activeId === overId) return;
+    const from = sections.findIndex((section) => section.id === activeId);
+    const to = sections.findIndex((section) => section.id === overId);
+    if (from < 0 || to < 0) return;
+    const nextSections = [...sections];
+    const [moved] = nextSections.splice(from, 1);
+    if (!moved) return;
+    nextSections.splice(to, 0, moved);
+    const order = new Map(
+      nextSections.map((section, index) => [section.id, index]),
+    );
+    onChange({
+      ...config,
+      sections: nextSections,
+      variants: config.variants.map((variant) => ({
+        ...variant,
+        sectionIds: [...variant.sectionIds].sort(
+          (first, second) => (order.get(first) ?? 0) - (order.get(second) ?? 0),
+        ),
+      })),
+    });
+  }
+
+  function update(index: number, next: Record<string, unknown>) {
+    onChange({
+      ...config,
+      sections: sections.map((section, current) =>
+        current === index ? next : section,
+      ) as SiteConfig["sections"],
+    });
+  }
+
+  return (
+    <Stack>
+      <Text size="sm" c="dimmed">
+        {language === "pl"
+          ? "Przeciągnij sekcje, aby ustawić kolejność widoczną w wariantach zaproszenia."
+          : language === "en"
+            ? "Drag sections to set the order used by invitation options."
+            : "Ziehen Sie die Abschnitte, um die Reihenfolge der Einladungsvarianten festzulegen."}
+      </Text>
+      <Accordion variant="separated">
+        {sections.map((section, index) => {
+          const type = sectionTypes[language].find(
+            (option) => option.value === section.type,
+          )!;
+          return (
+            <Accordion.Item
+              key={section.id}
+              value={section.id}
+              draggable
+              style={{ opacity: draggedId === section.id ? 0.55 : 1 }}
+              onDragStart={() => setDraggedId(section.id)}
+              onDragEnd={() => setDraggedId(null)}
+              onDragOver={(event) => event.preventDefault()}
+              onDrop={(event) => {
+                event.preventDefault();
+                if (draggedId) reorder(draggedId, section.id);
+                setDraggedId(null);
+              }}
+            >
+              <Accordion.Control
+                icon={
+                  <ThemeIcon variant="light" radius="xl" aria-hidden>
+                    {type.icon}
+                  </ThemeIcon>
+                }
+              >
+                <Group justify="space-between" wrap="nowrap" mr="sm">
+                  <Stack gap={0}>
+                    <Text fw={600}>{section.title}</Text>
+                    <Text size="xs" c="dimmed">
+                      {type.label.slice(2)}
+                    </Text>
+                  </Stack>
+                  <Text c="dimmed" aria-label="Przeciągnij sekcję">
+                    ⠿
+                  </Text>
+                </Group>
+              </Accordion.Control>
+              <Accordion.Panel>
+                <Fields
+                  value={section as unknown as Record<string, unknown>}
+                  config={config}
+                  onChange={(next) => update(index, next)}
+                />
+                <Group mt="md" justify="space-between">
+                  <Group gap="xs">
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label="Przesuń sekcję wyżej"
+                      disabled={index === 0}
+                      onClick={() =>
+                        reorder(section.id, sections[index - 1]!.id)
+                      }
+                    >
+                      ↑
+                    </ActionIcon>
+                    <ActionIcon
+                      variant="subtle"
+                      aria-label="Przesuń sekcję niżej"
+                      disabled={index === sections.length - 1}
+                      onClick={() =>
+                        reorder(section.id, sections[index + 1]!.id)
+                      }
+                    >
+                      ↓
+                    </ActionIcon>
+                  </Group>
+                  <Button
+                    color="red"
+                    variant="subtle"
+                    onClick={() =>
+                      onChange({
+                        ...config,
+                        sections: sections.filter(
+                          (item) => item.id !== section.id,
+                        ),
+                      })
+                    }
+                  >
+                    {language === "pl"
+                      ? "Usuń sekcję"
+                      : language === "en"
+                        ? "Remove section"
+                        : "Abschnitt entfernen"}
+                  </Button>
+                </Group>
+              </Accordion.Panel>
+            </Accordion.Item>
+          );
+        })}
+      </Accordion>
+      <Button
+        variant="light"
+        onClick={() => {
+          const id = `section-${crypto.randomUUID().slice(0, 8)}`;
+          onChange({
+            ...config,
+            sections: [
+              ...sections,
+              {
+                id,
+                type: "text",
+                title:
+                  language === "pl"
+                    ? "Nowa sekcja"
+                    : language === "en"
+                      ? "New section"
+                      : "Neuer Abschnitt",
+                body: "",
+                enabled: true,
+                mediaIds: [],
+              },
+            ],
+          });
+        }}
+      >
+        {language === "pl"
+          ? "Dodaj sekcję"
+          : language === "en"
+            ? "Add section"
+            : "Abschnitt hinzufügen"}
+      </Button>
     </Stack>
   );
 }
