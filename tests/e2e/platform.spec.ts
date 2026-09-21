@@ -158,6 +158,22 @@ test("editor manages named pages with URLs", async ({ page }) => {
   await page.getByLabel("Adres URL strony", { exact: true }).fill("rodzina");
   await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
 });
+test("page editor supports dragging ordered references", async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("tab", { name: "Strony", exact: true }).click();
+  await page.getByRole("button", { name: "Pełna /pelna" }).click();
+  const handle = page
+    .getByRole("button", { name: "Przeciągnij Ceremonia" })
+    .first();
+  await handle.focus();
+  await handle.press("Space");
+  await expect(page.locator(".reference-drag-ghost")).toBeVisible();
+  await handle.press("Escape");
+  await expect(page.locator(".reference-drag-ghost")).toBeHidden();
+});
 test("editor opens the current invitation in a full-screen preview", async ({
   page,
 }) => {
