@@ -787,7 +787,31 @@ function PageCollection({
                   ⧉
                 </ThemeIcon>
                 <div>
-                  <Text fw={600}>{page.label}</Text>
+                  <Group gap={6}>
+                    <Text fw={600}>{page.label}</Text>
+                    {page.id === config.defaultVariant ? (
+                      <Tooltip
+                        label={
+                          language === "pl"
+                            ? "Strona główna zawiera wszystkie elementy. Kolejność sekcji zmienisz w zakładce Sekcje."
+                            : language === "en"
+                              ? "The main page contains every element. Change section order in the Sections tab."
+                              : "Die Hauptseite enthält alle Elemente. Die Reihenfolge ändern Sie im Tab Abschnitte."
+                        }
+                        multiline
+                        w={280}
+                      >
+                        <ThemeIcon
+                          variant="light"
+                          size="sm"
+                          radius="xl"
+                          aria-label="Informacja o stronie głównej"
+                        >
+                          <IconInfoCircle size={15} />
+                        </ThemeIcon>
+                      </Tooltip>
+                    ) : null}
+                  </Group>
                   <Text size="xs" c="dimmed">
                     /{page.slug}
                   </Text>
@@ -807,12 +831,16 @@ function PageCollection({
                 </Alert>
               ) : null}
               <Fields
-                value={{
-                  label: page.label,
-                  slug: page.slug,
-                  eventIds: page.eventIds,
-                  sectionIds: page.sectionIds,
-                }}
+                value={
+                  page.id === config.defaultVariant
+                    ? { label: page.label, slug: page.slug }
+                    : {
+                        label: page.label,
+                        slug: page.slug,
+                        eventIds: page.eventIds,
+                        sectionIds: page.sectionIds,
+                      }
+                }
                 config={config}
                 referencesEditable={page.id !== config.defaultVariant}
                 onChange={(next) => replace(index, { ...page, ...next })}
@@ -822,7 +850,7 @@ function PageCollection({
                 color="red"
                 variant="subtle"
                 leftSection={<IconTrash size={16} />}
-                disabled={pages.length === 1}
+                disabled={page.id === config.defaultVariant}
                 onClick={() => remove(page.id)}
               >
                 {language === "pl"
