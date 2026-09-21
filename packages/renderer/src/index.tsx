@@ -228,9 +228,17 @@ export function Invitation({
   )!;
   const hero = config.media.find((m) => m.id === config.hero.mediaId);
   const mobile = config.media.find((m) => m.id === config.hero.mobileMediaId);
-  const sections = variant.sectionIds
-    .map((id) => config.sections.find((s) => s.id === id)!)
-    .filter((s) => s.enabled);
+  const isMainPage = variant.id === config.defaultVariant;
+  const sections = (
+    isMainPage
+      ? config.sections
+      : variant.sectionIds.map((id) =>
+          config.sections.find((s) => s.id === id)!,
+        )
+  ).filter((s) => s.enabled);
+  const events = isMainPage
+    ? config.events
+    : variant.eventIds.map((id) => config.events.find((e) => e.id === id)!);
   return (
     <InvitationProvider config={config}>
       <Box
@@ -301,11 +309,10 @@ export function Invitation({
                 ) : null}
                 {section.type === "timeline" ? (
                   <Timeline active={-1} bulletSize={14} lineWidth={1}>
-                    {variant.eventIds.map((id) => {
-                      const event = config.events.find((e) => e.id === id)!;
+                    {events.map((event) => {
                       return (
                         <Timeline.Item
-                          key={id}
+                          key={event.id}
                           title={<Text fw={600}>{event.time}</Text>}
                         >
                           <Title order={3} size="h2">

@@ -31,6 +31,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Alert,
   Accordion,
   ActionIcon,
   Button,
@@ -235,6 +236,16 @@ function referenceName(id: string, available: Reference[]) {
   return reference?.title || reference?.name || reference?.alt || id;
 }
 
+function hasCustomOrder(ids: string[], available: Reference[]) {
+  return (
+    ids.join("|") !==
+    available
+      .filter((item) => ids.includes(item.id))
+      .map((item) => item.id)
+      .join("|")
+  );
+}
+
 function SortableReference({
   id,
   name,
@@ -299,12 +310,14 @@ function OrderedReferences({
   label,
   available,
   language,
+  editable = true,
   onChange,
 }: {
   ids: string[];
   label: string;
   available: Reference[];
   language: PanelLanguage;
+  editable?: boolean;
   onChange: (ids: string[]) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -334,58 +347,70 @@ function OrderedReferences({
       <Text size="sm" fw={500}>
         {label} — {order}
       </Text>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragStart={({ active }) => setActiveId(String(active.id))}
-        onDragCancel={() => setActiveId(null)}
-        onDragEnd={({ active, over }) => {
-          setActiveId(null);
-          if (!over || active.id === over.id) return;
-          const from = ids.indexOf(String(active.id));
-          const to = ids.indexOf(String(over.id));
-          if (from >= 0 && to >= 0) onChange(arrayMove(ids, from, to));
-        }}
-      >
-        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-          <Stack gap={4}>
-            {ids.map((id) => {
-              const name = referenceName(id, available);
-              return (
-                <SortableReference
-                  key={id}
-                  id={id}
-                  name={name}
-                  language={language}
-                  onRemove={() => onChange(ids.filter((item) => item !== id))}
-                />
-              );
-            })}
-          </Stack>
-        </SortableContext>
-        <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
-          {activeId ? (
-            <div className="reference-drag-ghost">
-              <IconGripVertical size={18} stroke={1.75} />
-              <Text size="sm">{referenceName(activeId, available)}</Text>
-            </div>
-          ) : null}
-        </DragOverlay>
-      </DndContext>
-      <Select
-        aria-label={`${action}: ${label}`}
-        placeholder={placeholder}
-        value={null}
-        data={available
-          .filter((item) => !ids.includes(item.id))
-          .map((item) => ({
-            value: item.id,
-            label: referenceName(item.id, available),
-          }))}
-        onChange={(id) => {
-          if (id) onChange([...ids, id]);
-        }}
-      />
+      {editable ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={({ active }) => setActiveId(String(active.id))}
+          onDragCancel={() => setActiveId(null)}
+          onDragEnd={({ active, over }) => {
+            setActiveId(null);
+            if (!over || active.id === over.id) return;
+            const from = ids.indexOf(String(active.id));
+            const to = ids.indexOf(String(over.id));
+            if (from >= 0 && to >= 0) onChange(arrayMove(ids, from, to));
+          }}
+        >
+          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+            <Stack gap={4}>
+              {ids.map((id) => {
+                const name = referenceName(id, available);
+                return (
+                  <SortableReference
+                    key={id}
+                    id={id}
+                    name={name}
+                    language={language}
+                    onRemove={() => onChange(ids.filter((item) => item !== id))}
+                  />
+                );
+              })}
+            </Stack>
+          </SortableContext>
+          <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
+            {activeId ? (
+              <div className="reference-drag-ghost">
+                <IconGripVertical size={18} stroke={1.75} />
+                <Text size="sm">{referenceName(activeId, available)}</Text>
+              </div>
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      ) : (
+        <Stack gap={4}>
+          {available.map((item) => (
+            <Text key={item.id} size="sm">
+              {referenceName(item.id, available)}
+            </Text>
+          ))}
+        </Stack>
+      )}
+      {editable ? (
+        <Select
+          aria-label={`${action}: ${label}`}
+          placeholder={placeholder}
+          value={null}
+          data={available
+            .filter((item) => !ids.includes(item.id))
+            .map((item) => ({
+              value: item.id,
+              label: referenceName(item.id, available),
+            }))}
+          onChange={(id) => {
+            if (id) onChange([...ids, id]);
+          }}
+        />
+      ) : null}
     </Stack>
   );
 }
@@ -394,10 +419,12 @@ export function Fields({
   value,
   onChange,
   config,
+  referencesEditable = true,
 }: {
   value: Record<string, unknown>;
   onChange: (value: Record<string, unknown>) => void;
   config: SiteConfig;
+  referencesEditable?: boolean;
 }) {
   const { language } = usePanelI18n();
   function update(key: string, next: unknown) {
@@ -520,6 +547,7 @@ export function Fields({
                 label={label}
                 available={available}
                 language={language}
+                editable={referencesEditable}
                 onChange={(ids) => update(key, ids)}
               />
             );
@@ -737,6 +765,17 @@ function PageCollection({
               </Group>
             </Accordion.Control>
             <Accordion.Panel>
+              {page.id !== config.defaultVariant &&
+              (hasCustomOrder(page.eventIds, config.events) ||
+                hasCustomOrder(page.sectionIds, config.sections)) ? (
+                <Alert color="blue" variant="light" mb="md">
+                  {language === "pl"
+                    ? "Ta strona ma własną kolejność elementów. Zmiana kolejności w głównym konfiguratorze może wpłynąć na jej układ."
+                    : language === "en"
+                      ? "This page has its own element order. Changing the order in the main editor can affect its layout."
+                      : "Diese Seite hat eine eigene Reihenfolge. Änderungen im Haupteditor können ihr Layout beeinflussen."}
+                </Alert>
+              ) : null}
               <Fields
                 value={{
                   label: page.label,
@@ -745,6 +784,7 @@ function PageCollection({
                   sectionIds: page.sectionIds,
                 }}
                 config={config}
+                referencesEditable={page.id !== config.defaultVariant}
                 onChange={(next) => replace(index, { ...page, ...next })}
               />
               <Button
@@ -784,8 +824,8 @@ function PageCollection({
                       ? "New page"
                       : "Neue Unterseite",
                 dateLabel: "",
-                eventIds: [],
-                sectionIds: [],
+                eventIds: config.events.map((event) => event.id),
+                sectionIds: config.sections.map((section) => section.id),
               },
             ],
           });
