@@ -54,7 +54,7 @@ const labels: Record<string, string> = {
   date: "Data wydarzenia",
   venueId: "Miejsce",
   url: "Link wydarzenia",
-  slug: "Adres URL podstrony",
+  slug: "Adres URL strony",
   label: "Etykieta",
   eventIds: "Wydarzenia",
   sectionIds: "Sekcje",
@@ -154,7 +154,7 @@ const translatedLabels: Record<
     date: "Veranstaltungsdatum",
     venueId: "Ort",
     url: "Veranstaltungslink",
-    slug: "URL-Adresse der Unterseite",
+    slug: "URL-Adresse der Seite",
     label: "Beschriftung",
     eventIds: "Ereignisse",
     sectionIds: "Abschnitte",
@@ -617,7 +617,7 @@ function PageCollection({
                 onClick={() => remove(page.id)}
               >
                 {language === "pl"
-                  ? "Usuń podstronę"
+                  ? "Usuń stronę"
                   : language === "en"
                     ? "Remove page"
                     : "Unterseite entfernen"}
@@ -639,7 +639,7 @@ function PageCollection({
                 slug: id,
                 label:
                   language === "pl"
-                    ? "Nowa podstrona"
+                    ? "Nowa strona"
                     : language === "en"
                       ? "New page"
                       : "Neue Unterseite",
@@ -652,7 +652,7 @@ function PageCollection({
         }}
       >
         {language === "pl"
-          ? "Dodaj podstronę"
+          ? "Dodaj stronę"
           : language === "en"
             ? "Add page"
             : "Unterseite hinzufügen"}
