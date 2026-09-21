@@ -230,17 +230,17 @@ export const siteConfigSchema = z
     variants: value.variants.map((variant) => ({
       ...variant,
       hiddenEventIds:
-        variant.hiddenEventIds ??
-        (variant.id === value.defaultVariant
+        variant.id === value.defaultVariant
           ? []
-          : value.events
+          : (variant.hiddenEventIds ??
+            value.events
               .map((event) => event.id)
               .filter((id) => !variant.eventIds.includes(id))),
       hiddenSectionIds:
-        variant.hiddenSectionIds ??
-        (variant.id === value.defaultVariant
+        variant.id === value.defaultVariant
           ? []
-          : value.sections
+          : (variant.hiddenSectionIds ??
+            value.sections
               .map((section) => section.id)
               .filter((id) => !variant.sectionIds.includes(id))),
       eventIds:
@@ -318,17 +318,35 @@ export const siteConfigSchema = z
       if (slugs.has(variant.slug))
         issue(["variants", i, "slug"], "Powtórzony adres wariantu");
       slugs.add(variant.slug);
-      for (const field of ["eventIds", "sectionIds"] as const) {
+      for (const field of [
+        "eventIds",
+        "sectionIds",
+        "hiddenEventIds",
+        "hiddenSectionIds",
+      ] as const) {
         if (new Set(variant[field]).size !== variant[field].length)
           issue(["variants", i, field], "Powtórzone odwołanie");
         variant[field].forEach((id, j) =>
-          ref(field === "eventIds" ? "events" : "sections", id, [
-            "variants",
-            i,
-            field,
-            j,
-          ]),
+          ref(
+            field === "eventIds" || field === "hiddenEventIds"
+              ? "events"
+              : "sections",
+            id,
+            ["variants", i, field, j],
+          ),
         );
+      }
+      for (const [hiddenField, orderedField] of [
+        ["hiddenEventIds", "eventIds"],
+        ["hiddenSectionIds", "sectionIds"],
+      ] as const) {
+        variant[hiddenField].forEach((id, j) => {
+          if (!variant[orderedField].includes(id))
+            issue(
+              ["variants", i, hiddenField, j],
+              "Ukryty element musi należeć do kolejności strony",
+            );
+        });
       }
     });
   });

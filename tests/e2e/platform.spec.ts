@@ -156,6 +156,9 @@ test("editor manages named pages with URLs", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Dodaj stronę" }).click();
   await page.getByRole("button", { name: "Nowa strona" }).click();
+  await expect(page.getByRole("combobox", { name: /Podgl/ })).toHaveValue(
+    "Nowa strona",
+  );
   await page.getByLabel("Etykieta", { exact: true }).fill("Dla rodziny");
   await page.getByLabel("Adres URL strony", { exact: true }).fill("rodzina");
   await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
