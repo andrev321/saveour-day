@@ -317,6 +317,8 @@ export function Editor({
             <Tabs defaultValue="page">
               <Tabs.List>
                 <Tabs.Tab value="page">{t("page")}</Tabs.Tab>
+                <Tabs.Tab value="sections">{t("structure")}</Tabs.Tab>
+                <Tabs.Tab value="pages">{t("pages")}</Tabs.Tab>
                 <Tabs.Tab value="media">{t("media")}</Tabs.Tab>
                 <Tabs.Tab value="settings">{t("settings")}</Tabs.Tab>
               </Tabs.List>
@@ -360,12 +362,20 @@ export function Editor({
                     config={config}
                     onChange={setConfig}
                   />
+                </Stack>
+              </Tabs.Panel>
+              <Tabs.Panel value="sections" pt="lg">
+                <Stack>
                   <Title order={3}>{t("structure")}</Title>
                   <CollectionFields
                     name="sections"
                     config={config}
                     onChange={setConfig}
                   />
+                </Stack>
+              </Tabs.Panel>
+              <Tabs.Panel value="pages" pt="lg">
+                <Stack>
                   <Title order={3}>{t("pages")}</Title>
                   <CollectionFields
                     name="variants"
