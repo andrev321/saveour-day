@@ -142,6 +142,24 @@ test("editor manages invitation variants as named pages with URLs", async ({
   await page.getByLabel("Adres URL podstrony", { exact: true }).fill("rodzina");
   await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
 });
+test("editor opens the current invitation in a full-screen preview", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("button", { name: "Powiększ podgląd" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(
+    dialog
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Anna & Jan", exact: true }),
+  ).toBeVisible();
+  await dialog.getByRole("button", { name: "Zamknij podgląd" }).click();
+  await expect(dialog).toBeHidden();
+});
 test("anonymous API access is denied when services are not configured", async ({
   request,
 }) => {
