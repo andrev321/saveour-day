@@ -771,6 +771,12 @@ function SectionCollection({
                   onChange({
                     ...config,
                     sections: sections.filter((item) => item.id !== section.id),
+                    variants: config.variants.map((page) => ({
+                      ...page,
+                      sectionIds: page.sectionIds.filter(
+                        (id) => id !== section.id,
+                      ),
+                    })),
                   })
                 }
               />
@@ -790,24 +796,26 @@ function SectionCollection({
         variant="light"
         onClick={() => {
           const id = `section-${crypto.randomUUID().slice(0, 8)}`;
+          const newSection = {
+            id,
+            type: "text" as const,
+            title:
+              language === "pl"
+                ? "Nowa sekcja"
+                : language === "en"
+                  ? "New section"
+                  : "Neuer Abschnitt",
+            body: "",
+            enabled: true,
+            mediaIds: [],
+          };
           onChange({
             ...config,
-            sections: [
-              ...sections,
-              {
-                id,
-                type: "text",
-                title:
-                  language === "pl"
-                    ? "Nowa sekcja"
-                    : language === "en"
-                      ? "New section"
-                      : "Neuer Abschnitt",
-                body: "",
-                enabled: true,
-                mediaIds: [],
-              },
-            ],
+            sections: [...sections, newSection],
+            variants: config.variants.map((page) => ({
+              ...page,
+              sectionIds: [...page.sectionIds, id],
+            })),
           });
         }}
       >
