@@ -37,6 +37,12 @@ Po wdrożeniu otwórz panel, zaloguj się, utwórz testową realizację i sprawd
 
 Przed uruchomieniem z prawdziwymi danymi ustaw Deployment Protection dla Preview panelu. Produkcyjny panel powinien używać własnej domeny oraz HTTPS.
 
+## Kontrola jakości w GitHub
+
+Workflow `Quality checks` uruchamia się przy każdym pushu i pull requeście. Instaluje zależności z lockfile'a, sprawdza typy i lint, uruchamia testy jednostkowe, build strony i panelu oraz testy Playwright. Przy błędzie pobierz artefakt `browser-results` z konkretnego uruchomienia, aby zobaczyć zrzuty ekranu i szczegóły błędu.
+
+Przed scaleniem zmian do `main` wymagaj pozytywnego wyniku tego workflow w regułach ochrony gałęzi. Pierwsze uruchomienie Playwright w GitHub Actions może trwać dłużej, ponieważ pobiera Chromium i zależności systemowe.
+
 ## 3. Pierwsza publikacja dla klienta
 
 1. W panelu utwórz realizację z identyfikatorem klienta. Utwórz dla niej użytkownika klienta w Supabase Auth i dodaj go przez funkcję „Zaproś użytkownika”.
@@ -47,6 +53,19 @@ Przed uruchomieniem z prawdziwymi danymi ustaw Deployment Protection dla Preview
 6. Otwórz zwrócony adres Preview. Sprawdź dane, każde zaproszenie, zdjęcia, linki, mapy oraz widoki 320, 390, 768 i 1440 px. Po odbiorze przypisz domenę w projekcie Vercel.
 
 Publiczny build pobiera manifest podczas kompilacji. Token jest używany wyłącznie w tym kroku i nie trafia do JavaScriptu ani do przeglądarki gości. Wydanie jest przypięte do wersji konfiguracji i listy zasobów z chwili publikacji.
+
+### Lista odbioru wydania
+
+Przed przypisaniem domeny sprawdź adres Preview jako osoba bez sesji w panelu:
+
+- [ ] wszystkie strony otwierają się bezpośrednio pod swoim adresem URL;
+- [ ] teksty, terminy, linki telefoniczne, SMS, nawigacja i mapa prowadzą do właściwych miejsc;
+- [ ] zdjęcia są ostre, poprawnie wykadrowane i mają poprawne opisy alternatywne, gdy przekazują treść;
+- [ ] brak zdjęcia, opis lokalizacji lub mapa nie ukrywają pozostałej treści sekcji;
+- [ ] układ jest czytelny przy 320, 390, 768 i 1440 px, także z długimi imionami oraz opisami;
+- [ ] strona działa w Safari na iOS i Chrome na Androidzie;
+- [ ] wynik workflow `Quality checks` dla commitu wydania jest pozytywny;
+- [ ] w panelu zapisano adres Preview i zatwierdzoną wersję release.
 
 ## 4. Domena i webhook
 
