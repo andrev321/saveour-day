@@ -1,7 +1,8 @@
 import "@mantine/core/styles.css";
 import "@fontsource/inter/latin-ext-400.css";
 import "@fontsource/inter/latin-ext-600.css";
-import "@fontsource/cormorant-garamond/latin-ext-500.css";
+import "@fontsource/playfair-display/latin-ext-500.css";
+import "@fontsource/playfair-display/latin-ext-600.css";
 import "@wedding/renderer/styles.css";
 import "./styles.css";
 import {
