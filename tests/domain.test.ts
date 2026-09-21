@@ -107,6 +107,7 @@ test("normalizes the main page and validates hidden page elements", () => {
     ...config.variants[0],
     id: "limited",
     slug: "limited",
+    eventIds: ["party", "ceremony"],
     hiddenEventIds: ["ceremony"],
   });
 
@@ -114,7 +115,7 @@ test("normalizes the main page and validates hidden page elements", () => {
   assert.deepEqual(parsed.variants[0].hiddenEventIds, []);
   assert.deepEqual(
     parsed.variants[1].eventIds,
-    config.events.map(({ id }) => id),
+    ["party", "ceremony"],
   );
   assert.deepEqual(parsed.variants[1].hiddenEventIds, ["ceremony"]);
 

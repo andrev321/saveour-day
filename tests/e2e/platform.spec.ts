@@ -163,6 +163,22 @@ test("editor manages named pages with URLs", async ({ page }) => {
   await page.getByLabel("Adres URL strony", { exact: true }).fill("rodzina");
   await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
 });
+test("main page cannot be removed or reordered", async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await page.getByRole("tab", { name: "Strony", exact: true }).click();
+
+  await expect(page.getByText("/glowna", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Główna/ }).click();
+  await expect(
+    page.getByRole("button", { name: /Usuń stronę/ }),
+  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: /Przeciągnij/ })).toHaveCount(
+    0,
+  );
+});
 test("page editor supports dragging ordered references", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
