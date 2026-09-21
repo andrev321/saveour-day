@@ -4,6 +4,8 @@ import {
   IconCalendarTime,
   IconChevronDown,
   IconChevronUp,
+  IconEye,
+  IconEyeOff,
   IconGripVertical,
   IconLayoutList,
   IconMapPin,
@@ -268,12 +270,21 @@ function SortableReference({
   } = useSortable({ id });
   const drag =
     language === "pl" ? "Przeciągnij" : language === "en" ? "Drag" : "Ziehen";
-  const visibility =
-    language === "pl" ? "Widoczny" : language === "en" ? "Visible" : "Sichtbar";
+  const visibility = visible
+    ? language === "pl"
+      ? "Ukryj"
+      : language === "en"
+        ? "Hide"
+        : "Ausblenden"
+    : language === "pl"
+      ? "Pokaż"
+      : language === "en"
+        ? "Show"
+        : "Anzeigen";
   return (
     <Group
       ref={setNodeRef}
-      className="reference-row"
+      className={`reference-row${visible ? "" : " reference-row-hidden"}`}
       wrap="nowrap"
       style={{
         opacity: isDragging ? 0.25 : 1,
@@ -294,11 +305,14 @@ function SortableReference({
       <Text size="sm" className="reference-name">
         {name}
       </Text>
-      <Checkbox
-        checked={visible}
+      <ActionIcon
+        variant="subtle"
+        color="gray"
         aria-label={`${visibility}: ${name}`}
-        onChange={onVisibilityChange}
-      />
+        onClick={onVisibilityChange}
+      >
+        {visible ? <IconEye size={18} /> : <IconEyeOff size={18} />}
+      </ActionIcon>
     </Group>
   );
 }
