@@ -9,6 +9,7 @@
     "build": "npm run typecheck && npm run build --workspace @wedding/site",
     "build:admin": "npm run build --workspace @wedding/admin",
     "build:demo": "tsx scripts/build-demo.ts",
+    "check:production-env": "tsx scripts/check-production-env.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json",
     "lint": "eslint apps packages scripts tests",
     "test": "tsx --test tests/*.test.ts",

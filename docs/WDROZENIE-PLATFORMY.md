@@ -12,6 +12,12 @@ Instrukcja dotyczy implementacji z tego repozytorium. Rozdziela panel administra
 6. Ustaw `APP_URL` na produkcyjny adres panelu. Ustaw `VERCEL_TEAM_ID`, `VERCEL_GITHUB_REPO_ID` oraz `ENGINE_GIT_SHA` dla zespołu i repozytorium zawierającego ten kod. `ENGINE_GIT_SHA` musi być pełnym, 40-znakowym SHA zaakceptowanego commitu silnika. Token Vercel musi mieć dostęp tylko do tego zespołu i projektów zaproszeń.
 7. Pierwszego administratora dodaj w tabeli `platform_admins` po utworzeniu jego konta w Supabase Auth. Id użytkownika pobierzesz z Authentication → Users.
 
+Przed przeniesieniem zmiennych do Vercel sprawdź lokalny plik produkcyjny, bez wypisywania sekretów:
+
+```powershell
+npm.cmd run check:production-env -- apps/admin/.env.production.local
+```
+
 Przykład nadania roli administratora:
 
 ```sql
