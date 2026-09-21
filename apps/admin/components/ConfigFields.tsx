@@ -11,7 +11,6 @@ import {
   IconPhoto,
   IconPlus,
   IconTrash,
-  IconX,
 } from "@tabler/icons-react";
 import {
   DndContext,
@@ -250,12 +249,14 @@ function SortableReference({
   id,
   name,
   language,
-  onRemove,
+  visible,
+  onVisibilityChange,
 }: {
   id: string;
   name: string;
   language: PanelLanguage;
-  onRemove: () => void;
+  visible: boolean;
+  onVisibilityChange: () => void;
 }) {
   const {
     attributes,
@@ -267,8 +268,8 @@ function SortableReference({
   } = useSortable({ id });
   const drag =
     language === "pl" ? "Przeciągnij" : language === "en" ? "Drag" : "Ziehen";
-  const remove =
-    language === "pl" ? "Usuń" : language === "en" ? "Remove" : "Entfernen";
+  const visibility =
+    language === "pl" ? "Widoczny" : language === "en" ? "Visible" : "Sichtbar";
   return (
     <Group
       ref={setNodeRef}
@@ -293,14 +294,11 @@ function SortableReference({
       <Text size="sm" className="reference-name">
         {name}
       </Text>
-      <ActionIcon
-        variant="subtle"
-        color="red"
-        aria-label={`${remove} ${name}`}
-        onClick={onRemove}
-      >
-        <IconX size={16} />
-      </ActionIcon>
+      <Checkbox
+        checked={visible}
+        aria-label={`${visibility}: ${name}`}
+        onChange={onVisibilityChange}
+      />
     </Group>
   );
 }
@@ -327,20 +325,18 @@ function OrderedReferences({
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
-  const action =
-    language === "pl" ? "Dodaj" : language === "en" ? "Add" : "Hinzufügen";
-  const placeholder =
-    language === "pl"
-      ? "Dodaj element"
-      : language === "en"
-        ? "Add item"
-        : "Element hinzufügen";
   const order =
     language === "pl"
       ? "kolejność na stronie"
       : language === "en"
         ? "order on the page"
         : "Reihenfolge auf der Seite";
+  const displayedIds = editable
+    ? [
+        ...ids,
+        ...available.map((item) => item.id).filter((id) => !ids.includes(id)),
+      ]
+    : available.map((item) => item.id);
 
   return (
     <Stack gap={4}>
@@ -356,14 +352,22 @@ function OrderedReferences({
           onDragEnd={({ active, over }) => {
             setActiveId(null);
             if (!over || active.id === over.id) return;
-            const from = ids.indexOf(String(active.id));
-            const to = ids.indexOf(String(over.id));
-            if (from >= 0 && to >= 0) onChange(arrayMove(ids, from, to));
+            const from = displayedIds.indexOf(String(active.id));
+            const to = displayedIds.indexOf(String(over.id));
+            if (from >= 0 && to >= 0)
+              onChange(
+                arrayMove(displayedIds, from, to).filter((id) =>
+                  ids.includes(id),
+                ),
+              );
           }}
         >
-          <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <SortableContext
+            items={displayedIds}
+            strategy={verticalListSortingStrategy}
+          >
             <Stack gap={4}>
-              {ids.map((id) => {
+              {displayedIds.map((id) => {
                 const name = referenceName(id, available);
                 return (
                   <SortableReference
@@ -371,7 +375,14 @@ function OrderedReferences({
                     id={id}
                     name={name}
                     language={language}
-                    onRemove={() => onChange(ids.filter((item) => item !== id))}
+                    visible={ids.includes(id)}
+                    onVisibilityChange={() =>
+                      onChange(
+                        ids.includes(id)
+                          ? ids.filter((item) => item !== id)
+                          : [...ids, id],
+                      )
+                    }
                   />
                 );
               })}
@@ -395,22 +406,6 @@ function OrderedReferences({
           ))}
         </Stack>
       )}
-      {editable ? (
-        <Select
-          aria-label={`${action}: ${label}`}
-          placeholder={placeholder}
-          value={null}
-          data={available
-            .filter((item) => !ids.includes(item.id))
-            .map((item) => ({
-              value: item.id,
-              label: referenceName(item.id, available),
-            }))}
-          onChange={(id) => {
-            if (id) onChange([...ids, id]);
-          }}
-        />
-      ) : null}
     </Stack>
   );
 }
