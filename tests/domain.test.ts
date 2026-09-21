@@ -100,6 +100,29 @@ test("reject invalid date and time, normalize telephone", () => {
   config.contacts[0].phone = "+48 (123) 456-789";
   assert.equal(parseSiteConfig(config).contacts[0].phone, "+48123456789");
 });
+test("normalizes the main page and validates hidden page elements", () => {
+  const config = createDemo();
+  config.variants[0].hiddenEventIds = ["ceremony"];
+  config.variants.push({
+    ...config.variants[0],
+    id: "limited",
+    slug: "limited",
+    hiddenEventIds: ["ceremony"],
+  });
+
+  const parsed = parseSiteConfig(config);
+  assert.deepEqual(parsed.variants[0].hiddenEventIds, []);
+  assert.deepEqual(
+    parsed.variants[1].eventIds,
+    config.events.map(({ id }) => id),
+  );
+  assert.deepEqual(parsed.variants[1].hiddenEventIds, ["ceremony"]);
+
+  config.variants[1].hiddenEventIds = ["missing"];
+  assert.throws(() => parseSiteConfig(config), /hiddenEventIds/);
+  config.variants[1].hiddenEventIds = ["ceremony", "ceremony"];
+  assert.throws(() => parseSiteConfig(config), /Powt/);
+});
 test("only allow trusted Google embeds; reject paths escaping media directory", () => {
   const config = createDemo();
   config.venues[0].mapUrl = "https://www.google.com.evil.example/maps/embed";
