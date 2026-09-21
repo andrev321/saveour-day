@@ -57,3 +57,32 @@ body {
   font-size: 0.9rem;
   line-height: 1;
 }
+.section-drop-placeholder {
+  display: grid;
+  min-height: 3.5rem;
+  place-items: center;
+  margin: 0.5rem 0;
+  border: 1px dashed #4c6ef5;
+  border-radius: 0.5rem;
+  color: #4263eb;
+  background: color-mix(in srgb, #edf2ff 72%, transparent);
+  font-size: 0.8rem;
+}
+.section-drag-ghost {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 15rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid #bac8ff;
+  border-radius: 0.5rem;
+  background: white;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 15%);
+}
+.section-drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+.section-drag-handle:active {
+  cursor: grabbing;
+}
