@@ -20,6 +20,7 @@ import {
 } from "@mantine/core";
 import {
   siteConfigSchema,
+  themeDesigns,
   type SiteConfig,
   type MediaAsset,
 } from "@wedding/domain";
@@ -456,7 +457,21 @@ export function Editor({
                     ]}
                     value={config.theme}
                     allowDeselect={false}
-                    onChange={(v) => replace("theme", v)}
+                    onChange={(value) => {
+                      if (!value) return;
+                      const theme = value as SiteConfig["theme"];
+                      setConfig((current) => ({
+                        ...current,
+                        theme,
+                        design: themeDesigns[theme],
+                      }));
+                    }}
+                  />
+                  <Title order={3}>Kolory motywu</Title>
+                  <Fields
+                    config={config}
+                    value={config.design}
+                    onChange={(value) => replace("design", value)}
                   />
                   <Title order={3}>Udostępnianie</Title>
                   <Fields

@@ -4,6 +4,7 @@ import {
   ActionIcon,
   Button,
   Checkbox,
+  ColorInput,
   Group,
   NumberInput,
   Select,
@@ -57,6 +58,10 @@ const labels: Record<string, string> = {
   focalY: "Kadr desktop — pionowo (%)",
   mobileFocalX: "Kadr mobile — poziomo (%)",
   mobileFocalY: "Kadr mobile — pionowo (%)",
+  paper: "Tło strony",
+  surface: "Tło kart",
+  ink: "Kolor tekstu",
+  accent: "Kolor akcentu",
 };
 export function Fields({
   value,
@@ -203,6 +208,16 @@ export function Fields({
             );
           }
           if (typeof field !== "string") return null;
+          if (["paper", "surface", "ink", "accent"].includes(key))
+            return (
+              <ColorInput
+                key={key}
+                label={label}
+                value={field}
+                format="hex"
+                onChange={(value) => update(key, value)}
+              />
+            );
           return ["description", "body", "footer"].includes(key) ? (
             <Textarea
               key={key}

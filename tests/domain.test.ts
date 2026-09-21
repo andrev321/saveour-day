@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   siteConfigSchema,
   parseSiteConfig,
+  themeDesigns,
 } from "../packages/domain/src/index.ts";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import { importLegacy } from "../packages/domain/src/legacy.ts";
@@ -14,6 +15,26 @@ test("two independent configurations use the same schema", () => {
   assert.notEqual(first.theme, second.theme);
   assert.equal(parseSiteConfig(first).schemaVersion, 1);
   assert.equal(parseSiteConfig(second).schemaVersion, 1);
+});
+test("accepts custom color tokens and supplies a preset for older configurations", () => {
+  const legacy = structuredClone(createDemo("demo-sage")) as Record<
+    string,
+    unknown
+  >;
+  delete legacy.design;
+  assert.deepEqual(parseSiteConfig(legacy).design, themeDesigns.sage);
+
+  const config = createDemo();
+  const custom = { ...config, design: { ...config.design, accent: "#123456" } };
+  assert.equal(parseSiteConfig(custom).design.accent, "#123456");
+  assert.throws(
+    () =>
+      parseSiteConfig({
+        ...config,
+        design: { ...config.design, accent: "blue" },
+      }),
+    /design.accent/,
+  );
 });
 test("reject malformed JSON shape and dangerous URLs with field names", () => {
   assert.throws(() => parseSiteConfig(null));

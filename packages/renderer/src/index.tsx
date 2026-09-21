@@ -22,44 +22,32 @@ import {
   type MediaAsset,
 } from "@wedding/domain";
 
-const palettes = {
-  ivory: [
-    "#faf4e9",
-    "#eee5d5",
-    "#dfcdaa",
-    "#ceb47d",
-    "#bf9e57",
-    "#b58f3f",
-    "#a17b30",
-    "#856325",
-    "#6c501b",
-    "#513a10",
-  ],
-  sage: [
-    "#f2f7ee",
-    "#e1e9da",
-    "#c0d0b1",
-    "#9fb785",
-    "#83a161",
-    "#709449",
-    "#5d7e3c",
-    "#49642f",
-    "#3b5025",
-    "#2e401a",
-  ],
-  wine: [
-    "#fff0f2",
-    "#f7dfe3",
-    "#eabcc5",
-    "#dd97a6",
-    "#d2768d",
-    "#cb617d",
-    "#b44d68",
-    "#943d54",
-    "#773044",
-    "#5b2233",
-  ],
-} as const;
+const accentPalette = (
+  accent: string,
+): [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+] => [
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+  accent,
+];
+
 export function InvitationProvider({
   config,
   children,
@@ -68,7 +56,7 @@ export function InvitationProvider({
   children: React.ReactNode;
 }) {
   const theme = createTheme({
-    colors: { wedding: [...palettes[config.theme]] },
+    colors: { wedding: accentPalette(config.design.accent) },
     primaryColor: "wedding",
     primaryShade: 8,
     fontFamily: "Inter, sans-serif",
@@ -230,7 +218,17 @@ export function Invitation({
     .filter((s) => s.enabled);
   return (
     <InvitationProvider config={config}>
-      <Box className={`invitation theme-${config.theme}`}>
+      <Box
+        className="invitation"
+        style={
+          {
+            "--paper": config.design.paper,
+            "--surface": config.design.surface,
+            "--ink": config.design.ink,
+            "--accent": config.design.accent,
+          } as CSSProperties
+        }
+      >
         <Container size="xl" py="lg">
           <Group justify="space-between">
             <Text size="sm" fw={600}>

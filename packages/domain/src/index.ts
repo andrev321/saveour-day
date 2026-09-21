@@ -14,6 +14,37 @@ export const httpsUrl = z
     return url.protocol === "https:" && !url.username && !url.password;
   }, "Wymagany adres HTTPS bez danych logowania");
 const optionalUrl = z.union([z.literal(""), httpsUrl]).default("");
+const hexColor = z
+  .string()
+  .regex(/^#[0-9a-f]{6}$/i, "Użyj koloru HEX, np. #AABBCC");
+export const themeDesigns = {
+  ivory: {
+    paper: "#faf7f1",
+    surface: "#fffdfb",
+    ink: "#34322d",
+    accent: "#6c501b",
+  },
+  sage: {
+    paper: "#f5f7f1",
+    surface: "#fcfdf9",
+    ink: "#2f3a2c",
+    accent: "#3b5025",
+  },
+  wine: {
+    paper: "#fbf5f5",
+    surface: "#fffafb",
+    ink: "#3d2a2e",
+    accent: "#773044",
+  },
+} as const;
+const designSchema = z
+  .object({
+    paper: hexColor,
+    surface: hexColor,
+    ink: hexColor,
+    accent: hexColor,
+  })
+  .strict();
 const mapUrl = optionalUrl.refine((value) => {
   if (!value) return true;
   const u = new URL(value);
@@ -124,6 +155,7 @@ export const siteConfigSchema = z
       })
       .strict(),
     theme: z.enum(["ivory", "sage", "wine"]),
+    design: designSchema.optional(),
     metadata: z
       .object({
         title: text,
@@ -166,6 +198,10 @@ export const siteConfigSchema = z
     defaultVariant: idSchema,
   })
   .strict()
+  .transform((value) => ({
+    ...value,
+    design: value.design ?? themeDesigns[value.theme],
+  }))
   .superRefine((value, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: "custom", path, message });
