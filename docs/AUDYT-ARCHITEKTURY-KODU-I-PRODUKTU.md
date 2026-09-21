@@ -4,6 +4,8 @@ Data: 20.09.2026. Zakres: architektura → kod → produkt, ze szczególnym uwzg
 
 Projekt jest niewielkim, sensownie podzielonym zaproszeniem dla jednej pary. Nadaje się do rozwinięcia w bazę realizacji na zamówienie, ale obecnie nie zapewnia pełnej personalizacji ani kontroli dostępu do danych. Najważniejsza zmiana to oddzielenie treści, motywu, układu i zasad dostępu. Sama zamiana kolejnych literałów na zmienne środowiskowe nie rozwiąże problemu.
 
+> **Status po wdrożeniu planu:** raport opisuje stan początkowy i pozostaje zapisem decyzji architektonicznych. Aktualna implementacja ma panel, walidowany model danych, wersje i publikację, prywatne media, responsywny renderer, lokalne fonty oraz CI. Bieżący zakres i pozostałe zadania są w [planie rozwoju](PLAN-ROZWOJU-I-KOMPONENTY.md).
+
 ## 1. Architektura
 
 ### Obecny przepływ
