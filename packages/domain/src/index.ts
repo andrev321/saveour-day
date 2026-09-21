@@ -17,7 +17,14 @@ const optionalUrl = z.union([z.literal(""), httpsUrl]).default("");
 const hexColor = z
   .string()
   .regex(/^#[0-9a-f]{6}$/i, "Użyj koloru HEX, np. #AABBCC");
-export const themeDesigns = {
+export type ThemeName = "ivory" | "sage" | "wine";
+export type ThemeDesign = {
+  paper: string;
+  surface: string;
+  ink: string;
+  accent: string;
+};
+export const themeDesigns: Record<ThemeName, ThemeDesign> = {
   ivory: {
     paper: "#faf7f1",
     surface: "#fffdfb",

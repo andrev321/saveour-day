@@ -5,6 +5,38 @@ import { mediaSchema, type SiteConfig } from "@wedding/domain";
 import { z } from "zod";
 import { checkDb, HttpError, serviceDb } from "./server";
 
+const maxLibraryAssets = 100;
+const maxPendingUploads = 5;
+const uploadReservationMinutes = 30;
+
+async function clearExpiredReservations(
+  db: ReturnType<typeof serviceDb>,
+  siteId: string,
+) {
+  const expiresAt = new Date(
+    Date.now() - uploadReservationMinutes * 60 * 1000,
+  ).toISOString();
+  const { data, error } = await db
+    .from("media_assets")
+    .select("id,original_path")
+    .eq("site_id", siteId)
+    .eq("status", "pending")
+    .lt("created_at", expiresAt);
+  checkDb(error);
+  if (!data?.length) return;
+  await db.storage
+    .from("site-media")
+    .remove(data.map((asset) => asset.original_path));
+  const { error: deleteError } = await db
+    .from("media_assets")
+    .delete()
+    .in(
+      "id",
+      data.map((asset) => asset.id),
+    );
+  checkDb(deleteError);
+}
+
 export async function prepareUpload(siteId: string, input: unknown) {
   const body = z
     .object({
@@ -13,13 +45,28 @@ export async function prepareUpload(siteId: string, input: unknown) {
     })
     .parse(input);
   const db = serviceDb();
-  const { count, error: countError } = await db
-    .from("media_assets")
-    .select("id", { count: "exact", head: true })
-    .eq("site_id", siteId);
-  checkDb(countError);
-  if ((count || 0) >= 100)
+  await clearExpiredReservations(db, siteId);
+  const [ready, pending] = await Promise.all([
+    db
+      .from("media_assets")
+      .select("id", { count: "exact", head: true })
+      .eq("site_id", siteId)
+      .eq("status", "ready"),
+    db
+      .from("media_assets")
+      .select("id", { count: "exact", head: true })
+      .eq("site_id", siteId)
+      .eq("status", "pending"),
+  ]);
+  checkDb(ready.error);
+  checkDb(pending.error);
+  if ((ready.count || 0) >= maxLibraryAssets)
     throw new HttpError(400, "Limit biblioteki: 100 plików na realizację.");
+  if ((pending.count || 0) >= maxPendingUploads)
+    throw new HttpError(
+      429,
+      "Trwa już maksymalna liczba uploadów. Poczekaj na ich zakończenie.",
+    );
   const id = randomUUID(),
     original = `${siteId}/${id}/original`;
   const { error } = await db
