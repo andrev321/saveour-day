@@ -70,11 +70,13 @@ export function Editor({
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [width, setWidth] = useState<string>("390"),
-    [variant, setVariant] = useState(config.defaultVariant);
+    [variant, setVariant] = useState(config.defaultVariant),
+    [previewOpen, setPreviewOpen] = useState(false);
   const [confirm, setConfirm] = useState<"publish" | string | null>(null),
     [email, setEmail] = useState(""),
     [domain, setDomain] = useState(initial.site.domain || "");
   const frame = useRef<HTMLIFrameElement>(null),
+    expandedFrame = useRef<HTMLIFrameElement>(null),
     demoSnapshots = useRef(new Map<string, SiteConfig>());
   const dirty = JSON.stringify(config) !== saved;
   const validation = siteConfigSchema.safeParse(config);
@@ -85,10 +87,13 @@ export function Editor({
     const handle = (e: MessageEvent) => {
       if (
         e.origin === location.origin &&
-        e.source === frame.current?.contentWindow &&
+        [
+          frame.current?.contentWindow,
+          expandedFrame.current?.contentWindow,
+        ].includes(e.source as Window) &&
         e.data?.type === "preview-ready"
       )
-        frame.current?.contentWindow?.postMessage(
+        (e.source as Window).postMessage(
           { type: "preview-config", ...preview.current },
           location.origin,
         );
@@ -97,10 +102,11 @@ export function Editor({
     return () => window.removeEventListener("message", handle);
   }, []);
   useEffect(() => {
-    frame.current?.contentWindow?.postMessage(
-      { type: "preview-config", config, variant, urls: data.urls },
-      location.origin,
-    );
+    for (const current of [frame.current, expandedFrame.current])
+      current?.contentWindow?.postMessage(
+        { type: "preview-config", config, variant, urls: data.urls },
+        location.origin,
+      );
   }, [config, variant, data.urls]);
   useEffect(() => {
     if (previousLanguage.current === language) return;
@@ -563,6 +569,9 @@ export function Editor({
                 value={width}
                 onChange={(v) => setWidth(v || "390")}
               />
+              <Button variant="light" onClick={() => setPreviewOpen(true)}>
+                {t("openPreview")}
+              </Button>
             </Group>
             <div className="admin-preview">
               <div
@@ -581,6 +590,26 @@ export function Editor({
             </Text>
           </Stack>
         </SimpleGrid>
+        <Modal
+          opened={previewOpen}
+          onClose={() => setPreviewOpen(false)}
+          title={t("preview")}
+          fullScreen
+        >
+          <iframe
+            ref={expandedFrame}
+            src="/preview"
+            title={t("preview")}
+            style={{ border: 0, height: "calc(100vh - 5.5rem)", width: "100%" }}
+          />
+          <Button
+            mt="sm"
+            variant="subtle"
+            onClick={() => setPreviewOpen(false)}
+          >
+            {t("closePreview")}
+          </Button>
+        </Modal>
         <Card withBorder>
           <Title order={2} mb="md">
             {t("history")}

@@ -54,6 +54,8 @@ const messages: Record<PanelLanguage, Dictionary> = {
     sharing: "Udostępnianie",
     labelsFooter: "Etykiety i stopka",
     preview: "Podgląd wariantu",
+    openPreview: "Powiększ podgląd",
+    closePreview: "Zamknij podgląd",
     screenWidth: "Szerokość ekranu",
     history: "Historia publikacji",
     languageChanged:
@@ -117,6 +119,8 @@ const messages: Record<PanelLanguage, Dictionary> = {
     sharing: "Sharing",
     labelsFooter: "Labels and footer",
     preview: "Preview option",
+    openPreview: "Expand preview",
+    closePreview: "Close preview",
     screenWidth: "Screen width",
     history: "Publishing history",
     languageChanged:
@@ -182,6 +186,8 @@ const messages: Record<PanelLanguage, Dictionary> = {
     sharing: "Freigabe",
     labelsFooter: "Beschriftungen und Fußzeile",
     preview: "Vorschauvariante",
+    openPreview: "Vorschau vergrößern",
+    closePreview: "Vorschau schließen",
     screenWidth: "Bildschirmbreite",
     history: "Veröffentlichungsverlauf",
     languageChanged:
