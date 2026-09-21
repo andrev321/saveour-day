@@ -845,12 +845,18 @@ function SortableSection({
       >
         <Accordion.Control
           icon={
-            <ThemeIcon variant="light" radius="xl" aria-hidden>
+            <ThemeIcon
+              className="section-card-icon"
+              variant="light"
+              radius="xl"
+              size={36}
+              aria-hidden
+            >
               {type.icon}
             </ThemeIcon>
           }
         >
-          <Group justify="space-between" wrap="nowrap" mr="sm">
+          <Group className="section-card-summary" wrap="nowrap" mr="sm">
             <Stack gap={0}>
               <Text fw={600}>{section.title}</Text>
               <Text size="xs" c="dimmed">

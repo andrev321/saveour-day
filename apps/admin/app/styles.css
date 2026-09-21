@@ -80,9 +80,25 @@ body {
   box-shadow: 0 12px 30px rgb(0 0 0 / 15%);
 }
 .section-drag-handle {
+  display: grid;
+  flex: 0 0 1.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  place-items: center;
   cursor: grab;
   touch-action: none;
 }
 .section-drag-handle:active {
   cursor: grabbing;
+}
+.section-card-icon {
+  display: grid;
+  flex: 0 0 2.25rem;
+  place-items: center;
+  line-height: 1;
+}
+.section-card-summary {
+  flex: 1;
+  min-width: 0;
+  align-items: center;
 }
