@@ -12,7 +12,7 @@ const config = importLegacy(parseEnv(await fs.readFile(".env.local", "utf8")), {
 const dir = path.resolve(".local/legacy");
 await fs.mkdir(path.join(dir, "media"), { recursive: true });
 const sharp = (await import("sharp")).default;
-const image = await sharp("src/assets/wedding-bg.png")
+const image = await sharp("scripts/assets/legacy-wedding-bg.jpg")
   .rotate()
   .webp({ quality: 85 })
   .toBuffer({ resolveWithObject: true });

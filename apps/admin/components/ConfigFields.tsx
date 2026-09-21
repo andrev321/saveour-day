@@ -11,6 +11,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
@@ -682,10 +683,7 @@ function SectionCollection({
     const from = sections.findIndex((section) => section.id === activeId);
     const to = sections.findIndex((section) => section.id === overId);
     if (from < 0 || to < 0) return;
-    const nextSections = [...sections];
-    const [moved] = nextSections.splice(from, 1);
-    if (!moved) return;
-    nextSections.splice(to, 0, moved);
+    const nextSections = arrayMove(sections, from, to);
     const order = new Map(
       nextSections.map((section, index) => [section.id, index]),
     );
