@@ -122,7 +122,7 @@ test("section editor uses Polish section names and supports reordering", async (
   await sections.nth(0).getByRole("button").click();
   await page.getByRole("combobox", { name: "Rodzaj sekcji" }).click();
   await expect(
-    page.getByRole("option", { name: "⌖ Miejsce", exact: true }),
+    page.getByRole("option", { name: "◇ Miejsce", exact: true }),
   ).toBeVisible();
 });
 test("editor manages invitation variants as named pages with URLs", async ({
