@@ -4,7 +4,7 @@ for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/obiad");
+    await page.goto("/pelna");
     await expect(
       page.getByRole("heading", { name: "Anna & Jan", exact: true }),
     ).toBeVisible();
@@ -23,7 +23,7 @@ for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
     });
   });
 test("all existing routes load directly", async ({ page }) => {
-  for (const route of ["slub", "obiad", "grill"]) {
+  for (const route of ["glowna", "pelna", "ograniczona"]) {
     await page.goto(`/${route}`);
     await page.reload();
     await expect(page.locator("main")).toBeVisible();
@@ -108,7 +108,7 @@ test("section editor uses Polish section names and supports reordering", async (
     localStorage.setItem("wedding-panel-language", "pl"),
   );
   await page.goto("http://127.0.0.1:3000/demo");
-  await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
+  await page.getByRole("tab", { name: "Strona", exact: true }).click();
   await expect(
     page.getByText("Przeciągnij sekcje, aby ustawić kolejność", {
       exact: false,
@@ -124,6 +124,23 @@ test("section editor uses Polish section names and supports reordering", async (
   await expect(
     page.getByRole("option", { name: "⌖ Miejsce", exact: true }),
   ).toBeVisible();
+});
+test("editor manages invitation variants as named pages with URLs", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.goto("http://127.0.0.1:3000/demo");
+  await expect(page.getByRole("heading", { name: "Podstrony" })).toBeVisible();
+  await expect(
+    page.getByLabel(/Każda podstrona ma własny adres URL/),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dodaj podstronę" }).click();
+  await page.getByRole("button", { name: "Nowa podstrona" }).click();
+  await page.getByLabel("Etykieta", { exact: true }).fill("Dla rodziny");
+  await page.getByLabel("Adres URL podstrony", { exact: true }).fill("rodzina");
+  await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
 });
 test("anonymous API access is denied when services are not configured", async ({
   request,

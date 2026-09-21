@@ -308,21 +308,14 @@ export function Editor({
         </Group>
         <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
           <Card withBorder p="lg">
-            <Tabs defaultValue="content">
+            <Tabs defaultValue="page">
               <Tabs.List>
-                <Tabs.Tab value="content">{t("content")}</Tabs.Tab>
-                <Tabs.Tab value="structure">{t("structure")}</Tabs.Tab>
+                <Tabs.Tab value="page">{t("page")}</Tabs.Tab>
                 <Tabs.Tab value="media">{t("media")}</Tabs.Tab>
                 <Tabs.Tab value="settings">{t("settings")}</Tabs.Tab>
               </Tabs.List>
-              <Tabs.Panel value="content" pt="lg">
+              <Tabs.Panel value="page" pt="lg">
                 <Stack>
-                  <Title order={3}>{t("couple")}</Title>
-                  <Fields
-                    config={config}
-                    value={config.couple}
-                    onChange={(v) => replace("couple", v)}
-                  />
                   <Title order={3}>{t("hero")}</Title>
                   <Fields
                     config={config}
@@ -336,6 +329,12 @@ export function Editor({
                       if (!v.mobileMediaId) delete v.mobileMediaId;
                       replace("hero", v);
                     }}
+                  />
+                  <Title order={3}>{t("couple")}</Title>
+                  <Fields
+                    config={config}
+                    value={config.couple}
+                    onChange={(v) => replace("couple", v)}
                   />
                   <Title order={3}>{t("venues")}</Title>
                   <CollectionFields
@@ -355,24 +354,20 @@ export function Editor({
                     config={config}
                     onChange={setConfig}
                   />
-                </Stack>
-              </Tabs.Panel>
-              <Tabs.Panel value="structure" pt="lg">
-                <Stack>
                   <Title order={3}>{t("structure")}</Title>
                   <CollectionFields
                     name="sections"
                     config={config}
                     onChange={setConfig}
                   />
-                  <Title order={3}>{t("variants")}</Title>
+                  <Title order={3}>{t("pages")}</Title>
                   <CollectionFields
                     name="variants"
                     config={config}
                     onChange={setConfig}
                   />
                   <Select
-                    label={t("defaultVariant")}
+                    label={t("mainPage")}
                     data={config.variants.map((v) => ({
                       value: v.id,
                       label: v.label,
