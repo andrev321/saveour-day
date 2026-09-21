@@ -74,7 +74,7 @@ export function InvitationProvider({
     primaryShade: 6,
     fontFamily: "Inter, sans-serif",
     headings: {
-      fontFamily: "Cormorant Garamond, Georgia, serif",
+      fontFamily: "Playfair Display, Georgia, serif",
       fontWeight: "500",
     },
     defaultRadius: "lg",
