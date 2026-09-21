@@ -11,6 +11,7 @@ import {
   IconPhoto,
   IconPlus,
   IconTrash,
+  IconX,
 } from "@tabler/icons-react";
 import {
   DndContext,
@@ -221,6 +222,174 @@ const sectionTypes = {
     { value: "gallery", label: "Galerie", icon: IconPhoto },
   ],
 } as const;
+
+type Reference = {
+  id: string;
+  title?: string;
+  name?: string;
+  alt?: string;
+};
+
+function referenceName(id: string, available: Reference[]) {
+  const reference = available.find((item) => item.id === id);
+  return reference?.title || reference?.name || reference?.alt || id;
+}
+
+function SortableReference({
+  id,
+  name,
+  language,
+  onRemove,
+}: {
+  id: string;
+  name: string;
+  language: PanelLanguage;
+  onRemove: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+  const drag =
+    language === "pl" ? "Przeciągnij" : language === "en" ? "Drag" : "Ziehen";
+  const remove =
+    language === "pl" ? "Usuń" : language === "en" ? "Remove" : "Entfernen";
+  return (
+    <Group
+      ref={setNodeRef}
+      className="reference-row"
+      wrap="nowrap"
+      style={{
+        opacity: isDragging ? 0.25 : 1,
+        transform: CSS.Transform.toString(transform),
+        transition,
+      }}
+    >
+      <ActionIcon
+        variant="subtle"
+        color="gray"
+        className="reference-drag-handle"
+        aria-label={`${drag} ${name}`}
+        {...attributes}
+        {...listeners}
+      >
+        <IconGripVertical size={18} stroke={1.75} />
+      </ActionIcon>
+      <Text size="sm" className="reference-name">
+        {name}
+      </Text>
+      <ActionIcon
+        variant="subtle"
+        color="red"
+        aria-label={`${remove} ${name}`}
+        onClick={onRemove}
+      >
+        <IconX size={16} />
+      </ActionIcon>
+    </Group>
+  );
+}
+
+function OrderedReferences({
+  ids,
+  label,
+  available,
+  language,
+  onChange,
+}: {
+  ids: string[];
+  label: string;
+  available: Reference[];
+  language: PanelLanguage;
+  onChange: (ids: string[]) => void;
+}) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+  const action =
+    language === "pl" ? "Dodaj" : language === "en" ? "Add" : "Hinzufügen";
+  const placeholder =
+    language === "pl"
+      ? "Dodaj element"
+      : language === "en"
+        ? "Add item"
+        : "Element hinzufügen";
+  const order =
+    language === "pl"
+      ? "kolejność na stronie"
+      : language === "en"
+        ? "order on the page"
+        : "Reihenfolge auf der Seite";
+
+  return (
+    <Stack gap={4}>
+      <Text size="sm" fw={500}>
+        {label} — {order}
+      </Text>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={({ active }) => setActiveId(String(active.id))}
+        onDragCancel={() => setActiveId(null)}
+        onDragEnd={({ active, over }) => {
+          setActiveId(null);
+          if (!over || active.id === over.id) return;
+          const from = ids.indexOf(String(active.id));
+          const to = ids.indexOf(String(over.id));
+          if (from >= 0 && to >= 0) onChange(arrayMove(ids, from, to));
+        }}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <Stack gap={4}>
+            {ids.map((id) => {
+              const name = referenceName(id, available);
+              return (
+                <SortableReference
+                  key={id}
+                  id={id}
+                  name={name}
+                  language={language}
+                  onRemove={() => onChange(ids.filter((item) => item !== id))}
+                />
+              );
+            })}
+          </Stack>
+        </SortableContext>
+        <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
+          {activeId ? (
+            <div className="reference-drag-ghost">
+              <IconGripVertical size={18} stroke={1.75} />
+              <Text size="sm">{referenceName(activeId, available)}</Text>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+      <Select
+        aria-label={`${action}: ${label}`}
+        placeholder={placeholder}
+        value={null}
+        data={available
+          .filter((item) => !ids.includes(item.id))
+          .map((item) => ({
+            value: item.id,
+            label: referenceName(item.id, available),
+          }))}
+        onChange={(id) => {
+          if (id) onChange([...ids, id]);
+        }}
+      />
+    </Stack>
+  );
+}
+
 export function Fields({
   value,
   onChange,
@@ -345,70 +514,14 @@ export function Fields({
                   ? config.sections
                   : config.media;
             return (
-              <Stack key={key} gap={4}>
-                <Text size="sm" fw={500}>
-                  {label} —{" "}
-                  {language === "pl"
-                    ? "kolejność na stronie"
-                    : language === "en"
-                      ? "order on the page"
-                      : "Reihenfolge auf der Seite"}
-                </Text>
-                {(field as string[]).map((id, index) => (
-                  <Group key={`${id}-${index}`}>
-                    <Text size="sm">
-                      {available.find((a) => a.id === id)?.id || id}
-                    </Text>
-                    <ActionIcon
-                      variant="subtle"
-                      aria-label={`${language === "pl" ? "Przesuń" : language === "en" ? "Move" : "Verschiebe"} ${id} ${language === "pl" ? "wyżej" : language === "en" ? "up" : "nach oben"}`}
-                      disabled={index === 0}
-                      onClick={() => {
-                        const next = [...field];
-                        [next[index - 1], next[index]] = [
-                          next[index],
-                          next[index - 1],
-                        ];
-                        update(key, next);
-                      }}
-                    >
-                      ↑
-                    </ActionIcon>
-                    <ActionIcon
-                      variant="subtle"
-                      aria-label={`${language === "pl" ? "Usuń odwołanie" : language === "en" ? "Remove reference" : "Verweis entfernen"} ${id}`}
-                      onClick={() =>
-                        update(
-                          key,
-                          field.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      ×
-                    </ActionIcon>
-                  </Group>
-                ))}
-                <Select
-                  aria-label={`${language === "pl" ? "Dodaj" : language === "en" ? "Add" : "Hinzufügen"}: ${label}`}
-                  placeholder={
-                    language === "pl"
-                      ? "Dodaj element"
-                      : language === "en"
-                        ? "Add item"
-                        : "Element hinzufügen"
-                  }
-                  value={null}
-                  data={available
-                    .filter((a) => !field.includes(a.id))
-                    .map((a) => ({
-                      value: a.id,
-                      label: "title" in a ? a.title : a.id,
-                    }))}
-                  onChange={(v) => {
-                    if (v) update(key, [...field, v]);
-                  }}
-                />
-              </Stack>
+              <OrderedReferences
+                key={key}
+                ids={field as string[]}
+                label={label}
+                available={available}
+                language={language}
+                onChange={(ids) => update(key, ids)}
+              />
             );
           }
           if (typeof field !== "string") return null;
