@@ -8,7 +8,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import type { ReactNode } from "react";
-import type { InvitationLocale } from "@wedding/domain";
+import type { InvitationLocale } from "@invitations/domain";
 
 export type PanelLanguage = "pl" | "en" | "de";
 type Dictionary = Record<string, string>;
@@ -23,12 +23,11 @@ const messages: Record<PanelLanguage, Dictionary> = {
     password: "Hasło",
     forgot: "Nie pamiętam hasła",
     demo: "Otwórz lokalną demonstrację",
-    createSite: "Utwórz realizację",
-    siteName: "Nazwa nowej realizacji",
+    createSite: "Utwórz zaproszenie",
+    siteName: "Nazwa nowego zaproszenia",
     edit: "Edytuj zaproszenie",
     admin: "Administrator",
-    noSites:
-      "Nie masz jeszcze przypisanych realizacji. Skontaktuj się z administratorem.",
+    noSites: "Nie masz jeszcze realizacji. Utwórz pierwszą powyżej.",
     save: "Zapisz szkic",
     publish: "Publikuj stronę",
     simulate: "Symuluj publikację",
@@ -37,11 +36,11 @@ const messages: Record<PanelLanguage, Dictionary> = {
     pages: "Strony",
     mainPage: "Strona główna",
     pagesHelp:
-      "Każda strona ma własny adres URL. Możesz przygotować osobną, ograniczoną wersję dla wybranych gości.",
+      "Przygotuj warianty treści, a następnie przypisz je osobom lub rodzinom w sekcji zaproszeń.",
     structure: "Sekcje",
     media: "Zdjęcia",
     settings: "Ustawienia",
-    couple: "Para",
+    identity: "Zaproszenie",
     hero: "Pierwszy ekran",
     venues: "Miejsca",
     events: "Wydarzenia",
@@ -85,12 +84,11 @@ const messages: Record<PanelLanguage, Dictionary> = {
     password: "Password",
     forgot: "I forgot my password",
     demo: "Open local demo",
-    createSite: "Create project",
-    siteName: "New project name",
+    createSite: "Create invitation",
+    siteName: "New invitation name",
     edit: "Edit invitation",
     admin: "Administrator",
-    noSites:
-      "You do not have any assigned projects yet. Contact an administrator.",
+    noSites: "You have no projects yet. Create your first project above.",
     save: "Save draft",
     publish: "Publish site",
     simulate: "Simulate publishing",
@@ -99,11 +97,11 @@ const messages: Record<PanelLanguage, Dictionary> = {
     pages: "Pages",
     mainPage: "Main page",
     pagesHelp:
-      "Each page has its own URL. You can prepare a separate, limited version of the site for selected guests.",
+      "Prepare content variants, then assign them to individuals or households in the invitations section.",
     structure: "Sections",
     media: "Photos",
     settings: "Settings",
-    couple: "Couple",
+    identity: "Invitation",
     hero: "Hero section",
     venues: "Venues",
     events: "Events",
@@ -149,8 +147,8 @@ const messages: Record<PanelLanguage, Dictionary> = {
     password: "Passwort",
     forgot: "Passwort vergessen",
     demo: "Lokale Demo öffnen",
-    createSite: "Projekt erstellen",
-    siteName: "Name des neuen Projekts",
+    createSite: "Einladung erstellen",
+    siteName: "Name der neuen Einladung",
     edit: "Einladung bearbeiten",
     admin: "Administrator",
     noSites:
@@ -163,11 +161,11 @@ const messages: Record<PanelLanguage, Dictionary> = {
     pages: "Seiten",
     mainPage: "Hauptseite",
     pagesHelp:
-      "Jede Seite hat eine eigene URL. Sie können eine separate, eingeschränkte Version für ausgewählte Gäste vorbereiten.",
+      "Erstellen Sie Inhaltsvarianten und weisen Sie diese anschließend Personen oder Familien im Einladungsbereich zu.",
     structure: "Abschnitte",
     media: "Fotos",
     settings: "Einstellungen",
-    couple: "Paar",
+    identity: "Einladung",
     hero: "Startbereich",
     venues: "Orte",
     events: "Ereignisse",
@@ -233,7 +231,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     publishTitle: "Publikacja strony",
     restoreTitle: "Przywrócenie wydania",
     publishWarning:
-      "Treści i zdjęcia tego wydania staną się publiczne. Zmiany w późniejszym szkicu nie zmienią opublikowanej wersji.",
+      "Treści i zdjęcia będą dostępne zgodnie z ustawionym trybem dostępu. Zmiany w późniejszym szkicu nie zmienią opublikowanej wersji.",
     startSimulation: "Uruchom symulację",
     confirmPublish: "Potwierdź publikację",
     resolveFailed: "Zamknij po kontroli Vercel",
@@ -266,7 +264,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     publishTitle: "Publish site",
     restoreTitle: "Restore release",
     publishWarning:
-      "The content and photos in this release will become public. Changes in a later draft will not change the published version.",
+      "Content and photos will be available according to the selected access mode. Later draft changes will not change the published version.",
     startSimulation: "Start simulation",
     confirmPublish: "Confirm publishing",
     resolveFailed: "Close after Vercel review",
@@ -302,7 +300,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     publishTitle: "Seite veröffentlichen",
     restoreTitle: "Version wiederherstellen",
     publishWarning:
-      "Die Inhalte und Fotos dieser Version werden öffentlich. Änderungen in einem späteren Entwurf ändern die veröffentlichte Version nicht.",
+      "Inhalte und Fotos werden gemäß dem eingestellten Zugriffsmodus verfügbar. Spätere Entwurfsänderungen ändern die veröffentlichte Version nicht.",
     startSimulation: "Simulation starten",
     confirmPublish: "Veröffentlichung bestätigen",
     resolveFailed: "Nach Vercel-Prüfung schließen",
@@ -317,7 +315,7 @@ type PanelI18n = {
   t: (key: string) => string;
 };
 const PanelI18nContext = createContext<PanelI18n | null>(null);
-const storageKey = "wedding-panel-language";
+const storageKey = "invitations-panel-language";
 const invitationLocales: Record<PanelLanguage, InvitationLocale> = {
   pl: "pl-PL",
   en: "en-GB",
@@ -328,7 +326,9 @@ export const invitationLocaleFor = (
 ): InvitationLocale => invitationLocales[language];
 
 function readLanguage(): PanelLanguage {
-  const stored = window.localStorage.getItem(storageKey);
+  const stored =
+    window.localStorage.getItem(storageKey) ||
+    window.localStorage.getItem("wedding-panel-language");
   return stored === "en" || stored === "de" ? stored : "pl";
 }
 

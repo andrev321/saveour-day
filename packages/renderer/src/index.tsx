@@ -20,7 +20,7 @@ import {
   navigationUrl,
   type SiteConfig,
   type MediaAsset,
-} from "@wedding/domain";
+} from "@invitations/domain";
 
 type Palette = [
   string,
@@ -69,8 +69,8 @@ export function InvitationProvider({
   children: React.ReactNode;
 }) {
   const theme = createTheme({
-    colors: { wedding: createAccentPalette(config.design.accent) },
-    primaryColor: "wedding",
+    colors: { accent: createAccentPalette(config.design.accent) },
+    primaryColor: "accent",
     primaryShade: 6,
     fontFamily: "Inter, sans-serif",
     headings: {
@@ -245,6 +245,28 @@ export function Invitation({
     : variant.eventIds
         .map((id) => config.events.find((e) => e.id === id)!)
         .filter((event) => !variant.hiddenEventIds.includes(event.id));
+  if (
+    !config.identity.displayName &&
+    !config.hero.title &&
+    !config.hero.description &&
+    !config.hero.eyebrow &&
+    !hero &&
+    !sections.length
+  ) {
+    return (
+      <InvitationProvider config={config}>
+        <Box className="invitation" p="xl">
+          <Text c="dimmed">
+            {config.locale === "pl-PL"
+              ? "Puste zaproszenie. Dodaj główny napis i treść w edytorze."
+              : config.locale === "en-GB"
+                ? "Blank invitation. Add a main heading and content in the editor."
+                : "Leere Einladung. Ergänze eine Überschrift und Inhalte im Editor."}
+          </Text>
+        </Box>
+      </InvitationProvider>
+    );
+  }
   return (
     <InvitationProvider config={config}>
       <Box
@@ -261,7 +283,7 @@ export function Invitation({
         <Container size="xl" py="lg">
           <Group justify="space-between">
             <Text size="sm" fw={600}>
-              {config.couple.firstName} & {config.couple.secondName}
+              {config.identity.displayName}
             </Text>
             <Text size="sm">{variant.dateLabel || config.hero.dateLabel}</Text>
           </Group>
@@ -280,19 +302,27 @@ export function Invitation({
             )}
           </div>
           <div className="invitation-hero-copy">
-            <Text className="invitation-eyebrow">{config.hero.eyebrow}</Text>
-            <Title order={1}>
-              {config.couple.firstName}
-              <span> & </span>
-              {config.couple.secondName}
-            </Title>
-            <Title order={2} className="invitation-tagline">
-              {config.hero.title}
-            </Title>
-            <Text className="invitation-prose">{config.hero.description}</Text>
-            <Text fw={600} mt="xl">
-              {variant.dateLabel || config.hero.dateLabel}
-            </Text>
+            {config.hero.eyebrow && (
+              <Text className="invitation-eyebrow">{config.hero.eyebrow}</Text>
+            )}
+            {config.identity.displayName && (
+              <Title order={1}>{config.identity.displayName}</Title>
+            )}
+            {config.hero.title && (
+              <Title order={2} className="invitation-tagline">
+                {config.hero.title}
+              </Title>
+            )}
+            {config.hero.description && (
+              <Text className="invitation-prose">
+                {config.hero.description}
+              </Text>
+            )}
+            {(variant.dateLabel || config.hero.dateLabel) && (
+              <Text fw={600} mt="xl">
+                {variant.dateLabel || config.hero.dateLabel}
+              </Text>
+            )}
           </div>
         </section>
         <Container component="main" size="lg" py={{ base: 32, md: 64 }}>
@@ -380,9 +410,11 @@ export function Invitation({
             ))}
           </SimpleGrid>
         </Container>
-        <Container component="footer" ta="center" py="xl">
-          <Text>{config.copy.footer}</Text>
-        </Container>
+        {config.copy.footer && (
+          <Container component="footer" ta="center" py="xl">
+            <Text>{config.copy.footer}</Text>
+          </Container>
+        )}
       </Box>
     </InvitationProvider>
   );

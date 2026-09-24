@@ -49,12 +49,11 @@ import {
   ThemeIcon,
   Tooltip,
 } from "@mantine/core";
-import type { SiteConfig } from "@wedding/domain";
+import type { SiteConfig } from "@invitations/domain";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
 
 const labels: Record<string, string> = {
-  firstName: "Pierwsze imię",
-  secondName: "Drugie imię",
+  displayName: "Główny napis",
   eyebrow: "Tekst nad nagłówkiem",
   title: "Tytuł",
   description: "Opis",
@@ -105,8 +104,7 @@ const translatedLabels: Record<
   Record<string, string>
 > = {
   en: {
-    firstName: "First name",
-    secondName: "Second name",
+    displayName: "Main heading",
     eyebrow: "Text above heading",
     title: "Title",
     description: "Description",
@@ -153,8 +151,7 @@ const translatedLabels: Record<
     accent: "Accent colour",
   },
   de: {
-    firstName: "Vorname",
-    secondName: "Zweiter Name",
+    displayName: "Hauptüberschrift",
     eyebrow: "Text über der Überschrift",
     title: "Titel",
     description: "Beschreibung",
@@ -841,9 +838,6 @@ function PageCollection({
                       </Tooltip>
                     ) : null}
                   </Group>
-                  <Text size="xs" c="dimmed">
-                    /{page.slug}
-                  </Text>
                 </div>
               </Group>
             </Accordion.Control>
@@ -862,10 +856,9 @@ function PageCollection({
               <Fields
                 value={
                   page.id === config.defaultVariant
-                    ? { label: page.label, slug: page.slug }
+                    ? { label: page.label }
                     : {
                         label: page.label,
-                        slug: page.slug,
                         eventIds: page.eventIds,
                         sectionIds: page.sectionIds,
                         hiddenEventIds: page.hiddenEventIds,

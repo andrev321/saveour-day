@@ -52,12 +52,6 @@
   font-weight: 500;
   margin: 24px 0;
 }
-.invitation-hero h1 span {
-  display: block;
-  font-size: 0.55em;
-  margin: 0.1em 0;
-  font-style: italic;
-}
 .invitation-tagline {
   font-size: clamp(1.5rem, 2.3vw, 2.4rem);
   margin-bottom: 20px;
@@ -67,7 +61,7 @@
   letter-spacing: 0.15em;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--mantine-color-wedding-8);
+  color: var(--mantine-color-accent-8);
 }
 .invitation-prose {
   white-space: pre-line;

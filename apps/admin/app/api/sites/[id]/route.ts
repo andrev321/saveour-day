@@ -1,13 +1,11 @@
 import { z } from "zod";
-import { siteConfigSchema } from "@wedding/domain";
+import { siteConfigSchema, invitationLocales } from "@invitations/domain";
 import {
   api,
   checkDb,
   HttpError,
   readJson,
-  requireAdmin,
   requireSite,
-  required,
   serviceDb,
 } from "../../../../lib/server";
 import {
@@ -15,13 +13,15 @@ import {
   finalizeUpload,
   validateMedia,
 } from "../../../../lib/media";
-import { publish, syncDeployment } from "../../../../lib/publishing";
-import { createProject, vercel } from "../../../../lib/vercel";
+import { publish } from "../../../../lib/publishing";
+
+import { createTemplate, templateIds } from "@invitations/domain/templates";
+
 const siteId = (request: Request) =>
   new URL(request.url).pathname.split("/")[3]!;
 export const GET = api(async (request) => {
   const { db, site } = await requireSite(siteId(request));
-  const [draft, releases, deployments, media] = await Promise.all([
+  const [draft, releases, media, snapshots] = await Promise.all([
     db.from("drafts").select("*").eq("site_id", site.id).single(),
     db
       .from("releases")
@@ -30,18 +30,18 @@ export const GET = api(async (request) => {
       .order("created_at", { ascending: false })
       .limit(30),
     db
-      .from("deployments")
-      .select("*")
-      .eq("site_id", site.id)
-      .order("created_at", { ascending: false })
-      .limit(30),
-    db
       .from("media_assets")
       .select("id,manifest")
       .eq("site_id", site.id)
       .eq("status", "ready"),
+    db
+      .from("draft_snapshots")
+      .select("id,created_at,revision")
+      .eq("site_id", site.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
-  for (const result of [draft, releases, deployments, media])
+  for (const result of [draft, releases, media, snapshots])
     checkDb(result.error);
   const urls: Record<string, string> = {};
   const sources = (media.data || []).flatMap((asset) => [
@@ -64,9 +64,9 @@ export const GET = api(async (request) => {
   }
   return {
     site,
-    draft: draft.data,
+    draft: { ...draft.data, config: siteConfigSchema.parse(draft.data.config) },
+    snapshots: snapshots.data,
     releases: releases.data,
-    deployments: deployments.data,
     media: media.data,
     urls,
   };
@@ -96,19 +96,71 @@ export const POST = api(async (request) => {
   const body = z
     .object({
       action: z.enum([
+        "reset-template",
+        "restore-draft",
         "publish",
         "restore",
-        "sync",
         "prepare-upload",
         "finalize-upload",
-        "connect",
-        "invite",
-        "domain",
-        "resolve-failed",
       ]),
       payload: z.unknown(),
     })
     .parse(await readJson(request));
+  if (body.action === "reset-template" || body.action === "restore-draft") {
+    const db = serviceDb();
+    const p = z
+      .object({
+        revision: z.number().int().positive(),
+        templateId: z.enum(templateIds).optional(),
+        locale: z.enum(invitationLocales).optional(),
+        snapshotId: z.uuid().optional(),
+      })
+      .parse(body.payload);
+    let config;
+    if (body.action === "restore-draft") {
+      if (!p.snapshotId) throw new HttpError(400, "Wybierz kopię szkicu");
+      const { data, error } = await db
+        .from("draft_snapshots")
+        .select("config")
+        .eq("site_id", site.id)
+        .eq("id", p.snapshotId)
+        .single();
+      checkDb(error);
+      config = siteConfigSchema.parse(data?.config);
+      await validateMedia(site.id, config);
+    } else {
+      if (!p.templateId || !p.locale)
+        throw new HttpError(400, "Wybierz szablon i język");
+      const { data, error } = await db
+        .from("drafts")
+        .select("config")
+        .eq("site_id", site.id)
+        .single();
+      checkDb(error);
+      config = createTemplate(
+        p.templateId,
+        site.id,
+        p.locale,
+        undefined,
+        siteConfigSchema.parse(data?.config).defaultVariant,
+      );
+    }
+    const { data, error } = await db.rpc("replace_invitation_draft", {
+      sid: site.id,
+      actor: user.id,
+      expected_revision: p.revision,
+      content: config,
+      snapshot_id: body.action === "restore-draft" ? p.snapshotId : null,
+    });
+    if (error?.message.includes("VARIANT_IN_USE"))
+      throw new HttpError(
+        409,
+        "Najpierw zmień wariant lub cofnij powiązane zaproszenia: " +
+          error.details,
+      );
+    checkDb(error);
+    return { revision: data, config };
+  }
   if (body.action === "publish")
     return publish(
       site,
@@ -123,11 +175,6 @@ export const POST = api(async (request) => {
       0,
       z.object({ releaseId: z.uuid() }).parse(body.payload).releaseId,
     );
-  if (body.action === "sync")
-    return syncDeployment(
-      z.object({ id: z.uuid() }).parse(body.payload).id,
-      site.id,
-    );
   if (body.action === "prepare-upload")
     return prepareUpload(site.id, body.payload);
   if (body.action === "finalize-upload")
@@ -135,72 +182,5 @@ export const POST = api(async (request) => {
       site.id,
       z.object({ id: z.uuid() }).parse(body.payload).id,
     );
-  await requireAdmin();
-  const db = serviceDb();
-  if (body.action === "connect") {
-    if (site.vercel_project_id) return { connected: true };
-    const project = await createProject(site.id);
-    const { error } = await db
-      .from("sites")
-      .update({ vercel_project_id: project.id })
-      .eq("id", site.id);
-    checkDb(error);
-    return { connected: true };
-  }
-  if (body.action === "invite") {
-    const { email } = z.object({ email: z.email() }).parse(body.payload);
-    const { data, error } = await db.auth.admin.inviteUserByEmail(email, {
-      redirectTo: new URL("/account", required("APP_URL")).href,
-    });
-    if (error || !data.user)
-      throw new HttpError(
-        400,
-        "Nie udało się zaprosić użytkownika. Dla istniejącego konta przypisz członkostwo w bazie.",
-      );
-    const { error: memberError } = await db
-      .from("site_members")
-      .insert({ site_id: site.id, user_id: data.user.id });
-    checkDb(memberError);
-    return { invited: true };
-  }
-  if (body.action === "domain") {
-    if (!site.vercel_project_id)
-      throw new HttpError(409, "Najpierw połącz projekt Vercel");
-    const { domain } = z
-      .object({
-        domain: z
-          .string()
-          .toLowerCase()
-          .max(253)
-          .regex(/^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/),
-      })
-      .parse(body.payload);
-    const result = await vercel(
-      `/v10/projects/${encodeURIComponent(site.vercel_project_id)}/domains`,
-      { method: "POST", body: JSON.stringify({ name: domain }) },
-    );
-    const { error } = await db
-      .from("sites")
-      .update({ domain })
-      .eq("id", site.id);
-    checkDb(error);
-    return result;
-  }
-  const { id } = z.object({ id: z.uuid() }).parse(body.payload);
-  const { error } = await db
-    .from("deployments")
-    .update({
-      status: "error",
-      error: "Zadanie zamknięte przez operatora po kontroli Vercel.",
-    })
-    .eq("id", id)
-    .eq("site_id", site.id)
-    .eq("status", "preparing");
-  checkDb(error);
-  await db.from("audit_events").insert({
-    site_id: site.id,
-    actor_id: user.id,
-    action: "deployment.resolved",
-  });
-  return { resolved: true };
+  throw new HttpError(410, "Ta operacja publikacji została wycofana");
 });

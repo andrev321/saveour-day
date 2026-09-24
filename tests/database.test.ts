@@ -143,7 +143,7 @@ test("migration defines RLS isolation plus revision, immutable release and publi
       /DEPLOYMENT_ACTIVE/,
     );
     const changed = structuredClone(configA);
-    changed.couple.firstName = "Changed";
+    changed.identity.displayName = "Changed";
     await db.query("select public.save_site_draft($1,$2,2,$3)", [
       siteA,
       a,
@@ -153,7 +153,7 @@ test("migration defines RLS isolation plus revision, immutable release and publi
       "select config from public.releases where site_id=$1",
       [siteA],
     );
-    assert.equal(release.rows[0].config.couple.firstName, "Anna");
+    assert.equal(release.rows[0].config.identity.displayName, "Anna & Jan");
     await db.exec(
       `reset role; set role authenticated; set request.jwt.claim.sub = '${b}'`,
     );

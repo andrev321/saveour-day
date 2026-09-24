@@ -26,7 +26,7 @@ export function importLegacy(
   const grill = read("VITE_CONFIG_GRILL"),
     parking = read("VITE_CONFIG_PARKING");
   const config = createDemo("legacy");
-  config.couple = names;
+  config.identity = { displayName: `${names.firstName} & ${names.secondName}` };
   config.hero.dateLabel = common.weddingDate || "Data do ustalenia";
   config.hero.description = common.description || "";
   config.metadata.title = `${names.firstName} i ${names.secondName} — zaproszenie`;

@@ -1,18 +1,18 @@
 {
-  "name": "moj-slub",
+  "name": "invitation-platform",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "npm run dev --workspace @wedding/site",
-    "dev:admin": "npm run dev --workspace @wedding/admin",
-    "build": "npm run typecheck && npm run build --workspace @wedding/site",
-    "build:admin": "npm run build --workspace @wedding/admin",
+    "dev": "npm run dev --workspace @invitations/site",
+    "dev:admin": "npm run dev --workspace @invitations/admin",
+    "build": "npm run typecheck && npm run build --workspace @invitations/site",
+    "build:admin": "npm run build --workspace @invitations/admin",
     "build:demo": "tsx scripts/build-demo.ts",
     "check:production-env": "tsx scripts/check-production-env.ts",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json && tsc --noEmit -p apps/site/tsconfig.json",
     "lint": "eslint apps packages scripts tests",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "node --import tsx --experimental-test-module-mocks --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "import:legacy": "tsx scripts/import-legacy.ts"
   },
@@ -33,7 +33,6 @@
     "next": "16.3.5",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-router-dom": "^7.15.0",
     "sharp": "0.35.4",
     "zod": "4.6.5"
   },
@@ -44,16 +43,13 @@
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
     "prettier": "3.9.8",
     "tsx": "4.23.15",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10"
+    "typescript-eslint": "^8.58.2"
   },
   "workspaces": [
     "apps/*",

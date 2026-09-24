@@ -10,18 +10,13 @@ export default function SitePage({
 }) {
   const { id } = use(params);
   const [data, setData] = useState<EditorData | null>(null),
-    [admin, setAdmin] = useState(false),
     [error, setError] = useState("");
   useEffect(() => {
     let alive = true;
-    Promise.all([
-      apiFetch<EditorData>(`/api/sites/${id}`),
-      apiFetch<{ admin: boolean }>("/api/sites"),
-    ])
-      .then(([result, user]) => {
+    apiFetch<EditorData>(`/api/sites/${id}`)
+      .then((result) => {
         if (alive) {
           setData(result);
-          setAdmin(user.admin);
         }
       })
       .catch((e) => {
@@ -36,7 +31,7 @@ export default function SitePage({
       <Alert color="red">{error}</Alert>
     </Container>
   ) : data ? (
-    <Editor initial={data} admin={admin} />
+    <Editor initial={data} />
   ) : (
     <Container py="xl">
       <Loader aria-label="Ładowanie realizacji" />

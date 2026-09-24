@@ -1,34 +1,37 @@
-# Wedding Platform
+# Invitation Platform
 
-Platforma do obsługi wielu, niezależnych zaproszeń ślubnych. Publiczna strona jest statycznym artefaktem przypisanym do jednej realizacji; panel administracyjny przechowuje dane, media, wersje i prowadzi publikację do osobnego projektu Vercel.
+Platforma do tworzenia i zarządzania zaproszeniami na różne wydarzenia. Klienci wybierają szablon startowy (np. ślub, urodziny, impreza firmowa) albo pusty szkic, a następnie tworzą zaproszenia dla osób lub rodzin. Szablon można później zmienić z potwierdzeniem resetu; poprzedni zapisany szkic ma kopię do przywrócenia. Publikacja zatwierdza wersję w bazie bez osobnego builda. Dostęp jest publiczny, za kodem lub przez e-mail OTP; panel zbiera RSVP za poszczególnych gości i wydarzenia.
 
 ## Aplikacje
 
-- `apps/site` — publiczna, responsywna strona Vite. W buildzie otrzymuje tylko manifest jednej wersji zaproszenia.
+- `apps/site` — aplikacja Next.js obsługująca wszystkie realizacje, autoryzację gości, chronione media i RSVP.
 - `apps/admin` — panel Next.js dla administratora i klientów.
 - `packages/domain` — schemat Zod, walidacja danych oraz dane demonstracyjne.
 - `packages/renderer` — wspólny renderer React/Mantine używany przez stronę i podgląd w panelu.
 - `supabase/migrations` — baza, reguły RLS i procedury wersjonowania.
 
-Projekt wymaga Node.js 22 LTS i npm 11.
+Do pracy używaj Node.js 24 (tak jak w CI) i npm 11. `npm ci` instaluje wersje zapisane w lockfile.
 
 ## Uruchomienie lokalne
 
 ```powershell
 npm.cmd ci
 Copy-Item apps/admin/.env.example apps/admin/.env.local
+Copy-Item apps/site/.env.example apps/site/.env.local
 npm.cmd run dev
 ```
 
-Panel uruchomisz osobno poleceniem `npm.cmd run dev:admin`. Bez zmiennych Supabase dostępny jest wyłącznie ekran demonstracyjny pod `/demo`; interfejs nie udaje wtedy zapisu do bazy.
+Panel uruchomisz osobno poleceniem `npm.cmd run dev:admin`. Aplikacja gości działa na `http://127.0.0.1:5173`, panel na `http://127.0.0.1:3000`. Uzupełnij pliki `.env.local` zgodnie z [instrukcją wdrożenia](docs/WDROZENIE-PLATFORMY.md).
 
-Do migracji poprzedniej strony użyj:
+Bez konfiguracji Supabase można sprawdzić panel pod `http://127.0.0.1:3000/demo` oraz zaproszenia pod `http://127.0.0.1:5173/demo/glowna`, `/demo/pelna` i `/demo/ograniczona`. Demonstracja panelu symuluje publikację lokalnie; nie zapisuje jej w bazie.
+
+Konwersję danych poprzedniej strony do lokalnego JSON uruchomisz poleceniem:
 
 ```powershell
 npm.cmd run import:legacy -- "Imię 1" "Imię 2"
 ```
 
-Skrypt tworzy lokalny, ignorowany przez Git katalog `.local/legacy`. Przed publikacją sprawdź treść i zdjęcie w panelu.
+Skrypt odczytuje dawne zmienne `VITE_CONFIG_*` z głównego `.env.local` i tworzy lokalny, ignorowany przez Git katalog `.local/legacy`. Nie zapisuje realizacji w Supabase. Panel ma eksport JSON, ale nie ma formularza importu: wynik służy jako materiał do przeniesienia treści lub osobnej migracji danych. Zdjęcie trzeba dodać przez bibliotekę mediów i przypisać w konfiguracji. Obecny runtime nie używa `SITE_CONFIG`; komunikat starego importera o tej zmiennej nie jest instrukcją uruchomienia aplikacji.
 
 ## Kontrola jakości
 
@@ -36,21 +39,35 @@ Skrypt tworzy lokalny, ignorowany przez Git katalog `.local/legacy`. Przed publi
 npm.cmd run typecheck
 npm.cmd run lint
 npm.cmd test
-npm.cmd run build:demo
+npm.cmd run build
 npm.cmd run build:admin
 npm.cmd run test:e2e
 ```
 
-Test E2E sprawdza wszystkie warianty strony przy szerokościach 320–1920 px, bezpośrednie ścieżki oraz demonstracyjny panel.
+Testy sprawdzają SQL/RLS w PGlite, izolację wariantów, dostęp gości i RSVP, interfejsy panelu oraz widoki 320–1920 px. Testy formularzy w przeglądarce używają kontrolowanych odpowiedzi HTTP; rzeczywiste SMTP i Storage wymagają odbioru na stagingu.
 
-`npm.cmd run build` jest celowo buildem produkcyjnym i wymaga `RELEASE_MANIFEST_URL` oraz `RELEASE_TOKEN` albo lokalnego `SITE_CONFIG`. Nie używa danych demonstracyjnych bez jawnego wyboru, aby przypadkowo nie opublikować przykładowej realizacji.
+CI uruchamia także testy rzeczywistych handlerów API z kontrolowanym HTTP Supabase i magazynem ciasteczek. Nazwa skryptu `build:demo` pozostała dla zgodności z CI — skrypt buduje obecnie pełną aplikację Next.js `apps/site`.
+
+`npm.cmd run build` buduje wspólną aplikację Next.js bez danych klientów. Konfiguracja jest pobierana dopiero w runtime po autoryzacji. Demonstracje dostępne są jawnie pod `/demo/glowna`, `/demo/pelna` i `/demo/ograniczona`. Brak konfiguracji usług nie uruchamia przykładowej realizacji pod adresem klienta.
 
 Przed wpisaniem sekretów w Vercel można sprawdzić ich kompletność bez wyświetlania wartości:
 
 ```powershell
 npm.cmd run check:production-env -- apps/admin/.env.production.local
+npm.cmd run check:production-env -- --site apps/site/.env.production.local
 ```
 
 ## Wdrożenie
 
-Instrukcja dla pierwszego wdrożenia platformy i codziennej publikacji realizacji jest w [docs/WDROZENIE-PLATFORMY.md](docs/WDROZENIE-PLATFORMY.md). Założenia i uzasadnienie techniczne opisują [audyt](docs/AUDYT-ARCHITEKTURY-KODU-I-PRODUKTU.md) oraz [plan](docs/PLAN-ROZWOJU-I-KOMPONENTY.md).
+Wymagane są wszystkie trzy migracje Supabase oraz własny SMTP. Zmiany w repozytorium i lokalne testy nie oznaczają wykonania zdalnych migracji ani wdrożenia produkcyjnego.
+
+## Dokumentacja
+
+- [Szablony startowe](docs/SZABLONY-STARTOWE.md) — wybór, reset, kopie szkicu oraz zgodność starszych zaproszeń.
+
+- [Samodzielne wdrożenie — checklista](docs/CHECKLISTA-WDROZENIA.md) — co zapewnić, gdzie wpisać ustawienia i jak odebrać wdrożenie.
+
+- [Architektura](docs/ARCHITEKTURA.md) — moduły, model danych, publikacja, uprawnienia i ograniczenia.
+- [Decyzje techniczne](docs/DECYZJE-TECHNICZNE.md) — przyjęte rozwiązania, ich uzasadnienia i konsekwencje.
+- [Wdrożenie platformy](docs/WDROZENIE-PLATFORMY.md) — konfiguracja usług, migracja dawnych realizacji i odbiór stagingu.
+- [Self-review publikacji](docs/SELF-REVIEW-PUBLIKACJI.md) — datowany zapis wykonanej kontroli i jej ograniczeń.
