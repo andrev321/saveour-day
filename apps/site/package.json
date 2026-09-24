@@ -12,6 +12,7 @@
     "@invitations/domain": "*",
     "@invitations/renderer": "*",
     "next": "16.3.5",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "@invitations/ui": "*"
   }
 }

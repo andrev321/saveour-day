@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type RefObject } from "react";
+import * as S from "./preview.styles";
 
 /** Scale the surface, not its viewport: desktop breakpoints remain accurate. */
 export function PreviewCanvas({
@@ -43,13 +44,11 @@ export function PreviewCanvas({
         )
       : 1;
   return (
-    <div className="preview-canvas" ref={host} data-fit={fit}>
-      <div
-        className="preview-surface"
+    <S.PreviewCanvas ref={host} data-fit={fit}>
+      <S.PreviewSurface
         style={{ width: outerWidth * scale, height: outerHeight * scale }}
       >
-        <div
-          className="preview-device"
+        <S.PreviewDevice
           data-device={device}
           style={{
             width: outerWidth,
@@ -58,40 +57,35 @@ export function PreviewCanvas({
             transform: `scale(${scale})`,
           }}
         >
-          <div className="preview-device-screen">
-            <div
-              className="preview-device-status"
-              style={{ height: top }}
-              aria-hidden="true"
-            >
+          <S.PreviewDeviceScreen>
+            <S.PreviewDeviceStatus style={{ height: top }} aria-hidden="true">
               {device === "phone" ? (
                 <>
                   <span>9:41</span>
-                  <i className="preview-camera" />
-                  <span className="preview-status-icons">▮▮▮ ▰</span>
+                  <S.PreviewCamera />
+                  <S.PreviewStatusIcons>▮▮▮ ▰</S.PreviewStatusIcons>
                 </>
               ) : device === "desktop" ? (
                 <span>● ● ●</span>
               ) : (
-                <i className="preview-tablet-camera" />
+                <S.PreviewTabletCamera />
               )}
-            </div>
+            </S.PreviewDeviceStatus>
             <iframe
               ref={frame}
               src="/preview"
               title={title}
               style={{ width, height }}
             />
-            <div
-              className="preview-device-bottom"
+            <S.PreviewDeviceBottom
               style={{ height: bottom }}
               aria-hidden="true"
             >
               {device !== "desktop" && <i />}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+            </S.PreviewDeviceBottom>
+          </S.PreviewDeviceScreen>
+        </S.PreviewDevice>
+      </S.PreviewSurface>
+    </S.PreviewCanvas>
   );
 }

@@ -1,15 +1,16 @@
 "use client";
-import { ActionIcon, Select, Tooltip } from "@mantine/core";
+import { ActionIcon, Tooltip } from "@mantine/core";
 import {
+  ArrowsOutIcon,
+  CornersOutIcon,
+  DesktopIcon,
   DeviceMobileIcon,
   DeviceTabletIcon,
-  DesktopIcon,
-  ArrowsOutIcon,
   XIcon,
-  CornersOutIcon,
 } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
+import * as S from "./preview.styles";
 
 export function PreviewToolbar({
   width,
@@ -35,13 +36,9 @@ export function PreviewToolbar({
   const { language, t } = usePanelI18n();
   const ui = workspaceUi[language];
   return (
-    <div className="preview-toolbar">
-      <span className="preview-toolbar-label">{ui.preview}</span>
-      <div
-        className="preview-device-buttons"
-        role="group"
-        aria-label={t("screenWidth")}
-      >
+    <S.PreviewToolbar>
+      <S.PreviewToolbarLabel>{ui.preview}</S.PreviewToolbarLabel>
+      <S.PreviewDeviceButtons role="group" aria-label={t("screenWidth")}>
         {[
           { value: "390", label: ui.phone, icon: DeviceMobileIcon },
           { value: "768", label: ui.tablet, icon: DeviceTabletIcon },
@@ -64,21 +61,19 @@ export function PreviewToolbar({
             </ActionIcon>
           </Tooltip>
         ))}
-      </div>
-      <Select
-        className="preview-variant"
+      </S.PreviewDeviceButtons>
+      <S.PreviewVariant
         aria-label={t("preview")}
         size="xs"
         data={variants.map((v) => ({ value: v.id, label: v.label }))}
         value={variant}
         allowDeselect={false}
         onChange={(v) => {
-          if (v) onVariant(v);
+          if (typeof v === "string") onVariant(v);
         }}
       />
       <Tooltip label={`${ui.zoom}: ${fit ? ui.fit : ui.actual}`}>
-        <ActionIcon
-          className="preview-fit"
+        <S.PreviewFit
           aria-label={ui.fit}
           aria-pressed={fit}
           variant={fit ? "light" : "subtle"}
@@ -86,7 +81,7 @@ export function PreviewToolbar({
         >
           <CornersOutIcon size={19} />
           <span>{fit ? ui.fit : ui.actual}</span>
-        </ActionIcon>
+        </S.PreviewFit>
       </Tooltip>
       <Tooltip label={t(expanded ? "closePreview" : "openPreview")}>
         <ActionIcon
@@ -97,6 +92,6 @@ export function PreviewToolbar({
           {expanded ? <XIcon size={19} /> : <ArrowsOutIcon size={19} />}
         </ActionIcon>
       </Tooltip>
-    </div>
+    </S.PreviewToolbar>
   );
 }

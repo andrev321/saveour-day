@@ -30,6 +30,10 @@ Ustawienia widoku pod boczną nawigacją pozwalają wybrać gęstość Wygodna /
 
 `EditorWorkspace` zarządza rozmieszczeniem paneli, nawigacją i preferencjami; `PreviewCanvas` mierzy dostępne miejsce przez ResizeObserver; `PanelTheme` definiuje paletę Mantine oraz domyślny styl ikon. `Editor` zachowuje logikę edycji, zapisu, publikacji i komunikacji z podglądem.
 
+Własne style aplikacji są implementowane w styled-components, bez ręcznych `className` w JSX i osobnych arkuszy CSS. Panel dzieli je na `workspace.styles.ts`, `preview.styles.ts` oraz `fields.styles.ts`. Renderer zaproszeń i interfejs gości mają własne moduły `styles.ts`. Globalne style ograniczają się do bazowych ustawień dokumentu; podstawowe style Mantine i fonty nadal pochodzą z pakietów bibliotek. Selektory wewnętrznych elementów Mantine są ograniczone do odpowiednich styled-components.
+
+Obie aplikacje używają `StyledRegistry` z `@invitations/ui/registry`, zbierającego style osobno dla każdego renderowania serwerowego, oraz kompilatora Next.js `styledComponents`. Style trafiają do HTML przed hydratacją. Testy korzystają z ról i stabilnych atrybutów `data-ui`, niezależnych od wygenerowanych klas. Nie należy stylować po `data-ui` ani uzależniać testów od hashów klas.
+
 Zmiana wymaga zwykłego wdrożenia aplikacji admin z aktualnym lockfile. Nie wymaga migracji bazy, dodatkowych zmiennych środowiskowych ani ręcznej konfiguracji usług.
 
 Testy przeglądarkowe znajdują się w `tests/e2e/workspace.spec.ts`; obejmują szerokości 320–2560 px, edycję i zapis, menu mobilne, skalowanie desktopowego iframe, obsługę separatora klawiaturą, zapamiętywanie/reset preferencji oraz ograniczenie animacji.

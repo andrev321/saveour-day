@@ -1,4 +1,5 @@
 "use client";
+import * as S from "./styles";
 import { useEffect, useState } from "react";
 import { Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
@@ -107,14 +108,14 @@ export function GuestPage({
   }
   if (!data?.authorized)
     return (
-      <main className="guest-card">
+      <S.GuestCard >
         <h1>Twoje zaproszenie</h1>
         {message && <p role="status">{message}</p>}
         {!data && !message && <p>Wczytywanie…</p>}
         {links.map((l) => (
-          <a className="guest-link" key={l.href} href={l.href}>
+          <S.GuestLink  key={l.href} href={l.href}>
             {l.label}
-          </a>
+          </S.GuestLink>
         ))}
         {data?.requiresLink && (
           <p>Otwórz oryginalny link otrzymany od organizatora.</p>
@@ -193,7 +194,7 @@ export function GuestPage({
         {data?.mode === "public" && (
           <p>Otwórz oryginalny link otrzymany od organizatora.</p>
         )}
-      </main>
+      </S.GuestCard>
     );
   return (
     <>
@@ -204,7 +205,7 @@ export function GuestPage({
         }
       />
       {data.invitation && (
-        <section className="guest-card">
+        <S.GuestCard as="section">
           <h2>Potwierdź obecność</h2>
           <p>{data.invitation.label}</p>
           {data.deadline && (
@@ -299,7 +300,7 @@ export function GuestPage({
             </button>
           </form>
           {message && <p role="status">{message}</p>}
-        </section>
+        </S.GuestCard>
       )}
     </>
   );

@@ -1,10 +1,10 @@
+import { StyledRegistry } from "@invitations/ui/registry";
+import { AdminGlobalStyles } from "../components/workspace.styles";
 import "@mantine/core/styles.css";
 import "@fontsource/inter/latin-ext-400.css";
 import "@fontsource/inter/latin-ext-600.css";
 import "@fontsource/playfair-display/latin-ext-500.css";
 import "@fontsource/playfair-display/latin-ext-600.css";
-import "@invitations/renderer/styles.css";
-import "./styles.css";
 import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { PanelI18nProvider } from "../lib/i18n";
 import { PanelTheme } from "../components/PanelTheme";
@@ -19,9 +19,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <ColorSchemeScript forceColorScheme="light" />
       </head>
       <body>
-        <PanelTheme>
-          <PanelI18nProvider>{children}</PanelI18nProvider>
-        </PanelTheme>
+        <StyledRegistry>
+          <AdminGlobalStyles />
+          <PanelTheme>
+            <PanelI18nProvider>{children}</PanelI18nProvider>
+          </PanelTheme>
+        </StyledRegistry>
       </body>
     </html>
   );

@@ -14,6 +14,7 @@ Platforma obsługuje wielu organizatorów i wiele realizacji we wspólnym runtim
 | `apps/site` | Odczyt publikacji, bramka dostępu gości, renderowanie wariantu, chronione zdjęcia i formularz RSVP |
 | `packages/domain` | Schemat Zod, normalizacja konfiguracji, projekcja treści dla gości, wspólna walidacja RSVP, hashowanie kodów i tokenów |
 | `packages/renderer` | Wspólny renderer React/Mantine dla podglądu i publikacji, motywy, responsywność i lokalne fonty |
+| `packages/ui` | Wspólny rejestr styled-components dla SSR i streamingu obu aplikacji Next.js |
 | `supabase/migrations` | Tabele, RLS, uprawnienia kolumnowe, transakcje publikacji i RSVP, sesje gości i limity prób |
 
 Stos zainstalowany w repozytorium: Next.js 16, React 19, TypeScript, Zod 4, Mantine 9, Supabase i Sharp. CI używa Node.js 24. Dokładne wersje określa `package-lock.json`. Vite nie uczestniczy w uruchamianiu ani budowaniu aplikacji.

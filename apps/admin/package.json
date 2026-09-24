@@ -11,6 +11,7 @@
   "dependencies": {
     "@invitations/domain": "*",
     "@invitations/renderer": "*",
-    "server-only": "0.0.1"
+    "server-only": "0.0.1",
+    "@invitations/ui": "*"
   }
 }

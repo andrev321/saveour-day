@@ -71,7 +71,7 @@ test("admin demo forwards custom color tokens to the preview", async ({
     .click();
   await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
   await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
-  await expect(page.frameLocator("iframe").locator(".invitation")).toHaveCSS(
+  await expect(page.frameLocator("iframe").locator("[data-ui=invitation]")).toHaveCSS(
     "--accent",
     "#123456",
   );
@@ -136,9 +136,9 @@ test("section editor uses Polish section names and supports reordering", async (
   await expect(page.getByLabel("Identyfikator", { exact: true })).toBeHidden();
   await handle.focus();
   await handle.press("Space");
-  await expect(page.locator(".section-drag-ghost")).toBeVisible();
+  await expect(page.locator("[data-ui=section-drag-ghost]")).toBeVisible();
   await handle.press("Escape");
-  await expect(page.locator(".section-drag-ghost")).toBeHidden();
+  await expect(page.locator("[data-ui=section-drag-ghost]")).toBeHidden();
   await parking.getByRole("button").first().click();
   await page.getByRole("button", { name: "Przesuń sekcję wyżej" }).click();
   await expect(
@@ -222,11 +222,11 @@ test("page editor supports dragging ordered references", async ({ page }) => {
     .first();
   await handle.focus();
   await handle.press("Space");
-  await expect(page.locator(".reference-drag-ghost")).toBeVisible();
+  await expect(page.locator("[data-ui=reference-drag-ghost]")).toBeVisible();
   await handle.press("Escape");
-  await expect(page.locator(".reference-drag-ghost")).toBeHidden();
+  await expect(page.locator("[data-ui=reference-drag-ghost]")).toBeHidden();
   await page.getByRole("button", { name: "Ukryj: Ceremonia" }).first().click();
-  await expect(page.locator(".reference-row-hidden")).toHaveCount(1);
+  await expect(page.locator("[data-ui=reference-row][data-visible=false]")).toHaveCount(1);
 });
 test("editor opens the current invitation in a full-screen preview", async ({
   page,

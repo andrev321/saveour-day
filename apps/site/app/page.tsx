@@ -1,8 +1,9 @@
+import * as S from "../components/styles";
 export default function Home() {
   return (
-    <main className="guest-card">
+    <S.GuestCard >
       <h1>Twoje zaproszenie</h1>
       <p>Otwórz link otrzymany od organizatora.</p>
-    </main>
+    </S.GuestCard>
   );
 }

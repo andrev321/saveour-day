@@ -1,16 +1,15 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
 import {
-  FloppyDiskIcon as IconDeviceFloppy,
-  DownloadSimpleIcon as IconDownload,
-  PaperPlaneTiltIcon as IconRocket,
-  UploadSimpleIcon as IconUpload,
-  SquaresFourIcon,
-} from "@phosphor-icons/react";
+  publishedConfigSchema,
+  siteConfigSchema,
+  themeDesigns,
+  type InvitationLocale,
+  type MediaAsset,
+  type SiteConfig,
+} from "@invitations/domain";
 import {
   Accordion,
   ActionIcon,
-  Tooltip,
   Alert,
   Badge,
   Button,
@@ -25,30 +24,33 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
 } from "@mantine/core";
 import {
-  siteConfigSchema,
-  publishedConfigSchema,
-  type InvitationLocale,
-  themeDesigns,
-  type SiteConfig,
-  type MediaAsset,
-} from "@invitations/domain";
+  FloppyDiskIcon as IconDeviceFloppy,
+  DownloadSimpleIcon as IconDownload,
+  PaperPlaneTiltIcon as IconRocket,
+  UploadSimpleIcon as IconUpload,
+  SquaresFourIcon,
+} from "@phosphor-icons/react";
+import { useEffect, useRef, useState } from "react";
+import * as S from "./preview.styles";
 
-import { Fields, CollectionFields } from "./ConfigFields";
-import { apiFetch } from "./Dashboard";
+import { createTemplate, type TemplateId } from "@invitations/domain/templates";
+import { useLocalStorage } from "@mantine/hooks";
 import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
-import { createTemplate, type TemplateId } from "@invitations/domain/templates";
 import { templateUi } from "../lib/template-i18n";
-import { TemplateDialog } from "./TemplateDialog";
-import { GuestManagement } from "./GuestManagement";
-import { useLocalStorage } from "@mantine/hooks";
-import { EditorWorkspace } from "./EditorWorkspace";
-import { PreviewToolbar } from "./PreviewToolbar";
-import { PreviewCanvas } from "./PreviewCanvas";
 import { workspaceUi } from "../lib/workspace-i18n";
+import { CollectionFields, Fields } from "./ConfigFields";
+import { apiFetch } from "./Dashboard";
+import { EditorWorkspace } from "./EditorWorkspace";
+import { DismissibleAlert } from "./DismissibleAlert";
+import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
+import { PreviewCanvas } from "./PreviewCanvas";
+import { PreviewToolbar } from "./PreviewToolbar";
+import { TemplateDialog } from "./TemplateDialog";
 type RevisionResponse = { revision: number };
 type SignedUpload = { id: string; path: string; token: string };
 export type EditorData = {
@@ -100,7 +102,9 @@ export function Editor({
   const validation = siteConfigSchema.safeParse(config);
   const readyToPublish = publishedConfigSchema.safeParse(config).success;
   const preview = useRef({ config, variant, urls: data.urls });
-  preview.current = { config, variant, urls: data.urls };
+  // Keep the last valid draft for both existing and newly opened preview frames.
+  if (validation.success)
+    preview.current = { config, variant, urls: data.urls };
   useEffect(() => {
     const handle = (e: MessageEvent) => {
       if (
@@ -120,12 +124,13 @@ export function Editor({
     return () => window.removeEventListener("message", handle);
   }, []);
   useEffect(() => {
+    if (!validation.success) return;
     for (const current of [frame.current, expandedFrame.current])
       current?.contentWindow?.postMessage(
         { type: "preview-config", config, variant, urls: data.urls },
         location.origin,
       );
-  }, [config, variant, data.urls]);
+  }, [config, variant, data.urls, validation.success]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -387,32 +392,51 @@ export function Editor({
         <>
           {" "}
           {demo ? (
-            <Alert title={t("localDemo")}>
+            <DismissibleAlert title={t("localDemo")}>
               {language === "pl"
                 ? "Zmiany są przechowywane tylko do odświeżenia strony. Publikacja jest symulowana i nie łączy się z Vercel."
                 : language === "en"
                   ? "Changes are kept only until the page is refreshed. Publishing is simulated and does not connect to Vercel."
                   : "Änderungen bleiben nur bis zum Aktualisieren der Seite erhalten. Die Veröffentlichung wird simuliert und stellt keine Verbindung zu Vercel her."}
-            </Alert>
+            </DismissibleAlert>
           ) : null}
-          {message ? <Alert role="status">{message}</Alert> : null}
+          {message ? (
+            <DismissibleAlert
+              key={message}
+              role="status"
+              onClose={() => setMessage("")}
+            >
+              {message}
+            </DismissibleAlert>
+          ) : null}
           {!validation.success ? (
-            <Alert color="red" title={t("validation")} role="alert">
+            <DismissibleAlert
+              key={JSON.stringify(
+                validation.error.issues.map(({ path, code, message }) => ({
+                  path,
+                  code,
+                  message,
+                })),
+              )}
+              color="red"
+              title={t("validation")}
+              role="alert"
+            >
               {validation.error.issues.slice(0, 8).map((i, index) => (
                 <Text size="sm" key={index}>
                   {i.path.join(".")}: {i.message}
                 </Text>
               ))}
-            </Alert>
+            </DismissibleAlert>
           ) : null}
-          {!readyToPublish && (
-            <Alert>
+          {!config.identity.displayName.trim() && (
+            <DismissibleAlert>
               {language === "pl"
                 ? "Uzupełnij główny napis, aby opublikować zaproszenie."
                 : language === "en"
                   ? "Add a main heading before publishing."
                   : "Ergänze die Hauptüberschrift vor der Veröffentlichung."}
-            </Alert>
+            </DismissibleAlert>
           )}
         </>
       }
@@ -499,21 +523,21 @@ export function Editor({
             fullScreen
           >
             <Modal.Overlay />
-            <Modal.Content classNames={{ content: "preview-dialog" }}>
-              <Modal.Header className="preview-dialog-header">
-                <Modal.Title className="preview-dialog-title">
-                  {ui.live}
-                </Modal.Title>
-                {previewControls}
-              </Modal.Header>
-              <Modal.Body className="preview-dialog-body">
-                <PreviewCanvas
-                  width={Number(width)}
-                  fit={fit}
-                  frame={expandedFrame}
-                  title={t("preview")}
-                />
-              </Modal.Body>
+            <Modal.Content>
+              <S.PreviewDialog>
+                <S.PreviewDialogHeader>
+                  <S.PreviewDialogTitle>{ui.live}</S.PreviewDialogTitle>
+                  {previewControls}
+                </S.PreviewDialogHeader>
+                <S.PreviewDialogBody>
+                  <PreviewCanvas
+                    width={Number(width)}
+                    fit={fit}
+                    frame={expandedFrame}
+                    title={t("preview")}
+                  />
+                </S.PreviewDialogBody>
+              </S.PreviewDialog>
             </Modal.Content>
           </Modal.Root>
         </>

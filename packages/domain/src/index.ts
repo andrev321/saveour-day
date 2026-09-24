@@ -10,8 +10,13 @@ export const httpsUrl = z
   .url()
   .max(2048)
   .refine((value) => {
-    const url = new URL(value);
-    return url.protocol === "https:" && !url.username && !url.password;
+    // Refinements also run for strings that failed the preceding URL check.
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && !url.username && !url.password;
+    } catch {
+      return false;
+    }
   }, "Wymagany adres HTTPS bez danych logowania");
 const optionalUrl = z.union([z.literal(""), httpsUrl]).default("");
 const hexColor = z
@@ -71,12 +76,16 @@ const contrastRatio = (first: string, second: string) => {
 };
 const mapUrl = optionalUrl.refine((value) => {
   if (!value) return true;
-  const u = new URL(value);
-  return (
-    ["www.google.com", "maps.google.com"].includes(u.hostname) &&
-    (u.pathname.startsWith("/maps/embed") ||
-      u.searchParams.get("output") === "embed")
-  );
+  try {
+    const u = new URL(value);
+    return (
+      ["www.google.com", "maps.google.com"].includes(u.hostname) &&
+      (u.pathname.startsWith("/maps/embed") ||
+        u.searchParams.get("output") === "embed")
+    );
+  } catch {
+    return false;
+  }
 }, "Mapa musi być adresem osadzania Google Maps");
 const imageSource = z
   .string()
