@@ -1,30 +1,25 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import {
-  IconDeviceFloppy,
-  IconDownload,
-  IconFileText,
-  IconLayoutList,
-  IconMaximize,
-  IconFiles,
-  IconPhoto,
-  IconRocket,
-  IconSettings,
-  IconUpload,
-} from "@tabler/icons-react";
+  FloppyDiskIcon as IconDeviceFloppy,
+  DownloadSimpleIcon as IconDownload,
+  PaperPlaneTiltIcon as IconRocket,
+  UploadSimpleIcon as IconUpload,
+  SquaresFourIcon,
+} from "@phosphor-icons/react";
 import {
   Accordion,
+  ActionIcon,
+  Tooltip,
   Alert,
   Badge,
   Button,
   Card,
-  Container,
   FileButton,
   Group,
   Modal,
   NumberInput,
   Select,
-  SimpleGrid,
   Stack,
   Tabs,
   Text,
@@ -44,14 +39,15 @@ import { Fields, CollectionFields } from "./ConfigFields";
 import { apiFetch } from "./Dashboard";
 import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
-import {
-  createTemplate,
-  templateCatalog,
-  type TemplateId,
-} from "@invitations/domain/templates";
+import { createTemplate, type TemplateId } from "@invitations/domain/templates";
 import { templateUi } from "../lib/template-i18n";
-import { TemplatePicker } from "./TemplatePicker";
+import { TemplateDialog } from "./TemplateDialog";
 import { GuestManagement } from "./GuestManagement";
+import { useLocalStorage } from "@mantine/hooks";
+import { EditorWorkspace } from "./EditorWorkspace";
+import { PreviewToolbar } from "./PreviewToolbar";
+import { PreviewCanvas } from "./PreviewCanvas";
+import { workspaceUi } from "../lib/workspace-i18n";
 import { LanguageSelect } from "./LanguageSelect";
 type RevisionResponse = { revision: number };
 type SignedUpload = { id: string; path: string; token: string };
@@ -77,12 +73,23 @@ export function Editor({
 }) {
   const { language, t } = usePanelI18n();
   const tt = templateUi[language];
+  const ui = workspaceUi[language];
+  const [preferredWidth, setWidth] = useLocalStorage({
+    key: "invitations-view-v1-device",
+    defaultValue: "390",
+  });
+  const width = ["320", "390", "768", "1440"].includes(preferredWidth)
+    ? preferredWidth
+    : "390";
+  const [fit, setFit] = useLocalStorage({
+    key: "invitations-view-v1-fit",
+    defaultValue: true,
+  });
   const [data, setData] = useState(initial),
     [config, setConfig] = useState(initial.draft.config),
     [saved, setSaved] = useState(JSON.stringify(initial.draft.config));
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
-    [width, setWidth] = useState<string>("390"),
     [variant, setVariant] = useState(config.defaultVariant),
     [previewOpen, setPreviewOpen] = useState(false);
   const [confirm, setConfirm] = useState<"publish" | string | null>(null);
@@ -128,24 +135,29 @@ export function Editor({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const endpoint = `/api/sites/${data.site.id}`;
-  const [templateId, setTemplateId] = useState<TemplateId>("wedding-reception");
+  const [templateId, setTemplateId] = useState<TemplateId | null>(null);
   const [templateLocale, setTemplateLocale] = useState<InvitationLocale>(
     config.locale,
   );
   const [templateConfirm, setTemplateConfirm] = useState(false);
   const [snapshotId, setSnapshotId] = useState<string | null>(null);
   const demoDrafts = useRef(new Map<string, SiteConfig>());
-  const templateLabel = templateCatalog(templateLocale).find(
-    (t) => t.id === templateId,
-  )?.label;
+  function openTemplateDialog() {
+    setSnapshotId(null);
+    setTemplateId(null);
+    setTemplateLocale(config.locale);
+    setMessage("");
+    setTemplateConfirm(true);
+  }
   async function replaceDraft() {
+    if (!snapshotId && !templateId) return;
     await task(async () => {
       let result: { config: SiteConfig; revision: number };
       if (demo) {
         const next = snapshotId
           ? demoDrafts.current.get(snapshotId)
           : createTemplate(
-              templateId,
+              templateId!,
               config.id,
               templateLocale,
               undefined,
@@ -293,51 +305,43 @@ export function Editor({
   function replace(key: keyof SiteConfig, value: unknown) {
     setConfig((current) => ({ ...current, [key]: value }));
   }
+  const previewControls = (
+    <PreviewToolbar
+      width={width}
+      onWidth={setWidth}
+      fit={fit}
+      onFit={setFit}
+      variant={variant}
+      onVariant={setVariant}
+      variants={config.variants}
+      expanded={previewOpen}
+      onExpand={() => setPreviewOpen((value) => !value)}
+    />
+  );
   return (
-    <Container size="xl" py="xl">
-      <Stack gap="lg">
-        <Group justify="space-between">
-          <div>
-            <Text size="sm" c="dimmed">
-              PRACOWNIA ZAPROSZEŃ
-            </Text>
-            <Title order={1}>{data.site.name}</Title>
-          </div>
-          <Group>
-            <LanguageSelect />
-            <Badge color={dirty ? "orange" : "green"}>
-              {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
-            </Badge>
-            <Button
-              component="a"
-              href="/"
-              variant="subtle"
-              leftSection={<IconLayoutList size={16} />}
-            >
-              {t("projects")}
-            </Button>
-          </Group>
-        </Group>
-        {demo ? (
-          <Alert title={t("localDemo")}>
-            {language === "pl"
-              ? "Zmiany są przechowywane tylko do odświeżenia strony. Publikacja jest symulowana i nie łączy się z Vercel."
-              : language === "en"
-                ? "Changes are kept only until the page is refreshed. Publishing is simulated and does not connect to Vercel."
-                : "Änderungen bleiben nur bis zum Aktualisieren der Seite erhalten. Die Veröffentlichung wird simuliert und stellt keine Verbindung zu Vercel her."}
-          </Alert>
-        ) : null}
-        {message ? <Alert role="status">{message}</Alert> : null}
-        {!validation.success ? (
-          <Alert color="red" title={t("validation")} role="alert">
-            {validation.error.issues.slice(0, 8).map((i, index) => (
-              <Text size="sm" key={index}>
-                {i.path.join(".")}: {i.message}
-              </Text>
-            ))}
-          </Alert>
-        ) : null}
-        <Group>
+    <EditorWorkspace
+      title={<Title order={1}>{data.site.name}</Title>}
+      headerTools={
+        <Tooltip label={tt.change}>
+          <ActionIcon
+            variant="subtle"
+            size="lg"
+            aria-label={tt.change}
+            disabled={busy}
+            onClick={openTemplateDialog}
+          >
+            <SquaresFourIcon size={22} weight="duotone" />
+          </ActionIcon>
+        </Tooltip>
+      }
+      status={
+        <Badge color={dirty ? "orange" : "forest"}>
+          {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
+        </Badge>
+      }
+      save={
+        <>
+          {" "}
           <Button
             onClick={save}
             loading={busy}
@@ -346,10 +350,15 @@ export function Editor({
           >
             {t("save")}
           </Button>
+        </>
+      }
+      actions={
+        <>
+          {" "}
           <Button
             onClick={() => setConfirm("publish")}
             disabled={dirty || busy || !readyToPublish}
-            color="dark"
+            color="forest"
             leftSection={<IconRocket size={16} />}
           >
             {demo ? t("simulate") : t("publish")}
@@ -371,462 +380,425 @@ export function Editor({
           >
             {t("export")}
           </Button>
-        </Group>
-        {!readyToPublish && (
-          <Alert>
-            {language === "pl"
-              ? "Uzupełnij główny napis, aby opublikować zaproszenie."
-              : language === "en"
-                ? "Add a main heading before publishing."
-                : "Ergänze die Hauptüberschrift vor der Veröffentlichung."}
-          </Alert>
-        )}
-        <Modal
-          opened={templateConfirm}
-          onClose={() => !busy && setTemplateConfirm(false)}
-          title={snapshotId ? tt.restore : `${tt.apply}: ${templateLabel}?`}
-        >
-          <Stack>
-            {message && (
-              <Alert color="red" role="status">
-                {message}
-              </Alert>
-            )}
-            <Text>{tt.warning}</Text>
-            <Text>{tt.retained}</Text>
-            <Group>
-              <Button
-                variant="default"
-                disabled={busy}
-                onClick={() => setTemplateConfirm(false)}
-              >
-                {tt.cancel}
-              </Button>
-              <Button
-                color="red"
-                loading={busy}
-                onClick={() => void replaceDraft()}
-              >
-                {tt.replace}
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
-        <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
-          <Card withBorder p="lg">
-            <Tabs defaultValue="page">
-              <Tabs.List>
-                <Tabs.Tab value="page" leftSection={<IconFileText size={15} />}>
-                  {t("page")}
-                </Tabs.Tab>
-                <Tabs.Tab
-                  value="sections"
-                  leftSection={<IconLayoutList size={15} />}
-                >
-                  {t("structure")}
-                </Tabs.Tab>
-                <Tabs.Tab value="pages" leftSection={<IconFiles size={15} />}>
-                  {t("pages")}
-                </Tabs.Tab>
-                <Tabs.Tab value="media" leftSection={<IconPhoto size={15} />}>
-                  {t("media")}
-                </Tabs.Tab>
-                <Tabs.Tab
-                  value="settings"
-                  leftSection={<IconSettings size={15} />}
-                >
-                  {t("settings")}
-                </Tabs.Tab>
-              </Tabs.List>
-              <Tabs.Panel value="page" pt="lg">
-                <Stack>
-                  <Title order={3}>{t("hero")}</Title>
-                  <Fields
-                    config={config}
-                    value={{
-                      ...config.hero,
-                      mediaId: config.hero.mediaId || "",
-                      mobileMediaId: config.hero.mobileMediaId || "",
-                    }}
-                    onChange={(v) => {
-                      if (!v.mediaId) delete v.mediaId;
-                      if (!v.mobileMediaId) delete v.mobileMediaId;
-                      replace("hero", v);
-                    }}
-                  />
-                  <Title order={3}>{t("identity")}</Title>
-                  <Fields
-                    config={config}
-                    value={config.identity}
-                    onChange={(v) => replace("identity", v)}
-                  />
-                  <Title order={3}>{t("venues")}</Title>
-                  <CollectionFields
-                    name="venues"
-                    config={config}
-                    onChange={setConfig}
-                  />
-                  <Title order={3}>{t("events")}</Title>
-                  <CollectionFields
-                    name="events"
-                    config={config}
-                    onChange={setConfig}
-                  />
-                  <Title order={3}>{t("contacts")}</Title>
-                  <CollectionFields
-                    name="contacts"
-                    config={config}
-                    onChange={setConfig}
-                  />
-                </Stack>
-              </Tabs.Panel>
-              <Tabs.Panel value="sections" pt="lg">
-                <Stack>
-                  <Title order={3}>{t("structure")}</Title>
-                  <CollectionFields
-                    name="sections"
-                    config={config}
-                    onChange={setConfig}
-                  />
-                </Stack>
-              </Tabs.Panel>
-              <Tabs.Panel value="pages" pt="lg">
-                <Stack>
-                  <Title order={3}>{t("pages")}</Title>
-                  <CollectionFields
-                    name="variants"
-                    config={config}
-                    onChange={setConfig}
-                    onPageSelect={setVariant}
-                  />
-                  <Select
-                    label={t("mainPage")}
-                    data={config.variants.map((v) => ({
-                      value: v.id,
-                      label: v.label,
-                    }))}
-                    value={config.defaultVariant}
-                    allowDeselect={false}
-                    onChange={(v) => replace("defaultVariant", v)}
-                  />
-                </Stack>
-              </Tabs.Panel>
-              <Tabs.Panel value="media" pt="lg">
-                <Stack>
-                  <FileButton
-                    onChange={upload}
-                    accept="image/png,image/jpeg,image/webp"
-                  >
-                    {(props) => (
-                      <Button
-                        {...props}
-                        loading={busy}
-                        leftSection={<IconUpload size={16} />}
-                      >
-                        {language === "pl"
-                          ? "Dodaj zdjęcie"
-                          : language === "en"
-                            ? "Add photo"
-                            : "Foto hinzufügen"}
-                      </Button>
-                    )}
-                  </FileButton>
-                  <Text size="sm" c="dimmed">
-                    {language === "pl"
-                      ? "JPEG, PNG lub WebP; do 8 MB i 20 megapikseli."
-                      : language === "en"
-                        ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
-                        : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
-                  </Text>
-                  {data.media
-                    .filter((m) => !config.media.some((c) => c.id === m.id))
-                    .map((m) => (
-                      <Button
-                        key={m.id}
-                        variant="light"
-                        onClick={() =>
-                          setConfig({
-                            ...config,
-                            media: [...config.media, m.manifest],
-                          })
-                        }
-                      >
-                        {language === "pl"
-                          ? "Dodaj zapisane zdjęcie"
-                          : language === "en"
-                            ? "Add saved photo"
-                            : "Gespeichertes Foto hinzufügen"}{" "}
-                        {m.id.slice(0, 8)}
-                      </Button>
-                    ))}
-                  {config.media.map((media, index) => (
-                    <Card withBorder key={media.id}>
-                      <Text size="sm" mb="sm">
-                        {language === "pl"
-                          ? "Zdjęcie"
-                          : language === "en"
-                            ? "Photo"
-                            : "Foto"}{" "}
-                        {index + 1}
-                      </Text>
-                      <TextInput
-                        label={
-                          language === "pl"
-                            ? "Opis alternatywny (pusty dla dekoracji)"
-                            : language === "en"
-                              ? "Alternative description (leave empty for decoration)"
-                              : "Alternativbeschreibung (für Dekoration leer lassen)"
-                        }
-                        value={media.alt}
-                        onChange={(e) => {
-                          const next = structuredClone(config);
-                          next.media[index].alt = e.currentTarget.value;
-                          setConfig(next);
-                        }}
-                      />
-                      {(
-                        [
-                          "focalX",
-                          "focalY",
-                          "mobileFocalX",
-                          "mobileFocalY",
-                        ] as const
-                      ).map((key) => (
-                        <NumberInput
-                          key={key}
-                          label={
-                            {
-                              focalX: t("focalDesktopX"),
-                              focalY: t("focalDesktopY"),
-                              mobileFocalX: t("focalMobileX"),
-                              mobileFocalY: t("focalMobileY"),
-                            }[key]
-                          }
-                          min={0}
-                          max={100}
-                          value={media[key]}
-                          onChange={(v) => {
-                            const next = structuredClone(config);
-                            next.media[index][key] = Number(v);
-                            setConfig(next);
-                          }}
-                        />
-                      ))}
-                    </Card>
-                  ))}
-                </Stack>
-              </Tabs.Panel>
-              <Tabs.Panel value="settings" pt="lg">
-                <Stack>
-                  <Select
-                    label={t("theme")}
-                    data={[
-                      {
-                        value: "ivory",
-                        label:
-                          language === "pl"
-                            ? "Krem i złoto"
-                            : language === "en"
-                              ? "Ivory and gold"
-                              : "Elfenbein und Gold",
-                      },
-                      {
-                        value: "sage",
-                        label:
-                          language === "pl"
-                            ? "Szałwia i kość słoniowa"
-                            : language === "en"
-                              ? "Sage and ivory"
-                              : "Salbei und Elfenbein",
-                      },
-                      {
-                        value: "wine",
-                        label:
-                          language === "pl"
-                            ? "Bordo i jasne tło"
-                            : language === "en"
-                              ? "Wine and light background"
-                              : "Bordeaux und heller Hintergrund",
-                      },
-                    ]}
-                    value={config.theme}
-                    allowDeselect={false}
-                    onChange={(value) => {
-                      if (!value) return;
-                      const theme = value as SiteConfig["theme"];
-                      setConfig((current) => ({
-                        ...current,
-                        theme,
-                        design: themeDesigns[theme],
-                      }));
-                    }}
-                  />
-                  <Title order={3}>{t("colors")}</Title>
-                  <Fields
-                    config={config}
-                    value={config.design}
-                    onChange={(value) => replace("design", value)}
-                  />
-                  <Title order={3}>{t("sharing")}</Title>
-                  <Fields
-                    config={config}
-                    value={config.metadata}
-                    onChange={(v) => replace("metadata", v)}
-                  />
-                  <Title order={3}>{t("labelsFooter")}</Title>
-                  <Fields
-                    config={config}
-                    value={config.copy}
-                    onChange={(v) => replace("copy", v)}
-                  />
-                  <Accordion variant="separated">
-                    <Accordion.Item value="template-reset">
-                      <Accordion.Control>
-                        {language === "pl"
-                          ? "Zmiana szablonu i kopie szkicu"
-                          : language === "en"
-                            ? "Change template and draft backups"
-                            : "Vorlage ändern und Entwurfssicherungen"}
-                      </Accordion.Control>
-                      <Accordion.Panel>
-                        <Stack>
-                          <TemplatePicker
-                            templateId={templateId}
-                            locale={templateLocale}
-                            onTemplate={setTemplateId}
-                            onLocale={setTemplateLocale}
-                          />
-                          <Button
-                            variant="light"
-                            disabled={busy}
-                            onClick={() => {
-                              setSnapshotId(null);
-                              setMessage("");
-                              setTemplateConfirm(true);
-                            }}
-                          >
-                            {tt.change}
-                          </Button>
-                          {!!data.snapshots?.length && (
-                            <Group align="end">
-                              <Select
-                                label={tt.snapshot}
-                                placeholder={tt.chooseSnapshot}
-                                value={snapshotId}
-                                onChange={setSnapshotId}
-                                data={data.snapshots.map((s) => ({
-                                  value: s.id,
-                                  label: `${tt.revision} ${s.revision} · ${new Date(s.created_at).toLocaleString()}`,
-                                }))}
-                              />
-                              <Button
-                                variant="subtle"
-                                disabled={!snapshotId || busy}
-                                onClick={() => {
-                                  setMessage("");
-                                  setTemplateConfirm(true);
-                                }}
-                              >
-                                {tt.restore}
-                              </Button>
-                            </Group>
-                          )}
-                        </Stack>
-                      </Accordion.Panel>
-                    </Accordion.Item>
-                  </Accordion>
-                </Stack>
-              </Tabs.Panel>
-            </Tabs>
-          </Card>
-          <Stack>
-            <Group>
-              <Select
-                label={t("preview")}
-                data={config.variants.map((v) => ({
-                  value: v.id,
-                  label: v.label,
-                }))}
-                value={variant}
-                onChange={(v) => setVariant(v || config.defaultVariant)}
-              />
-              <Select
-                label={t("screenWidth")}
-                data={["320", "390", "768", "1440"]}
-                value={width}
-                onChange={(v) => setWidth(v || "390")}
-              />
-              <Button
-                variant="light"
-                onClick={() => setPreviewOpen(true)}
-                leftSection={<IconMaximize size={16} />}
-              >
-                {t("openPreview")}
-              </Button>
-            </Group>
-            <div className="admin-preview">
-              <div
-                className="admin-preview-inner"
-                style={{ width: Number(width) }}
-              >
-                <iframe ref={frame} src="/preview" title={t("preview")} />
-              </div>
-            </div>
-            <Text size="xs" c="dimmed">
+          <LanguageSelect />
+        </>
+      }
+      notices={
+        <>
+          {" "}
+          {demo ? (
+            <Alert title={t("localDemo")}>
               {language === "pl"
-                ? "Podgląd korzysta z tego samego renderera co opublikowana strona. Przy błędnych danych pozostaje ostatnia prawidłowa wersja."
+                ? "Zmiany są przechowywane tylko do odświeżenia strony. Publikacja jest symulowana i nie łączy się z Vercel."
                 : language === "en"
-                  ? "The preview uses the same renderer as the published site. Invalid data leaves the last valid version visible."
-                  : "Die Vorschau verwendet denselben Renderer wie die veröffentlichte Seite. Bei ungültigen Daten bleibt die letzte gültige Version sichtbar."}
-            </Text>
-          </Stack>
-        </SimpleGrid>
-        <Modal
-          opened={previewOpen}
-          onClose={() => setPreviewOpen(false)}
-          title={t("preview")}
-          size="calc(100vw - 4rem)"
-          yOffset="2rem"
-          xOffset="2rem"
-          classNames={{
-            content: "expanded-preview-modal",
-            body: "expanded-preview-modal-body",
-          }}
-          overlayProps={{ backgroundOpacity: 0.24, blur: 1 }}
-          transitionProps={{ transition: "pop", duration: 180 }}
-        >
-          <Stack h="100%" gap="sm">
-            <Group>
-              <Select
-                label={t("preview")}
-                data={config.variants.map((page) => ({
-                  value: page.id,
-                  label: page.label,
-                }))}
-                value={variant}
-                onChange={(value) => setVariant(value || config.defaultVariant)}
-              />
-              <Select
-                label={t("screenWidth")}
-                data={["320", "390", "768", "1024", "1440"]}
-                value={width}
-                onChange={(value) => setWidth(value || "390")}
-              />
-              <Button variant="subtle" onClick={() => setPreviewOpen(false)}>
-                {t("closePreview")}
+                  ? "Changes are kept only until the page is refreshed. Publishing is simulated and does not connect to Vercel."
+                  : "Änderungen bleiben nur bis zum Aktualisieren der Seite erhalten. Die Veröffentlichung wird simuliert und stellt keine Verbindung zu Vercel her."}
+            </Alert>
+          ) : null}
+          {message ? <Alert role="status">{message}</Alert> : null}
+          {!validation.success ? (
+            <Alert color="red" title={t("validation")} role="alert">
+              {validation.error.issues.slice(0, 8).map((i, index) => (
+                <Text size="sm" key={index}>
+                  {i.path.join(".")}: {i.message}
+                </Text>
+              ))}
+            </Alert>
+          ) : null}
+          {!readyToPublish && (
+            <Alert>
+              {language === "pl"
+                ? "Uzupełnij główny napis, aby opublikować zaproszenie."
+                : language === "en"
+                  ? "Add a main heading before publishing."
+                  : "Ergänze die Hauptüberschrift vor der Veröffentlichung."}
+            </Alert>
+          )}
+        </>
+      }
+      onResetView={() => {
+        setWidth("390");
+        setFit(true);
+      }}
+      preview={
+        <>
+          {!previewOpen && previewControls}
+          <PreviewCanvas
+            width={Number(width)}
+            fit={fit}
+            frame={frame}
+            title={t("preview")}
+          />
+        </>
+      }
+      dialogs={
+        <>
+          <TemplateDialog
+            opened={templateConfirm && !snapshotId}
+            onClose={() => setTemplateConfirm(false)}
+            title={tt.change}
+            templateId={templateId}
+            locale={templateLocale}
+            onTemplate={setTemplateId}
+            onLocale={setTemplateLocale}
+            onSubmit={() => void replaceDraft()}
+            submitLabel={tt.replace}
+            busy={busy}
+            error={message}
+            reset
+          />
+          <Modal
+            opened={templateConfirm && !!snapshotId}
+            onClose={() => !busy && setTemplateConfirm(false)}
+            title={tt.restore}
+          >
+            <Stack>
+              {message && (
+                <Alert color="red" role="status">
+                  {message}
+                </Alert>
+              )}
+              <Text>{tt.warning}</Text>
+              <Text>{tt.retained}</Text>
+              <Group>
+                <Button
+                  variant="default"
+                  disabled={busy}
+                  onClick={() => setTemplateConfirm(false)}
+                >
+                  {tt.cancel}
+                </Button>
+                <Button
+                  color="red"
+                  loading={busy}
+                  onClick={() => void replaceDraft()}
+                >
+                  {tt.replace}
+                </Button>
+              </Group>
+            </Stack>
+          </Modal>
+          <Modal
+            opened={!!confirm}
+            onClose={() => setConfirm(null)}
+            title={
+              confirm === "publish" ? t("publishTitle") : t("restoreTitle")
+            }
+          >
+            <Stack>
+              <Text>{t("publishWarning")}</Text>
+              <Button onClick={publish}>
+                {demo ? t("startSimulation") : t("confirmPublish")}
               </Button>
-            </Group>
-            <div className="expanded-preview-frame">
-              <div style={{ width: Number(width) }}>
-                <iframe
-                  ref={expandedFrame}
-                  src="/preview"
+            </Stack>
+          </Modal>
+
+          <Modal.Root
+            opened={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            fullScreen
+          >
+            <Modal.Overlay />
+            <Modal.Content classNames={{ content: "preview-dialog" }}>
+              <Modal.Header className="preview-dialog-header">
+                <Modal.Title className="preview-dialog-title">
+                  {ui.live}
+                </Modal.Title>
+                {previewControls}
+              </Modal.Header>
+              <Modal.Body className="preview-dialog-body">
+                <PreviewCanvas
+                  width={Number(width)}
+                  fit={fit}
+                  frame={expandedFrame}
                   title={t("preview")}
                 />
-              </div>
-            </div>
-          </Stack>
-        </Modal>
+              </Modal.Body>
+            </Modal.Content>
+          </Modal.Root>
+        </>
+      }
+    >
+      <Tabs.Panel value="page" pt="lg">
+        <Stack>
+          <Title order={3}>{t("hero")}</Title>
+          <Fields
+            config={config}
+            value={{
+              ...config.hero,
+              mediaId: config.hero.mediaId || "",
+              mobileMediaId: config.hero.mobileMediaId || "",
+            }}
+            onChange={(v) => {
+              if (!v.mediaId) delete v.mediaId;
+              if (!v.mobileMediaId) delete v.mobileMediaId;
+              replace("hero", v);
+            }}
+          />
+          <Title order={3}>{t("identity")}</Title>
+          <Fields
+            config={config}
+            value={config.identity}
+            onChange={(v) => replace("identity", v)}
+          />
+          <Title order={3}>{t("venues")}</Title>
+          <CollectionFields
+            name="venues"
+            config={config}
+            onChange={setConfig}
+          />
+          <Title order={3}>{t("events")}</Title>
+          <CollectionFields
+            name="events"
+            config={config}
+            onChange={setConfig}
+          />
+          <Title order={3}>{t("contacts")}</Title>
+          <CollectionFields
+            name="contacts"
+            config={config}
+            onChange={setConfig}
+          />
+        </Stack>
+      </Tabs.Panel>
+      <Tabs.Panel value="sections" pt="lg">
+        <Stack>
+          <Title order={3}>{t("structure")}</Title>
+          <CollectionFields
+            name="sections"
+            config={config}
+            onChange={setConfig}
+          />
+        </Stack>
+      </Tabs.Panel>
+      <Tabs.Panel value="pages" pt="lg">
+        <Stack>
+          <Title order={3}>{t("pages")}</Title>
+          <CollectionFields
+            name="variants"
+            config={config}
+            onChange={setConfig}
+            onPageSelect={setVariant}
+          />
+          <Select
+            label={t("mainPage")}
+            data={config.variants.map((v) => ({
+              value: v.id,
+              label: v.label,
+            }))}
+            value={config.defaultVariant}
+            allowDeselect={false}
+            onChange={(v) => replace("defaultVariant", v)}
+          />
+        </Stack>
+      </Tabs.Panel>
+      <Tabs.Panel value="media" pt="lg">
+        <Stack>
+          <FileButton
+            onChange={upload}
+            accept="image/png,image/jpeg,image/webp"
+          >
+            {(props) => (
+              <Button
+                {...props}
+                loading={busy}
+                leftSection={<IconUpload size={16} />}
+              >
+                {language === "pl"
+                  ? "Dodaj zdjęcie"
+                  : language === "en"
+                    ? "Add photo"
+                    : "Foto hinzufügen"}
+              </Button>
+            )}
+          </FileButton>
+          <Text size="sm" c="dimmed">
+            {language === "pl"
+              ? "JPEG, PNG lub WebP; do 8 MB i 20 megapikseli."
+              : language === "en"
+                ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
+                : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
+          </Text>
+          {data.media
+            .filter((m) => !config.media.some((c) => c.id === m.id))
+            .map((m) => (
+              <Button
+                key={m.id}
+                variant="light"
+                onClick={() =>
+                  setConfig({
+                    ...config,
+                    media: [...config.media, m.manifest],
+                  })
+                }
+              >
+                {language === "pl"
+                  ? "Dodaj zapisane zdjęcie"
+                  : language === "en"
+                    ? "Add saved photo"
+                    : "Gespeichertes Foto hinzufügen"}{" "}
+                {m.id.slice(0, 8)}
+              </Button>
+            ))}
+          {config.media.map((media, index) => (
+            <Card withBorder key={media.id}>
+              <Text size="sm" mb="sm">
+                {language === "pl"
+                  ? "Zdjęcie"
+                  : language === "en"
+                    ? "Photo"
+                    : "Foto"}{" "}
+                {index + 1}
+              </Text>
+              <TextInput
+                label={
+                  language === "pl"
+                    ? "Opis alternatywny (pusty dla dekoracji)"
+                    : language === "en"
+                      ? "Alternative description (leave empty for decoration)"
+                      : "Alternativbeschreibung (für Dekoration leer lassen)"
+                }
+                value={media.alt}
+                onChange={(e) => {
+                  const next = structuredClone(config);
+                  next.media[index].alt = e.currentTarget.value;
+                  setConfig(next);
+                }}
+              />
+              {(
+                ["focalX", "focalY", "mobileFocalX", "mobileFocalY"] as const
+              ).map((key) => (
+                <NumberInput
+                  key={key}
+                  label={
+                    {
+                      focalX: t("focalDesktopX"),
+                      focalY: t("focalDesktopY"),
+                      mobileFocalX: t("focalMobileX"),
+                      mobileFocalY: t("focalMobileY"),
+                    }[key]
+                  }
+                  min={0}
+                  max={100}
+                  value={media[key]}
+                  onChange={(v) => {
+                    const next = structuredClone(config);
+                    next.media[index][key] = Number(v);
+                    setConfig(next);
+                  }}
+                />
+              ))}
+            </Card>
+          ))}
+        </Stack>
+      </Tabs.Panel>
+      <Tabs.Panel value="settings" pt="lg">
+        <Stack>
+          <Select
+            label={t("theme")}
+            data={[
+              {
+                value: "ivory",
+                label:
+                  language === "pl"
+                    ? "Krem i złoto"
+                    : language === "en"
+                      ? "Ivory and gold"
+                      : "Elfenbein und Gold",
+              },
+              {
+                value: "sage",
+                label:
+                  language === "pl"
+                    ? "Szałwia i kość słoniowa"
+                    : language === "en"
+                      ? "Sage and ivory"
+                      : "Salbei und Elfenbein",
+              },
+              {
+                value: "wine",
+                label:
+                  language === "pl"
+                    ? "Bordo i jasne tło"
+                    : language === "en"
+                      ? "Wine and light background"
+                      : "Bordeaux und heller Hintergrund",
+              },
+            ]}
+            value={config.theme}
+            allowDeselect={false}
+            onChange={(value) => {
+              if (!value) return;
+              const theme = value as SiteConfig["theme"];
+              setConfig((current) => ({
+                ...current,
+                theme,
+                design: themeDesigns[theme],
+              }));
+            }}
+          />
+          <Title order={3}>{t("colors")}</Title>
+          <Fields
+            config={config}
+            value={config.design}
+            onChange={(value) => replace("design", value)}
+          />
+          <Title order={3}>{t("sharing")}</Title>
+          <Fields
+            config={config}
+            value={config.metadata}
+            onChange={(v) => replace("metadata", v)}
+          />
+          <Title order={3}>{t("labelsFooter")}</Title>
+          <Fields
+            config={config}
+            value={config.copy}
+            onChange={(v) => replace("copy", v)}
+          />
+          <Accordion variant="separated">
+            <Accordion.Item value="template-reset">
+              <Accordion.Control>
+                {language === "pl"
+                  ? "Kopie szkicu"
+                  : language === "en"
+                    ? "Draft backups"
+                    : "Entwurfssicherungen"}
+              </Accordion.Control>
+              <Accordion.Panel>
+                <Stack>
+                  {!!data.snapshots?.length && (
+                    <Group align="end">
+                      <Select
+                        label={tt.snapshot}
+                        placeholder={tt.chooseSnapshot}
+                        value={snapshotId}
+                        onChange={setSnapshotId}
+                        data={data.snapshots.map((s) => ({
+                          value: s.id,
+                          label: `${tt.revision} ${s.revision} · ${new Date(s.created_at).toLocaleString()}`,
+                        }))}
+                      />
+                      <Button
+                        variant="subtle"
+                        disabled={!snapshotId || busy}
+                        onClick={() => {
+                          setMessage("");
+                          setTemplateConfirm(true);
+                        }}
+                      >
+                        {tt.restore}
+                      </Button>
+                    </Group>
+                  )}
+                </Stack>
+              </Accordion.Panel>
+            </Accordion.Item>
+          </Accordion>
+        </Stack>
+      </Tabs.Panel>
+
+      <Tabs.Panel value="history">
+        {" "}
         <Card withBorder>
           <Title order={2} mb="md">
             {t("history")}
@@ -874,25 +846,17 @@ export function Editor({
             ))}
           </Stack>
         </Card>
+      </Tabs.Panel>
+      <Tabs.Panel value="guests">
+        {" "}
         {!demo && (
           <GuestManagement
             key={data.releases[0]?.id || `draft-${data.draft.revision}`}
             siteId={data.site.id}
           />
         )}
-        <Modal
-          opened={!!confirm}
-          onClose={() => setConfirm(null)}
-          title={confirm === "publish" ? t("publishTitle") : t("restoreTitle")}
-        >
-          <Stack>
-            <Text>{t("publishWarning")}</Text>
-            <Button onClick={publish}>
-              {demo ? t("startSimulation") : t("confirmPublish")}
-            </Button>
-          </Stack>
-        </Modal>
-      </Stack>
-    </Container>
+        {demo && <Alert>{ui.demoGuests}</Alert>}
+      </Tabs.Panel>
+    </EditorWorkspace>
   );
 }

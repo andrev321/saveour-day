@@ -89,6 +89,7 @@ test("organizer creates family links, edits recipients and changes access settin
   await page.goto(
     `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
   );
+  await page.getByRole("tab", { name: "Goście", exact: true }).click();
   await page.getByLabel("Nazwa osoby lub rodziny").fill("Rodzina Kowalskich");
   await page
     .getByLabel("Goście — każda osoba w osobnym wierszu")

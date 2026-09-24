@@ -4,6 +4,8 @@ Stan kodu: 2026-09-23. Dokument opisuje implementację w repozytorium. Nie potwi
 
 ## Podział aplikacji
 
+Panel korzysta z adaptacyjnego układu Focus × Paper. `EditorWorkspace` odpowiada za nawigację i układ, `PreviewCanvas` za skalowanie iframe, a `PanelTheme` za paletę Mantine i ikony Phosphor. Preferencje widoku są lokalne dla urządzenia i nie trafiają do konfiguracji zaproszenia. Szczegóły: [interfejs konfiguratora](KONFIGURATOR-INTERFEJS.md).
+
 Platforma obsługuje wielu organizatorów i wiele realizacji we wspólnym runtime. Docelowa konfiguracja hostingu to dwa projekty Next.js na Vercel i jeden projekt Supabase na środowisko.
 
 | Moduł | Odpowiedzialność |

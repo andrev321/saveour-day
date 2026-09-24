@@ -63,6 +63,8 @@ Wymagane są wszystkie trzy migracje Supabase oraz własny SMTP. Zmiany w repozy
 
 ## Dokumentacja
 
+- [Interfejs konfiguratora](docs/KONFIGURATOR-INTERFEJS.md) — Focus × Paper, układ mobilny, skalowanie podglądu i preferencje widoku.
+
 - [Szablony startowe](docs/SZABLONY-STARTOWE.md) — wybór, reset, kopie szkicu oraz zgodność starszych zaproszeń.
 
 - [Samodzielne wdrożenie — checklista](docs/CHECKLISTA-WDROZENIA.md) — co zapewnić, gdzie wpisać ustawienia i jak odebrać wdrożenie.
