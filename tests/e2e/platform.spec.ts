@@ -246,12 +246,8 @@ test("editor opens the current invitation in a full-screen preview", async ({
       .frameLocator("iframe")
       .getByRole("heading", { name: "Anna & Jan", exact: true }),
   ).toBeVisible();
-  await dialog.getByRole("combobox", { name: "Szerokość ekranu" }).click();
-  await page.getByRole("option", { name: "768", exact: true }).click();
-  await expect(dialog.locator(".expanded-preview-frame > div")).toHaveCSS(
-    "width",
-    "768px",
-  );
+  await dialog.getByRole("button", { name: "Tablet", exact: true }).click();
+  await expect(dialog.locator("iframe")).toHaveCSS("width", "768px");
   await dialog.getByRole("combobox", { name: "Podgląd wariantu" }).click();
   await page.getByRole("option", { name: "Główna", exact: true }).click();
   await dialog.getByRole("button", { name: "Zamknij podgląd" }).click();

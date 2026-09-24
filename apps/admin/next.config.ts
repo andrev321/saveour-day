@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  devIndicators: false,
   transpilePackages: ["@invitations/domain", "@invitations/renderer"],
-  experimental: { optimizePackageImports: ["@mantine/core", "@mantine/hooks"] },
+  experimental: {
+    optimizePackageImports: [
+      "@mantine/core",
+      "@mantine/hooks",
+      "@phosphor-icons/react",
+    ],
+  },
   async headers() {
     const developmentEval =
       process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";

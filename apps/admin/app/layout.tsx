@@ -5,12 +5,9 @@ import "@fontsource/playfair-display/latin-ext-500.css";
 import "@fontsource/playfair-display/latin-ext-600.css";
 import "@invitations/renderer/styles.css";
 import "./styles.css";
-import {
-  MantineProvider,
-  ColorSchemeScript,
-  mantineHtmlProps,
-} from "@mantine/core";
+import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { PanelI18nProvider } from "../lib/i18n";
+import { PanelTheme } from "../components/PanelTheme";
 export const metadata = {
   title: "Pracownia zaproszeń",
   robots: { index: false, follow: false },
@@ -22,9 +19,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <ColorSchemeScript forceColorScheme="light" />
       </head>
       <body>
-        <MantineProvider forceColorScheme="light">
+        <PanelTheme>
           <PanelI18nProvider>{children}</PanelI18nProvider>
-        </MantineProvider>
+        </PanelTheme>
       </body>
     </html>
   );

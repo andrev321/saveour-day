@@ -1,20 +1,20 @@
 "use client";
 import { useState } from "react";
 import {
-  IconCalendarTime,
-  IconChevronDown,
-  IconChevronUp,
-  IconEye,
-  IconEyeOff,
-  IconGripVertical,
-  IconInfoCircle,
-  IconLayoutList,
-  IconMapPin,
-  IconMessageCircle,
-  IconPhoto,
-  IconPlus,
-  IconTrash,
-} from "@tabler/icons-react";
+  CalendarDotsIcon as IconCalendarTime,
+  CaretDownIcon as IconChevronDown,
+  CaretUpIcon as IconChevronUp,
+  EyeIcon as IconEye,
+  EyeSlashIcon as IconEyeOff,
+  DotsSixVerticalIcon as IconGripVertical,
+  InfoIcon as IconInfoCircle,
+  StackIcon as IconLayoutList,
+  MapPinIcon as IconMapPin,
+  ChatCircleIcon as IconMessageCircle,
+  ImageIcon as IconPhoto,
+  PlusIcon as IconPlus,
+  TrashIcon as IconTrash,
+} from "@phosphor-icons/react";
 import {
   DndContext,
   DragOverlay,
@@ -298,7 +298,7 @@ function SortableReference({
         {...attributes}
         {...listeners}
       >
-        <IconGripVertical size={18} stroke={1.75} />
+        <IconGripVertical size={18} />
       </ActionIcon>
       <Text size="sm" className="reference-name">
         {name}
@@ -413,7 +413,7 @@ function OrderedReferences({
           <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
             {activeId ? (
               <div className="reference-drag-ghost">
-                <IconGripVertical size={18} stroke={1.75} />
+                <IconGripVertical size={18} />
                 <Text size="sm">{referenceName(activeId, available)}</Text>
               </div>
             ) : null}
@@ -502,9 +502,7 @@ export function Fields({
                 allowDeselect={false}
                 leftSection={
                   <span className="section-type-icon">
-                    {SelectedIcon ? (
-                      <SelectedIcon size={16} stroke={1.75} />
-                    ) : null}
+                    {SelectedIcon ? <SelectedIcon size={16} /> : null}
                   </span>
                 }
                 renderOption={({ option }) => {
@@ -515,7 +513,7 @@ export function Fields({
                   return (
                     <span className="section-type-option">
                       <span className="section-type-icon">
-                        {Icon ? <Icon size={16} stroke={1.75} /> : null}
+                        {Icon ? <Icon size={16} /> : null}
                       </span>
                       <span>{option.label}</span>
                     </span>
@@ -1111,39 +1109,41 @@ function SortableSection({
           transition,
         }}
       >
-        <Accordion.Control
-          icon={
-            <ThemeIcon
-              className="section-card-icon"
-              variant="light"
-              radius="xl"
-              size={36}
-              aria-hidden
-            >
-              <Icon size={18} stroke={1.75} />
-            </ThemeIcon>
-          }
-        >
-          <Group className="section-card-summary" wrap="nowrap" mr="sm">
-            <Stack gap={0}>
-              <Text fw={600}>{section.title}</Text>
-              <Text size="xs" c="dimmed">
-                {type.label}
-              </Text>
-            </Stack>
-            <Text
-              c="dimmed"
-              className="section-drag-handle"
-              data-testid={`drag-handle-${section.id}`}
-              aria-label="Przeciągnij sekcję"
-              {...attributes}
-              {...listeners}
-              onClick={(event) => event.stopPropagation()}
-            >
-              <IconGripVertical size={18} stroke={1.75} />
-            </Text>
-          </Group>
-        </Accordion.Control>
+        <div className="section-control-row">
+          <Accordion.Control
+            icon={
+              <ThemeIcon
+                className="section-card-icon"
+                variant="light"
+                radius="xl"
+                size={36}
+                aria-hidden
+              >
+                <Icon size={18} />
+              </ThemeIcon>
+            }
+          >
+            <Group className="section-card-summary" wrap="nowrap" mr="sm">
+              <Stack gap={0}>
+                <Text fw={600}>{section.title}</Text>
+                <Text size="xs" c="dimmed">
+                  {type.label}
+                </Text>
+              </Stack>
+            </Group>
+          </Accordion.Control>
+          <Text
+            c="dimmed"
+            className="section-drag-handle"
+            data-testid={`drag-handle-${section.id}`}
+            aria-label="Przeciągnij sekcję"
+            {...attributes}
+            {...listeners}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <IconGripVertical size={18} />
+          </Text>
+        </div>
         <Accordion.Panel>
           <Fields
             value={section as unknown as Record<string, unknown>}
@@ -1206,7 +1206,7 @@ function SectionDragGhost({
   return (
     <div className="section-drag-ghost">
       <ThemeIcon variant="light" radius="xl" aria-hidden>
-        <Icon size={18} stroke={1.75} />
+        <Icon size={18} />
       </ThemeIcon>
       <div>
         <Text fw={600}>{section.title}</Text>

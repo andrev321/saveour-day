@@ -14,24 +14,24 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
   await expect(
     page.getByRole("combobox", { name: "Szablon startowy", exact: true }),
   ).toBeHidden();
-  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
   await expect(
-    page.getByRole("combobox", { name: "Szablon startowy", exact: true }),
-  ).toBeHidden();
-  await page
-    .getByRole("button", { name: "Zmiana szablonu i kopie szkicu" })
-    .click();
+    page.getByRole("button", { name: "Zastąp konfigurację" }),
+  ).toBeDisabled();
   await page
     .getByRole("combobox", { name: "Szablon startowy", exact: true })
     .click();
   await page.getByRole("option", { name: "Urodziny", exact: true }).click();
-  await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
   await expect(page.getByRole("dialog")).toContainText(
     "Niezapisane zmiany zostaną utracone",
   );
   await page.getByRole("button", { name: "Anuluj", exact: true }).click();
   await expect(heading).toHaveValue("Niezapisane zmiany");
   await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
+  await page
+    .getByRole("combobox", { name: "Szablon startowy", exact: true })
+    .click();
+  await page.getByRole("option", { name: "Urodziny", exact: true }).click();
   await page.getByRole("button", { name: "Zastąp konfigurację" }).click();
   await expect(heading).toHaveValue("Urodziny");
   await expect(
@@ -40,18 +40,20 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
       .getByRole("heading", { name: "Urodziny", exact: true })
       .first(),
   ).toBeVisible();
+  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page.getByRole("button", { name: "Kopie szkicu", exact: true }).click();
   await page.getByRole("combobox", { name: "Kopia zapisanego szkicu" }).click();
   await page.getByRole("option", { name: /Rewizja 1/ }).click();
   await page.getByRole("button", { name: "Przywróć kopię szkicu" }).click();
   await page.getByRole("button", { name: "Zastąp konfigurację" }).click();
   await expect(heading).toHaveValue("Anna & Jan");
+  await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
   await page
     .getByRole("combobox", { name: "Szablon startowy", exact: true })
     .click();
   await page
     .getByRole("option", { name: "Puste zaproszenie", exact: true })
     .click();
-  await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
   await page.getByRole("button", { name: "Zastąp konfigurację" }).click();
   await expect(heading).toHaveValue("");
   await expect(
@@ -79,6 +81,9 @@ for (const [label, heading] of [
     page,
   }) => {
     await page.goto(`${admin}/demo`);
+    await page
+      .getByRole("button", { name: "Utwórz zaproszenie", exact: true })
+      .click();
     await expect(
       page.getByRole("heading", { name: "Wybierz szablon na początek" }),
     ).toBeVisible();
@@ -87,13 +92,16 @@ for (const [label, heading] of [
     );
     await page.getByLabel("Nazwa nowego zaproszenia").fill("Nowy projekt");
     await expect(
-      page.getByRole("button", { name: "Utwórz zaproszenie", exact: true }),
+      page
+        .getByRole("dialog")
+        .getByRole("button", { name: "Utwórz zaproszenie", exact: true }),
     ).toBeDisabled();
     await page
       .getByRole("combobox", { name: "Szablon startowy", exact: true })
       .click();
     await page.getByRole("option", { name: label, exact: true }).click();
     await page
+      .getByRole("dialog")
       .getByRole("button", { name: "Utwórz zaproszenie", exact: true })
       .click();
     await expect(
