@@ -1,11 +1,12 @@
 ﻿"use client";
-import { Select, Stack, Text } from "@mantine/core";
+import { Group, Select, Stack, Text } from "@mantine/core";
 import {
   templateCatalog,
   type TemplateId,
 } from "@invitations/domain/templates";
 import { invitationLocales, type InvitationLocale } from "@invitations/domain";
-import { usePanelI18n } from "../lib/i18n";
+import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
+import { LanguageFlag } from "./LanguageFlag";
 export function TemplatePicker({
   templateId,
   locale,
@@ -53,6 +54,18 @@ export function TemplatePicker({
               : "Sprache der Vorlage"
         }
         value={locale}
+        leftSection={
+          <LanguageFlag language={locale.slice(0, 2) as PanelLanguage} />
+        }
+        leftSectionPointerEvents="none"
+        renderOption={({ option }) => (
+          <Group gap="xs" wrap="nowrap">
+            <LanguageFlag
+              language={option.value.slice(0, 2) as PanelLanguage}
+            />
+            <span>{option.label}</span>
+          </Group>
+        )}
         disabled={disabled}
         data={invitationLocales.map((value, i) => ({
           value,

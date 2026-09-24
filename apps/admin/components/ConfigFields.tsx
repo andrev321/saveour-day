@@ -1,20 +1,4 @@
 "use client";
-import { useState } from "react";
-import {
-  CalendarDotsIcon as IconCalendarTime,
-  CaretDownIcon as IconChevronDown,
-  CaretUpIcon as IconChevronUp,
-  EyeIcon as IconEye,
-  EyeSlashIcon as IconEyeOff,
-  DotsSixVerticalIcon as IconGripVertical,
-  InfoIcon as IconInfoCircle,
-  StackIcon as IconLayoutList,
-  MapPinIcon as IconMapPin,
-  ChatCircleIcon as IconMessageCircle,
-  ImageIcon as IconPhoto,
-  PlusIcon as IconPlus,
-  TrashIcon as IconTrash,
-} from "@phosphor-icons/react";
 import {
   DndContext,
   DragOverlay,
@@ -32,10 +16,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { SiteConfig } from "@invitations/domain";
 import {
-  Alert,
   Accordion,
   ActionIcon,
+  Alert,
   Button,
   Checkbox,
   ColorInput,
@@ -44,13 +29,29 @@ import {
   Select,
   Stack,
   Text,
-  Textarea,
   TextInput,
+  Textarea,
   ThemeIcon,
   Tooltip,
 } from "@mantine/core";
-import type { SiteConfig } from "@invitations/domain";
+import {
+  CalendarDotsIcon as IconCalendarTime,
+  CaretDownIcon as IconChevronDown,
+  CaretUpIcon as IconChevronUp,
+  EyeIcon as IconEye,
+  EyeSlashIcon as IconEyeOff,
+  DotsSixVerticalIcon as IconGripVertical,
+  InfoIcon as IconInfoCircle,
+  StackIcon as IconLayoutList,
+  MapPinIcon as IconMapPin,
+  ChatCircleIcon as IconMessageCircle,
+  ImageIcon as IconPhoto,
+  PlusIcon as IconPlus,
+  TrashIcon as IconTrash,
+} from "@phosphor-icons/react";
+import { useState } from "react";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
+import * as S from "./fields.styles";
 
 const labels: Record<string, string> = {
   displayName: "Główny napis",
@@ -280,9 +281,9 @@ function SortableReference({
         ? "Show"
         : "Anzeigen";
   return (
-    <Group
+    <S.ReferenceRow
       ref={setNodeRef}
-      className={`reference-row${visible ? "" : " reference-row-hidden"}`}
+      data-visible={visible}
       wrap="nowrap"
       style={{
         opacity: isDragging ? 0.25 : 1,
@@ -290,19 +291,17 @@ function SortableReference({
         transition,
       }}
     >
-      <ActionIcon
+      <S.ReferenceDragHandle
         variant="subtle"
         color="gray"
-        className="reference-drag-handle"
+
         aria-label={`${drag} ${name}`}
         {...attributes}
         {...listeners}
       >
         <IconGripVertical size={18} />
-      </ActionIcon>
-      <Text size="sm" className="reference-name">
-        {name}
-      </Text>
+      </S.ReferenceDragHandle>
+      <S.ReferenceName size="sm">{name}</S.ReferenceName>
       <ActionIcon
         variant="subtle"
         color="gray"
@@ -311,7 +310,7 @@ function SortableReference({
       >
         {visible ? <IconEye size={18} /> : <IconEyeOff size={18} />}
       </ActionIcon>
-    </Group>
+    </S.ReferenceRow>
   );
 }
 
@@ -412,10 +411,10 @@ function OrderedReferences({
           </SortableContext>
           <DragOverlay dropAnimation={{ duration: 160, easing: "ease" }}>
             {activeId ? (
-              <div className="reference-drag-ghost">
+              <S.ReferenceDragGhost>
                 <IconGripVertical size={18} />
                 <Text size="sm">{referenceName(activeId, available)}</Text>
-              </div>
+              </S.ReferenceDragGhost>
             ) : null}
           </DragOverlay>
         </DndContext>
@@ -501,9 +500,9 @@ export function Fields({
                 value={String(field)}
                 allowDeselect={false}
                 leftSection={
-                  <span className="section-type-icon">
+                  <S.SectionTypeIcon>
                     {SelectedIcon ? <SelectedIcon size={16} /> : null}
-                  </span>
+                  </S.SectionTypeIcon>
                 }
                 renderOption={({ option }) => {
                   const type = types.find(
@@ -511,12 +510,12 @@ export function Fields({
                   );
                   const Icon = type?.icon;
                   return (
-                    <span className="section-type-option">
-                      <span className="section-type-icon">
+                    <S.SectionTypeOption>
+                      <S.SectionTypeIcon>
                         {Icon ? <Icon size={16} /> : null}
-                      </span>
+                      </S.SectionTypeIcon>
                       <span>{option.label}</span>
-                    </span>
+                    </S.SectionTypeOption>
                   );
                 }}
                 onChange={(v) => update(key, v)}
@@ -1109,41 +1108,40 @@ function SortableSection({
           transition,
         }}
       >
-        <div className="section-control-row">
+        <S.SectionControlRow>
           <Accordion.Control
             icon={
-              <ThemeIcon
-                className="section-card-icon"
+              <S.SectionCardIcon
                 variant="light"
                 radius="xl"
                 size={36}
                 aria-hidden
               >
                 <Icon size={18} />
-              </ThemeIcon>
+              </S.SectionCardIcon>
             }
           >
-            <Group className="section-card-summary" wrap="nowrap" mr="sm">
+            <S.SectionCardSummary wrap="nowrap" mr="sm">
               <Stack gap={0}>
                 <Text fw={600}>{section.title}</Text>
                 <Text size="xs" c="dimmed">
                   {type.label}
                 </Text>
               </Stack>
-            </Group>
+            </S.SectionCardSummary>
           </Accordion.Control>
-          <Text
+          <S.SectionDragHandle
             c="dimmed"
-            className="section-drag-handle"
+
             data-testid={`drag-handle-${section.id}`}
             aria-label="Przeciągnij sekcję"
             {...attributes}
             {...listeners}
-            onClick={(event) => event.stopPropagation()}
+            onClick={(event: React.MouseEvent<HTMLElement>) => event.stopPropagation()}
           >
             <IconGripVertical size={18} />
-          </Text>
-        </div>
+          </S.SectionDragHandle>
+        </S.SectionControlRow>
         <Accordion.Panel>
           <Fields
             value={section as unknown as Record<string, unknown>}
@@ -1204,7 +1202,7 @@ function SectionDragGhost({
   )!;
   const Icon = type.icon;
   return (
-    <div className="section-drag-ghost">
+    <S.SectionDragGhost>
       <ThemeIcon variant="light" radius="xl" aria-hidden>
         <Icon size={18} />
       </ThemeIcon>
@@ -1214,6 +1212,6 @@ function SectionDragGhost({
           {type.label}
         </Text>
       </div>
-    </div>
+    </S.SectionDragGhost>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import {
+  navigationUrl,
+  type MediaAsset,
+  type SiteConfig,
+} from "@invitations/domain";
 import {
   Anchor,
-  Box,
   Button,
-  Card,
   Container,
   Group,
   MantineProvider,
@@ -16,11 +18,8 @@ import {
   createTheme,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import {
-  navigationUrl,
-  type SiteConfig,
-  type MediaAsset,
-} from "@invitations/domain";
+import { useState, type CSSProperties } from "react";
+import * as S from "./styles";
 
 type Palette = [
   string,
@@ -105,8 +104,7 @@ function Photo({
   const [failed, setFailed] = useState(false);
   if (failed)
     return (
-      <Box
-        className="invitation-photo-fallback"
+      <S.InvitationPhotoFallback
         role={media.alt ? "img" : undefined}
         aria-label={media.alt || undefined}
       />
@@ -116,8 +114,7 @@ function Photo({
       {mobile ? (
         <source media="(max-width: 47.99em)" srcSet={resolve(mobile.src)} />
       ) : null}
-      <img
-        className="invitation-photo"
+      <S.InvitationPhoto
         src={resolve(media.src)}
         srcSet={
           media.variants.length
@@ -158,7 +155,7 @@ function Venue({
       </Title>
       {venue.address ? <Text c="dimmed">{venue.address}</Text> : null}
       {venue.description ? (
-        <Text className="invitation-prose">{venue.description}</Text>
+        <S.InvitationProse>{venue.description}</S.InvitationProse>
       ) : null}
       <Group>
         <Button
@@ -177,12 +174,11 @@ function Venue({
         ) : null}
       </Group>
       {venue.mapUrl && showMap ? (
-        <iframe
+        <S.InvitationMap
           src={venue.mapUrl}
           title={venue.name}
           loading="lazy"
           referrerPolicy="no-referrer"
-          className="invitation-map"
         />
       ) : null}
     </Stack>
@@ -255,7 +251,7 @@ export function Invitation({
   ) {
     return (
       <InvitationProvider config={config}>
-        <Box className="invitation" p="xl">
+        <S.Invitation p="xl">
           <Text c="dimmed">
             {config.locale === "pl-PL"
               ? "Puste zaproszenie. Dodaj główny napis i treść w edytorze."
@@ -263,14 +259,13 @@ export function Invitation({
                 ? "Blank invitation. Add a main heading and content in the editor."
                 : "Leere Einladung. Ergänze eine Überschrift und Inhalte im Editor."}
           </Text>
-        </Box>
+        </S.Invitation>
       </InvitationProvider>
     );
   }
   return (
     <InvitationProvider config={config}>
-      <Box
-        className="invitation"
+      <S.Invitation
         style={
           {
             "--paper": config.design.paper,
@@ -288,8 +283,8 @@ export function Invitation({
             <Text size="sm">{variant.dateLabel || config.hero.dateLabel}</Text>
           </Group>
         </Container>
-        <section className={`invitation-hero hero-${config.hero.layout}`}>
-          <div className="invitation-hero-photo">
+        <S.InvitationHero data-layout={config.hero.layout}>
+          <S.InvitationHeroPhoto>
             {hero ? (
               <Photo
                 media={hero}
@@ -298,50 +293,46 @@ export function Invitation({
                 hero
               />
             ) : (
-              <div className="invitation-photo-fallback" />
+              <S.InvitationPhotoFallback as="div" />
             )}
-          </div>
-          <div className="invitation-hero-copy">
+          </S.InvitationHeroPhoto>
+          <S.InvitationHeroCopy>
             {config.hero.eyebrow && (
-              <Text className="invitation-eyebrow">{config.hero.eyebrow}</Text>
+              <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
             )}
             {config.identity.displayName && (
               <Title order={1}>{config.identity.displayName}</Title>
             )}
             {config.hero.title && (
-              <Title order={2} className="invitation-tagline">
+              <S.InvitationTagline order={2}>
                 {config.hero.title}
-              </Title>
+              </S.InvitationTagline>
             )}
             {config.hero.description && (
-              <Text className="invitation-prose">
-                {config.hero.description}
-              </Text>
+              <S.InvitationProse>{config.hero.description}</S.InvitationProse>
             )}
             {(variant.dateLabel || config.hero.dateLabel) && (
               <Text fw={600} mt="xl">
                 {variant.dateLabel || config.hero.dateLabel}
               </Text>
             )}
-          </div>
-        </section>
+          </S.InvitationHeroCopy>
+        </S.InvitationHero>
         <Container component="main" size="lg" py={{ base: 32, md: 64 }}>
           <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
             {sections.map((section) => (
-              <Card
+              <S.InvitationSection
                 component="section"
                 key={section.id}
                 withBorder
                 p={{ base: "lg", sm: "xl" }}
-                className={`invitation-section section-${section.type}`}
+                data-kind={section.type}
               >
-                <Text className="invitation-eyebrow" mb="md">
+                <S.InvitationEyebrow mb="md">
                   {section.title}
-                </Text>
+                </S.InvitationEyebrow>
                 {section.body ? (
-                  <Text mb="lg" className="invitation-prose">
-                    {section.body}
-                  </Text>
+                  <S.InvitationProse mb="lg">{section.body}</S.InvitationProse>
                 ) : null}
                 {section.type === "timeline" ? (
                   <Timeline active={-1} bulletSize={14} lineWidth={1}>
@@ -406,7 +397,7 @@ export function Invitation({
                     ))}
                   </SimpleGrid>
                 ) : null}
-              </Card>
+              </S.InvitationSection>
             ))}
           </SimpleGrid>
         </Container>
@@ -415,7 +406,7 @@ export function Invitation({
             <Text>{config.copy.footer}</Text>
           </Container>
         )}
-      </Box>
+      </S.Invitation>
     </InvitationProvider>
   );
 }

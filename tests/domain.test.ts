@@ -73,6 +73,45 @@ test("reject malformed JSON shape and dangerous URLs with field names", () => {
   config.events[0].url = "https://user:password@example.com";
   assert.equal(siteConfigSchema.safeParse(config).success, false);
 });
+test("incomplete URLs produce field errors instead of throwing while editing", () => {
+  for (const field of ["event", "navigation", "map"] as const) {
+    for (const value of [
+      "d",
+      "https:",
+      "https://",
+      "https://[",
+      "example.com",
+    ]) {
+      const config = createDemo();
+      const path =
+        field === "event"
+          ? ["events", 0, "url"]
+          : ["venues", 0, field === "map" ? "mapUrl" : "navigationUrl"];
+      if (field === "event") config.events[0].url = value;
+      else if (field === "map") config.venues[0].mapUrl = value;
+      else config.venues[0].navigationUrl = value;
+      const result = siteConfigSchema.safeParse(config);
+      assert.equal(result.success, false, `${field}: ${value}`);
+      if (!result.success) {
+        assert.ok(
+          result.error.issues.some(
+            (issue) => JSON.stringify(issue.path) === JSON.stringify(path),
+          ),
+        );
+      }
+    }
+  }
+  const config = createDemo();
+  config.events[0].url = "https://example.com/event";
+  config.venues[0].navigationUrl = "https://maps.google.com/";
+  config.venues[0].mapUrl = "https://www.google.com/maps/embed?pb=example";
+  assert.equal(siteConfigSchema.safeParse(config).success, true);
+  config.events[0].url = "";
+  config.venues[0].navigationUrl = "";
+  config.venues[0].mapUrl = "";
+  assert.equal(siteConfigSchema.safeParse(config).success, true);
+});
+
 test("reject cross references, duplicate IDs and duplicate route slugs", () => {
   const config = createDemo();
   config.sections[1].venueId = "missing";

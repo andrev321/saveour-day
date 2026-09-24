@@ -35,18 +35,18 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    const preview = page.locator(".workspace-preview");
-    const toolbar = preview.locator(".preview-toolbar");
+    const preview = page.locator("[data-ui=workspace-preview]");
+    const toolbar = preview.locator("[data-ui=preview-toolbar]");
     expect(
       await toolbar.evaluate(
         (element) => element.scrollWidth <= element.clientWidth,
       ),
     ).toBe(true);
     await expect(
-      preview.locator('.preview-device[data-device="phone"]'),
+      preview.locator('[data-ui=preview-device][data-device="phone"]'),
     ).toBeVisible();
     const frame = await preview.locator("iframe").boundingBox();
-    const canvas = await preview.locator(".preview-canvas").boundingBox();
+    const canvas = await preview.locator("[data-ui=preview-canvas]").boundingBox();
     expect(frame!.width).toBeLessThanOrEqual(canvas!.width);
     if (width < 1100) {
       await page.getByRole("button", { name: "Menu", exact: true }).click();
@@ -99,7 +99,7 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
   await page.reload();
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
   await expect(separator).toHaveAttribute("aria-valuenow", "560");
-  await expect(page.locator(".editor-workspace")).toHaveAttribute(
+  await expect(page.locator("[data-ui=editor-workspace]")).toHaveAttribute(
     "data-density",
     "compact",
   );
@@ -112,7 +112,7 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
   await page.getByRole("button", { name: "Ustawienia widoku" }).click();
   await page.getByRole("button", { name: "Przywróć układ" }).click();
   await expect(separator).toHaveAttribute("aria-valuenow", "460");
-  await expect(page.locator(".editor-workspace")).toHaveAttribute(
+  await expect(page.locator("[data-ui=editor-workspace]")).toHaveAttribute(
     "data-density",
     "comfortable",
   );
@@ -127,15 +127,15 @@ test("preview toolbar stays in one row in both views and switches device frames"
   await page.setViewportSize({ width: 390, height: 844 });
   await openEditor(page);
   await page.getByRole("button", { name: "Podgląd", exact: true }).click();
-  const header = await page.locator(".workspace-header").boundingBox();
+  const header = await page.locator("[data-ui=workspace-header]").boundingBox();
   expect(header!.height).toBeLessThanOrEqual(64);
   for (const expanded of [false, true]) {
     if (expanded)
       await page.getByRole("button", { name: "Powiększ podgląd" }).click();
     const scope = expanded
       ? page.getByRole("dialog")
-      : page.locator(".workspace-preview");
-    const toolbar = scope.locator(".preview-toolbar");
+      : page.locator("[data-ui=workspace-preview]");
+    const toolbar = scope.locator("[data-ui=preview-toolbar]");
     expect(
       await toolbar.evaluate((el) => el.scrollWidth <= el.clientWidth),
     ).toBe(true);
@@ -146,15 +146,15 @@ test("preview toolbar stays in one row in both views and switches device frames"
     ]) {
       await scope.getByRole("button", { name: label, exact: true }).click();
       await expect(
-        scope.locator(`.preview-device[data-device="${device}"]`),
+        scope.locator(`[data-ui=preview-device][data-device="${device}"]`),
       ).toBeVisible();
       await expect(scope.locator("iframe")).toHaveCSS("width", width);
     }
-    const device = await scope.locator(".preview-device").boundingBox();
-    const canvas = await scope.locator(".preview-canvas").boundingBox();
+    const device = await scope.locator("[data-ui=preview-device]").boundingBox();
+    const canvas = await scope.locator("[data-ui=preview-canvas]").boundingBox();
     expect(device!.height).toBeLessThanOrEqual(canvas!.height);
     await scope.getByRole("button", { name: "Dopasuj", exact: true }).click();
-    await expect(scope.locator(".preview-canvas")).toHaveAttribute(
+    await expect(scope.locator("[data-ui=preview-canvas]")).toHaveAttribute(
       "data-fit",
       "false",
     );
@@ -203,16 +203,16 @@ test("expanded preview fills the viewport after resize and clips the entire phon
     await expect
       .poll(
         async () =>
-          (await dialog.locator(".preview-canvas").boundingBox())!.width,
+          (await dialog.locator("[data-ui=preview-canvas]").boundingBox())!.width,
       )
       .toBeGreaterThan(width - 40);
-    const device = dialog.locator(".preview-device");
+    const device = dialog.locator("[data-ui=preview-device]");
     await expect
       .poll(async () => (await device.boundingBox())!.width)
       .toBeGreaterThan(Math.min(width - 80, 1350));
   }
   await dialog.getByRole("button", { name: "Telefon", exact: true }).click();
-  const screen = dialog.locator(".preview-device-screen");
+  const screen = dialog.locator("[data-ui=preview-device-screen]");
   await expect(screen).toHaveCSS("overflow", "hidden");
   await expect(screen).toHaveCSS("border-radius", "38px");
   await dialog

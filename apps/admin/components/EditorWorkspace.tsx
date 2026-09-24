@@ -1,33 +1,34 @@
 "use client";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import {
   ActionIcon,
   Button,
   Drawer,
-  Text,
   Popover,
   SegmentedControl,
   Tabs,
+  Text,
   Tooltip,
 } from "@mantine/core";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import {
-  EnvelopeSimpleIcon,
-  FileTextIcon,
-  StackIcon,
-  CopyIcon,
-  ImageIcon,
-  UsersIcon,
-  GearSixIcon,
   ClockCounterClockwiseIcon,
-  SidebarSimpleIcon,
-  SlidersHorizontalIcon,
+  CopyIcon,
+  EnvelopeSimpleIcon,
+  EyeIcon,
+  FileTextIcon,
+  GearSixIcon,
+  ImageIcon,
   ListIcon,
   PencilSimpleIcon,
-  EyeIcon,
+  SidebarSimpleIcon,
+  SlidersHorizontalIcon,
+  StackIcon,
+  UsersIcon,
 } from "@phosphor-icons/react";
+import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { usePanelI18n } from "../lib/i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
+import * as S from "./workspace.styles";
 
 export function EditorWorkspace({
   title,
@@ -99,8 +100,7 @@ export function EditorWorkspace({
     { value: "history", label: t("history"), icon: ClockCounterClockwiseIcon },
   ];
   return (
-    <div
-      className="editor-workspace"
+    <S.EditorWorkspace
       data-collapsed={collapsed}
       data-density={density}
       data-view={view}
@@ -111,19 +111,19 @@ export function EditorWorkspace({
         } as CSSProperties
       }
     >
-      <header className="workspace-header">
-        <a className="workspace-brand" href="/" aria-label={t("projects")}>
+      <S.WorkspaceHeader>
+        <S.WorkspaceBrand href="/" aria-label={t("projects")}>
           <EnvelopeSimpleIcon size={28} weight="duotone" />
           <span>{ui.brand}</span>
-        </a>
-        <div className="workspace-project">
+        </S.WorkspaceBrand>
+        <S.WorkspaceProject>
           {title}
           {status}
-        </div>
-        <div className="workspace-actions">
+        </S.WorkspaceProject>
+        <S.WorkspaceActions>
           {headerTools}
           {save}
-          <div className="desktop-project-actions">{actions}</div>
+          <S.DesktopProjectActions>{actions}</S.DesktopProjectActions>
           <Popover
             position="bottom-end"
             opened={projectOptions}
@@ -131,38 +131,35 @@ export function EditorWorkspace({
             trapFocus
           >
             <Popover.Target>
-              <ActionIcon
-                className="mobile-project-actions"
+              <S.MobileProjectActions
                 variant="light"
                 size="lg"
                 aria-label={ui.actions}
                 onClick={() => setProjectOptions((value) => !value)}
               >
                 <GearSixIcon size={22} weight="duotone" />
-              </ActionIcon>
+              </S.MobileProjectActions>
             </Popover.Target>
             <Popover.Dropdown>
-              <div
-                className="project-actions-menu"
+              <S.ProjectActionsMenu
                 onClick={(event) => {
                   if ((event.target as HTMLElement).closest("button"))
                     setProjectOptions(false);
                 }}
               >
                 {actions}
-              </div>
+              </S.ProjectActionsMenu>
             </Popover.Dropdown>
           </Popover>
-        </div>
-      </header>
-      <Tabs
-        className="workspace-body"
+        </S.WorkspaceActions>
+      </S.WorkspaceHeader>
+      <S.WorkspaceBody
         value={active}
         onChange={setActive}
         orientation="vertical"
         keepMounted
       >
-        <aside className="workspace-nav">
+        <S.WorkspaceNav>
           <Tabs.List aria-label={ui.menu}>
             {items.map(({ value, label, icon: Icon }) => (
               <Tooltip
@@ -181,7 +178,7 @@ export function EditorWorkspace({
               </Tooltip>
             ))}
           </Tabs.List>
-          <div className="workspace-nav-footer">
+          <S.WorkspaceNavFooter>
             <Tooltip
               label={collapsed ? ui.expand : ui.collapse}
               position="right"
@@ -240,14 +237,13 @@ export function EditorWorkspace({
                 </Button>
               </Popover.Dropdown>
             </Popover>
-          </div>
-        </aside>
-        <main className="workspace-form" id="workspace-edit">
-          <div className="workspace-notices">{notices}</div>
+          </S.WorkspaceNavFooter>
+        </S.WorkspaceNav>
+        <S.WorkspaceForm id="workspace-edit">
+          <S.WorkspaceNotices>{notices}</S.WorkspaceNotices>
           {children}
-        </main>
-        <div
-          className="workspace-resizer"
+        </S.WorkspaceForm>
+        <S.WorkspaceResizer
           role="separator"
           aria-orientation="vertical"
           aria-label={ui.resize}
@@ -284,15 +280,11 @@ export function EditorWorkspace({
             event.currentTarget.releasePointerCapture(event.pointerId)
           }
         />
-        <section
-          className="workspace-preview"
-          id="workspace-preview"
-          aria-label={ui.live}
-        >
+        <S.WorkspacePreview id="workspace-preview" aria-label={ui.live}>
           {preview}
-        </section>
-      </Tabs>
-      <nav className="workspace-mobile-nav" aria-label={ui.view}>
+        </S.WorkspacePreview>
+      </S.WorkspaceBody>
+      <S.WorkspaceMobileNav aria-label={ui.view}>
         <Button
           variant="subtle"
           onClick={() => setMenu(true)}
@@ -318,14 +310,14 @@ export function EditorWorkspace({
         >
           {ui.preview}
         </Button>
-      </nav>
+      </S.WorkspaceMobileNav>
       <Drawer
         opened={menu}
         onClose={() => setMenu(false)}
         title={ui.brand}
         size="min(320px, 90vw)"
       >
-        <div className="workspace-drawer-nav">
+        <S.WorkspaceDrawerNav>
           <Button component="a" href="/" variant="default">
             {t("projects")}
           </Button>
@@ -354,9 +346,9 @@ export function EditorWorkspace({
           >
             {ui.reset}
           </Button>
-        </div>
+        </S.WorkspaceDrawerNav>
       </Drawer>
       {dialogs}
-    </div>
+    </S.EditorWorkspace>
   );
 }
