@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { siteConfigSchema, type SiteConfig } from "@wedding/domain";
-import { Invitation } from "@wedding/renderer";
+import { siteConfigSchema, type SiteConfig } from "@invitations/domain";
+import { Invitation } from "@invitations/renderer";
 export default function Preview() {
   const [state, setState] = useState<{
     config: SiteConfig;

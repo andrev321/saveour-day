@@ -31,7 +31,7 @@ test("builds a complete tonal scale from a custom accent", () => {
 });
 test("React escapes user text and does not render excluded variant sections", () => {
   const config = createDemo();
-  config.couple.firstName = "<script>alert(1)</script>";
+  config.identity.displayName = "<script>alert(1)</script>";
   config.variants.push({
     ...config.variants[0],
     id: "limited",

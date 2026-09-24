@@ -17,7 +17,13 @@ import {
 import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
 import { LanguageSelect } from "./LanguageSelect";
-type Site = { id: string; name: string; domain?: string };
+import { ProjectStart } from "./ProjectStart";
+type Site = {
+  id: string;
+  name: string;
+  public_slug?: string;
+  published_release_id?: string | null;
+};
 type SitesResponse = { sites: Site[]; admin: boolean };
 
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
@@ -41,7 +47,6 @@ export function Dashboard({ configured }: { configured: boolean }) {
     [logged, setLogged] = useState(false);
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
-    [name, setName] = useState(""),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -143,6 +148,34 @@ export function Dashboard({ configured }: { configured: boolean }) {
                   {t("login")}
                 </Button>
                 <Button
+                  variant="light"
+                  disabled={busy || !email || password.length < 12}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const { error } = await browserDb().auth.signUp({
+                        email,
+                        password,
+                        options: {
+                          emailRedirectTo: location.origin + "/auth/confirm",
+                        },
+                      });
+                      setMessage(
+                        error
+                          ? error.message
+                          : "Sprawdź e-mail, aby potwierdzić konto. Następnie zaloguj się.",
+                      );
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Utwórz konto
+                </Button>
+                <Text size="sm">
+                  Nowe konto: hasło musi mieć co najmniej 12 znaków.
+                </Text>
+                <Button
                   variant="subtle"
                   disabled={!email}
                   onClick={async () => {
@@ -158,34 +191,20 @@ export function Dashboard({ configured }: { configured: boolean }) {
             </form>
           </Card>
         ) : null}
-        {logged && admin ? (
-          <Card withBorder>
-            <Group align="end">
-              <TextInput
-                label={t("siteName")}
-                value={name}
-                onChange={(e) => setName(e.currentTarget.value)}
-              />
-              <Button
-                disabled={!name.trim()}
-                onClick={async () => {
-                  try {
-                    const site = await apiFetch<Site>("/api/sites", {
-                      method: "POST",
-                      body: JSON.stringify({ name }),
-                    });
-                    window.location.href = `/sites/${site.id}`;
-                  } catch (e) {
-                    setMessage((e as Error).message);
-                  }
-                }}
-              >
-                {t("createSite")}
-              </Button>
-              <Badge>{t("admin")}</Badge>
-            </Group>
-          </Card>
-        ) : null}
+        {logged && (
+          <>
+            {admin && <Badge>{t("admin")}</Badge>}
+            <ProjectStart
+              onCreate={async (values) => {
+                const site = await apiFetch<Site>("/api/sites", {
+                  method: "POST",
+                  body: JSON.stringify(values),
+                });
+                window.location.href = `/sites/${site.id}`;
+              }}
+            />
+          </>
+        )}
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
           {sites.map((site) => (
             <Card key={site.id} withBorder>
@@ -193,7 +212,9 @@ export function Dashboard({ configured }: { configured: boolean }) {
                 <Title order={2} size="h3">
                   {site.name}
                 </Title>
-                <Text c="dimmed">{site.domain || t("domainMissing")}</Text>
+                <Text c="dimmed">
+                  {site.published_release_id ? "Opublikowana" : "Szkic"}
+                </Text>
                 <Button
                   component="a"
                   href={`/sites/${site.id}`}

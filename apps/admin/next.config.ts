@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
-  transpilePackages: ["@wedding/domain", "@wedding/renderer"],
+  transpilePackages: ["@invitations/domain", "@invitations/renderer"],
   experimental: { optimizePackageImports: ["@mantine/core", "@mantine/hooks"] },
   async headers() {
+    const developmentEval =
+      process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";
     return [
       {
         source: "/(.*)",
@@ -16,8 +18,7 @@ const config: NextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; img-src 'self' blob: data: https://*.supabase.co; connect-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+            value: `default-src 'self'; img-src 'self' blob: data: https://*.supabase.co; connect-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'${developmentEval}; frame-src 'self'; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'`,
           },
         ],
       },

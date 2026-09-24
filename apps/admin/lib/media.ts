@@ -1,7 +1,7 @@
 import "server-only";
 import sharp from "sharp";
 import { randomUUID } from "node:crypto";
-import { mediaSchema, type SiteConfig } from "@wedding/domain";
+import { mediaSchema, type SiteConfig } from "@invitations/domain";
 import { z } from "zod";
 import { checkDb, HttpError, serviceDb } from "./server";
 

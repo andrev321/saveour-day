@@ -1,17 +1,21 @@
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { createDemo } from "@wedding/domain/demo";
+import { createTemplate, templateIds } from "@invitations/domain/templates";
+import { invitationLocales } from "@invitations/domain";
 import {
   api,
   checkDb,
   readJson,
-  requireAdmin,
   requireUser,
   serviceDb,
 } from "../../../lib/server";
 export const GET = api(async () => {
   const { db, user } = await requireUser();
   const [{ data: sites, error }, { data: admin }] = await Promise.all([
-    db.from("sites").select("*").order("created_at", { ascending: false }),
+    db
+      .from("sites")
+      .select("id,name,public_slug,published_release_id")
+      .order("created_at", { ascending: false }),
     db
       .from("platform_admins")
       .select("user_id")
@@ -22,25 +26,31 @@ export const GET = api(async () => {
   return { sites, admin: !!admin };
 });
 export const POST = api(async (request) => {
-  const { user } = await requireAdmin();
-  const { name } = z
-    .object({ name: z.string().trim().min(1).max(200) })
+  const { user } = await requireUser();
+  const { name, templateId, locale } = z
+    .object({
+      name: z.string().trim().min(1).max(200),
+      templateId: z.enum(templateIds),
+      locale: z.enum(invitationLocales),
+    })
     .parse(await readJson(request));
-  const db = serviceDb();
-  const { data: site, error } = await db
-    .from("sites")
-    .insert({ name })
-    .select()
-    .single();
+  const id = randomUUID();
+  const config = createTemplate(templateId, id, locale);
+  const stem =
+    name
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 50) || "zaproszenie";
+  const { error } = await serviceDb().rpc("create_owned_site", {
+    actor: user.id,
+    title: name,
+    slug: stem + "-" + id,
+    sid: id,
+    content: config,
+  });
   checkDb(error);
-  const config = createDemo();
-  config.id = site.id;
-  const { error: draftError } = await db
-    .from("drafts")
-    .insert({ site_id: site.id, config });
-  checkDb(draftError);
-  await db
-    .from("audit_events")
-    .insert({ site_id: site.id, actor_id: user.id, action: "site.created" });
-  return site;
+  return { id, name };
 });

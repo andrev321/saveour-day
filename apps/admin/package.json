@@ -1,5 +1,5 @@
 {
-  "name": "@wedding/admin",
+  "name": "@invitations/admin",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,8 @@
     "start": "next start --port 3000"
   },
   "dependencies": {
-    "@wedding/domain": "*",
-    "@wedding/renderer": "*"
+    "@invitations/domain": "*",
+    "@invitations/renderer": "*",
+    "server-only": "0.0.1"
   }
 }

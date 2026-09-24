@@ -162,19 +162,19 @@ const variantSchema = z
     hiddenSectionIds: z.array(idSchema).max(30).optional(),
   })
   .strict();
-export const siteConfigSchema = z
+const currentConfigSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     id: idSchema,
     locale: z.enum(invitationLocales),
     timeZone: z.literal("Europe/Warsaw"),
-    couple: z.object({ firstName: text, secondName: text }).strict(),
+    identity: z.object({ displayName: z.string().trim().max(500) }).strict(),
     hero: z
       .object({
-        eyebrow: text,
-        title: text,
+        eyebrow: z.string().trim().max(500),
+        title: z.string().trim().max(500),
         description: paragraph,
-        dateLabel: text,
+        dateLabel: z.string().trim().max(500),
         mediaId: idSchema.optional(),
         mobileMediaId: idSchema.optional(),
         layout: z.enum(["overlay", "split"]),
@@ -198,7 +198,7 @@ export const siteConfigSchema = z
         sms: text,
         copyPhone: text,
         copied: text,
-        footer: text,
+        footer: z.string().trim().max(500),
         variantLabel: text,
       })
       .strict(),
@@ -219,7 +219,7 @@ export const siteConfigSchema = z
     media: z.array(mediaSchema).max(30),
     venues: z.array(venueSchema).max(30),
     events: z.array(eventSchema).max(50),
-    sections: z.array(sectionSchema).min(1).max(30),
+    sections: z.array(sectionSchema).max(30),
     variants: z.array(variantSchema).min(1).max(10),
     defaultVariant: idSchema,
   })
@@ -350,6 +350,42 @@ export const siteConfigSchema = z
       }
     });
   });
+/** Convert historical snapshots without changing their stored representation. */
+export function upgradeConfig(input: unknown): unknown {
+  if (
+    !input ||
+    typeof input !== "object" ||
+    !("schemaVersion" in input) ||
+    input.schemaVersion !== 1
+  )
+    return input;
+  const value = input as Record<string, unknown>;
+  const names = z
+    .object({ firstName: text, secondName: text })
+    .strict()
+    .safeParse(value.couple);
+  if (!names.success || "identity" in value) return input;
+  const { couple: _couple, ...rest } = value;
+  void _couple;
+  return {
+    ...rest,
+    schemaVersion: 2,
+    identity: {
+      displayName: names.data.firstName + " & " + names.data.secondName,
+    },
+  };
+}
+export const siteConfigSchema = z.preprocess(
+  upgradeConfig,
+  currentConfigSchema,
+);
+export const publishedConfigSchema = siteConfigSchema.refine(
+  (config) => config.identity.displayName.length > 0,
+  {
+    path: ["identity", "displayName"],
+    message: "Uzupełnij główny napis przed publikacją",
+  },
+);
 export type SiteConfig = z.infer<typeof siteConfigSchema>;
 export type MediaAsset = z.infer<typeof mediaSchema>;
 export function parseSiteConfig(input: unknown): SiteConfig {

@@ -1,10 +1,11 @@
 import { test, expect } from "@playwright/test";
+const adminUrl = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
   test(`invitation reflows at ${width}px`, async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/pelna");
+    await page.goto("/demo/pelna");
     await expect(
       page.getByRole("heading", { name: "Anna & Jan", exact: true }),
     ).toBeVisible();
@@ -24,7 +25,7 @@ for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
   });
 test("all existing routes load directly", async ({ page }) => {
   for (const route of ["glowna", "pelna", "ograniczona"]) {
-    await page.goto(`/${route}`);
+    await page.goto(`/demo/${route}`);
     await page.reload();
     await expect(page.locator("main")).toBeVisible();
   }
@@ -35,11 +36,14 @@ test("admin demo edits and saves before simulated publication", async ({
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await expect(
     page.getByText("Demonstracja lokalna", { exact: true }),
   ).toBeVisible();
-  await page.getByLabel("Pierwsze imię", { exact: true }).fill("Zmieniona");
+  await page.getByLabel("Główny napis", { exact: true }).fill("Zmieniona");
   await expect(
     page.getByRole("button", { name: "Symuluj publikację" }),
   ).toBeDisabled();
@@ -52,7 +56,7 @@ test("admin demo edits and saves before simulated publication", async ({
   await expect(
     page
       .frameLocator("iframe")
-      .getByRole("heading", { name: "Zmieniona & Jan", exact: true }),
+      .getByRole("heading", { name: "Zmieniona", exact: true }),
   ).toBeVisible();
 });
 test("admin demo forwards custom color tokens to the preview", async ({
@@ -61,7 +65,10 @@ test("admin demo forwards custom color tokens to the preview", async ({
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
   await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
   await expect(page.frameLocator("iframe").locator(".invitation")).toHaveCSS(
@@ -69,20 +76,23 @@ test("admin demo forwards custom color tokens to the preview", async ({
     "#123456",
   );
 });
-test("panel language changes the untouched invitation template", async ({
+test("panel language preserves the untouched invitation template", async ({
   page,
 }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
   await expect(page.getByRole("button", { name: "Save draft" })).toBeVisible();
   await expect(
     page
       .frameLocator("iframe")
-      .getByRole("heading", { name: "Emma & Liam", exact: true }),
+      .getByRole("heading", { name: "Anna & Jan", exact: true }),
   ).toBeVisible();
 });
 test("panel language preserves a customized invitation template", async ({
@@ -91,14 +101,17 @@ test("panel language preserves a customized invitation template", async ({
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
-  await page.getByLabel("Pierwsze imię", { exact: true }).fill("Kasia");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
+  await page.getByLabel("Główny napis", { exact: true }).fill("Kasia");
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
   await expect(
     page
       .frameLocator("iframe")
-      .getByRole("heading", { name: "Kasia & Jan", exact: true }),
+      .getByRole("heading", { name: "Kasia", exact: true }),
   ).toBeVisible();
 });
 test("section editor uses Polish section names and supports reordering", async ({
@@ -107,7 +120,10 @@ test("section editor uses Polish section names and supports reordering", async (
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
   await expect(
     page.getByText("Przeciągnij sekcje, aby ustawić kolejność", {
@@ -137,40 +153,51 @@ test("new text sections are visible in the preview", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
   await page.getByRole("button", { name: "Dodaj sekcję" }).click();
   await expect(
     page.frameLocator("iframe").getByText("Nowa sekcja", { exact: true }),
   ).toBeVisible();
 });
-test("editor manages named pages with URLs", async ({ page }) => {
+test("editor manages named content variants", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Strony", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Strony" })).toBeVisible();
-  await expect(
-    page.getByLabel(/Każda strona ma własny adres URL/),
-  ).toBeVisible();
+  await expect(page.getByLabel(/Przygotuj warianty treści/)).toBeVisible();
   await page.getByRole("button", { name: "Dodaj stronę" }).click();
   await page.getByRole("button", { name: "Nowa strona" }).click();
   await expect(page.getByRole("combobox", { name: /Podgl/ })).toHaveValue(
     "Nowa strona",
   );
   await page.getByLabel("Etykieta", { exact: true }).fill("Dla rodziny");
-  await page.getByLabel("Adres URL strony", { exact: true }).fill("rodzina");
-  await expect(page.getByText("/rodzina", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Dla rodziny", exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Adres URL strony", { exact: true }),
+  ).toHaveCount(0);
 });
 test("main page cannot be removed or reordered", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Strony", exact: true }).click();
 
-  await expect(page.getByText("/glowna", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Główna/ })).toBeVisible();
   await page.getByRole("button", { name: /Główna/ }).click();
   await expect(
     page.getByRole("button", { name: /Usuń stronę/ }),
@@ -183,7 +210,10 @@ test("page editor supports dragging ordered references", async ({ page }) => {
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("tab", { name: "Strony", exact: true }).click();
   await page.getByRole("button", { name: "Dodaj stronę" }).click();
   await page.getByRole("button", { name: /Nowa strona/ }).click();
@@ -204,7 +234,10 @@ test("editor opens the current invitation in a full-screen preview", async ({
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
-  await page.goto("http://127.0.0.1:3000/demo");
+  await page.goto(`${adminUrl}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("button", { name: "Powiększ podgląd" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
@@ -227,9 +260,9 @@ test("editor opens the current invitation in a full-screen preview", async ({
 test("anonymous API access is denied when services are not configured", async ({
   request,
 }) => {
-  const response = await request.get("http://127.0.0.1:3000/api/sites");
+  const response = await request.get(`${adminUrl}/api/sites`);
   expect([401, 503]).toContain(response.status());
-  const forged = await request.post("http://127.0.0.1:3000/api/sites", {
+  const forged = await request.post(`${adminUrl}/api/sites`, {
     headers: { Origin: "https://attacker.example" },
     data: { name: "forged" },
   });

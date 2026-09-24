@@ -14,19 +14,19 @@ import { importLegacy } from "../packages/domain/src/legacy.ts";
 test("two independent configurations use the same schema", () => {
   const first = createDemo(),
     second = createDemo("demo-sage");
-  assert.notDeepEqual(first.couple, second.couple);
+  assert.notDeepEqual(first.identity, second.identity);
   assert.notEqual(first.theme, second.theme);
-  assert.equal(parseSiteConfig(first).schemaVersion, 1);
-  assert.equal(parseSiteConfig(second).schemaVersion, 1);
+  assert.equal(parseSiteConfig(first).schemaVersion, 2);
+  assert.equal(parseSiteConfig(second).schemaVersion, 2);
 });
 test("provides localized initial templates and detects a customized template", () => {
   const polish = createDemo("client", "pl-PL");
   const english = createDemo("client", "en-GB");
   const german = createDemo("client", "de-DE");
 
-  assert.equal(polish.couple.firstName, "Anna");
-  assert.equal(english.couple.firstName, "Emma");
-  assert.equal(german.couple.firstName, "Lena");
+  assert.equal(polish.identity.displayName, "Anna & Jan");
+  assert.equal(english.identity.displayName, "Emma & Liam");
+  assert.equal(german.identity.displayName, "Lena & Jonas");
   assert.equal(german.venues[0].address, "Adresse ergänzen");
   assert.equal(isUnmodifiedTemplate(english), true);
   assert.equal(
@@ -113,10 +113,7 @@ test("normalizes the main page and validates hidden page elements", () => {
 
   const parsed = parseSiteConfig(config);
   assert.deepEqual(parsed.variants[0].hiddenEventIds, []);
-  assert.deepEqual(
-    parsed.variants[1].eventIds,
-    ["party", "ceremony"],
-  );
+  assert.deepEqual(parsed.variants[1].eventIds, ["party", "ceremony"]);
   assert.deepEqual(parsed.variants[1].hiddenEventIds, ["ceremony"]);
 
   config.variants[1].hiddenEventIds = ["missing"];
@@ -177,7 +174,7 @@ test("legacy import preserves descriptions and all variants without hardcoded id
     },
     { firstName: "Nowa", secondName: "Para" },
   );
-  assert.equal(config.couple.firstName, "Nowa");
+  assert.equal(config.identity.displayName, "Nowa & Para");
   assert.deepEqual(
     config.variants.map((v) => v.slug),
     ["slub", "obiad", "grill"],

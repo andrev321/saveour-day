@@ -13,6 +13,7 @@ import {
   IconUpload,
 } from "@tabler/icons-react";
 import {
+  Accordion,
   Alert,
   Badge,
   Button,
@@ -32,50 +33,50 @@ import {
 } from "@mantine/core";
 import {
   siteConfigSchema,
+  publishedConfigSchema,
+  type InvitationLocale,
   themeDesigns,
   type SiteConfig,
   type MediaAsset,
-} from "@wedding/domain";
-import { createDemo, isUnmodifiedTemplate } from "@wedding/domain/demo";
+} from "@invitations/domain";
+
 import { Fields, CollectionFields } from "./ConfigFields";
 import { apiFetch } from "./Dashboard";
 import { browserDb } from "../lib/browser";
-import { invitationLocaleFor, usePanelI18n } from "../lib/i18n";
+import { usePanelI18n } from "../lib/i18n";
+import {
+  createTemplate,
+  templateCatalog,
+  type TemplateId,
+} from "@invitations/domain/templates";
+import { templateUi } from "../lib/template-i18n";
+import { TemplatePicker } from "./TemplatePicker";
+import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
-type Job = {
-  id: string;
-  release_id: string;
-  status: string;
-  url?: string;
-  error?: string;
-  created_at?: string;
-};
 type RevisionResponse = { revision: number };
 type SignedUpload = { id: string; path: string; token: string };
-type DomainResponse = { verified?: boolean };
 export type EditorData = {
   site: {
     id: string;
     name: string;
     domain?: string;
-    vercel_project_id?: string;
+    published_release_id?: string | null;
   };
   draft: { config: SiteConfig; revision: number };
-  deployments: Job[];
   releases: { id: string; created_at: string }[];
+  snapshots?: { id: string; created_at: string; revision: number }[];
   media: { id: string; manifest: MediaAsset }[];
   urls: Record<string, string>;
 };
 export function Editor({
   initial,
-  admin = false,
   demo = false,
 }: {
   initial: EditorData;
-  admin?: boolean;
   demo?: boolean;
 }) {
   const { language, t } = usePanelI18n();
+  const tt = templateUi[language];
   const [data, setData] = useState(initial),
     [config, setConfig] = useState(initial.draft.config),
     [saved, setSaved] = useState(JSON.stringify(initial.draft.config));
@@ -84,16 +85,14 @@ export function Editor({
     [width, setWidth] = useState<string>("390"),
     [variant, setVariant] = useState(config.defaultVariant),
     [previewOpen, setPreviewOpen] = useState(false);
-  const [confirm, setConfirm] = useState<"publish" | string | null>(null),
-    [email, setEmail] = useState(""),
-    [domain, setDomain] = useState(initial.site.domain || "");
+  const [confirm, setConfirm] = useState<"publish" | string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null),
     expandedFrame = useRef<HTMLIFrameElement>(null),
     demoSnapshots = useRef(new Map<string, SiteConfig>());
   const dirty = JSON.stringify(config) !== saved;
   const validation = siteConfigSchema.safeParse(config);
+  const readyToPublish = publishedConfigSchema.safeParse(config).success;
   const preview = useRef({ config, variant, urls: data.urls });
-  const previousLanguage = useRef(language);
   preview.current = { config, variant, urls: data.urls };
   useEffect(() => {
     const handle = (e: MessageEvent) => {
@@ -121,15 +120,6 @@ export function Editor({
       );
   }, [config, variant, data.urls]);
   useEffect(() => {
-    if (previousLanguage.current === language) return;
-    previousLanguage.current = language;
-    if (!isUnmodifiedTemplate(config)) return;
-    const template = createDemo(config.id, invitationLocaleFor(language));
-    setConfig(template);
-    setVariant(template.defaultVariant);
-    setMessage(t("languageChanged"));
-  }, [config, language, t]);
-  useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -138,6 +128,64 @@ export function Editor({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const endpoint = `/api/sites/${data.site.id}`;
+  const [templateId, setTemplateId] = useState<TemplateId>("wedding-reception");
+  const [templateLocale, setTemplateLocale] = useState<InvitationLocale>(
+    config.locale,
+  );
+  const [templateConfirm, setTemplateConfirm] = useState(false);
+  const [snapshotId, setSnapshotId] = useState<string | null>(null);
+  const demoDrafts = useRef(new Map<string, SiteConfig>());
+  const templateLabel = templateCatalog(templateLocale).find(
+    (t) => t.id === templateId,
+  )?.label;
+  async function replaceDraft() {
+    await task(async () => {
+      let result: { config: SiteConfig; revision: number };
+      if (demo) {
+        const next = snapshotId
+          ? demoDrafts.current.get(snapshotId)
+          : createTemplate(
+              templateId,
+              config.id,
+              templateLocale,
+              undefined,
+              data.draft.config.defaultVariant,
+            );
+        if (!next) throw new Error(tt.missing);
+        const id = crypto.randomUUID();
+        demoDrafts.current.set(id, structuredClone(data.draft.config));
+        result = {
+          config: structuredClone(next),
+          revision: data.draft.revision + 1,
+        };
+        setData({
+          ...data,
+          draft: result,
+          snapshots: [
+            {
+              id,
+              created_at: new Date().toISOString(),
+              revision: data.draft.revision,
+            },
+            ...(data.snapshots || []),
+          ],
+        });
+      } else {
+        result = await action(snapshotId ? "restore-draft" : "reset-template", {
+          revision: data.draft.revision,
+          templateId,
+          locale: templateLocale,
+          snapshotId: snapshotId || undefined,
+        });
+        await reload();
+      }
+      setConfig(result.config);
+      setSaved(JSON.stringify(result.config));
+      setVariant(result.config.defaultVariant);
+      setTemplateConfirm(false);
+      setMessage(tt.saved);
+    });
+  }
   async function action<T = unknown>(action: string, payload: unknown) {
     return apiFetch<T>(endpoint, {
       method: "POST",
@@ -184,6 +232,8 @@ export function Editor({
     const requested = confirm;
     setConfirm(null);
     await task(async () => {
+      if (requested === "publish")
+        publishedConfigSchema.parse(data.draft.config);
       if (demo) {
         const id = crypto.randomUUID();
         const snapshot =
@@ -194,15 +244,6 @@ export function Editor({
         demoSnapshots.current.set(id, structuredClone(snapshot));
         setData({
           ...data,
-          deployments: [
-            {
-              id,
-              release_id: id,
-              status: "simulation",
-              created_at: new Date().toISOString(),
-            },
-            ...data.deployments,
-          ],
           releases: [
             { id, created_at: new Date().toISOString() },
             ...data.releases,
@@ -218,7 +259,9 @@ export function Editor({
           : { releaseId: requested },
       );
       await reload();
-      setMessage(t("publicationStarted"));
+      setMessage(
+        "Opublikowano. Stały adres strony jest gotowy do udostępnienia.",
+      );
     });
   }
   async function upload(file: File | null) {
@@ -250,9 +293,6 @@ export function Editor({
   function replace(key: keyof SiteConfig, value: unknown) {
     setConfig((current) => ({ ...current, [key]: value }));
   }
-  const active = data.deployments.some((d) =>
-    ["preparing", "building"].includes(d.status),
-  );
   return (
     <Container size="xl" py="xl">
       <Stack gap="lg">
@@ -308,7 +348,7 @@ export function Editor({
           </Button>
           <Button
             onClick={() => setConfirm("publish")}
-            disabled={dirty || busy || !validation.success || active}
+            disabled={dirty || busy || !readyToPublish}
             color="dark"
             leftSection={<IconRocket size={16} />}
           >
@@ -332,6 +372,46 @@ export function Editor({
             {t("export")}
           </Button>
         </Group>
+        {!readyToPublish && (
+          <Alert>
+            {language === "pl"
+              ? "Uzupełnij główny napis, aby opublikować zaproszenie."
+              : language === "en"
+                ? "Add a main heading before publishing."
+                : "Ergänze die Hauptüberschrift vor der Veröffentlichung."}
+          </Alert>
+        )}
+        <Modal
+          opened={templateConfirm}
+          onClose={() => !busy && setTemplateConfirm(false)}
+          title={snapshotId ? tt.restore : `${tt.apply}: ${templateLabel}?`}
+        >
+          <Stack>
+            {message && (
+              <Alert color="red" role="status">
+                {message}
+              </Alert>
+            )}
+            <Text>{tt.warning}</Text>
+            <Text>{tt.retained}</Text>
+            <Group>
+              <Button
+                variant="default"
+                disabled={busy}
+                onClick={() => setTemplateConfirm(false)}
+              >
+                {tt.cancel}
+              </Button>
+              <Button
+                color="red"
+                loading={busy}
+                onClick={() => void replaceDraft()}
+              >
+                {tt.replace}
+              </Button>
+            </Group>
+          </Stack>
+        </Modal>
         <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="xl">
           <Card withBorder p="lg">
             <Tabs defaultValue="page">
@@ -374,11 +454,11 @@ export function Editor({
                       replace("hero", v);
                     }}
                   />
-                  <Title order={3}>{t("couple")}</Title>
+                  <Title order={3}>{t("identity")}</Title>
                   <Fields
                     config={config}
-                    value={config.couple}
-                    onChange={(v) => replace("couple", v)}
+                    value={config.identity}
+                    onChange={(v) => replace("identity", v)}
                   />
                   <Title order={3}>{t("venues")}</Title>
                   <CollectionFields
@@ -599,6 +679,62 @@ export function Editor({
                     value={config.copy}
                     onChange={(v) => replace("copy", v)}
                   />
+                  <Accordion variant="separated">
+                    <Accordion.Item value="template-reset">
+                      <Accordion.Control>
+                        {language === "pl"
+                          ? "Zmiana szablonu i kopie szkicu"
+                          : language === "en"
+                            ? "Change template and draft backups"
+                            : "Vorlage ändern und Entwurfssicherungen"}
+                      </Accordion.Control>
+                      <Accordion.Panel>
+                        <Stack>
+                          <TemplatePicker
+                            templateId={templateId}
+                            locale={templateLocale}
+                            onTemplate={setTemplateId}
+                            onLocale={setTemplateLocale}
+                          />
+                          <Button
+                            variant="light"
+                            disabled={busy}
+                            onClick={() => {
+                              setSnapshotId(null);
+                              setMessage("");
+                              setTemplateConfirm(true);
+                            }}
+                          >
+                            {tt.change}
+                          </Button>
+                          {!!data.snapshots?.length && (
+                            <Group align="end">
+                              <Select
+                                label={tt.snapshot}
+                                placeholder={tt.chooseSnapshot}
+                                value={snapshotId}
+                                onChange={setSnapshotId}
+                                data={data.snapshots.map((s) => ({
+                                  value: s.id,
+                                  label: `${tt.revision} ${s.revision} · ${new Date(s.created_at).toLocaleString()}`,
+                                }))}
+                              />
+                              <Button
+                                variant="subtle"
+                                disabled={!snapshotId || busy}
+                                onClick={() => {
+                                  setMessage("");
+                                  setTemplateConfirm(true);
+                                }}
+                              >
+                                {tt.restore}
+                              </Button>
+                            </Group>
+                          )}
+                        </Stack>
+                      </Accordion.Panel>
+                    </Accordion.Item>
+                  </Accordion>
                 </Stack>
               </Tabs.Panel>
             </Tabs>
@@ -696,7 +832,7 @@ export function Editor({
             {t("history")}
           </Title>
           <Stack>
-            {!data.deployments.length ? (
+            {!data.releases.length ? (
               <Text c="dimmed">
                 {language === "pl"
                   ? "Nie opublikowano jeszcze żadnej wersji."
@@ -705,152 +841,45 @@ export function Editor({
                     : "Es wurde noch keine Version veröffentlicht."}
               </Text>
             ) : null}
-            {data.deployments.map((job) => (
+            {data.releases.map((job) => (
               <Group key={job.id} justify="space-between">
                 <div>
-                  <Badge>{job.status}</Badge>
+                  <Badge>
+                    {demo
+                      ? "simulation"
+                      : job.id === data.site.published_release_id
+                        ? "active"
+                        : "snapshot"}
+                  </Badge>
                   <Text size="sm">
                     {job.created_at
                       ? new Date(job.created_at).toLocaleString("pl-PL")
                       : job.id}
                   </Text>
-                  {job.error ? (
-                    <Text c="red" size="sm">
-                      {job.error}
-                    </Text>
-                  ) : null}
                 </div>
                 <Group>
-                  {job.url ? (
-                    <Button
-                      component="a"
-                      href={job.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      variant="subtle"
-                    >
-                      {language === "pl"
-                        ? "Otwórz"
-                        : language === "en"
-                          ? "Open"
-                          : "Öffnen"}
-                    </Button>
-                  ) : null}
-                  {["preparing", "building"].includes(job.status) ? (
-                    <Button
-                      variant="light"
-                      loading={busy}
-                      onClick={() =>
-                        task(async () => {
-                          await action("sync", { id: job.id });
-                          await reload();
-                        })
-                      }
-                    >
-                      {language === "pl"
-                        ? "Odśwież status"
-                        : language === "en"
-                          ? "Refresh status"
-                          : "Status aktualisieren"}
-                    </Button>
-                  ) : null}
-                  {["ready", "simulation"].includes(job.status) ? (
-                    <Button
-                      variant="subtle"
-                      disabled={busy || active}
-                      onClick={() => setConfirm(job.release_id)}
-                    >
-                      {language === "pl"
-                        ? "Przywróć wydanie"
-                        : language === "en"
-                          ? "Restore release"
-                          : "Version wiederherstellen"}
-                    </Button>
-                  ) : null}
-                  {admin && job.status === "preparing" ? (
-                    <Button
-                      color="red"
-                      variant="subtle"
-                      onClick={() => {
-                        if (window.confirm(t("resolveConfirm")))
-                          void task(async () => {
-                            await action("resolve-failed", { id: job.id });
-                            await reload();
-                          });
-                      }}
-                    >
-                      {t("resolveFailed")}
-                    </Button>
-                  ) : null}
+                  <Button
+                    variant="subtle"
+                    disabled={busy}
+                    onClick={() => setConfirm(job.id)}
+                  >
+                    {language === "pl"
+                      ? "Przywróć wydanie"
+                      : language === "en"
+                        ? "Restore release"
+                        : "Version wiederherstellen"}
+                  </Button>
                 </Group>
               </Group>
             ))}
           </Stack>
         </Card>
-        {admin && !demo ? (
-          <Card withBorder>
-            <Title order={2} mb="md">
-              {t("administration")}
-            </Title>
-            <Stack>
-              <Button
-                variant="light"
-                disabled={busy || !!data.site.vercel_project_id}
-                onClick={() =>
-                  task(async () => {
-                    await action("connect", {});
-                    await reload();
-                  })
-                }
-              >
-                {data.site.vercel_project_id
-                  ? t("vercelConnected")
-                  : t("createVercel")}
-              </Button>
-              <Group align="end">
-                <TextInput
-                  label={t("clientEmail")}
-                  value={email}
-                  onChange={(e) => setEmail(e.currentTarget.value)}
-                />
-                <Button
-                  onClick={() =>
-                    task(async () => {
-                      await action("invite", { email });
-                      setMessage(t("invitationSent"));
-                    })
-                  }
-                >
-                  {t("inviteClient")}
-                </Button>
-              </Group>
-              <Group align="end">
-                <TextInput
-                  label={t("clientDomain")}
-                  value={domain}
-                  onChange={(e) => setDomain(e.currentTarget.value)}
-                />
-                <Button
-                  onClick={() =>
-                    task(async () => {
-                      const result = await action<DomainResponse>("domain", {
-                        domain,
-                      });
-                      setMessage(
-                        result.verified
-                          ? t("domainVerified")
-                          : t("domainAdded"),
-                      );
-                      await reload();
-                    })
-                  }
-                >
-                  {t("assignDomain")}
-                </Button>
-              </Group>
-            </Stack>
-          </Card>
-        ) : null}
+        {!demo && (
+          <GuestManagement
+            key={data.releases[0]?.id || `draft-${data.draft.revision}`}
+            siteId={data.site.id}
+          />
+        )}
         <Modal
           opened={!!confirm}
           onClose={() => setConfirm(null)}

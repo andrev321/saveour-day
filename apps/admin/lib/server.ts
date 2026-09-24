@@ -53,21 +53,13 @@ export async function requireSite(siteId: string) {
   const { db, user } = await requireUser();
   const { data, error } = await db
     .from("sites")
-    .select("*")
+    .select(
+      "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline",
+    )
     .eq("id", siteId)
     .maybeSingle();
   if (error || !data) throw new HttpError(404, "Nie znaleziono realizacji");
   return { db, user, site: data };
-}
-export async function requireAdmin() {
-  const { db, user } = await requireUser();
-  const { data } = await db
-    .from("platform_admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!data) throw new HttpError(403, "Ta operacja wymaga administratora");
-  return { db, user };
 }
 export function verifyOrigin(request: Request) {
   const expected = process.env.APP_URL || new URL(request.url).origin;
@@ -96,6 +88,10 @@ export function api(handler: (request: Request) => Promise<unknown>) {
             headers: { "Cache-Control": "private, no-store" },
           });
     } catch (error) {
+      if (!(error instanceof HttpError) && !(error instanceof z.ZodError))
+        console.error(
+          JSON.stringify({ event: "panel.request.failed", status: 500 }),
+        );
       if (error instanceof z.ZodError)
         return NextResponse.json(
           {
@@ -125,14 +121,22 @@ export function checkDb(error: { message: string } | null) {
   if (error.message.includes("REVISION_CONFLICT"))
     throw new HttpError(
       409,
-      "Szkic zmienił się w innej sesji. Odśwież stronę przed zapisem.",
+      "Dane zmieniły się w innej sesji. Odśwież stronę przed zapisem.",
     );
-  if (error.message.includes("DEPLOYMENT_ACTIVE"))
-    throw new HttpError(409, "Publikacja już trwa. Odśwież jej status.");
-  if (error.message.includes("DAILY_LIMIT"))
-    throw new HttpError(
-      429,
-      "Limit 10 publikacji w ciągu 24 godzin został wykorzystany.",
-    );
+  const messages: Record<string, string> = {
+    VARIANT_MISSING:
+      "Wariant jest używany przez zaproszenia albo nie istnieje w publikacji.",
+    CODE_REQUIRED: "Ustaw kod dostępu.",
+    EMAIL_REQUIRED: "Każde aktywne zaproszenie musi mieć adres e-mail.",
+    RSVP_CLOSED: "Termin odpowiedzi minął.",
+    UNPUBLISHED: "Strona nie jest opublikowana.",
+    INVALID_ANSWERS: "Odpowiedzi nie pasują do zaproszenia.",
+    FORBIDDEN: "Brak dostępu.",
+    LEGACY_PUBLICATION_ACTIVE:
+      "Najpierw wyłącz stare publiczne deploymenty tej realizacji zgodnie z instrukcją migracji.",
+  };
+  for (const [key, message] of Object.entries(messages)) {
+    if (error.message.includes(key)) throw new HttpError(409, message);
+  }
   throw new HttpError(500, "Nie udało się zapisać danych");
 }
