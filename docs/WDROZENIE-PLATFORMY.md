@@ -1,4 +1,6 @@
-﻿# Wdrożenie wspólnej platformy zaproszeń
+# Wdrożenie wspólnej platformy zaproszeń
+
+Aktualny stan środowiska i pozostałe kroki: [status stagingu](STAGING-STATUS.md). Obie aplikacje są wdrożone; konfiguracja Resend SMTP czeka na domenę nadawczą.
 
 ## Architektura
 

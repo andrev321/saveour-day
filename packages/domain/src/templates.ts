@@ -3,6 +3,7 @@
   parseSiteConfig,
   type InvitationLocale,
 } from "./index.ts";
+import { personalTemplateExample } from "./template-examples.ts";
 
 const definitions = [
   ["wedding", "Ślub", "Wedding ceremony", "Trauung"],
@@ -128,6 +129,7 @@ export function createTemplate(
   if (!item) throw new Error("Unknown invitation template");
   const l = labels[locale];
   const blank = templateId === "blank";
+  const example = personalTemplateExample(templateId, locale);
   const eventTitles = blank
     ? []
     : templateId === "wedding-reception" || templateId === "family-ceremony"
@@ -154,7 +156,12 @@ export function createTemplate(
   const sections = blank
     ? []
     : [
-        { id: nextId(), type: "text", title: l.invite, body: l.example },
+        {
+          id: nextId(),
+          type: "text",
+          title: l.invite,
+          body: example?.body ?? l.example,
+        },
         { id: nextId(), type: "timeline", title: l.program },
         ...venues.map((venue) => ({
           id: nextId(),
@@ -174,11 +181,11 @@ export function createTemplate(
     id,
     locale,
     timeZone: "Europe/Warsaw",
-    identity: { displayName: blank ? "" : item.label },
+    identity: { displayName: blank ? "" : (example?.names ?? item.label) },
     hero: {
       eyebrow: blank ? "" : l.invite,
-      title: "",
-      description: blank ? "" : l.welcome,
+      title: example?.title ?? "",
+      description: blank ? "" : (example?.body ?? l.welcome),
       dateLabel: "",
       layout: "split",
     },
@@ -186,7 +193,11 @@ export function createTemplate(
       templateId === "corporate" || templateId === "workshop"
         ? "sage"
         : "ivory",
-    metadata: { title: l.invite, description: "", indexing: false },
+    metadata: {
+      title: example ? `${example.names} — ${item.label}` : l.invite,
+      description: example?.body ?? "",
+      indexing: false,
+    },
     copy: {
       navigate: l.navigate,
       showMap: l.showMap,
