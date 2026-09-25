@@ -15,6 +15,10 @@ type Dictionary = Record<string, string>;
 
 const messages: Record<PanelLanguage, Dictionary> = {
   pl: {
+    emailConfirmedTitle: "Adres e-mail potwierdzony",
+    emailConfirmedBody:
+      "Twoje konto jest aktywne. Możesz zacząć tworzyć zaproszenia.",
+    emailConfirmedContinue: "Przejdź do panelu",
     language: "Język panelu",
     dashboard: "Twoje realizacje",
     logout: "Wyloguj",
@@ -76,6 +80,10 @@ const messages: Record<PanelLanguage, Dictionary> = {
     backToProjects: "Przejdź do realizacji",
   },
   en: {
+    emailConfirmedTitle: "Email address confirmed",
+    emailConfirmedBody:
+      "Your account is active. You can start creating invitations.",
+    emailConfirmedContinue: "Continue to dashboard",
     language: "Panel language",
     dashboard: "Your projects",
     logout: "Sign out",
@@ -139,6 +147,10 @@ const messages: Record<PanelLanguage, Dictionary> = {
     backToProjects: "Go to projects",
   },
   de: {
+    emailConfirmedTitle: "E-Mail-Adresse bestätigt",
+    emailConfirmedBody:
+      "Dein Konto ist aktiv. Du kannst jetzt Einladungen erstellen.",
+    emailConfirmedContinue: "Weiter zur Übersicht",
     language: "Sprache des Panels",
     dashboard: "Ihre Projekte",
     logout: "Abmelden",

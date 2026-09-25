@@ -15,7 +15,10 @@ export async function GET(request: Request) {
     const { error } = await db.auth.verifyOtp({ token_hash: token, type });
     if (!error)
       return NextResponse.redirect(
-        new URL(type === "signup" ? "/" : "/account", url.origin),
+        new URL(
+          type === "signup" ? "/?emailConfirmed=1" : "/account",
+          url.origin,
+        ),
       );
   }
   return NextResponse.redirect(new URL("/?error=expired", url.origin));

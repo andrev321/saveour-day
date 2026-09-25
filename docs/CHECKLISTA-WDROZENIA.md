@@ -2,6 +2,8 @@
 
 Stan: 2026-09-23. Odznaczaj punkty po wykonaniu. Dokument nie potwierdza wdrożenia. Najpierw wykonaj kroki na stagingu, potem powtórz dla produkcji. Szczegóły migracji i pełne testy opisuje [instrukcja techniczna](WDROZENIE-PLATFORMY.md).
 
+Wykonane kroki i adresy bieżącego środowiska: [status stagingu](STAGING-STATUS.md). Poniższa lista pozostaje instrukcją dla nowych środowisk.
+
 ## 1. Co musisz zapewnić
 
 - [ ] Repozytorium Git z wypchniętym aktualnym kodem, lockfile i migracjami.
@@ -99,3 +101,17 @@ Nie potrzebujesz tokena Vercel w aplikacji, webhooka builda, projektu dla każde
 | Potwierdzenie konta nie działa | Site URL, `token_hash`, `type=signup`, ważność tokena |
 | 404 zaproszenia | Publikację, poprawność linku, cofnięcie dostępu |
 | `LEGACY_PUBLICATION_ACTIVE` | Wyłączenie dawnych kopii przed wyczyszczeniem `vercel_project_id` |
+
+## Resend SMTP i instalacja monorepo — uzupełnienie 2026-09-25
+
+Resend: host `smtp.resend.com`, port `465`, użytkownik `resend`, hasło: klucz API Resend z uprawnieniem wysyłki. Do wysyłki do różnych odbiorców adres nadawcy musi być w zweryfikowanej domenie. Do testu bez własnej domeny użyj `onboarding@resend.dev`, wyłącznie do dokładnego adresu właściciela konta Resend. Hasło wpisz bezpośrednio w Supabase Authentication → Emails → SMTP Settings. SDK Resend w aplikacji i zmienna RESEND_API_KEY na Vercelu nie są potrzebne: wiadomości wysyła Supabase Auth przez SMTP.
+
+Obecny panel Supabase wymaga custom SMTP do edycji szablonów. Skonfiguruj je dopiero po poprawnym ustawieniu SMTP. Bez własnej domeny `onboarding@resend.dev` umożliwia testy tylko do adresu właściciela konta Resend; nie wystarcza do testowania maili do organizatorów i gości. [Instrukcja Resend](https://resend.com/docs/send-with-supabase-smtp).
+
+Dla Root Directory `apps/admin` i `apps/site` ustaw w obu projektach Vercela **Install Command**:
+
+```sh
+cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
+```
+
+Ta konfiguracja przeszła oba buildy stagingu. Domyślna instalacja pomijała zależności głównego pakietu i powodowała błędy brakujących modułów.

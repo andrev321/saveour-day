@@ -59,7 +59,7 @@ test("creation handler builds selected templates server-side and rejects invalid
       locale: string;
       schemaVersion: number;
     };
-    assert.equal(content.identity.displayName, "Birthday");
+    assert.equal(content.identity.displayName, "Sophie");
     assert.equal(content.locale, "en-GB");
     assert.equal(content.schemaVersion, 2);
     assert.equal(

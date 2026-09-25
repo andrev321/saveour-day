@@ -15,6 +15,7 @@ import {
   Title,
 } from "@mantine/core";
 import { apiFetch } from "./Dashboard";
+import { QrCodeCard } from "./QrCodeCard";
 type Guest = { id: string; name: string };
 type InvitationRow = {
   id: string;
@@ -195,6 +196,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 Wycofaj publikację
               </Button>
             </Group>
+            <QrCodeCard
+              url={data.url}
+              published={!!data.site.published_release_id}
+              onMessage={setMessage}
+            />
             <form
               onSubmit={(e) => {
                 e.preventDefault();

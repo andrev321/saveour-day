@@ -7,6 +7,7 @@ import {
   Card,
   Container,
   Group,
+  Modal,
   PasswordInput,
   SimpleGrid,
   Stack,
@@ -40,8 +41,21 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
     throw new Error(result.error || "The operation could not be completed");
   return result as T;
 }
-export function Dashboard({ configured }: { configured: boolean }) {
+export function Dashboard({
+  configured,
+  emailConfirmed = false,
+}: {
+  configured: boolean;
+  emailConfirmed?: boolean;
+}) {
   const { t } = usePanelI18n();
+  const [confirmationOpen, setConfirmationOpen] = useState(emailConfirmed);
+  function dismissConfirmation() {
+    setConfirmationOpen(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("emailConfirmed");
+    window.history.replaceState(window.history.state, "", url);
+  }
   const [sites, setSites] = useState<Site[]>([]),
     [admin, setAdmin] = useState(false),
     [logged, setLogged] = useState(false);
@@ -84,6 +98,19 @@ export function Dashboard({ configured }: { configured: boolean }) {
   }
   return (
     <Container size="lg" py={48}>
+      <Modal
+        opened={confirmationOpen}
+        onClose={dismissConfirmation}
+        title={t("emailConfirmedTitle")}
+        centered
+      >
+        <Stack>
+          <Text>{t("emailConfirmedBody")}</Text>
+          <Button onClick={dismissConfirmation}>
+            {t("emailConfirmedContinue")}
+          </Button>
+        </Stack>
+      </Modal>
       <Stack gap="xl">
         <Group justify="space-between">
           <div>
