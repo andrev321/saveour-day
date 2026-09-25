@@ -18,10 +18,27 @@ import { useEffect, useRef, useState } from "react";
 import type QRCodeStyling from "qr-code-styling";
 import type { DotType } from "qr-code-styling/lib/types";
 
-const heartSvg = (color: string) =>
-  `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="18" fill="white"/><path d="M32 52S9 39 9 22c0-8 6-13 13-13 5 0 8 3 10 7 2-4 5-7 10-7 7 0 13 5 13 13 0 17-23 30-23 30Z" fill="${color}"/></svg>`,
-  )}`;
+function paintHeart(canvas: HTMLCanvasElement, color: string) {
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  context.save();
+  context.translate((canvas.width - 64) / 2, (canvas.height - 64) / 2);
+  context.fillStyle = "#ffffff";
+  context.beginPath();
+  context.roundRect(0, 0, 64, 64, 18);
+  context.fill();
+  context.fillStyle = color;
+  context.beginPath();
+  context.moveTo(32, 53);
+  context.bezierCurveTo(27, 48, 9, 38, 9, 22);
+  context.bezierCurveTo(9, 14, 14, 9, 22, 9);
+  context.bezierCurveTo(27, 9, 30, 12, 32, 16);
+  context.bezierCurveTo(34, 12, 37, 9, 42, 9);
+  context.bezierCurveTo(50, 9, 55, 14, 55, 22);
+  context.bezierCurveTo(55, 38, 37, 48, 32, 53);
+  context.fill();
+  context.restore();
+}
 
 const styles: { value: DotType; label: string }[] = [
   { value: "square", label: "Klasyczny" },
@@ -58,24 +75,22 @@ export function QrCodeCard({
         height: 280,
         margin: 12,
         data: url,
-        image: heart ? heartSvg(foreground) : undefined,
         qrOptions: { errorCorrectionLevel: "H" },
         dotsOptions: { color: foreground, type: dotStyle },
         cornersSquareOptions: { color: foreground, type: "extra-rounded" },
         cornersDotOptions: { color: foreground, type: "dot" },
         backgroundOptions: { color: background },
-        imageOptions: {
-          hideBackgroundDots: true,
-          imageSize: 0.28,
-          margin: 5,
-        },
       });
       container.current.replaceChildren();
       instance.append(container.current);
       qr.current = instance;
-      const result = await instance.getRawData("png");
-      if (active && result instanceof Blob)
-        setPng({ key: qrKey, blob: result });
+      await instance.getRawData("png");
+      const canvas = container.current.querySelector("canvas");
+      if (!canvas) return;
+      if (heart) paintHeart(canvas, foreground);
+      canvas.toBlob((result) => {
+        if (active && result) setPng({ key: qrKey, blob: result });
+      }, "image/png");
     });
     return () => {
       active = false;
