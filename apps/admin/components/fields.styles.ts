@@ -47,7 +47,7 @@ export const ReferenceDragGhost = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 0.5rem;
     min-width: 12rem;
     padding: 0.5rem 0.75rem;
-    border: 1px solid #a5c0a4;
+    border: 1px solid #9FB4DD;
     border-radius: 0.5rem;
     background: #fff;
     box-shadow: 0 12px 30px rgb(0 0 0 / 15%);
@@ -149,7 +149,7 @@ export const SectionDragGhost = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 0.75rem;
     min-width: 15rem;
     padding: 0.75rem 1rem;
-    border: 1px solid #a5c0a4;
+    border: 1px solid #9FB4DD;
     border-radius: 0.5rem;
     background: white;
     box-shadow: 0 12px 30px rgb(0 0 0 / 15%);

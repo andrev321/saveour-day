@@ -340,7 +340,7 @@ export function Editor({
         </Tooltip>
       }
       status={
-        <Badge color={dirty ? "orange" : "forest"}>
+        <Badge color={dirty ? "orange" : "brand"}>
           {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
         </Badge>
       }
@@ -363,7 +363,7 @@ export function Editor({
           <Button
             onClick={() => setConfirm("publish")}
             disabled={dirty || busy || !readyToPublish}
-            color="forest"
+            color="brand"
             leftSection={<IconRocket size={16} />}
           >
             {demo ? t("simulate") : t("publish")}

@@ -8,6 +8,7 @@ import { ProjectStart } from "./ProjectStart";
 import { LanguageSelect } from "./LanguageSelect";
 import { usePanelI18n } from "../lib/i18n";
 import type { SiteConfig } from "@invitations/domain";
+import { BrandLogo } from "@invitations/ui/brand";
 export function DemoWorkspace() {
   const [initial, setInitial] = useState<EditorData | null>(null);
   const { language } = usePanelI18n();
@@ -23,6 +24,7 @@ export function DemoWorkspace() {
   return (
     <Container size="sm" py="xl">
       <Stack>
+        <BrandLogo animated height={56} />
         <LanguageSelect />
         <ProjectStart
           onCreate={({ name, templateId, locale }) =>

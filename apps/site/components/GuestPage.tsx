@@ -3,6 +3,7 @@ import * as S from "./styles";
 import { useEffect, useState } from "react";
 import { Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
+import { BrandLogo } from "@invitations/ui/brand";
 type Reply = {
   authorized: boolean;
   mode: string;
@@ -109,6 +110,7 @@ export function GuestPage({
   if (!data?.authorized)
     return (
       <S.GuestCard >
+        <BrandLogo animated height={52} />
         <h1>Twoje zaproszenie</h1>
         {message && <p role="status">{message}</p>}
         {!data && !message && <p>Wczytywanie…</p>}
