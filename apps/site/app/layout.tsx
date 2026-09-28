@@ -7,7 +7,7 @@ import "@fontsource/inter/latin-ext-600.css";
 import "@fontsource/playfair-display/latin-ext-500.css";
 import "@fontsource/playfair-display/latin-ext-600.css";
 export const metadata: Metadata = {
-  title: "Zaproszenie",
+  title: "Zaproszenie — saveour.day",
   robots: { index: false, follow: false },
   description: "Otwórz swoje zaproszenie",
 };

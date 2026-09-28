@@ -2,8 +2,8 @@
 import { ActionIcon, Tabs } from "@mantine/core";
 import { createGlobalStyle, keyframes, styled } from "styled-components";
 export const AdminGlobalStyles = createGlobalStyle`body {margin: 0;
-background: #f7f3ec;
-color: #302f2b;}
+background: #F4F6FB;
+color: #242B59;}
 * {box-sizing: border-box;}
 `;
 
@@ -21,18 +21,18 @@ export const EditorWorkspace = styled.div.attrs<{ "data-ui"?: string }>({
 })`
   & {
     --nav-width: 208px;
-    --paper-border: #e5e0d7;
+    --panel-border: #DCE2EE;
     height: min(100dvh, var(--visual-height, 100dvh));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #f7f3ec;
+    background: #F4F6FB;
   }
   &[data-collapsed="true"] {
     --nav-width: 76px;
   }
   & :focus-visible {
-    outline: 2px solid #35604c;
+    outline: 2px solid #3D518B;
     outline-offset: 3px;
   }
   @media (min-width: 1100px) and (max-width: 1599px) {
@@ -97,7 +97,7 @@ export const WorkspaceHeader = styled.header.attrs<{ "data-ui"?: string }>({
     gap: 20px;
     min-height: 60px;
     padding: 8px 20px 8px 0;
-    border-bottom: 1px solid var(--paper-border);
+    border-bottom: 1px solid var(--panel-border);
   }
   @media (min-width: 1100px) and (max-width: 1599px) {
     & {
@@ -130,13 +130,19 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #35604c;
+    color: #3D518B;
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
   }
-  [data-collapsed="true"] & span {
-    display: none;
+  & .brand-symbol {
+    display: none !important;
+  }
+  [data-collapsed="true"] & .brand-lockup {
+    display: none !important;
+  }
+  [data-collapsed="true"] & .brand-symbol {
+    display: block !important;
   }
   @media (max-width: 1099px) {
     & {
@@ -145,8 +151,11 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
     }
   }
   @media (max-width: 1099px) {
-    & span {
-      display: none;
+    & .brand-lockup {
+      display: none !important;
+    }
+    & .brand-symbol {
+      display: block !important;
     }
   }
   @media (max-width: 767px) {
@@ -306,7 +315,7 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     flex-direction: column;
     min-height: 0;
     padding: 24px 12px 16px;
-    border-right: 1px solid var(--paper-border);
+    border-right: 1px solid var(--panel-border);
   }
   & .mantine-Tabs-list {
     gap: 8px;
@@ -322,19 +331,19 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     border: 0;
     border-radius: 10px;
     padding: 14px 16px;
-    color: #575951;
+    color: #59647D;
     min-height: 48px;
     transition:
       background-color 160ms,
       color 160ms;
   }
   & .mantine-Tabs-tab[data-active] {
-    background: #e2ebdf;
-    color: #2c5442;
+    background: #DFF0F4;
+    color: #24485C;
     font-weight: 600;
   }
   & .mantine-Tabs-tab:hover {
-    background: #ebece3;
+    background: #EAF0FA;
   }
   & .mantine-Tabs-tabSection {
     margin-inline-end: 12px;
@@ -380,7 +389,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     overflow: auto;
     min-width: 0;
     padding: 24px;
-    background: #fffefa;
+    background: #FFFFFF;
     scrollbar-gutter: stable;
   }
   & .mantine-Tabs-panel {
@@ -394,23 +403,23 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     margin-top: 12px;
   }
   & .mantine-Input-input {
-    border-color: #dcded4;
-    background: #fffefa;
+    border-color: #CDD6E7;
+    background: #FFFFFF;
   }
   & .mantine-Input-input:focus {
-    border-color: #35604c;
+    border-color: #3D518B;
   }
   & .mantine-InputWrapper-label {
     margin-bottom: 6px;
-    color: #393d35;
+    color: #303B59;
   }
   & .mantine-Accordion-item {
-    border-color: #e5e0d7;
-    background: #fffefa;
+    border-color: #DCE2EE;
+    background: #FFFFFF;
   }
   & .mantine-Card-root {
-    border-color: #e5e0d7;
-    background: #fffefa;
+    border-color: #DCE2EE;
+    background: #FFFFFF;
   }
   ${EditorWorkspace}[data-density="compact"] & {
     padding: 16px;
@@ -489,8 +498,8 @@ export const WorkspaceResizer = styled.div.attrs<{ "data-ui"?: string }>({
   & {
     cursor: col-resize;
     touch-action: none;
-    border-inline: 1px solid #e5e0d7;
-    background: #f0ece4;
+    border-inline: 1px solid #DCE2EE;
+    background: #E8EDF6;
     position: relative;
   }
   &::after {
@@ -500,17 +509,17 @@ export const WorkspaceResizer = styled.div.attrs<{ "data-ui"?: string }>({
     left: 2px;
     width: 2px;
     height: 48px;
-    background: #b6beb0;
+    background: #9BAAC9;
     border-radius: 4px;
   }
   &:hover {
-    background: #c5d7c2;
-    outline: 2px solid #35604c;
+    background: #CDDAF4;
+    outline: 2px solid #3D518B;
     outline-offset: -2px;
   }
   &:focus-visible {
-    background: #c5d7c2;
-    outline: 2px solid #35604c;
+    background: #CDDAF4;
+    outline: 2px solid #3D518B;
     outline-offset: -2px;
   }
   @media (max-width: 1099px) {
@@ -530,7 +539,7 @@ export const WorkspacePreview = styled.section.attrs<{ "data-ui"?: string }>({
     min-height: 0;
     padding: 24px;
     gap: 18px;
-    background: #f4f1ea;
+    background: #EDF2F8;
   }
   & h2 {
     font-size: 18px;
@@ -587,8 +596,8 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
       justify-content: center;
       gap: 12px;
       padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-      border-top: 1px solid #e5e0d7;
-      background: #fffefa;
+      border-top: 1px solid #DCE2EE;
+      background: #FFFFFF;
     }
   }
   @media (max-width: 1099px) {

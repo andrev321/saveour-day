@@ -9,7 +9,7 @@ export const PreviewDialog = styled.div.attrs<{ "data-ui"?: string }>({
     flex-direction: column;
     height: 100dvh;
     overflow: hidden;
-    background: #f4f1ea;
+    background: #EDF2F8;
     width: 100%;
   }
 `;
@@ -20,8 +20,8 @@ export const PreviewDialogHeader = styled(Modal.Header).attrs<{
   & {
     min-height: 52px;
     padding: 8px 16px;
-    background: #f7f3ec;
-    border-bottom: 1px solid #e5e0d7;
+    background: #F4F6FB;
+    border-bottom: 1px solid #DCE2EE;
   }
   @media (max-width: 767px) {
     & {
@@ -66,7 +66,7 @@ export const PreviewCanvas = styled.div.attrs<{ "data-ui"?: string }>({
     min-height: 0;
     overflow: auto;
     border-radius: 16px;
-    background: #ebe8df;
+    background: #DFE7F1;
   }
 `;
 
@@ -87,8 +87,8 @@ export const PreviewDevice = styled.div.attrs<{ "data-ui"?: string }>({
     top: 0;
     left: 0;
     transform-origin: top left;
-    background: #faf9f5;
-    box-shadow: 0 14px 36px #302f2b30;
+    background: #F8FAFD;
+    box-shadow: 0 14px 36px #242B5930;
   }
   &[data-device="phone"] {
     border-radius: 48px;
@@ -96,14 +96,14 @@ export const PreviewDevice = styled.div.attrs<{ "data-ui"?: string }>({
     box-shadow:
       0 0 0 2px #8b908c,
       0 0 0 4px #d2d3ce,
-      0 18px 40px #302f2b38;
+      0 18px 40px #242B5938;
   }
   &[data-device="tablet"] {
     border-radius: 30px;
     background: #262a29;
     box-shadow:
       0 0 0 2px #90948f,
-      0 18px 40px #302f2b38;
+      0 18px 40px #242B5938;
   }
   &[data-device="desktop"] {
     border-radius: 10px;
@@ -112,7 +112,7 @@ export const PreviewDevice = styled.div.attrs<{ "data-ui"?: string }>({
   & iframe {
     display: block;
     border: 0;
-    background: #fffefa;
+    background: #FFFFFF;
   }
 `;
 
@@ -122,7 +122,7 @@ export const PreviewDeviceScreen = styled.div.attrs<{ "data-ui"?: string }>({
   & {
     overflow: hidden;
     isolation: isolate;
-    background: #fffefa;
+    background: #FFFFFF;
   }
   [data-device="phone"] & {
     border-radius: 38px;
@@ -147,8 +147,8 @@ export const PreviewDeviceStatus = styled.div.attrs<{ "data-ui"?: string }>({
     font:
       600 12px Inter,
       sans-serif;
-    color: #302f2b;
-    background: #fffefa;
+    color: #242B59;
+    background: #FFFFFF;
   }
   [data-device="phone"] & {
     border-radius: 38px 38px 0 0;
@@ -196,7 +196,7 @@ export const PreviewDeviceBottom = styled.div.attrs<{ "data-ui"?: string }>({
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #fffefa;
+    background: #FFFFFF;
     border-radius: 0 0 38px 38px;
   }
   & i {
@@ -274,7 +274,7 @@ export const PreviewDeviceButtons = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 2px;
     padding: 2px;
     border-radius: 9px;
-    background: #e9e7df;
+    background: #DCE5F1;
   }
 `;
 

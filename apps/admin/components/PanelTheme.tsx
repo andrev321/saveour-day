@@ -5,19 +5,20 @@ import type { ReactNode } from "react";
 
 const theme = createTheme({
   respectReducedMotion: true,
-  primaryColor: "forest",
+  black: "#242B59",
+  primaryColor: "brand",
   colors: {
-    forest: [
-      "#f0f5ef",
-      "#e2ebdf",
-      "#c5d7c2",
-      "#a5c0a4",
-      "#83a785",
-      "#648c69",
-      "#35604c",
-      "#2c5442",
-      "#234635",
-      "#173526",
+    brand: [
+      "#F1F4FC",
+      "#E1E8F8",
+      "#CDDAF4",
+      "#AABDE5",
+      "#819BCF",
+      "#5D78AE",
+      "#3D518B",
+      "#304176",
+      "#242B59",
+      "#1A2145",
     ],
   },
   fontFamily: "Inter, sans-serif",

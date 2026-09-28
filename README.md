@@ -1,4 +1,8 @@
-# Invitation Platform
+# saveour.day
+
+Identyfikacja marki: [warianty logo i instrukcja użycia](assets/brand/README.md),
+[podgląd wersji jasnych, ciemnych i animacji](assets/brand/index.html).
+Pliki można odtworzyć poleceniem `npm run build:brand`.
 
 Platforma do tworzenia i zarządzania zaproszeniami na różne wydarzenia. Klienci wybierają szablon startowy (np. ślub, urodziny, impreza firmowa) albo pusty szkic, a następnie tworzą zaproszenia dla osób lub rodzin. Szablon można później zmienić z potwierdzeniem resetu; poprzedni zapisany szkic ma kopię do przywrócenia. Publikacja zatwierdza wersję w bazie bez osobnego builda. Dostęp jest publiczny, za kodem lub przez e-mail OTP; panel zbiera RSVP za poszczególnych gości i wydarzenia.
 

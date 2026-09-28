@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 124" width="120" height="124" role="img" aria-label="saveour.day" class="sod-animated">
+<title>saveour.day</title><style>
+@keyframes sod-back-in { from { transform: translate(10px, -9px); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+@keyframes sod-front-in { from { transform: translate(-10px, 9px); opacity: 0; } to { transform: translate(0, 0); opacity: 1; } }
+.sod-animated .sod-back { animation: sod-back-in 800ms cubic-bezier(.22,1,.36,1) both; }
+.sod-animated .sod-front { animation: sod-front-in 800ms cubic-bezier(.22,1,.36,1) 100ms both; }
+@media (prefers-reduced-motion: reduce) {
+  .sod-animated .sod-back, .sod-animated .sod-front { animation: none; }
+}</style>
+<g class="sod-back"><path d="M28 13 Q28 8 33 10 L100 33 Q105 35 100 38 L57 60 L28 45 Z" fill="#3D518B"/><path d="M66 63 L107 43 Q112 41 112 47 L112 99 Q112 104 107 102 L75 90 L75 73 Q75 69 71 67 Z" fill="#304176"/></g>
+<path class="sod-front" d="M12 43 Q8 41 8 47 L8 88 Q8 93 13 95 L63 113 Q68 115 68 109 L68 76 Q68 71 63 68 Z" fill="#24485C"/>
+</svg>

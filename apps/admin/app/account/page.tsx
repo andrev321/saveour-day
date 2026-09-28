@@ -10,6 +10,7 @@ import {
 } from "@mantine/core";
 import { browserDb } from "../../lib/browser";
 import { usePanelI18n } from "../../lib/i18n";
+import { BrandLogo } from "@invitations/ui/brand";
 export default function Account() {
   const { t } = usePanelI18n();
   const [password, setPassword] = useState(""),
@@ -17,6 +18,7 @@ export default function Account() {
   return (
     <Container size="xs" py={80}>
       <Stack>
+        <BrandLogo height={52} />
         <Title>{t("setPassword")}</Title>
         <PasswordInput
           label={t("newPassword")}

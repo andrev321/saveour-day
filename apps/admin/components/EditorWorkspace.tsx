@@ -13,7 +13,6 @@ import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import {
   ClockCounterClockwiseIcon,
   CopyIcon,
-  EnvelopeSimpleIcon,
   EyeIcon,
   FileTextIcon,
   GearSixIcon,
@@ -29,6 +28,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { usePanelI18n } from "../lib/i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import * as S from "./workspace.styles";
+import { BrandLogo } from "@invitations/ui/brand";
 
 export function EditorWorkspace({
   title,
@@ -113,8 +113,18 @@ export function EditorWorkspace({
     >
       <S.WorkspaceHeader>
         <S.WorkspaceBrand href="/" aria-label={t("projects")}>
-          <EnvelopeSimpleIcon size={28} weight="duotone" />
-          <span>{ui.brand}</span>
+          <BrandLogo
+            variant="short"
+            height={40}
+            decorative
+            className="brand-lockup"
+          />
+          <BrandLogo
+            variant="mark"
+            height={32}
+            decorative
+            className="brand-symbol"
+          />
         </S.WorkspaceBrand>
         <S.WorkspaceProject>
           {title}

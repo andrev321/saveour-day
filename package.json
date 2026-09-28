@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "build:brand": "tsx scripts/build-brand.ts",
     "dev": "npm run dev --workspace @invitations/site",
     "dev:admin": "npm run dev --workspace @invitations/admin",
     "build": "npm run typecheck && npm run build --workspace @invitations/site",

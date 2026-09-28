@@ -19,6 +19,7 @@ import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
 import { LanguageSelect } from "./LanguageSelect";
 import { ProjectStart } from "./ProjectStart";
+import { BrandLogo } from "@invitations/ui/brand";
 type Site = {
   id: string;
   name: string;
@@ -114,9 +115,7 @@ export function Dashboard({
       <Stack gap="xl">
         <Group justify="space-between">
           <div>
-            <Text size="sm" c="dimmed">
-              PRACOWNIA ZAPROSZEŃ
-            </Text>
+            <BrandLogo animated height={56} style={{ marginBottom: 12 }} />
             <Title>{t("dashboard")}</Title>
           </div>
           <LanguageSelect />

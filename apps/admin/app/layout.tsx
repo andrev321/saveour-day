@@ -9,7 +9,7 @@ import { ColorSchemeScript, mantineHtmlProps } from "@mantine/core";
 import { PanelI18nProvider } from "../lib/i18n";
 import { PanelTheme } from "../components/PanelTheme";
 export const metadata = {
-  title: "Pracownia zaproszeń",
+  title: "saveour.day — Pracownia zaproszeń",
   robots: { index: false, follow: false },
 };
 export default function Layout({ children }: { children: React.ReactNode }) {
