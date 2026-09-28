@@ -1,4 +1,13 @@
 import { z } from "zod";
+import { themeNames, themeDesigns, themes } from "./themes.ts";
+export {
+  themeNames,
+  themeDesigns,
+  themes,
+  type ThemeName,
+  type ThemeDesign,
+  type ThemeAppearance,
+} from "./themes.ts";
 
 const text = z.string().trim().min(1).max(500);
 const paragraph = z.string().trim().max(6000).default("");
@@ -22,35 +31,8 @@ const optionalUrl = z.union([z.literal(""), httpsUrl]).default("");
 const hexColor = z
   .string()
   .regex(/^#[0-9a-f]{6}$/i, "Użyj koloru HEX, np. #AABBCC");
-export type ThemeName = "ivory" | "sage" | "wine";
 export type InvitationLocale = "pl-PL" | "en-GB" | "de-DE";
 export const invitationLocales = ["pl-PL", "en-GB", "de-DE"] as const;
-export type ThemeDesign = {
-  paper: string;
-  surface: string;
-  ink: string;
-  accent: string;
-};
-export const themeDesigns: Record<ThemeName, ThemeDesign> = {
-  ivory: {
-    paper: "#faf7f1",
-    surface: "#fffdfb",
-    ink: "#34322d",
-    accent: "#6c501b",
-  },
-  sage: {
-    paper: "#f5f7f1",
-    surface: "#fcfdf9",
-    ink: "#2f3a2c",
-    accent: "#3b5025",
-  },
-  wine: {
-    paper: "#fbf5f5",
-    surface: "#fffafb",
-    ink: "#3d2a2e",
-    accent: "#773044",
-  },
-} as const;
 const designSchema = z
   .object({
     paper: hexColor,
@@ -189,7 +171,14 @@ const currentConfigSchema = z
         layout: z.enum(["overlay", "split"]),
       })
       .strict(),
-    theme: z.enum(["ivory", "sage", "wine"]),
+    theme: z.enum(themeNames),
+    appearance: z
+      .object({
+        icons: z.boolean(),
+        decorations: z.enum(["none", "subtle", "full"]),
+      })
+      .strict()
+      .optional(),
     design: designSchema.optional(),
     metadata: z
       .object({
@@ -236,6 +225,7 @@ const currentConfigSchema = z
   .transform((value) => ({
     ...value,
     design: value.design ?? themeDesigns[value.theme],
+    appearance: value.appearance ?? themes[value.theme].appearance,
     variants: value.variants.map((variant) => ({
       ...variant,
       hiddenEventIds:

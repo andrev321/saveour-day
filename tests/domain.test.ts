@@ -13,7 +13,7 @@ import { importLegacy } from "../packages/domain/src/legacy.ts";
 
 test("two independent configurations use the same schema", () => {
   const first = createDemo(),
-    second = createDemo("demo-sage");
+    second = createDemo("demo-botanical");
   assert.notDeepEqual(first.identity, second.identity);
   assert.notEqual(first.theme, second.theme);
   assert.equal(parseSiteConfig(first).schemaVersion, 2);
@@ -38,12 +38,12 @@ test("provides localized initial templates and detects a customized template", (
   );
 });
 test("accepts custom color tokens and supplies a preset for older configurations", () => {
-  const legacy = structuredClone(createDemo("demo-sage")) as Record<
+  const legacy = structuredClone(createDemo("demo-botanical")) as Record<
     string,
     unknown
   >;
   delete legacy.design;
-  assert.deepEqual(parseSiteConfig(legacy).design, themeDesigns.sage);
+  assert.deepEqual(parseSiteConfig(legacy).design, themeDesigns.botanical);
 
   const config = createDemo();
   const custom = { ...config, design: { ...config.design, accent: "#123456" } };

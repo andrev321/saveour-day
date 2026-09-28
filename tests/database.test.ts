@@ -30,7 +30,7 @@ test("migration defines RLS isolation plus revision, immutable release and publi
     const siteA = "20000000-0000-4000-8000-000000000001",
       siteB = "20000000-0000-4000-8000-000000000002";
     const configA = { ...createDemo(), id: siteA },
-      configB = { ...createDemo("demo-sage"), id: siteB };
+      configB = { ...createDemo("demo-botanical"), id: siteB };
     await db.query("insert into auth.users values ($1),($2)", [a, b]);
     await db.query(
       "insert into public.sites(id,name) values ($1,'A'),($2,'B')",

@@ -19,13 +19,11 @@ for (const width of [390, 1440]) {
         "rgb(250, 247, 241)",
       );
       const hero = page.locator("[data-ui=invitation-hero]");
-      await expect(hero).toHaveCSS("display", "grid");
-      expect(
-        await hero.evaluate(
-          (element) =>
-            getComputedStyle(element).gridTemplateColumns.split(" ").length,
-        ),
-      ).toBe(width < 768 ? 1 : 2);
+      await expect(hero).toHaveCSS("display", "flex");
+      await expect(hero).toHaveCSS("flex-direction", "column-reverse");
+      await expect(
+        page.locator("[data-ui=invitation-hero-photo]"),
+      ).toBeHidden();
       await expect(
         page.getByRole("heading", { name: "Anna & Jan", exact: true }),
       ).toBeVisible();
