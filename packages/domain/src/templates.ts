@@ -1,6 +1,10 @@
 ﻿import {
   invitationLocales,
   parseSiteConfig,
+  themes,
+  type ThemeName,
+  type ThemeDesign,
+  type ThemeAppearance,
   type InvitationLocale,
 } from "./index.ts";
 import { personalTemplateExample } from "./template-examples.ts";
@@ -34,6 +38,39 @@ const definitions = [
   ["blank", "Puste zaproszenie", "Blank invitation", "Leere Einladung"],
 ] as const;
 export type TemplateId = (typeof definitions)[number][0];
+export const templateThemes: Record<TemplateId, ThemeName> = {
+  wedding: "classic",
+  reception: "evening",
+  "wedding-reception": "botanical",
+  birthday: "celebration",
+  corporate: "editorial",
+  anniversary: "classic",
+  "family-ceremony": "botanical",
+  "baby-shower": "celebration",
+  housewarming: "celebration",
+  workshop: "editorial",
+  blank: "editorial",
+};
+export function templateStyle(id: TemplateId) {
+  const theme = templateThemes[id];
+  const preset = themes[theme];
+  const palettes: Partial<Record<TemplateId, Partial<ThemeDesign>>> = {
+    anniversary: { accent: "#58616b" },
+    "family-ceremony": { paper: "#f8faf4", accent: "#54694a" },
+    "baby-shower": { paper: "#fff5ef", surface: "#edf4fa", accent: "#496582" },
+    housewarming: { paper: "#fcf2e6", accent: "#974a32" },
+  };
+  const appearance: ThemeAppearance = { ...preset.appearance };
+  if (["baby-shower", "housewarming"].includes(id))
+    appearance.decorations = "subtle";
+  if (id === "workshop") appearance.icons = true;
+  return {
+    theme,
+    design: { ...preset.design, ...palettes[id] },
+    appearance,
+    layout: preset.layout,
+  };
+}
 export const templateIds = definitions.map(([id]) => id) as [
   TemplateId,
   ...TemplateId[],
@@ -114,6 +151,7 @@ export function templateCatalog(locale: InvitationLocale) {
     category: row[0],
     locales: invitationLocales,
     label: row[index],
+    style: templateStyle(row[0]),
     description:
       row[0] === "blank" ? labels[locale].blank : labels[locale].sections,
   }));
@@ -187,12 +225,11 @@ export function createTemplate(
       title: example?.title ?? "",
       description: blank ? "" : (example?.body ?? l.welcome),
       dateLabel: "",
-      layout: "split",
+      layout: item.style.layout,
     },
-    theme:
-      templateId === "corporate" || templateId === "workshop"
-        ? "sage"
-        : "ivory",
+    theme: item.style.theme,
+    design: item.style.design,
+    appearance: item.style.appearance,
     metadata: {
       title: example ? `${example.names} — ${item.label}` : l.invite,
       description: example?.body ?? "",

@@ -2,13 +2,24 @@ import { notFound } from "next/navigation";
 import { Invitation } from "@invitations/renderer";
 import { createDemo } from "@invitations/domain/demo";
 import { guestContent } from "@invitations/domain/guest";
+import { themes, themeNames } from "@invitations/domain";
 export default async function Demo({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ theme?: string }>;
 }) {
   const { slug } = await params;
   const config = createDemo();
+  const { theme } = await searchParams;
+  const selected = themeNames.find((id) => id === theme);
+  if (selected) {
+    config.theme = selected;
+    config.design = { ...themes[selected].design };
+    config.appearance = { ...themes[selected].appearance };
+    config.hero.layout = themes[selected].layout;
+  }
   config.variants.push({ ...config.variants[0], id: "full", slug: "pelna" });
   config.variants.push({
     ...config.variants[0],

@@ -167,10 +167,10 @@ const templates: Record<InvitationLocale, Template> = {
 };
 
 export function createDemo(
-  id = "demo-ivory",
+  id = "demo-classic",
   locale: InvitationLocale = "pl-PL",
 ) {
-  const second = id === "demo-sage";
+  const second = id === "demo-botanical";
   const template = templates[locale];
   const couple =
     second && locale === "pl-PL"
@@ -189,8 +189,8 @@ export function createDemo(
       dateLabel: template.dateLabel,
       layout: "split",
     },
-    theme: second ? "sage" : "ivory",
-    design: themeDesigns[second ? "sage" : "ivory"],
+    theme: second ? "botanical" : "classic",
+    design: themeDesigns[second ? "botanical" : "classic"],
     metadata: { ...template.metadata, indexing: false },
     copy: template.copy,
     contacts: [

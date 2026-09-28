@@ -33,11 +33,11 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
     .click();
   await page.getByRole("option", { name: "Urodziny", exact: true }).click();
   await page.getByRole("button", { name: "Zastąp konfigurację" }).click();
-  await expect(heading).toHaveValue("Urodziny");
+  await expect(heading).toHaveValue("Zofia");
   await expect(
     page
       .frameLocator("iframe")
-      .getByRole("heading", { name: "Urodziny", exact: true })
+      .getByRole("heading", { name: "Zofia", exact: true })
       .first(),
   ).toBeVisible();
   await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
@@ -74,7 +74,7 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
 });
 
 for (const [label, heading] of [
-  ["Urodziny", "Urodziny"],
+  ["Urodziny", "Zofia"],
   ["Puste zaproszenie", ""],
 ]) {
   test(`a clean project requires choosing ${label} before opening the editor`, async ({

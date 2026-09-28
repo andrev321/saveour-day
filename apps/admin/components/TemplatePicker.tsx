@@ -4,8 +4,13 @@ import {
   templateCatalog,
   type TemplateId,
 } from "@invitations/domain/templates";
-import { invitationLocales, type InvitationLocale } from "@invitations/domain";
+import {
+  themes,
+  invitationLocales,
+  type InvitationLocale,
+} from "@invitations/domain";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
+import { ThemePreview } from "./ThemePicker";
 import { LanguageFlag } from "./LanguageFlag";
 export function TemplatePicker({
   templateId,
@@ -22,6 +27,7 @@ export function TemplatePicker({
 }) {
   const { language } = usePanelI18n();
   const catalog = templateCatalog(locale);
+  const selected = catalog.find((t) => t.id === templateId);
   return (
     <Stack gap="xs">
       <Select
@@ -74,8 +80,19 @@ export function TemplatePicker({
         allowDeselect={false}
         onChange={(value) => value && onLocale(value as InvitationLocale)}
       />
+      {selected && (
+        <div>
+          <ThemePreview
+            theme={selected.style.theme}
+            design={selected.style.design}
+          />
+          <Text size="sm" fw={600}>
+            {themes[selected.style.theme].labels[language]}
+          </Text>
+        </div>
+      )}
       <Text size="sm" c="dimmed">
-        {catalog.find((t) => t.id === templateId)?.description}
+        {selected?.description}
       </Text>
     </Stack>
   );

@@ -1,6 +1,7 @@
 "use client";
 import {
   navigationUrl,
+  themes,
   type MediaAsset,
   type SiteConfig,
 } from "@invitations/domain";
@@ -10,16 +11,24 @@ import {
   Container,
   Group,
   MantineProvider,
-  SimpleGrid,
   Stack,
   Text,
-  Timeline,
   Title,
   createTheme,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import { useState, type CSSProperties } from "react";
 import * as S from "./styles";
+import {
+  ClockIcon,
+  MapPinIcon,
+  ChatCircleIcon,
+  ImagesIcon,
+  EnvelopeOpenIcon,
+  LeafIcon,
+  SparkleIcon,
+  DiamondIcon,
+} from "@phosphor-icons/react";
 
 type Palette = [
   string,
@@ -67,24 +76,28 @@ export function InvitationProvider({
   config: SiteConfig;
   children: React.ReactNode;
 }) {
+  const preset = themes[config.theme];
   const theme = createTheme({
     colors: { accent: createAccentPalette(config.design.accent) },
     primaryColor: "accent",
     primaryShade: 6,
-    fontFamily: "Inter, sans-serif",
+    fontFamily: preset.bodyFont,
     headings: {
-      fontFamily: "Playfair Display, Georgia, serif",
-      fontWeight: "500",
+      fontFamily: preset.headingFont,
+      fontWeight: "600",
     },
-    defaultRadius: "lg",
+    defaultRadius: preset.radius,
     components: {
       Button: Button.extend({
-        defaultProps: { radius: "xl", size: "md", autoContrast: true },
+        defaultProps: { radius: preset.radius, size: "md", autoContrast: true },
       }),
     },
   });
   return (
-    <MantineProvider theme={theme} forceColorScheme="light">
+    <MantineProvider
+      theme={theme}
+      forceColorScheme={config.theme === "evening" ? "dark" : "light"}
+    >
       {children}
     </MantineProvider>
   );
@@ -241,6 +254,12 @@ export function Invitation({
     : variant.eventIds
         .map((id) => config.events.find((e) => e.id === id)!)
         .filter((event) => !variant.hiddenEventIds.includes(event.id));
+  const colors = {
+    "--paper": config.design.paper,
+    "--surface": config.design.surface,
+    "--ink": config.design.ink,
+    "--accent": config.design.accent,
+  } as CSSProperties;
   if (
     !config.identity.displayName &&
     !config.hero.title &&
@@ -251,7 +270,12 @@ export function Invitation({
   ) {
     return (
       <InvitationProvider config={config}>
-        <S.Invitation p="xl">
+        <S.ThemedInvitation
+          p="xl"
+          data-theme={config.theme}
+          data-decorations={config.appearance.decorations}
+          style={colors}
+        >
           <Text c="dimmed">
             {config.locale === "pl-PL"
               ? "Puste zaproszenie. Dodaj główny napis i treść w edytorze."
@@ -259,21 +283,16 @@ export function Invitation({
                 ? "Blank invitation. Add a main heading and content in the editor."
                 : "Leere Einladung. Ergänze eine Überschrift und Inhalte im Editor."}
           </Text>
-        </S.Invitation>
+        </S.ThemedInvitation>
       </InvitationProvider>
     );
   }
   return (
     <InvitationProvider config={config}>
-      <S.Invitation
-        style={
-          {
-            "--paper": config.design.paper,
-            "--surface": config.design.surface,
-            "--ink": config.design.ink,
-            "--accent": config.design.accent,
-          } as CSSProperties
-        }
+      <S.ThemedInvitation
+        data-theme={config.theme}
+        data-decorations={config.appearance.decorations}
+        style={colors}
       >
         <Container size="xl" py="lg">
           <Group justify="space-between">
@@ -283,7 +302,10 @@ export function Invitation({
             <Text size="sm">{variant.dateLabel || config.hero.dateLabel}</Text>
           </Group>
         </Container>
-        <S.InvitationHero data-layout={config.hero.layout}>
+        <S.InvitationHero
+          data-layout={config.hero.layout}
+          data-has-photo={Boolean(hero)}
+        >
           <S.InvitationHeroPhoto>
             {hero ? (
               <Photo
@@ -297,6 +319,7 @@ export function Invitation({
             )}
           </S.InvitationHeroPhoto>
           <S.InvitationHeroCopy>
+            <ThemeOrnament config={config} />
             {config.hero.eyebrow && (
               <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
             )}
@@ -319,7 +342,7 @@ export function Invitation({
           </S.InvitationHeroCopy>
         </S.InvitationHero>
         <Container component="main" size="lg" py={{ base: 32, md: 64 }}>
-          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
+          <S.SectionGrid>
             {sections.map((section) => (
               <S.InvitationSection
                 component="section"
@@ -328,46 +351,59 @@ export function Invitation({
                 p={{ base: "lg", sm: "xl" }}
                 data-kind={section.type}
               >
-                <S.InvitationEyebrow mb="md">
-                  {section.title}
-                </S.InvitationEyebrow>
+                <Group gap="sm" mb="lg">
+                  {config.appearance.icons && (
+                    <SectionIcon kind={section.type} theme={config.theme} />
+                  )}
+                  <Title order={2} size="h3">
+                    {section.title}
+                  </Title>
+                </Group>
                 {section.body ? (
                   <S.InvitationProse mb="lg">{section.body}</S.InvitationProse>
                 ) : null}
                 {section.type === "timeline" ? (
-                  <Timeline active={-1} bulletSize={14} lineWidth={1}>
+                  <S.Schedule>
                     {events.map((event) => {
                       return (
-                        <Timeline.Item
-                          key={event.id}
-                          title={<Text fw={600}>{event.time}</Text>}
-                        >
-                          <Title order={3} size="h2">
-                            {event.title}
-                          </Title>
-                          <Text size="sm" c="dimmed">
-                            {event.dateLabel ||
-                              (event.date
-                                ? new Intl.DateTimeFormat(config.locale, {
-                                    day: "numeric",
-                                    month: "long",
-                                    timeZone: config.timeZone,
-                                  }).format(new Date(`${event.date}T12:00:00Z`))
-                                : "")}
+                        <li key={event.id}>
+                          <Text
+                            component="span"
+                            className="event-time"
+                            fw={600}
+                          >
+                            {event.time}
                           </Text>
-                          {event.url ? (
-                            <Anchor
-                              href={event.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {config.copy.eventLink}
-                            </Anchor>
-                          ) : null}
-                        </Timeline.Item>
+                          <div>
+                            <Title order={3} size="h2">
+                              {event.title}
+                            </Title>
+                            <Text size="sm" c="dimmed">
+                              {event.dateLabel ||
+                                (event.date
+                                  ? new Intl.DateTimeFormat(config.locale, {
+                                      day: "numeric",
+                                      month: "long",
+                                      timeZone: config.timeZone,
+                                    }).format(
+                                      new Date(`${event.date}T12:00:00Z`),
+                                    )
+                                  : "")}
+                            </Text>
+                            {event.url ? (
+                              <Anchor
+                                href={event.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                {config.copy.eventLink}
+                              </Anchor>
+                            ) : null}
+                          </div>
+                        </li>
                       );
                     })}
-                  </Timeline>
+                  </S.Schedule>
                 ) : null}
                 {section.type === "venue" ? (
                   <Venue
@@ -387,7 +423,7 @@ export function Invitation({
                   </Stack>
                 ) : null}
                 {section.type === "gallery" ? (
-                  <SimpleGrid cols={{ base: 1, sm: 2 }}>
+                  <S.Gallery>
                     {section.mediaIds.map((id) => (
                       <Photo
                         key={id}
@@ -395,18 +431,58 @@ export function Invitation({
                         resolveMedia={resolveMedia}
                       />
                     ))}
-                  </SimpleGrid>
+                  </S.Gallery>
                 ) : null}
               </S.InvitationSection>
             ))}
-          </SimpleGrid>
+          </S.SectionGrid>
         </Container>
         {config.copy.footer && (
           <Container component="footer" ta="center" py="xl">
             <Text>{config.copy.footer}</Text>
           </Container>
         )}
-      </S.Invitation>
+      </S.ThemedInvitation>
     </InvitationProvider>
+  );
+}
+
+function SectionIcon({
+  kind,
+  theme,
+}: {
+  kind: SiteConfig["sections"][number]["type"];
+  theme: SiteConfig["theme"];
+}) {
+  const Icon = {
+    text: EnvelopeOpenIcon,
+    timeline: ClockIcon,
+    venue: MapPinIcon,
+    contact: ChatCircleIcon,
+    gallery: ImagesIcon,
+  }[kind];
+  return (
+    <Icon
+      aria-hidden="true"
+      size={26}
+      weight={theme === "celebration" ? "duotone" : "thin"}
+      style={{ color: "var(--accent)", flexShrink: 0 }}
+    />
+  );
+}
+function ThemeOrnament({ config }: { config: SiteConfig }) {
+  if (config.appearance.decorations === "none") return null;
+  const Icon =
+    config.theme === "botanical"
+      ? LeafIcon
+      : config.theme === "celebration"
+        ? SparkleIcon
+        : DiamondIcon;
+  return (
+    <S.Ornament aria-hidden="true">
+      <span />
+      <Icon size={32} weight="thin" />
+      <span />
+    </S.Ornament>
   );
 }

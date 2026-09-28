@@ -2,7 +2,6 @@
 import {
   publishedConfigSchema,
   siteConfigSchema,
-  themeDesigns,
   type InvitationLocale,
   type MediaAsset,
   type SiteConfig,
@@ -50,6 +49,7 @@ import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewToolbar } from "./PreviewToolbar";
+import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
 type RevisionResponse = { revision: number };
 type SignedUpload = { id: string; path: string; token: string };
@@ -718,49 +718,7 @@ export function Editor({
       </Tabs.Panel>
       <Tabs.Panel value="settings" pt="lg">
         <Stack>
-          <Select
-            label={t("theme")}
-            data={[
-              {
-                value: "ivory",
-                label:
-                  language === "pl"
-                    ? "Krem i złoto"
-                    : language === "en"
-                      ? "Ivory and gold"
-                      : "Elfenbein und Gold",
-              },
-              {
-                value: "sage",
-                label:
-                  language === "pl"
-                    ? "Szałwia i kość słoniowa"
-                    : language === "en"
-                      ? "Sage and ivory"
-                      : "Salbei und Elfenbein",
-              },
-              {
-                value: "wine",
-                label:
-                  language === "pl"
-                    ? "Bordo i jasne tło"
-                    : language === "en"
-                      ? "Wine and light background"
-                      : "Bordeaux und heller Hintergrund",
-              },
-            ]}
-            value={config.theme}
-            allowDeselect={false}
-            onChange={(value) => {
-              if (!value) return;
-              const theme = value as SiteConfig["theme"];
-              setConfig((current) => ({
-                ...current,
-                theme,
-                design: themeDesigns[theme],
-              }));
-            }}
-          />
+          <ThemePicker config={config} onChange={setConfig} />
           <Title order={3}>{t("colors")}</Title>
           <Fields
             config={config}

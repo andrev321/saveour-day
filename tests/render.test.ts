@@ -7,17 +7,34 @@ import {
   Invitation,
 } from "../packages/renderer/src/index.tsx";
 import { createDemo } from "../packages/domain/src/demo.ts";
-import { themeDesigns } from "../packages/domain/src/index.ts";
+import {
+  themeDesigns,
+  themeNames,
+  themes,
+} from "../packages/domain/src/index.ts";
 test("render descriptions, contacts and optional-map reception for every theme", () => {
-  for (const theme of ["ivory", "sage", "wine"] as const) {
-    const config = { ...createDemo(), theme, design: themeDesigns[theme] };
+  for (const theme of themeNames) {
+    const config = {
+      ...createDemo(),
+      theme,
+      design: themeDesigns[theme],
+      appearance: themes[theme].appearance,
+    };
     config.venues[1].description = "Widoczny opis przyjęcia";
     const html = renderToStaticMarkup(createElement(Invitation, { config }));
     assert.match(html, /Widoczny opis przyjęcia/);
     assert.match(html, /Parking dla gości/);
     assert.match(html, /tel:\+48000000000/);
     assert.doesNotMatch(html, /<iframe/);
+    assert.ok(html.includes(`data-theme="${theme}"`));
   }
+});
+test("decorations and section icons can be disabled independently", () => {
+  const config = createDemo();
+  config.appearance = { icons: false, decorations: "none" };
+  const html = renderToStaticMarkup(createElement(Invitation, { config }));
+  assert.doesNotMatch(html, /<svg/);
+  assert.match(html, /Plan naszego dnia/);
 });
 test("builds a complete tonal scale from a custom accent", () => {
   const palette = createAccentPalette("#123456");
