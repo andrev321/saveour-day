@@ -16,6 +16,7 @@ dist-ssr
 .env.*
 !.env.example
 .vercel/
+supabase/.temp/
 .local/
 .next/
 test-results/

@@ -105,6 +105,7 @@ export async function context(kind: string, key: string) {
       invitation ? "id" : "public_slug",
       invitation ? invitation.site_id : key,
     )
+    .is("deleted_at", null)
     .maybeSingle();
   check(result.error);
   const site = result.data as SiteRecord | null;

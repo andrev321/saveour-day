@@ -56,6 +56,7 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
   };
   let storedSession: unknown = null;
   let releaseReads = 0;
+  let siteDeleted = false;
   const buckets: string[] = [];
   mock.method(
     globalThis,
@@ -66,8 +67,10 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       );
       const table = url.pathname.split("/").at(-1);
       let data: unknown;
-      if (table === "sites") data = site;
-      else if (table === "invitations")
+      if (table === "sites") {
+        assert.equal(url.searchParams.get("deleted_at"), "is.null");
+        data = siteDeleted ? null : site;
+      } else if (table === "invitations")
         data = url.searchParams.has("emails")
           ? [{ id: invitation.id }]
           : invitation;
@@ -214,6 +217,25 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     assert.equal(bindingGate.requiresLink, true);
     invitation.revoked = true;
     assert.equal((await GET(new Request(url))).status, 404);
+    invitation.revoked = false;
+    siteDeleted = true;
+    const readsBeforeDeletion = releaseReads;
+    assert.equal((await GET(new Request(url))).status, 404);
+    assert.equal(
+      (await post("rsvp", { revision: 0, note: "", answers: [] })).status,
+      404,
+    );
+    assert.equal(
+      (
+        await media.GET(
+          new Request(
+            `${process.env.SITE_URL}/api/media/i/token/photo/main.webp`,
+          ),
+        )
+      ).status,
+      404,
+    );
+    assert.equal(releaseReads, readsBeforeDeletion);
   } finally {
     mock.restoreAll();
   }

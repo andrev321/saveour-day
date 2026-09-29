@@ -69,6 +69,17 @@ Integracja nadała własne wersje historii. Nie uruchamiaj ponownie migracji ani
 | 202609200001_platform.sql | 20260924210635 | platform |
 | 202609210001_guest_platform.sql | 20260924210649 | guest_platform |
 | 202609230001_invitation_templates.sql | 20260924210816 | invitation_templates |
+| 20260929060915_site_soft_delete.sql | 20260929062727 | site_soft_delete |
+| 20260929060918_monthly_site_purge.sql | 20260929062743 | monthly_site_purge |
+| 20260929063114_isolate_purge_extension.sql | 20260929063222 | isolate_purge_extension |
+
+## Usuwanie realizacji — 29.09.2026
+
+Wdrożono migracje soft delete oraz Edge Function `purge-sites` (wersja 1). Aktywny Cron `purge-deleted-sites-monthly` ma harmonogram `0 3 1 * *` (03:00 UTC, pierwszy dzień miesiąca). Funkcja odrzuciła próbę z nieprawidłowym tokenem kodem 403. Sprawdzono uprawnienia: funkcje czyszczące nie są wykonywalne przez `anon` ani klienta panelu. Nie usuwano istniejących realizacji podczas weryfikacji; mechanizm trwałego usuwania sprawdzono na odizolowanej bazie PGlite i atrapach Storage.
+
+Szczegóły retencji, konfiguracji oraz kontroli nieudanych zadań: [Usuwanie realizacji](USUWANIE-REALIZACJI.md).
+
+Doradca zgłasza `extension_in_public` dla nowo włączonego `pg_net`. Automatyczna kontrola odrzuciła jego odtworzenie w schemacie `extensions` ze względu na ryzyko przerwania dispatchera. Rozszerzenie pozostaje w dotychczasowej lokalizacji. Migracja `isolate_purge_extension` zawiera tylko REVOKE USAGE, ale ponowna kontrola wykazała, że uprawnienia nadane przez właściciela `supabase_admin` nadal obowiązują na zarządzanym środowisku. Schemat `net` nie jest standardowo udostępniony przez Data API; nie należy go tam dodawać. Nie traktuj samego sukcesu tej migracji jako potwierdzenia cofnięcia uprawnień. [Opis ostrzeżenia](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [uprawnienia pg_net](https://supabase.com/docs/guides/database/extensions/pg_net#permissions).
 
 ## Wynik doradcy bezpieczeństwa
 

@@ -57,6 +57,7 @@ export async function requireSite(siteId: string) {
       "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline",
     )
     .eq("id", siteId)
+    .is("deleted_at", null)
     .maybeSingle();
   if (error || !data) throw new HttpError(404, "Nie znaleziono realizacji");
   return { db, user, site: data };
@@ -124,6 +125,7 @@ export function checkDb(error: { message: string } | null) {
       "Dane zmieniły się w innej sesji. Odśwież stronę przed zapisem.",
     );
   const messages: Record<string, string> = {
+    SITE_DELETED: "Realizacja została usunięta. Wróć do listy realizacji.",
     VARIANT_MISSING:
       "Wariant jest używany przez zaproszenia albo nie istnieje w publikacji.",
     CODE_REQUIRED: "Ustaw kod dostępu.",
