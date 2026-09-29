@@ -18,6 +18,7 @@ import {
   Title,
 } from "@mantine/core";
 import type { MediaAsset, SiteConfig } from "@invitations/domain";
+import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import * as S from "./PhotoLibrary.styles";
@@ -52,6 +53,8 @@ export function PhotoLibrary({
   ];
   const photo = photos.find((item) => item.id === selected);
   const included = config.media.some((item) => item.id === selected);
+  const selectedMain = !!photo && config.hero.mediaId === photo.id;
+  const selectedMobile = !!photo && config.hero.mobileMediaId === photo.id;
   const locked = library.some(
     (item) => item.id === selected && item.status === "deleting",
   );
@@ -303,17 +306,29 @@ export function PhotoLibrary({
             <Group>
               <Button
                 disabled={full}
-                variant="light"
+                variant={selectedMain ? "filled" : "light"}
+                aria-pressed={selectedMain}
+                leftSection={
+                  selectedMain ? (
+                    <CheckIcon size={18} aria-hidden="true" />
+                  ) : undefined
+                }
                 onClick={() => update({}, "mediaId")}
               >
-                {copy.useMain}
+                {selectedMain ? copy.selectedMain : copy.useMain}
               </Button>
               <Button
                 disabled={full}
-                variant="light"
+                variant={selectedMobile ? "filled" : "light"}
+                aria-pressed={selectedMobile}
+                leftSection={
+                  selectedMobile ? (
+                    <CheckIcon size={18} aria-hidden="true" />
+                  ) : undefined
+                }
                 onClick={() => update({}, "mobileMediaId")}
               >
-                {copy.useMobile}
+                {selectedMobile ? copy.selectedMobile : copy.useMobile}
               </Button>
               {!included && (
                 <Button disabled={full} onClick={() => update({})}>

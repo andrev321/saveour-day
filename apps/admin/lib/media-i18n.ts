@@ -33,6 +33,8 @@ export const mediaUi = {
     saved: "W bibliotece",
     useMain: "Ustaw jako główne",
     useMobile: "Ustaw na telefonie",
+    selectedMain: "Wybrane jako główne",
+    selectedMobile: "Wybrane na telefonie",
     add: "Dodaj do zaproszenia",
     remove: "Usuń z zaproszenia",
     removeHelp:
@@ -76,6 +78,8 @@ export const mediaUi = {
     saved: "In library",
     useMain: "Use as main image",
     useMobile: "Use on phone",
+    selectedMain: "Selected as main image",
+    selectedMobile: "Selected for phone",
     add: "Add to invitation",
     remove: "Remove from invitation",
     removeHelp:
@@ -119,6 +123,8 @@ export const mediaUi = {
     saved: "In der Bibliothek",
     useMain: "Als Hauptbild verwenden",
     useMobile: "Am Smartphone verwenden",
+    selectedMain: "Als Hauptbild ausgewählt",
+    selectedMobile: "Für Smartphone ausgewählt",
     add: "Zur Einladung hinzufügen",
     remove: "Aus der Einladung entfernen",
     removeHelp:
