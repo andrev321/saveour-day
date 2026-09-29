@@ -19,6 +19,20 @@ import { createTemplate, templateIds } from "@invitations/domain/templates";
 
 const siteId = (request: Request) =>
   new URL(request.url).pathname.split("/")[3]!;
+export const DELETE = api(async (request) => {
+  const { site, user } = await requireSite(siteId(request));
+  const { data, error } = await serviceDb().rpc("soft_delete_site", {
+    sid: site.id,
+    actor: user.id,
+  });
+  if (error?.message.includes("FORBIDDEN"))
+    throw new HttpError(
+      403,
+      "Tylko właściciel lub administrator może usunąć realizację.",
+    );
+  checkDb(error);
+  return { deletedAt: data };
+});
 export const GET = api(async (request) => {
   const { db, site } = await requireSite(siteId(request));
   const [draft, releases, media, snapshots] = await Promise.all([

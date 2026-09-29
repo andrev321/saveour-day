@@ -14,7 +14,8 @@ export const GET = api(async () => {
   const [{ data: sites, error }, { data: admin }] = await Promise.all([
     db
       .from("sites")
-      .select("id,name,public_slug,published_release_id")
+      .select("id,name,public_slug,published_release_id,owner_id,created_at")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     db
       .from("platform_admins")
@@ -23,7 +24,13 @@ export const GET = api(async () => {
       .maybeSingle(),
   ]);
   checkDb(error);
-  return { sites, admin: !!admin };
+  return {
+    sites: (sites || []).map((site) => ({
+      ...site,
+      canDelete: site.owner_id === user.id || !!admin,
+    })),
+    admin: !!admin,
+  };
 });
 export const POST = api(async (request) => {
   const { user } = await requireUser();
