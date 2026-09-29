@@ -112,4 +112,26 @@ for (const width of [390, 1440])
     await expect(
       page.getByRole("alert").filter({ hasText: "mediaIds" }),
     ).toHaveCount(0);
+    await page
+      .getByRole("button", { name: "Zapisz szkic", exact: true })
+      .click();
+    const removedPhoto = page.getByRole("button", {
+      name: "Podgląd i kadrowanie: Zdjęcie testowe",
+      exact: true,
+    });
+    await removedPhoto.click();
+    await dialog
+      .getByRole("button", { name: "Usuń plik z biblioteki", exact: true })
+      .click();
+    await expect(dialog).toContainText("Tej operacji nie można cofnąć");
+    await dialog.getByRole("button", { name: "Anuluj", exact: true }).click();
+    await expect(removedPhoto).toHaveCount(1);
+    await dialog
+      .getByRole("button", { name: "Usuń plik z biblioteki", exact: true })
+      .click();
+    await dialog
+      .getByRole("button", { name: "Usuń plik na zawsze", exact: true })
+      .click();
+    await expect(dialog).toHaveCount(0);
+    await expect(removedPhoto).toHaveCount(0);
   });

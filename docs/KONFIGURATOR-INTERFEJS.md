@@ -25,6 +25,10 @@ Zakładka Zdjęcia pokazuje miniatury wszystkich plików zapisanych w realizacji
 
 W tym samym oknie można zmienić opis dostępności, wybrać zdjęcie główne albo mobilne i dodać zapisany plik do zaproszenia. „Usuń z zaproszenia” usuwa odwołania w nagłówku i galeriach, pozostawiając plik w bibliotece. Zmiany wymagają zapisania szkicu i publikacji. Limit zaproszenia wynosi 30 zdjęć; kolejne uploady mogą pozostać w bibliotece.
 
+„Usuń plik z biblioteki” trwale usuwa upload i jego rozmiary po potwierdzeniu. Aby usunąć zdjęcie używane w bieżącej konfiguracji, najpierw wybierz „Usuń z zaproszenia” i zapisz szkic, a następnie otwórz je ponownie w bibliotece. Baza blokuje usuwanie plików obecnych w zapisanym szkicu, dowolnej publikacji lub kopii szkicu. Dzięki temu stare publikacje i przywracanie historii pozostają kompletne.
+
+Operacja najpierw rezerwuje plik statusem `deleting`, blokując nowe odwołania w szkicach, publikacjach i kopiach szkicu. Dopiero po pomyślnym usunięciu obiektów przez Storage API usuwa metadane. Jeśli usługa nie odpowie, wpis pozostaje widoczny z możliwością ponowienia; nie należy przywracać mu ręcznie statusu `ready`, ponieważ część plików może już nie istnieć.
+
 Po uploadzie edytor pobiera podpisane adresy Storage przed przekazaniem zdjęcia do podglądu. Renderer wiąże błąd pobrania z konkretnym zestawem adresów, dzięki czemu odświeżenie adresu lub wybór innego zdjęcia ponawia wyświetlanie zamiast pozostawiać pusty zamiennik. Testy `photo-recovery.spec.ts` i `photo-library.spec.ts` obejmują tę regresję oraz obsługę biblioteki na telefonie i komputerze.
 
 ### Preferencje edytora

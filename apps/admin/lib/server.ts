@@ -125,6 +125,14 @@ export function checkDb(error: { message: string } | null) {
       "Dane zmieniły się w innej sesji. Odśwież stronę przed zapisem.",
     );
   const messages: Record<string, string> = {
+    MEDIA_IN_DRAFT: "Najpierw usuń zdjęcie z zaproszenia i zapisz szkic.",
+    MEDIA_IN_RELEASE:
+      "Zdjęcie jest używane w opublikowanej wersji lub historii publikacji. Nie można usunąć jej pliku.",
+    MEDIA_IN_SNAPSHOT:
+      "Zdjęcie jest używane w zachowanej kopii szkicu. Nie można usunąć jej pliku.",
+    MEDIA_UNAVAILABLE:
+      "Zdjęcie zostało usunięte lub trwa jego usuwanie. Odśwież bibliotekę zdjęć.",
+    MEDIA_NOT_READY: "Poczekaj na zakończenie przesyłania zdjęcia.",
     SITE_DELETED: "Realizacja została usunięta. Wróć do listy realizacji.",
     VARIANT_MISSING:
       "Wariant jest używany przez zaproszenia albo nie istnieje w publikacji.",

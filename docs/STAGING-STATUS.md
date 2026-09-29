@@ -72,6 +72,14 @@ Integracja nadała własne wersje historii. Nie uruchamiaj ponownie migracji ani
 | 20260929060915_site_soft_delete.sql | 20260929062727 | site_soft_delete |
 | 20260929060918_monthly_site_purge.sql | 20260929062743 | monthly_site_purge |
 | 20260929063114_isolate_purge_extension.sql | 20260929063222 | isolate_purge_extension |
+| 20260929112149_fix_storage_media_read_policy.sql | 20260929112326 | fix_storage_media_read_policy |
+| 20260929112334_delete_unused_media.sql | 20260929113018 | delete_unused_media |
+
+## Odczyt i usuwanie zdjęć — 29.09.2026
+
+Naprawiono politykę `storage.objects.read_own_media`: niekwalifikowane `name` w podzapytaniu odnosiło się do `sites.name`, więc właściciel nie mógł generować podpisanych adresów zdjęć. Reguła używa teraz `storage.objects.name`. Na rzeczywistym koncie właściciela, przez transakcyjne ustawienie roli do testu RLS, potwierdzono widoczność sześciu plików obu zdjęć. Test lokalny odtwarzał brak dostępu przed poprawką i sprawdza odczyt właściciela, członka oraz izolację pozostałych realizacji po poprawce.
+
+Wdrożono funkcje rezerwacji i finalizacji usuwania nieużywanego zdjęcia. Dostęp do nich ma wyłącznie serwer (`service_role`), a aktor jest sprawdzany w bazie. Nie usuwano zdjęć użytkownika w ramach weryfikacji. Testy usuwania korzystają z odizolowanej bazy i atrap Storage. Doradca bezpieczeństwa nie zgłosił nowych ostrzeżeń związanych z tymi funkcjami.
 
 ## Usuwanie realizacji — 29.09.2026
 

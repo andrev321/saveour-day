@@ -1,6 +1,16 @@
 export const mediaUi = {
   pl: {
     title: "Twoje zdjęcia",
+    deleteFile: "Usuń plik z biblioteki",
+    deleteTitle: "Trwale usunąć zdjęcie?",
+    deleteBody:
+      "Plik i jego miniatury zostaną trwale usunięte. Tej operacji nie można cofnąć. Zdjęcia używane w zapisanym szkicu, publikacjach lub kopiach szkicu są chronione.",
+    deleteConfirm: "Usuń plik na zawsze",
+    cancel: "Anuluj",
+    saveFirst:
+      "Najpierw usuń zdjęcie z zaproszenia i zapisz szkic. Następnie możesz usunąć plik z biblioteki.",
+    deleting: "Usuwanie pliku — ponów w razie błędu",
+    deleteError: "Nie udało się usunąć zdjęcia. Spróbuj ponownie.",
     empty: "Dodaj pierwsze zdjęcie, aby zobaczyć je tutaj.",
     help: "Kliknij miniaturę, aby obejrzeć zdjęcie, ustawić kadr lub wybrać je na główne.",
     photo: "Zdjęcie",
@@ -34,6 +44,16 @@ export const mediaUi = {
   },
   en: {
     title: "Your photos",
+    deleteFile: "Delete file from library",
+    deleteTitle: "Permanently delete photo?",
+    deleteBody:
+      "The file and its thumbnails will be permanently deleted. This cannot be undone. Photos used in saved drafts, releases or draft snapshots are protected.",
+    deleteConfirm: "Delete permanently",
+    cancel: "Cancel",
+    saveFirst:
+      "Remove the photo from the invitation and save your draft before deleting the file from the library.",
+    deleting: "File deletion — retry if it failed",
+    deleteError: "Could not delete the photo. Try again.",
     empty: "Add your first photo to see it here.",
     help: "Select a thumbnail to view the photo, adjust the crop or use it as the main image.",
     photo: "Photo",
@@ -67,6 +87,16 @@ export const mediaUi = {
   },
   de: {
     title: "Deine Fotos",
+    deleteFile: "Datei aus Bibliothek löschen",
+    deleteTitle: "Foto dauerhaft löschen?",
+    deleteBody:
+      "Die Datei und ihre Vorschaubilder werden unwiderruflich gelöscht. Fotos in gespeicherten Entwürfen, Veröffentlichungen oder Entwurfskopien sind geschützt.",
+    deleteConfirm: "Endgültig löschen",
+    cancel: "Abbrechen",
+    saveFirst:
+      "Entferne das Foto aus der Einladung und speichere den Entwurf, bevor du die Datei löschst.",
+    deleting: "Datei wird gelöscht — bei Fehler erneut versuchen",
+    deleteError: "Das Foto konnte nicht gelöscht werden. Versuche es erneut.",
     empty: "Füge dein erstes Foto hinzu, um es hier zu sehen.",
     help: "Wähle ein Vorschaubild, um das Foto anzusehen, den Ausschnitt anzupassen oder es als Hauptbild zu verwenden.",
     photo: "Foto",

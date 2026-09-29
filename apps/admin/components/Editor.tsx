@@ -62,7 +62,7 @@ export type EditorData = {
   draft: { config: SiteConfig; revision: number };
   releases: { id: string; created_at: string }[];
   snapshots?: { id: string; created_at: string; revision: number }[];
-  media: { id: string; manifest: MediaAsset }[];
+  media: { id: string; manifest: MediaAsset; status?: string }[];
   urls: Record<string, string>;
 };
 export function Editor({
@@ -655,6 +655,26 @@ export function Editor({
             library={data.media}
             urls={data.urls}
             onChange={setConfig}
+            canDelete={!dirty && !busy}
+            onDelete={async (id) => {
+              if (dirty || busy) throw new Error("Najpierw zapisz szkic.");
+              if (demo) {
+                setData((current) => ({
+                  ...current,
+                  media: current.media.filter((m) => m.id !== id),
+                }));
+                return;
+              }
+              try {
+                await action("delete-media", { id });
+                setData((current) => ({
+                  ...current,
+                  media: current.media.filter((m) => m.id !== id),
+                }));
+              } finally {
+                await reload();
+              }
+            }}
           />
         </Stack>
       </Tabs.Panel>
