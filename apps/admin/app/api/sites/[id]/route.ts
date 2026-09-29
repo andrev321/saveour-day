@@ -12,6 +12,7 @@ import {
   prepareUpload,
   finalizeUpload,
   validateMedia,
+  deleteMedia,
 } from "../../../../lib/media";
 import { publish } from "../../../../lib/publishing";
 
@@ -45,9 +46,9 @@ export const GET = api(async (request) => {
       .limit(30),
     db
       .from("media_assets")
-      .select("id,manifest")
+      .select("id,manifest,status")
       .eq("site_id", site.id)
-      .eq("status", "ready"),
+      .in("status", ["ready", "deleting"]),
     db
       .from("draft_snapshots")
       .select("id,created_at,revision")
@@ -58,10 +59,12 @@ export const GET = api(async (request) => {
   for (const result of [draft, releases, media, snapshots])
     checkDb(result.error);
   const urls: Record<string, string> = {};
-  const sources = (media.data || []).flatMap((asset) => [
-    asset.manifest.src,
-    ...asset.manifest.variants.map((variant: { src: string }) => variant.src),
-  ]);
+  const sources = (media.data || [])
+    .filter((asset) => asset.status === "ready")
+    .flatMap((asset) => [
+      asset.manifest.src,
+      ...asset.manifest.variants.map((variant: { src: string }) => variant.src),
+    ]);
   if (sources.length) {
     const { data: signedUrls, error } = await db.storage
       .from("site-media")
@@ -116,10 +119,17 @@ export const POST = api(async (request) => {
         "restore",
         "prepare-upload",
         "finalize-upload",
+        "delete-media",
       ]),
       payload: z.unknown(),
     })
     .parse(await readJson(request));
+  if (body.action === "delete-media")
+    return deleteMedia(
+      site.id,
+      z.object({ id: z.uuid() }).parse(body.payload).id,
+      user.id,
+    );
   if (body.action === "reset-template" || body.action === "restore-draft") {
     const db = serviceDb();
     const p = z

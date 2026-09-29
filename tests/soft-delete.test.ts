@@ -37,6 +37,8 @@ test("soft delete hides all tenant data, disables writes, and purges only expire
       "20260929060915_site_soft_delete.sql",
       "20260929060918_monthly_site_purge.sql",
       "20260929063114_isolate_purge_extension.sql",
+      "20260929112149_fix_storage_media_read_policy.sql",
+      "20260929112334_delete_unused_media.sql",
     ]) {
       await db.exec(
         (await readFile(`supabase/migrations/${file}`, "utf8")).replace(
@@ -71,6 +73,147 @@ test("soft delete hides all tenant data, disables writes, and purges only expire
     await db.query(
       "insert into storage.objects(bucket_id,name) values('site-media',$1),('site-media',$2)",
       [`${recent}/photo.png`, `${expired}/orphan.png`],
+    );
+    // Positive access matters: an always-denying policy also passes isolation tests.
+    await db.exec(
+      `set role authenticated; set request.jwt.claim.role='authenticated'; set request.jwt.claim.sub='${owner}'`,
+    );
+    assert.equal(
+      (await db.query("select name from storage.objects")).rows.length,
+      2,
+      "owner can read their active projects' photos",
+    );
+    await db.exec(`set request.jwt.claim.sub='${other}'`);
+    assert.deepEqual(
+      (await db.query("select name from storage.objects")).rows,
+      [{ name: `${recent}/photo.png` }],
+      "member can read only their project's photos",
+    );
+    await db.exec("reset role; set request.jwt.claim.role='service_role'");
+    const aid = "50000000-0000-4000-8000-000000000001";
+    const imageConfig = JSON.stringify({
+      ...config,
+      id: active,
+      media: [{ id: aid }],
+    });
+    await db.query(
+      "insert into public.media_assets(id,site_id,status,original_path,manifest) values($1,$2,'ready',$3,'{}')",
+      [aid, active, `${active}/${aid}/original`],
+    );
+    await db.query(
+      "insert into storage.objects(bucket_id,name) values('site-media',$1)",
+      [`${active}/${aid}/640.webp`],
+    );
+    await assert.rejects(
+      db.query("select public.begin_media_deletion($1,$2,$3)", [
+        active,
+        aid,
+        other,
+      ]),
+      /FORBIDDEN/,
+    );
+    await db.query("update public.drafts set config=$2 where site_id=$1", [
+      active,
+      imageConfig,
+    ]);
+    await assert.rejects(
+      db.query("select public.begin_media_deletion($1,$2,$3)", [
+        active,
+        aid,
+        owner,
+      ]),
+      /MEDIA_IN_DRAFT/,
+    );
+    await db.query("update public.drafts set config=$2 where site_id=$1", [
+      active,
+      JSON.stringify({ ...config, id: active }),
+    ]);
+    await db.query(
+      "insert into public.draft_snapshots(site_id,config,revision) values($1,$2,1)",
+      [active, imageConfig],
+    );
+    await assert.rejects(
+      db.query("select public.begin_media_deletion($1,$2,$3)", [
+        active,
+        aid,
+        owner,
+      ]),
+      /MEDIA_IN_SNAPSHOT/,
+    );
+    await db.query("delete from public.draft_snapshots where site_id=$1", [
+      active,
+    ]);
+    await db.query(
+      "insert into public.releases(site_id,config,asset_paths,engine_sha,created_by) values($1,$2,'{}','test',$3)",
+      [active, imageConfig, owner],
+    );
+    await assert.rejects(
+      db.query("select public.begin_media_deletion($1,$2,$3)", [
+        active,
+        aid,
+        owner,
+      ]),
+      /MEDIA_IN_RELEASE/,
+    );
+    await db.query("delete from public.releases where site_id=$1", [active]);
+    const deletePaths = await db.query(
+      "select * from public.begin_media_deletion($1,$2,$3)",
+      [active, aid, owner],
+    );
+    assert.deepEqual(deletePaths.rows, [{ path: `${active}/${aid}/640.webp` }]);
+    assert.deepEqual(
+      (
+        await db.query("select * from public.begin_media_deletion($1,$2,$3)", [
+          active,
+          aid,
+          owner,
+        ])
+      ).rows,
+      deletePaths.rows,
+      "retry lists remaining files",
+    );
+    await assert.rejects(
+      db.query("update public.drafts set config=$2 where site_id=$1", [
+        active,
+        imageConfig,
+      ]),
+      /MEDIA_UNAVAILABLE/,
+    );
+    await assert.rejects(
+      db.query(
+        "insert into public.releases(site_id,config,asset_paths,engine_sha,created_by) values($1,$2,'{}','test',$3)",
+        [active, imageConfig, owner],
+      ),
+      /MEDIA_UNAVAILABLE/,
+    );
+    await assert.rejects(
+      db.query("select public.finish_media_deletion($1,$2,$3)", [
+        active,
+        aid,
+        owner,
+      ]),
+      /MEDIA_REMAIN/,
+    );
+    // Storage API test double: only now can the asset metadata be removed.
+    await db.query("delete from storage.objects where name=$1", [
+      `${active}/${aid}/640.webp`,
+    ]);
+    await db.query("select public.finish_media_deletion($1,$2,$3)", [
+      active,
+      aid,
+      owner,
+    ]);
+    assert.equal(
+      (await db.query("select id from public.media_assets where id=$1", [aid]))
+        .rows.length,
+      0,
+    );
+    await assert.rejects(
+      db.query("update public.drafts set config=$2 where site_id=$1", [
+        active,
+        imageConfig,
+      ]),
+      /MEDIA_UNAVAILABLE/,
     );
     const { rows: removed } = await db.query<{ soft_delete_site: string }>(
       "select public.soft_delete_site($1,$2)",

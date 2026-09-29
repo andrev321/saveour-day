@@ -9,6 +9,38 @@ const maxLibraryAssets = 100;
 const maxPendingUploads = 5;
 const uploadReservationMinutes = 30;
 
+export async function deleteMedia(
+  siteId: string,
+  assetId: string,
+  actor: string,
+) {
+  const db = serviceDb();
+  const args = { sid: siteId, aid: assetId, actor };
+  const { data, error } = await db.rpc("begin_media_deletion", args);
+  checkDb(error);
+  const paths = (data || []).map((item: { path: string }) => item.path);
+  if (
+    paths.some(
+      (path: string) =>
+        !path.startsWith(`${siteId}/${assetId}/`) || path.includes(".."),
+    )
+  )
+    throw new HttpError(500, "Nieprawidłowy zakres usuwania zdjęcia");
+  for (let i = 0; i < paths.length; i += 500) {
+    const { error: storageError } = await db.storage
+      .from("site-media")
+      .remove(paths.slice(i, i + 500));
+    if (storageError)
+      throw new HttpError(
+        503,
+        "Nie udało się usunąć plików. Ponów usuwanie zdjęcia z biblioteki.",
+      );
+  }
+  const { error: finishError } = await db.rpc("finish_media_deletion", args);
+  checkDb(finishError);
+  return { deleted: true };
+}
+
 async function clearExpiredReservations(
   db: ReturnType<typeof serviceDb>,
   siteId: string,
