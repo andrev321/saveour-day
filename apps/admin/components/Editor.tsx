@@ -16,12 +16,10 @@ import {
   FileButton,
   Group,
   Modal,
-  NumberInput,
   Select,
   Stack,
   Tabs,
   Text,
-  TextInput,
   Title,
   Tooltip,
 } from "@mantine/core";
@@ -49,6 +47,7 @@ import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewToolbar } from "./PreviewToolbar";
+import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
 type RevisionResponse = { revision: number };
@@ -299,12 +298,20 @@ export function Editor({
       const media = await action<MediaAsset>("finalize-upload", {
         id: signed.id,
       });
-      setConfig((current) => ({
-        ...current,
-        media: [...current.media, media],
-        hero: { ...current.hero, mediaId: current.hero.mediaId || media.id },
-      }));
+      // Load the private Storage URLs before sending the new photo to previews.
       await reload();
+      setConfig((current) =>
+        current.media.length >= 30
+          ? current
+          : {
+              ...current,
+              media: [...current.media, media],
+              hero: {
+                ...current.hero,
+                mediaId: current.hero.mediaId || media.id,
+              },
+            },
+      );
     });
   }
   function replace(key: keyof SiteConfig, value: unknown) {
@@ -643,77 +650,12 @@ export function Editor({
                 ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
                 : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
           </Text>
-          {data.media
-            .filter((m) => !config.media.some((c) => c.id === m.id))
-            .map((m) => (
-              <Button
-                key={m.id}
-                variant="light"
-                onClick={() =>
-                  setConfig({
-                    ...config,
-                    media: [...config.media, m.manifest],
-                  })
-                }
-              >
-                {language === "pl"
-                  ? "Dodaj zapisane zdjęcie"
-                  : language === "en"
-                    ? "Add saved photo"
-                    : "Gespeichertes Foto hinzufügen"}{" "}
-                {m.id.slice(0, 8)}
-              </Button>
-            ))}
-          {config.media.map((media, index) => (
-            <Card withBorder key={media.id}>
-              <Text size="sm" mb="sm">
-                {language === "pl"
-                  ? "Zdjęcie"
-                  : language === "en"
-                    ? "Photo"
-                    : "Foto"}{" "}
-                {index + 1}
-              </Text>
-              <TextInput
-                label={
-                  language === "pl"
-                    ? "Opis alternatywny (pusty dla dekoracji)"
-                    : language === "en"
-                      ? "Alternative description (leave empty for decoration)"
-                      : "Alternativbeschreibung (für Dekoration leer lassen)"
-                }
-                value={media.alt}
-                onChange={(e) => {
-                  const next = structuredClone(config);
-                  next.media[index].alt = e.currentTarget.value;
-                  setConfig(next);
-                }}
-              />
-              {(
-                ["focalX", "focalY", "mobileFocalX", "mobileFocalY"] as const
-              ).map((key) => (
-                <NumberInput
-                  key={key}
-                  label={
-                    {
-                      focalX: t("focalDesktopX"),
-                      focalY: t("focalDesktopY"),
-                      mobileFocalX: t("focalMobileX"),
-                      mobileFocalY: t("focalMobileY"),
-                    }[key]
-                  }
-                  min={0}
-                  max={100}
-                  value={media[key]}
-                  onChange={(v) => {
-                    const next = structuredClone(config);
-                    next.media[index][key] = Number(v);
-                    setConfig(next);
-                  }}
-                />
-              ))}
-            </Card>
-          ))}
+          <PhotoLibrary
+            config={config}
+            library={data.media}
+            urls={data.urls}
+            onChange={setConfig}
+          />
         </Stack>
       </Tabs.Panel>
       <Tabs.Panel value="settings" pt="lg">

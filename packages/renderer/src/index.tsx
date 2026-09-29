@@ -114,8 +114,16 @@ function Photo({
   hero?: boolean;
 }) {
   const resolve = resolveMedia || ((src: string) => src);
-  const [failed, setFailed] = useState(false);
-  if (failed)
+  const src = resolve(media.src);
+  const mobileSrc = mobile ? resolve(mobile.src) : undefined;
+  const srcSet = media.variants.length
+    ? media.variants.map((v) => `${resolve(v.src)} ${v.width}w`).join(", ")
+    : undefined;
+  const sourceKey = JSON.stringify([media.id, src, mobileSrc, srcSet]);
+  const [failedSource, setFailedSource] = useState<string | null>(null);
+  // Signed URLs can arrive after the first render or be refreshed later.
+  // A failure belongs to that request, not permanently to the photo component.
+  if (failedSource === sourceKey)
     return (
       <S.InvitationPhotoFallback
         role={media.alt ? "img" : undefined}
@@ -125,24 +133,19 @@ function Photo({
   return (
     <picture>
       {mobile ? (
-        <source media="(max-width: 47.99em)" srcSet={resolve(mobile.src)} />
+        <source media="(max-width: 47.99em)" srcSet={mobileSrc} />
       ) : null}
       <S.InvitationPhoto
-        src={resolve(media.src)}
-        srcSet={
-          media.variants.length
-            ? media.variants
-                .map((v) => `${resolve(v.src)} ${v.width}w`)
-                .join(", ")
-            : undefined
-        }
+        src={src}
+        srcSet={srcSet}
         sizes="(max-width: 48em) 100vw, 60vw"
         alt={media.alt}
         width={media.width}
         height={media.height}
         loading={hero ? "eager" : "lazy"}
         fetchPriority={hero ? "high" : "auto"}
-        onError={() => setFailed(true)}
+        onError={() => setFailedSource(sourceKey)}
+        onLoad={() => setFailedSource(null)}
         style={
           {
             "--focal": `${media.focalX}% ${media.focalY}%`,

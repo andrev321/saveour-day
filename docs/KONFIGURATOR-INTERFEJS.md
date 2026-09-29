@@ -19,6 +19,16 @@ Ustawienia widoku pod boczną nawigacją pozwalają wybrać gęstość Wygodna /
 
 ## Stan i dostępność
 
+### Biblioteka zdjęć
+
+Zakładka Zdjęcia pokazuje miniatury wszystkich plików zapisanych w realizacji, oznaczenia zdjęcia głównego i mobilnego oraz pliki pozostawione tylko w bibliotece. Kliknięcie miniatury otwiera większy podgląd. Punkt kadrowania ustawia się kliknięciem lub przeciąganiem znacznika na zdjęciu; strzałki przesuwają go klawiaturą, a Home i przycisk „Wyśrodkuj kadr” przywracają środek. Komputer i Telefon mają niezależne ustawienia. Przykładowy kadr pokazuje efekt, natomiast ostateczny kształt zależy od motywu i miejsca zdjęcia w zaproszeniu.
+
+W tym samym oknie można zmienić opis dostępności, wybrać zdjęcie główne albo mobilne i dodać zapisany plik do zaproszenia. „Usuń z zaproszenia” usuwa odwołania w nagłówku i galeriach, pozostawiając plik w bibliotece. Zmiany wymagają zapisania szkicu i publikacji. Limit zaproszenia wynosi 30 zdjęć; kolejne uploady mogą pozostać w bibliotece.
+
+Po uploadzie edytor pobiera podpisane adresy Storage przed przekazaniem zdjęcia do podglądu. Renderer wiąże błąd pobrania z konkretnym zestawem adresów, dzięki czemu odświeżenie adresu lub wybór innego zdjęcia ponawia wyświetlanie zamiast pozostawiać pusty zamiennik. Testy `photo-recovery.spec.ts` i `photo-library.spec.ts` obejmują tę regresję oraz obsługę biblioteki na telefonie i komputerze.
+
+### Preferencje edytora
+
 - Preferencje urządzenia zapisują się w localStorage pod kluczami `invitations-view-v1-*`: szerokość formularza, zwinięcie nawigacji, gęstość, szerokość i dopasowanie podglądu.
 - Preferencje nie są częścią konfiguracji zaproszenia, szkicu ani publikacji.
 - Przełączanie Edycja / Podgląd nie demontuje formularza i zachowuje edytowane wartości, rozwinięte sekcje i pozycję przewijania.
