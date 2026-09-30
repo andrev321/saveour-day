@@ -48,3 +48,22 @@ RLS bez polityk w `private.site_purge_jobs` jest celowe: tabela jest niedostępn
 Testy obejmują kontrolę właściciela, izolację RLS, blokowanie zapisów i API gości, granicę miesiąca, kolejność usuwania plików i rekordów, odrzucanie nieprawidłowych tokenów oraz błędy Storage. Testy przeglądarkowe sprawdzają stany sesji, ponawianie pobrania, potwierdzenie usuwania i układ mobilny.
 
 Źródła: [Supabase Cron](https://supabase.com/docs/guides/cron/quickstart), [usuwanie plików Storage](https://supabase.com/docs/guides/storage/management/delete-objects), [pg_net](https://supabase.com/docs/guides/database/extensions/pg_net).
+
+
+## Cykl mediów po poprawkach z 30.09.2026
+
+Zastosuj migrację `20260930165858_harden_media_lifecycle.sql` przed wdrożeniem nowych wersji panelu i aplikacji zaproszeń. Migracja rozszerza statusy o `processing`, blokuje bezpośredni odczyt i podpisywanie URL-i przez klientów Storage oraz ukrywa `original_path` przed klientami. Nie zmienia istniejących plików ani publikacji. Stare akcje `prepare-upload` i `finalize-upload` są usunięte z API.
+
+Upload to jedno żądanie `POST /api/sites/:id/media` z surowym plikiem JPEG/PNG/WebP. Serwer ogranicza strumień do 8 MiB, rezerwuje asset pod blokadą realizacji i nadaje dziesięciominutową dzierżawę. Przechowuje wyłącznie przetworzone WebP, pod losowym prefiksem nieujawnianym klientowi. Wysyłka do Storage używa JWT zalogowanego użytkownika, a INSERT policy sprawdza aktywną realizację, tajny prefiks i niewygasły status `processing`. Nie ma polityki UPDATE, DELETE ani SELECT dla klientów. Nie używaj service role do uploadów — ominęłoby to tę kontrolę.
+
+Finalizacja w SQL wymaga istniejącego, niewygasłego `processing` i obecności plików manifestu. `deleting` jest stanem terminalnym. Awaria przetwarzania uruchamia usuwanie całego prefiksu; awaria Storage pozostawia metadane i rezerwację usuwania do ponowienia. Przed każdym uploadem sprzątane są `error`, `deleting` i wygasłe `pending`/`processing`. Rezerwacja ponownie sprawdza status: asset, który zdążył przejść na `ready`, nie zostanie usunięty przez spóźnione sprzątanie. Limit 100 obejmuje wszystkie rekordy biblioteki, a limit pięciu uploadów jest sprawdzany pod tą samą blokadą.
+
+Panel pobiera zdjęcia przez `GET /api/sites/:id/media/:asset/:file`, z autoryzacją realizacji i kontrolą gotowości assetu. Odpowiedzi mają `private, no-store`; po pobraniu Storage sprawdzana jest ponownie aktywność realizacji i assetu. API gości również ponownie sprawdza aktywność realizacji po pobraniu pliku. Nowy kod nie wystawia podpisanych linków do odczytu ani uploadu.
+
+### Jednorazowe przejście ze starych podpisanych linków
+
+Już wystawionych tokenów Storage nie można odwołać zmianą kodu lub RLS. Przed uznaniem odcięcia dostępu za natychmiastowe odczekaj od wyłączenia starego panelu co najmniej dwie godziny (stare tokeny uploadu) oraz wygaśnięcie wszystkich wcześniej wystawionych URL-i odczytu. Stary panel wystawiał URL-e godzinne, ale użytkownik z dawnym SELECT Storage mógł sam wystawić dłuższe. W takim przypadku potrzebne jest odwołanie tokenów przez Supabase lub przeniesienie plików i usunięcie ich starych ścieżek przez Storage API. Weryfikacja samej migracji nie potwierdza odwołania takich uprawnień.
+
+### Testy
+
+`npm test` obejmuje pozytywny INSERT Storage oraz odmowy dla obcego użytkownika, błędnego prefiksu, wygasłej dzierżawy i usuniętej realizacji; blokadę cofnięcia `deleting`; ochronę przed spóźnionym cleanup; błędy uploadu i usuwania oraz autoryzowane API zdjęć. Testy współbieżności w `media-concurrency.test.ts` wymagają pustej, odizolowanej bazy PostgreSQL wskazanej przez `TEST_DATABASE_URL` — tworzą role i schematy testowe. CI uruchamia je na osobnym PostgreSQL 17. Nigdy nie wskazuj w tej zmiennej stagingu ani produkcji.

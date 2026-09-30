@@ -99,3 +99,8 @@ Informacje o braku polityk dla `access_attempts` i `guest_sessions` są zgodne z
 
 
 
+
+
+## Poprawki cyklu mediów — przygotowane 30.09.2026
+
+Migracja `20260930165858_harden_media_lifecycle.sql` i nowe API uploadu/odczytu wymagają wdrożenia. Ten wpis nie potwierdza zastosowania migracji ani zmiany konfiguracji stagingu. Instrukcja wdrożenia i ograniczenie dotyczące już wystawionych tokenów Storage: `USUWANIE-REALIZACJI.md`, sekcja „Cykl mediów po poprawkach z 30.09.2026”.

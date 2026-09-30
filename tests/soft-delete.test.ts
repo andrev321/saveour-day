@@ -39,6 +39,7 @@ test("soft delete hides all tenant data, disables writes, and purges only expire
       "20260929063114_isolate_purge_extension.sql",
       "20260929112149_fix_storage_media_read_policy.sql",
       "20260929112334_delete_unused_media.sql",
+      "20260930165858_harden_media_lifecycle.sql",
     ]) {
       await db.exec(
         (await readFile(`supabase/migrations/${file}`, "utf8")).replace(
@@ -74,20 +75,18 @@ test("soft delete hides all tenant data, disables writes, and purges only expire
       "insert into storage.objects(bucket_id,name) values('site-media',$1),('site-media',$2)",
       [`${recent}/photo.png`, `${expired}/orphan.png`],
     );
-    // Positive access matters: an always-denying policy also passes isolation tests.
+    // Direct Storage reads/signing are disabled; the panel uses an authenticated proxy.
     await db.exec(
       `set role authenticated; set request.jwt.claim.role='authenticated'; set request.jwt.claim.sub='${owner}'`,
     );
-    assert.equal(
-      (await db.query("select name from storage.objects")).rows.length,
-      2,
-      "owner can read their active projects' photos",
+    assert.deepEqual(
+      (await db.query("select name from storage.objects")).rows,
+      [],
     );
     await db.exec(`set request.jwt.claim.sub='${other}'`);
     assert.deepEqual(
       (await db.query("select name from storage.objects")).rows,
-      [{ name: `${recent}/photo.png` }],
-      "member can read only their project's photos",
+      [],
     );
     await db.exec("reset role; set request.jwt.claim.role='service_role'");
     const aid = "50000000-0000-4000-8000-000000000001";

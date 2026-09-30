@@ -1,0 +1,2 @@
+[functions.purge-sites]
+verify_jwt = false
