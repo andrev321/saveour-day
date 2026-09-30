@@ -35,7 +35,6 @@ import * as S from "./preview.styles";
 
 import { createTemplate, type TemplateId } from "@invitations/domain/templates";
 import { useLocalStorage } from "@mantine/hooks";
-import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
 import { templateUi } from "../lib/template-i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
@@ -51,7 +50,6 @@ import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
 type RevisionResponse = { revision: number };
-type SignedUpload = { id: string; path: string; token: string };
 export type EditorData = {
   site: {
     id: string;
@@ -285,20 +283,14 @@ export function Editor({
     await task(async () => {
       if (demo) throw new Error(t("uploadNeedsSupabase"));
       if (file.size > 8388608) throw new Error(t("maxPhotoSize"));
-      const signed = await action<SignedUpload>("prepare-upload", {
-        type: file.type,
-        size: file.size,
+      const response = await fetch(`${endpoint}/media`, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
       });
-      const { error } = await browserDb()
-        .storage.from("site-media")
-        .uploadToSignedUrl(signed.path, signed.token, file, {
-          contentType: file.type,
-        });
-      if (error) throw new Error(t("uploadFailed"));
-      const media = await action<MediaAsset>("finalize-upload", {
-        id: signed.id,
-      });
-      // Load the private Storage URLs before sending the new photo to previews.
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || t("uploadFailed"));
+      const media = result as MediaAsset;
       await reload();
       setConfig((current) =>
         current.media.length >= 30

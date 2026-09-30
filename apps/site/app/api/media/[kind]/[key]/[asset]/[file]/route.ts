@@ -23,6 +23,7 @@ export const GET = endpoint(async (request) => {
     .download(assets[source]);
   check(error);
   if (!data) throw new GuestError(404, "Nie znaleziono zdjęcia");
+  await context(parts[3], parts[4]);
   return new Response(data, {
     headers: {
       "Content-Type": "image/webp",
@@ -31,3 +32,4 @@ export const GET = endpoint(async (request) => {
     },
   });
 });
+

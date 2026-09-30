@@ -8,12 +8,7 @@ import {
   requireSite,
   serviceDb,
 } from "../../../../lib/server";
-import {
-  prepareUpload,
-  finalizeUpload,
-  validateMedia,
-  deleteMedia,
-} from "../../../../lib/media";
+import { validateMedia, deleteMedia } from "../../../../lib/media";
 import { publish } from "../../../../lib/publishing";
 
 import { createTemplate, templateIds } from "@invitations/domain/templates";
@@ -48,7 +43,8 @@ export const GET = api(async (request) => {
       .from("media_assets")
       .select("id,manifest,status")
       .eq("site_id", site.id)
-      .in("status", ["ready", "deleting"]),
+      .in("status", ["ready", "deleting"])
+      .not("manifest", "is", null),
     db
       .from("draft_snapshots")
       .select("id,created_at,revision")
@@ -65,20 +61,7 @@ export const GET = api(async (request) => {
       asset.manifest.src,
       ...asset.manifest.variants.map((variant: { src: string }) => variant.src),
     ]);
-  if (sources.length) {
-    const { data: signedUrls, error } = await db.storage
-      .from("site-media")
-      .createSignedUrls(
-        sources.map((source) => `${site.id}/${source.slice("/media/".length)}`),
-        3600,
-      );
-    checkDb(error);
-    for (const signed of signedUrls || []) {
-      if (signed.signedUrl && signed.path)
-        urls[`/media/${signed.path.slice(`${site.id}/`.length)}`] =
-          signed.signedUrl;
-    }
-  }
+  for (const source of sources) urls[source] = `/api/sites/${site.id}${source}`;
   return {
     site,
     draft: { ...draft.data, config: siteConfigSchema.parse(draft.data.config) },
@@ -117,8 +100,6 @@ export const POST = api(async (request) => {
         "restore-draft",
         "publish",
         "restore",
-        "prepare-upload",
-        "finalize-upload",
         "delete-media",
       ]),
       payload: z.unknown(),
@@ -198,13 +179,6 @@ export const POST = api(async (request) => {
       user.id,
       0,
       z.object({ releaseId: z.uuid() }).parse(body.payload).releaseId,
-    );
-  if (body.action === "prepare-upload")
-    return prepareUpload(site.id, body.payload);
-  if (body.action === "finalize-upload")
-    return finalizeUpload(
-      site.id,
-      z.object({ id: z.uuid() }).parse(body.payload).id,
     );
   throw new HttpError(410, "Ta operacja publikacji została wycofana");
 });
