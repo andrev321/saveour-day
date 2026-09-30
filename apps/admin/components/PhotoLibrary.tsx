@@ -1,17 +1,11 @@
 "use client";
-import {
-  useState,
-  type Dispatch,
-  type SetStateAction,
-  type PointerEvent,
-} from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   Alert,
   Badge,
   Button,
   Group,
   Modal,
-  SegmentedControl,
   Stack,
   Text,
   TextInput,
@@ -22,6 +16,8 @@ import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import * as S from "./PhotoLibrary.styles";
+import { PhotoCropEditor } from "./PhotoCropEditor";
+import type { PhotoDevice } from "./DeviceSelector";
 
 export function PhotoLibrary({
   config,
@@ -41,7 +37,7 @@ export function PhotoLibrary({
   const { language } = usePanelI18n();
   const copy = mediaUi[language];
   const [selected, setSelected] = useState<string | null>(null);
-  const [device, setDevice] = useState("desktop");
+  const [device, setDevice] = useState<PhotoDevice>("desktop");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -54,16 +50,15 @@ export function PhotoLibrary({
   const photo = photos.find((item) => item.id === selected);
   const included = config.media.some((item) => item.id === selected);
   const selectedMain = !!photo && config.hero.mediaId === photo.id;
+  const selectedTablet = !!photo && config.hero.tabletMediaId === photo.id;
   const selectedMobile = !!photo && config.hero.mobileMediaId === photo.id;
   const locked = library.some(
     (item) => item.id === selected && item.status === "deleting",
   );
   const full = (!included && config.media.length >= 30) || locked || deleting;
-  const xKey = device === "mobile" ? "mobileFocalX" : "focalX";
-  const yKey = device === "mobile" ? "mobileFocalY" : "focalY";
   function update(
     patch: Partial<MediaAsset>,
-    hero?: "mediaId" | "mobileMediaId",
+    hero?: "mediaId" | "mobileMediaId" | "tabletMediaId",
   ) {
     if (!photo || full) return;
     onChange((current) => {
@@ -78,15 +73,6 @@ export function PhotoLibrary({
           : [...current.media, { ...photo, ...patch }],
         hero: hero ? { ...current.hero, [hero]: photo.id } : current.hero,
       };
-    });
-  }
-  function position(event: PointerEvent<HTMLDivElement>) {
-    const bounds = event.currentTarget.getBoundingClientRect();
-    if (!bounds.width || !bounds.height) return;
-    const clamp = (n: number) => Math.round(Math.max(0, Math.min(100, n)));
-    update({
-      [xKey]: clamp(((event.clientX - bounds.left) / bounds.width) * 100),
-      [yKey]: clamp(((event.clientY - bounds.top) / bounds.height) * 100),
     });
   }
   return (
@@ -132,6 +118,11 @@ export function PhotoLibrary({
                 {config.hero.mediaId === item.id && (
                   <Badge size="xs">{copy.main}</Badge>
                 )}
+                {config.hero.tabletMediaId === item.id && (
+                  <Badge size="xs" variant="light">
+                    {copy.tabletMain}
+                  </Badge>
+                )}
                 {config.hero.mobileMediaId === item.id && (
                   <Badge size="xs" variant="light">
                     {copy.phone}
@@ -169,131 +160,14 @@ export function PhotoLibrary({
             )}
             {locked && <Alert color="orange">{copy.deleting}</Alert>}
             {!locked && (
-              <>
-                <SegmentedControl
-                  value={device}
-                  onChange={setDevice}
-                  data={[
-                    { value: "desktop", label: copy.desktop },
-                    { value: "mobile", label: copy.mobile },
-                  ]}
-                />
-                <S.Editor>
-                  <Stack gap="sm">
-                    <Text fw={600}>{copy.point}</Text>
-                    <Text size="sm" c="dimmed" id="photo-focus-help">
-                      {copy.pointHelp}
-                    </Text>
-                    <S.Focus
-                      role="group"
-                      tabIndex={full ? -1 : 0}
-                      aria-label={copy.point}
-                      aria-describedby="photo-focus-help"
-                      aria-disabled={full}
-                      onPointerDown={(e) => {
-                        if (full) return;
-                        e.currentTarget.focus();
-                        e.currentTarget.setPointerCapture(e.pointerId);
-                        position(e);
-                      }}
-                      onPointerMove={(e) => {
-                        if (e.currentTarget.hasPointerCapture(e.pointerId))
-                          position(e);
-                      }}
-                      onPointerUp={(e) => {
-                        if (e.currentTarget.hasPointerCapture(e.pointerId))
-                          e.currentTarget.releasePointerCapture(e.pointerId);
-                      }}
-                      onKeyDown={(e) => {
-                        if (
-                          ![
-                            "ArrowLeft",
-                            "ArrowRight",
-                            "ArrowUp",
-                            "ArrowDown",
-                            "Home",
-                          ].includes(e.key)
-                        )
-                          return;
-                        e.preventDefault();
-                        const step = e.shiftKey ? 10 : 2;
-                        update({
-                          [xKey]:
-                            e.key === "Home"
-                              ? 50
-                              : Math.max(
-                                  0,
-                                  Math.min(
-                                    100,
-                                    photo[xKey] +
-                                      (e.key === "ArrowRight"
-                                        ? step
-                                        : e.key === "ArrowLeft"
-                                          ? -step
-                                          : 0),
-                                  ),
-                                ),
-                          [yKey]:
-                            e.key === "Home"
-                              ? 50
-                              : Math.max(
-                                  0,
-                                  Math.min(
-                                    100,
-                                    photo[yKey] +
-                                      (e.key === "ArrowDown"
-                                        ? step
-                                        : e.key === "ArrowUp"
-                                          ? -step
-                                          : 0),
-                                  ),
-                                ),
-                        });
-                      }}
-                    >
-                      <img
-                        src={urls[photo.src] || photo.src}
-                        alt={photo.alt}
-                        draggable={false}
-                        width={photo.width}
-                        height={photo.height}
-                      />
-                      <S.Marker
-                        data-testid="photo-focus-marker"
-                        aria-hidden="true"
-                        style={{
-                          left: `${photo[xKey]}%`,
-                          top: `${photo[yKey]}%`,
-                        }}
-                      />
-                    </S.Focus>
-                    <Button
-                      variant="subtle"
-                      disabled={full}
-                      onClick={() => update({ [xKey]: 50, [yKey]: 50 })}
-                    >
-                      {copy.center}
-                    </Button>
-                  </Stack>
-                  <Stack gap="sm">
-                    <Text fw={600}>{copy.crop}</Text>
-                    <S.Crop
-                      data-testid="photo-crop"
-                      src={urls[photo.src] || photo.src}
-                      alt={photo.alt}
-                      style={{
-                        width:
-                          device === "mobile" ? "min(100%, 225px)" : "100%",
-                        aspectRatio: device === "mobile" ? "3 / 4" : "4 / 3",
-                        objectPosition: `${photo[xKey]}% ${photo[yKey]}%`,
-                      }}
-                    />
-                    <Text size="sm" c="dimmed">
-                      {copy.cropHelp}
-                    </Text>
-                  </Stack>
-                </S.Editor>
-              </>
+              <PhotoCropEditor
+                photo={photo}
+                urls={urls}
+                device={device}
+                onDevice={setDevice}
+                disabled={full}
+                onChange={update}
+              />
             )}
             <TextInput
               label={copy.alt}
@@ -330,6 +204,19 @@ export function PhotoLibrary({
               >
                 {selectedMobile ? copy.selectedMobile : copy.useMobile}
               </Button>
+              <Button
+                disabled={full}
+                variant={selectedTablet ? "filled" : "light"}
+                aria-pressed={selectedTablet}
+                leftSection={
+                  selectedTablet ? (
+                    <CheckIcon size={18} aria-hidden="true" />
+                  ) : undefined
+                }
+                onClick={() => update({}, "tabletMediaId")}
+              >
+                {selectedTablet ? copy.selectedTablet : copy.useTablet}
+              </Button>
               {!included && (
                 <Button disabled={full} onClick={() => update({})}>
                   {copy.add}
@@ -351,6 +238,10 @@ export function PhotoLibrary({
                           current.hero.mediaId === photo.id
                             ? undefined
                             : current.hero.mediaId,
+                        tabletMediaId:
+                          current.hero.tabletMediaId === photo.id
+                            ? undefined
+                            : current.hero.tabletMediaId,
                         mobileMediaId:
                           current.hero.mobileMediaId === photo.id
                             ? undefined

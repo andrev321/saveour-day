@@ -1,16 +1,10 @@
 "use client";
 import { ActionIcon, Tooltip } from "@mantine/core";
-import {
-  ArrowsOutIcon,
-  CornersOutIcon,
-  DesktopIcon,
-  DeviceMobileIcon,
-  DeviceTabletIcon,
-  XIcon,
-} from "@phosphor-icons/react";
+import { ArrowsOutIcon, CornersOutIcon, XIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import * as S from "./preview.styles";
+import { DeviceSelector, deviceWidths } from "./DeviceSelector";
 
 export function PreviewToolbar({
   width,
@@ -38,30 +32,16 @@ export function PreviewToolbar({
   return (
     <S.PreviewToolbar>
       <S.PreviewToolbarLabel>{ui.preview}</S.PreviewToolbarLabel>
-      <S.PreviewDeviceButtons role="group" aria-label={t("screenWidth")}>
-        {[
-          { value: "390", label: ui.phone, icon: DeviceMobileIcon },
-          { value: "768", label: ui.tablet, icon: DeviceTabletIcon },
-          { value: "1440", label: ui.desktop, icon: DesktopIcon },
-        ].map(({ value, label, icon: Icon }) => (
-          <Tooltip label={label} key={value}>
-            <ActionIcon
-              aria-label={label}
-              aria-pressed={
-                width === value || (value === "390" && width === "320")
-              }
-              variant={
-                width === value || (value === "390" && width === "320")
-                  ? "filled"
-                  : "subtle"
-              }
-              onClick={() => onWidth(value)}
-            >
-              <Icon size={19} weight="duotone" />
-            </ActionIcon>
-          </Tooltip>
-        ))}
-      </S.PreviewDeviceButtons>
+      <DeviceSelector
+        device={
+          Number(width) < 768
+            ? "mobile"
+            : Number(width) < 1024
+              ? "tablet"
+              : "desktop"
+        }
+        onChange={(device) => onWidth(deviceWidths[device])}
+      />
       <S.PreviewVariant
         aria-label={t("preview")}
         size="xs"

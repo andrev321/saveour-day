@@ -105,11 +105,13 @@ export function InvitationProvider({
 function Photo({
   media,
   mobile,
+  tablet,
   resolveMedia,
   hero = false,
 }: {
   media: MediaAsset;
   mobile?: MediaAsset;
+  tablet?: MediaAsset;
   resolveMedia?: (src: string) => string;
   hero?: boolean;
 }) {
@@ -119,7 +121,14 @@ function Photo({
   const srcSet = media.variants.length
     ? media.variants.map((v) => `${resolve(v.src)} ${v.width}w`).join(", ")
     : undefined;
-  const sourceKey = JSON.stringify([media.id, src, mobileSrc, srcSet]);
+  const tabletSrc = tablet ? resolve(tablet.src) : undefined;
+  const sourceKey = JSON.stringify([
+    media.id,
+    src,
+    mobileSrc,
+    tabletSrc,
+    srcSet,
+  ]);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   // Signed URLs can arrive after the first render or be refreshed later.
   // A failure belongs to that request, not permanently to the photo component.
@@ -135,6 +144,12 @@ function Photo({
       {mobile ? (
         <source media="(max-width: 47.99em)" srcSet={mobileSrc} />
       ) : null}
+      {tablet ? (
+        <source
+          media="(min-width: 48em) and (max-width: 63.99em)"
+          srcSet={tabletSrc}
+        />
+      ) : null}
       <S.InvitationPhoto
         src={src}
         srcSet={srcSet}
@@ -149,6 +164,7 @@ function Photo({
         style={
           {
             "--focal": `${media.focalX}% ${media.focalY}%`,
+            "--tablet-focal": `${tablet?.tabletFocalX ?? media.tabletFocalX ?? 50}% ${tablet?.tabletFocalY ?? media.tabletFocalY ?? 50}%`,
             "--mobile-focal": `${mobile?.mobileFocalX ?? media.mobileFocalX}% ${mobile?.mobileFocalY ?? media.mobileFocalY}%`,
           } as CSSProperties
         }
@@ -240,6 +256,7 @@ export function Invitation({
   )!;
   const hero = config.media.find((m) => m.id === config.hero.mediaId);
   const mobile = config.media.find((m) => m.id === config.hero.mobileMediaId);
+  const tablet = config.media.find((m) => m.id === config.hero.tabletMediaId);
   const isMainPage = variant.id === config.defaultVariant;
   const sections = (
     isMainPage
@@ -314,6 +331,7 @@ export function Invitation({
               <Photo
                 media={hero}
                 mobile={mobile}
+                tablet={tablet}
                 resolveMedia={resolveMedia}
                 hero
               />

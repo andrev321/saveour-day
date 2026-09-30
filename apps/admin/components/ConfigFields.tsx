@@ -16,7 +16,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { SiteConfig } from "@invitations/domain";
+import type { MediaAsset, SiteConfig } from "@invitations/domain";
 import {
   Accordion,
   ActionIcon,
@@ -52,6 +52,7 @@ import {
 import { useState } from "react";
 import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
 import * as S from "./fields.styles";
+import { PhotoReference, PhotoThumbnail, photoName } from "./PhotoReference";
 
 const labels: Record<string, string> = {
   displayName: "Główny napis",
@@ -62,6 +63,7 @@ const labels: Record<string, string> = {
   layout: "Układ hero",
   mediaId: "Zdjęcie główne",
   mobileMediaId: "Zdjęcie mobilne",
+  tabletMediaId: "Zdjęcie na tablecie",
   name: "Nazwa",
   address: "Adres",
   mapUrl: "Adres osadzania mapy Google",
@@ -113,6 +115,7 @@ const translatedLabels: Record<
     layout: "Hero layout",
     mediaId: "Hero image",
     mobileMediaId: "Mobile image",
+    tabletMediaId: "Tablet image",
     name: "Name",
     address: "Address",
     mapUrl: "Google Maps embed address",
@@ -160,6 +163,7 @@ const translatedLabels: Record<
     layout: "Layout des Startbereichs",
     mediaId: "Hauptbild",
     mobileMediaId: "Mobiles Bild",
+    tabletMediaId: "Tablet-Bild",
     name: "Name",
     address: "Adresse",
     mapUrl: "Google-Maps-Einbettungsadresse",
@@ -249,12 +253,14 @@ function hasCustomOrder(ids: string[], available: Reference[]) {
 function SortableReference({
   id,
   name,
+  photo,
   language,
   visible,
   onVisibilityChange,
 }: {
   id: string;
   name: string;
+  photo?: MediaAsset;
   language: PanelLanguage;
   visible: boolean;
   onVisibilityChange: () => void;
@@ -301,7 +307,9 @@ function SortableReference({
       >
         <IconGripVertical size={18} />
       </S.ReferenceDragHandle>
-      <S.ReferenceName size="sm">{name}</S.ReferenceName>
+      <S.ReferenceName component="div" size="sm">
+        {photo ? <PhotoReference photo={photo} /> : name}
+      </S.ReferenceName>
       <ActionIcon
         variant="subtle"
         color="gray"
@@ -319,6 +327,7 @@ function OrderedReferences({
   hiddenIds = [],
   label,
   available,
+  photos,
   language,
   editable = true,
   hint,
@@ -328,6 +337,7 @@ function OrderedReferences({
   hiddenIds?: string[];
   label: string;
   available: Reference[];
+  photos?: MediaAsset[];
   language: PanelLanguage;
   editable?: boolean;
   hint?: string;
@@ -346,7 +356,17 @@ function OrderedReferences({
       : language === "en"
         ? "order on the page"
         : "Reihenfolge auf der Seite";
-  const displayedIds = editable ? ids : available.map((item) => item.id);
+  const displayedIds = !editable
+    ? available.map((item) => item.id)
+    : photos
+      ? [
+          ...ids,
+          ...available
+            .filter((item) => !ids.includes(item.id))
+            .map((item) => item.id),
+        ]
+      : ids;
+  const activePhoto = photos?.find((photo) => photo.id === activeId);
 
   return (
     <Stack gap={4}>
@@ -388,21 +408,34 @@ function OrderedReferences({
           >
             <Stack gap={4}>
               {displayedIds.map((id) => {
-                const name = referenceName(id, available);
+                const photo = photos?.find((photo) => photo.id === id);
+                const name = photo
+                  ? photoName(photo)
+                  : referenceName(id, available);
                 return (
                   <SortableReference
                     key={id}
                     id={id}
                     name={name}
+                    photo={photo}
                     language={language}
-                    visible={!hiddenIds.includes(id)}
+                    visible={
+                      photos ? ids.includes(id) : !hiddenIds.includes(id)
+                    }
                     onVisibilityChange={() =>
-                      onChange(
-                        ids,
-                        hiddenIds.includes(id)
-                          ? hiddenIds.filter((item) => item !== id)
-                          : [...hiddenIds, id],
-                      )
+                      photos
+                        ? onChange(
+                            ids.includes(id)
+                              ? ids.filter((item) => item !== id)
+                              : [...ids, id],
+                            hiddenIds,
+                          )
+                        : onChange(
+                            ids,
+                            hiddenIds.includes(id)
+                              ? hiddenIds.filter((item) => item !== id)
+                              : [...hiddenIds, id],
+                          )
                     }
                   />
                 );
@@ -413,7 +446,11 @@ function OrderedReferences({
             {activeId ? (
               <S.ReferenceDragGhost>
                 <IconGripVertical size={18} />
-                <Text size="sm">{referenceName(activeId, available)}</Text>
+                {activePhoto ? (
+                  <PhotoReference photo={activePhoto} />
+                ) : (
+                  <Text size="sm">{referenceName(activeId, available)}</Text>
+                )}
               </S.ReferenceDragGhost>
             ) : null}
           </DragOverlay>
@@ -421,9 +458,15 @@ function OrderedReferences({
       ) : (
         <Stack gap={4}>
           {available.map((item) => (
-            <Text key={item.id} size="sm">
-              {referenceName(item.id, available)}
-            </Text>
+            <div key={item.id}>
+              {photos?.find((photo) => photo.id === item.id) ? (
+                <PhotoReference
+                  photo={photos.find((photo) => photo.id === item.id)!}
+                />
+              ) : (
+                <Text size="sm">{referenceName(item.id, available)}</Text>
+              )}
+            </div>
           ))}
         </Stack>
       )}
@@ -464,6 +507,7 @@ export function Fields({
             ].includes(key),
         )
         .map(([key, field]) => {
+          if (key === "mediaIds" && value.type !== "gallery") return null;
           const label =
             (language === "pl" ? labels : translatedLabels[language])[key] ||
             labels[key] ||
@@ -534,18 +578,52 @@ export function Fields({
                 onChange={(v) => update(key, v)}
               />
             );
-          if (key === "venueId" || key === "mediaId" || key === "mobileMediaId")
+          if (["mediaId", "mobileMediaId", "tabletMediaId"].includes(key)) {
+            const selected = config.media.find((photo) => photo.id === field);
             return (
               <Select
                 key={key}
                 label={label}
                 clearable
-                data={(key === "venueId" ? config.venues : config.media).map(
-                  (i) => ({
-                    value: i.id,
-                    label: "name" in i ? i.name : i.alt || i.id,
-                  }),
-                )}
+                data={config.media.map((photo) => ({
+                  value: photo.id,
+                  label: photoName(photo),
+                }))}
+                value={typeof field === "string" ? field || null : null}
+                leftSection={
+                  selected ? <PhotoThumbnail photo={selected} /> : undefined
+                }
+                leftSectionWidth={48}
+                styles={{ input: { minHeight: 48 } }}
+                renderOption={({ option }) => {
+                  const photo = config.media.find(
+                    (photo) => photo.id === option.value,
+                  );
+                  return photo ? (
+                    <PhotoReference photo={photo} />
+                  ) : (
+                    option.label
+                  );
+                }}
+                onChange={(id) => {
+                  const next = { ...value };
+                  if (id) next[key] = id;
+                  else delete next[key];
+                  onChange(next);
+                }}
+              />
+            );
+          }
+          if (key === "venueId")
+            return (
+              <Select
+                key={key}
+                label={label}
+                clearable
+                data={config.venues.map((i) => ({
+                  value: i.id,
+                  label: i.name,
+                }))}
                 value={typeof field === "string" ? field : null}
                 onChange={(v) => {
                   const next = { ...value };
@@ -572,6 +650,7 @@ export function Fields({
                 hiddenIds={hiddenReferenceIds[key as "eventIds" | "sectionIds"]}
                 label={label}
                 available={available}
+                photos={key === "mediaIds" ? config.media : undefined}
                 language={language}
                 editable={referencesEditable}
                 hint={
@@ -584,13 +663,15 @@ export function Fields({
                     : undefined
                 }
                 onChange={(ids, hiddenIds) =>
-                  onChange({
-                    ...value,
-                    [key]: ids,
-                    [key === "eventIds"
-                      ? "hiddenEventIds"
-                      : "hiddenSectionIds"]: hiddenIds,
-                  })
+                  key === "mediaIds"
+                    ? update(key, ids)
+                    : onChange({
+                        ...value,
+                        [key]: ids,
+                        [key === "eventIds"
+                          ? "hiddenEventIds"
+                          : "hiddenSectionIds"]: hiddenIds,
+                      })
                 }
               />
             );
@@ -1137,7 +1218,9 @@ function SortableSection({
             aria-label="Przeciągnij sekcję"
             {...attributes}
             {...listeners}
-            onClick={(event: React.MouseEvent<HTMLElement>) => event.stopPropagation()}
+            onClick={(event: React.MouseEvent<HTMLElement>) =>
+              event.stopPropagation()
+            }
           >
             <IconGripVertical size={18} />
           </S.SectionDragHandle>

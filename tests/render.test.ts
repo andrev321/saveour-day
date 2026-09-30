@@ -8,10 +8,45 @@ import {
 } from "../packages/renderer/src/index.tsx";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import {
+  mediaSchema,
+  parseSiteConfig,
   themeDesigns,
   themeNames,
   themes,
 } from "../packages/domain/src/index.ts";
+import { guestContent } from "../packages/domain/src/guest.ts";
+
+test("tablet hero photo survives guest projection and renders independent responsive crop", () => {
+  const config = createDemo();
+  config.media = ["desktop", "tablet", "mobile"].map((id) =>
+    mediaSchema.parse({
+      id,
+      src: `/media/${id}.webp`,
+      width: 1200,
+      height: 800,
+      tabletFocalX: 25,
+      tabletFocalY: 75,
+    }),
+  );
+  config.hero.mediaId = "desktop";
+  config.hero.tabletMediaId = "tablet";
+  config.hero.mobileMediaId = "mobile";
+  const guest = guestContent(parseSiteConfig(config), config.defaultVariant);
+  assert.deepEqual(
+    guest.media.map((photo) => photo.id),
+    ["desktop", "tablet", "mobile"],
+  );
+  const html = renderToStaticMarkup(
+    createElement(Invitation, { config: guest }),
+  );
+  assert.match(
+    html,
+    /media="\(min-width: 48em\) and \(max-width: 63.99em\)" srcSet="\/media\/tablet.webp"/,
+  );
+  assert.match(html, /--tablet-focal:25% 75%/);
+  config.hero.tabletMediaId = "unknown-photo";
+  assert.throws(() => parseSiteConfig(config), /tabletMediaId/);
+});
 test("render descriptions, contacts and optional-map reception for every theme", () => {
   for (const theme of themeNames) {
     const config = {

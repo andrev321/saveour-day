@@ -97,6 +97,8 @@ export const mediaSchema = z
     height: z.number().int().positive().max(20000),
     focalX: z.number().min(0).max(100).default(50),
     focalY: z.number().min(0).max(100).default(50),
+    tabletFocalX: z.number().min(0).max(100).default(50),
+    tabletFocalY: z.number().min(0).max(100).default(50),
     mobileFocalX: z.number().min(0).max(100).default(50),
     mobileFocalY: z.number().min(0).max(100).default(50),
     variants: z
@@ -168,6 +170,7 @@ const currentConfigSchema = z
         dateLabel: z.string().trim().max(500),
         mediaId: idSchema.optional(),
         mobileMediaId: idSchema.optional(),
+        tabletMediaId: idSchema.optional(),
         layout: z.enum(["overlay", "split"]),
       })
       .strict(),
@@ -301,6 +304,7 @@ const currentConfigSchema = z
     ref("variants", value.defaultVariant, ["defaultVariant"]);
     ref("media", value.hero.mediaId, ["hero", "mediaId"]);
     ref("media", value.hero.mobileMediaId, ["hero", "mobileMediaId"]);
+    ref("media", value.hero.tabletMediaId, ["hero", "tabletMediaId"]);
     value.events.forEach((event, i) =>
       ref("venues", event.venueId, ["events", i, "venueId"]),
     );

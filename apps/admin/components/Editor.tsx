@@ -39,6 +39,7 @@ import { usePanelI18n } from "../lib/i18n";
 import { templateUi } from "../lib/template-i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import { CollectionFields, Fields } from "./ConfigFields";
+import { MediaUrlsContext } from "./PhotoReference";
 import { apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
 import { DismissibleAlert } from "./DismissibleAlert";
@@ -322,7 +323,7 @@ export function Editor({
       onExpand={() => setPreviewOpen((value) => !value)}
     />
   );
-  return (
+  const workspace = (
     <EditorWorkspace
       title={<Title order={1}>{data.site.name}</Title>}
       headerTools={
@@ -551,10 +552,12 @@ export function Editor({
               ...config.hero,
               mediaId: config.hero.mediaId || "",
               mobileMediaId: config.hero.mobileMediaId || "",
+              tabletMediaId: config.hero.tabletMediaId || "",
             }}
             onChange={(v) => {
               if (!v.mediaId) delete v.mediaId;
               if (!v.mobileMediaId) delete v.mobileMediaId;
+              if (!v.tabletMediaId) delete v.tabletMediaId;
               replace("hero", v);
             }}
           />
@@ -795,4 +798,5 @@ export function Editor({
       </Tabs.Panel>
     </EditorWorkspace>
   );
+  return <MediaUrlsContext value={data.urls}>{workspace}</MediaUrlsContext>;
 }
