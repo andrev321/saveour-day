@@ -31,39 +31,67 @@ for (const width of [390, 1440])
       })
       .click();
     const dialog = page.getByRole("dialog");
-    const focus = dialog.getByRole("group", { name: "Ustaw punkt kadrowania" });
+    const focus = dialog.getByRole("group", { name: "Przesuń ramkę kadru" });
+    await expect(focus.locator("img")).toHaveJSProperty("naturalWidth", 1200);
+    await focus.scrollIntoViewIfNeeded();
     const bounds = await focus.boundingBox();
     await focus.click({
-      position: { x: bounds!.width * 0.75, y: bounds!.height * 0.25 },
+      position: { x: bounds!.width * 0.97, y: bounds!.height * 0.5 },
     });
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
-      "75% 25%",
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "100% 50%",
     );
     await focus.press("ArrowLeft");
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
-      "73% 25%",
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "98% 50%",
     );
-    await dialog.getByText("Telefon", { exact: true }).click();
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
+    await dialog.getByRole("button", { name: "Telefon", exact: true }).click();
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
       "50% 50%",
     );
     await focus.press("ArrowDown");
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
       "50% 52%",
     );
     await dialog.getByRole("button", { name: "Wyśrodkuj kadr" }).click();
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
       "50% 50%",
     );
-    await dialog.getByText("Komputer", { exact: true }).click();
-    await expect(dialog.getByTestId("photo-crop")).toHaveCSS(
-      "object-position",
-      "73% 25%",
+    await dialog.getByRole("button", { name: "Tablet", exact: true }).click();
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "50% 50%",
+    );
+    await focus.press("ArrowRight");
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "52% 50%",
+    );
+    const frameBounds = await dialog.getByTestId("photo-crop").boundingBox();
+    const stageBounds = await focus.boundingBox();
+    const centerX = frameBounds!.x + frameBounds!.width / 2;
+    const centerY = frameBounds!.y + frameBounds!.height / 2;
+    await page.mouse.move(centerX, centerY);
+    await page.mouse.down();
+    await page.mouse.move(centerX + stageBounds!.width * 0.1, centerY, {
+      steps: 5,
+    });
+    await page.mouse.up();
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "82% 50%",
+    );
+    await expect(dialog.locator('[data-ui="photo-crop-frame"]')).toHaveCount(1);
+    await expect(dialog.locator("img")).toHaveCount(1);
+    await dialog.getByRole("button", { name: "Komputer", exact: true }).click();
+    await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
+      "data-position",
+      "98% 50%",
     );
     await dialog
       .getByRole("textbox", { name: "Opis zdjęcia", exact: true })

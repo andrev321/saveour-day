@@ -25,6 +25,11 @@ export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
     object-position: var(--focal, 50% 50%);
     border-radius: inherit;
   }
+  @media (min-width: 48em) and (max-width: 63.99em) {
+    & {
+      object-position: var(--tablet-focal, 50% 50%);
+    }
+  }
   @media (max-width: 47.99em) {
     & {
       object-position: var(--mobile-focal, 50% 50%);

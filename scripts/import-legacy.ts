@@ -26,6 +26,8 @@ config.media = [
     height: image.info.height,
     focalX: 50,
     focalY: 50,
+    tabletFocalX: 50,
+    tabletFocalY: 50,
     mobileFocalX: 50,
     mobileFocalY: 50,
     variants: [],

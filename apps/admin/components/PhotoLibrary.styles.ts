@@ -30,21 +30,13 @@ export const Tile = styled.button`
     object-fit: cover;
   }
 `;
-export const Editor = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 24px;
-  @media (max-width: 40em) {
-    grid-template-columns: minmax(0, 1fr);
-  }
-`;
 export const Focus = styled.div`
   position: relative;
   width: 100%;
   overflow: hidden;
   border-radius: 12px;
   background: #edf1f8;
-  cursor: crosshair;
+  cursor: pointer;
   touch-action: none;
   &:focus-visible {
     outline: 3px solid #52679d;
@@ -58,22 +50,29 @@ export const Focus = styled.div`
     pointer-events: none;
   }
 `;
-export const Marker = styled.span`
+export const CropFrame = styled.div`
   position: absolute;
-  width: 26px;
-  height: 26px;
-  border: 3px solid white;
-  border-radius: 50%;
-  background: #3b519e99;
-  box-shadow: 0 0 0 2px #27386c;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-`;
-export const Crop = styled.img`
-  display: block;
-  width: 100%;
-  max-height: 300px;
-  border-radius: 12px;
-  object-fit: cover;
-  background: #edf1f8;
+  box-sizing: border-box;
+  border: 2px solid white;
+  box-shadow:
+    0 0 0 1px #27386c,
+    0 0 0 100vmax rgb(0 0 0 / 55%);
+  cursor: grab;
+  &:active {
+    cursor: grabbing;
+  }
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    pointer-events: none;
+  }
+  &::before {
+    inset: 0 33.333%;
+    border-inline: 1px dashed rgb(255 255 255 / 65%);
+  }
+  &::after {
+    inset: 33.333% 0;
+    border-block: 1px dashed rgb(255 255 255 / 65%);
+  }
 `;

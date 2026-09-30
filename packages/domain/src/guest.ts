@@ -45,6 +45,7 @@ export function guestContent(
   const media = new Set([
     config.hero.mediaId,
     config.hero.mobileMediaId,
+    config.hero.tabletMediaId,
     ...sections.flatMap((s) => s.mediaIds),
   ]);
   return {
