@@ -1,22 +1,23 @@
 import "server-only";
 import sharp from "sharp";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { mediaSchema, type SiteConfig } from "@invitations/domain";
-import { z } from "zod";
-import { checkDb, HttpError, serviceDb } from "./server";
-
-const maxLibraryAssets = 100;
-const maxPendingUploads = 5;
-const uploadReservationMinutes = 30;
+import { checkDb, HttpError, serviceDb, sessionDb } from "./server";
 
 export async function deleteMedia(
   siteId: string,
   assetId: string,
   actor: string,
+  cleanupOnly = false,
 ) {
   const db = serviceDb();
   const args = { sid: siteId, aid: assetId, actor };
-  const { data, error } = await db.rpc("begin_media_deletion", args);
+  const { data, error } = await db.rpc("begin_media_deletion", {
+    ...args,
+    cleanup_only: cleanupOnly,
+  });
+  if (cleanupOnly && error?.message.includes("MEDIA_NOT_READY"))
+    return { deleted: false };
   checkDb(error);
   const paths = (data || []).map((item: { path: string }) => item.path);
   if (
@@ -41,96 +42,35 @@ export async function deleteMedia(
   return { deleted: true };
 }
 
-async function clearExpiredReservations(
-  db: ReturnType<typeof serviceDb>,
-  siteId: string,
-) {
-  const expiresAt = new Date(
-    Date.now() - uploadReservationMinutes * 60 * 1000,
-  ).toISOString();
-  const { data, error } = await db
-    .from("media_assets")
-    .select("id,original_path")
-    .eq("site_id", siteId)
-    .eq("status", "pending")
-    .lt("created_at", expiresAt);
+export async function cleanupMedia(siteId: string, actor: string) {
+  const { data, error } = await serviceDb().rpc("media_cleanup_candidates", {
+    sid: siteId,
+    actor,
+  });
   checkDb(error);
-  if (!data?.length) return;
-  await db.storage
-    .from("site-media")
-    .remove(data.map((asset) => asset.original_path));
-  const { error: deleteError } = await db
-    .from("media_assets")
-    .delete()
-    .in(
-      "id",
-      data.map((asset) => asset.id),
-    );
-  checkDb(deleteError);
+  for (const asset of data || [])
+    await deleteMedia(siteId, asset.id, actor, true);
 }
 
-export async function prepareUpload(siteId: string, input: unknown) {
-  const body = z
-    .object({
-      type: z.enum(["image/jpeg", "image/png", "image/webp"]),
-      size: z.number().int().positive().max(8388608),
-    })
-    .parse(input);
+export async function uploadMedia(
+  siteId: string,
+  actor: string,
+  buffer: Buffer,
+  uploadDb: Awaited<ReturnType<typeof sessionDb>>,
+) {
+  if (!buffer.length || buffer.length > 8388608)
+    throw new HttpError(413, "Limit pliku: 8 MB");
+  await cleanupMedia(siteId, actor);
   const db = serviceDb();
-  await clearExpiredReservations(db, siteId);
-  const [ready, pending] = await Promise.all([
-    db
-      .from("media_assets")
-      .select("id", { count: "exact", head: true })
-      .eq("site_id", siteId)
-      .eq("status", "ready"),
-    db
-      .from("media_assets")
-      .select("id", { count: "exact", head: true })
-      .eq("site_id", siteId)
-      .eq("status", "pending"),
-  ]);
-  checkDb(ready.error);
-  checkDb(pending.error);
-  if ((ready.count || 0) >= maxLibraryAssets)
-    throw new HttpError(400, "Limit biblioteki: 100 plików na realizację.");
-  if ((pending.count || 0) >= maxPendingUploads)
-    throw new HttpError(
-      429,
-      "Trwa już maksymalna liczba uploadów. Poczekaj na ich zakończenie.",
-    );
-  const id = randomUUID(),
-    original = `${siteId}/${id}/original`;
-  const { error } = await db
-    .from("media_assets")
-    .insert({ id, site_id: siteId, original_path: original });
-  checkDb(error);
-  const { data, error: signedError } = await db.storage
-    .from("site-media")
-    .createSignedUploadUrl(original, { upsert: false });
-  if (signedError || !data)
-    throw new HttpError(503, "Nie można przygotować uploadu");
-  return { id, path: original, token: data.token, type: body.type };
-}
-export async function finalizeUpload(siteId: string, assetId: string) {
-  const db = serviceDb();
-  const { data: asset } = await db
-    .from("media_assets")
-    .select("*")
-    .eq("id", assetId)
-    .eq("site_id", siteId)
-    .single();
-  if (!asset) throw new HttpError(404, "Nie znaleziono zdjęcia");
-  if (asset.status === "ready") return asset.manifest;
-  if (asset.status !== "pending")
-    throw new HttpError(400, "Upload został odrzucony. Dodaj nowy plik.");
+  const assetId = randomUUID();
+  const prefix = `${siteId}/${assetId}/${randomBytes(32).toString("hex")}`;
+  const args = { sid: siteId, aid: assetId, actor };
+  const { error: reserveError } = await db.rpc("reserve_media_upload", {
+    ...args,
+    original: `${prefix}/original`,
+  });
+  checkDb(reserveError);
   try {
-    const { data, error } = await db.storage
-      .from("site-media")
-      .download(asset.original_path);
-    if (error || !data) throw new HttpError(400, "Najpierw prześlij plik");
-    if (data.size > 8388608) throw new HttpError(413, "Limit pliku: 8 MB");
-    const buffer = Buffer.from(await data.arrayBuffer());
     const metadata = await sharp(buffer, {
       limitInputPixels: 20000000,
     }).metadata();
@@ -153,17 +93,13 @@ export async function finalizeUpload(siteId: string, assetId: string) {
         .toBuffer({ resolveWithObject: true });
       if (variants.some((v) => v.width === output.info.width)) continue;
       const name = `${output.info.width}.webp`;
-      const { error: uploadError } = await db.storage
+      const { error: uploadError } = await uploadDb.storage
         .from("site-media")
-        .upload(`${siteId}/${assetId}/${name}`, output.data, {
+        .upload(`${prefix}/${name}`, output.data, {
           contentType: "image/webp",
           upsert: false,
         });
-      if (
-        uploadError &&
-        !uploadError.message.toLowerCase().includes("already exists")
-      )
-        throw uploadError;
+      if (uploadError) throw uploadError;
       variants.push({
         src: `/media/${assetId}/${name}`,
         width: output.info.width,
@@ -178,20 +114,22 @@ export async function finalizeUpload(siteId: string, assetId: string) {
       height,
       variants,
     });
-    const { error: updateError } = await db
-      .from("media_assets")
-      .update({ status: "ready", manifest })
-      .eq("id", assetId)
-      .eq("site_id", siteId);
-    checkDb(updateError);
-    await db.storage.from("site-media").remove([asset.original_path]);
+    const { error: completeError } = await db.rpc("complete_media_upload", {
+      ...args,
+      content: manifest,
+    });
+    checkDb(completeError);
     return manifest;
   } catch (error) {
-    await db
-      .from("media_assets")
-      .update({ status: "error" })
-      .eq("id", assetId)
-      .eq("site_id", siteId);
+    // Only a still-processing upload can fail. A stale worker cannot reset deleting.
+    const { error: failError } = await db.rpc("fail_media_upload", args);
+    if (!failError) {
+      try {
+        await deleteMedia(siteId, assetId, actor, true);
+      } catch {
+        /* Preserve metadata and retry the full prefix on the next cleanup. */
+      }
+    }
     if (error instanceof HttpError) throw error;
     throw new HttpError(400, "Nie udało się bezpiecznie przetworzyć zdjęcia");
   }
@@ -201,7 +139,7 @@ export async function validateMedia(siteId: string, config: SiteConfig) {
   if (!config.media.length) return paths;
   const { data, error } = await serviceDb()
     .from("media_assets")
-    .select("id,manifest")
+    .select("id,manifest,original_path")
     .eq("site_id", siteId)
     .eq("status", "ready")
     .in(
@@ -228,7 +166,32 @@ export async function validateMedia(siteId: string, config: SiteConfig) {
       media.src,
       ...media.variants.map((v) => v.src),
     ]))
-      paths[source] = `${siteId}/${source.slice("/media/".length)}`;
+      paths[source] = mediaStoragePath(
+        siteId,
+        media.id,
+        row.original_path,
+        source,
+      );
   }
   return paths;
+}
+
+export function mediaStoragePath(
+  siteId: string,
+  assetId: string,
+  original: string,
+  source: string,
+) {
+  if (
+    !source.startsWith(`/media/${assetId}/`) ||
+    source.includes("..") ||
+    !original.startsWith(`${siteId}/${assetId}/`) ||
+    original.includes("..") ||
+    !original.endsWith("/original")
+  )
+    throw new HttpError(500, "Nieprawidłowy zakres zdjęcia");
+  return (
+    original.slice(0, -"original".length) +
+    source.slice(`/media/${assetId}/`.length)
+  );
 }

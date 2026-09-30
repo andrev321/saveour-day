@@ -23,10 +23,16 @@ test("media deletion removes scoped Storage files before metadata and remains re
       checkDb: (error: { message: string } | null) => {
         if (error) throw new Error(error.message);
       },
+      sessionDb: async () => ({}),
       serviceDb: () => ({
         rpc: async (name: string, args: unknown) => {
           calls.push(name);
-          assert.deepEqual(args, { sid, aid, actor: "owner" });
+          assert.deepEqual(args, {
+            sid,
+            aid,
+            actor: "owner",
+            ...(name === "begin_media_deletion" ? { cleanup_only: false } : {}),
+          });
           return {
             data:
               name === "begin_media_deletion"
