@@ -132,6 +132,11 @@ export function checkDb(error: { message: string } | null) {
       "Zdjęcie jest używane w zachowanej kopii szkicu. Nie można usunąć jej pliku.",
     MEDIA_UNAVAILABLE:
       "Zdjęcie zostało usunięte lub trwa jego usuwanie. Odśwież bibliotekę zdjęć.",
+    MEDIA_LIBRARY_FULL: "Limit biblioteki: 100 plików na realizację.",
+    MEDIA_UPLOAD_LIMIT:
+      "Trwa już maksymalna liczba uploadów. Poczekaj na ich zakończenie.",
+    MEDIA_REMAIN:
+      "Nie udało się usunąć wszystkich plików. Ponów usuwanie zdjęcia.",
     MEDIA_NOT_READY: "Poczekaj na zakończenie przesyłania zdjęcia.",
     SITE_DELETED: "Realizacja została usunięta. Wróć do listy realizacji.",
     VARIANT_MISSING:
