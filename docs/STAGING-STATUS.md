@@ -1,4 +1,4 @@
-# Staging — stan 2026-09-25
+# Staging — stan 2026-09-30
 
 Obie aplikacje są wdrożone (READY), ale pełny odbiór OTP, zdjęć i RSVP nie jest zakończony. Wybrano testową wysyłkę Resend bez własnej domeny; SMTP jest aktywne, trzy szablony Auth zapisane, a rejestracja i potwierdzenie e-maila zostały sprawdzone.
 
@@ -74,6 +74,7 @@ Integracja nadała własne wersje historii. Nie uruchamiaj ponownie migracji ani
 | 20260929063114_isolate_purge_extension.sql | 20260929063222 | isolate_purge_extension |
 | 20260929112149_fix_storage_media_read_policy.sql | 20260929112326 | fix_storage_media_read_policy |
 | 20260929112334_delete_unused_media.sql | 20260929113018 | delete_unused_media |
+| 20260930165858_harden_media_lifecycle.sql | 20260930173525 | harden_media_lifecycle |
 
 ## Odczyt i usuwanie zdjęć — 29.09.2026
 
@@ -101,6 +102,31 @@ Informacje o braku polityk dla `access_attempts` i `guest_sessions` są zgodne z
 
 
 
-## Poprawki cyklu mediów — przygotowane 30.09.2026
+## Poprawki cyklu mediów — wdrożone 30.09.2026
 
-Migracja `20260930165858_harden_media_lifecycle.sql` i nowe API uploadu/odczytu wymagają wdrożenia. Ten wpis nie potwierdza zastosowania migracji ani zmiany konfiguracji stagingu. Instrukcja wdrożenia i ograniczenie dotyczące już wystawionych tokenów Storage: `USUWANIE-REALIZACJI.md`, sekcja „Cykl mediów po poprawkach z 30.09.2026”.
+PR #1 został scalony do `main` jako `9905cac55f2a9db50a8d4f5434d638bdc5fe7b8f`. Integracja GitHub–Vercel automatycznie wdrożyła obie aplikacje przed zastosowaniem migracji; baza została następnie zaktualizowana o 17:35 UTC (19:35 w Polsce). Dla kolejnych zmian wymagających migracji stosuj kolejność opisaną w instrukcji wdrożenia.
+
+| Komponent | Potwierdzony stan |
+| --- | --- |
+| Panel | READY, `dpl_DHddorTz5y6bUZ3JmoW7bNG3smKg`, alias `moj-slub-admin-staging.vercel.app` |
+| Zaproszenia | READY, `dpl_2LWgzvYRrGnk7b5a2k1qB4rzhjdr`, alias `moj-slub-site-staging.vercel.app` |
+| Supabase | `harden_media_lifecycle`, wersja historii `20260930173525` |
+| Worker purge | ACTIVE, wersja 1; kod zgodny z repozytorium, bez potrzeby ponownego wdrożenia |
+| Cron purge | Aktywny, `0 3 1 * *`, poprawny adres workera |
+
+Weryfikacja na stagingu po migracji:
+- Prywatny bucket `site-media`; jedyna polityka klienta Storage to INSERT przez `can_upload_media`. Kolumna `original_path` jest ukryta przed klientem.
+- Funkcje rezerwacji, finalizacji i usuwania są dostępne wyłącznie dla `service_role`.
+- Test w transakcji z ROLLBACK potwierdził rezerwację uploadu, zgodę tylko na właściwą ścieżkę wariantu, odmowę odczytu Storage przez właściciela, stan terminalny `deleting`, odrzucenie spóźnionej finalizacji oraz zakończenie usuwania metadanych.
+- Panel główny i demo zaproszeń zwracają 200. Niezalogowane wywołania listy realizacji, uploadu i odczytu zdjęcia zwracają 401 z `no-store`; nieistniejące zaproszenie zwraca 404.
+- Worker odrzuca nieprawidłowy token zadania kodem 403; uprawnienia klienta do funkcji purge pozostają zablokowane.
+- Zachowano 2 istniejące rekordy zdjęć i 6 obiektów Storage. Nie uruchamiano purge istniejących realizacji ani nie usuwano zdjęć użytkownika.
+- Brak logów error/fatal obu wdrożeń w sprawdzonym okresie po zastosowaniu migracji.
+
+CI PR #1 zakończyło się sukcesem: 36 testów (w tym współbieżność na PostgreSQL), 54 E2E, lint, TypeScript i buildy demo/panelu; build zaproszeń przeszedł również lokalnie. W tej kontroli stagingu nie wykonano pełnego uploadu/odczytu z sesją użytkownika ani pozytywnego trwałego purge na rzeczywistym Storage.
+
+Doradca bezpieczeństwa nadal zgłasza wcześniejsze ostrzeżenia dla `pg_net`, funkcji pomocniczych SECURITY DEFINER i wyłączonej ochrony przed wyciekłymi hasłami. Nowe ostrzeżenie dla `can_upload_media` wynika z celowego EXECUTE dla authenticated: funkcja kontroluje tożsamość, realizację, stan uploadu, jego wygaśnięcie i tajną ścieżkę, a dostęp anon jest cofnięty. Nie zmieniano niezwiązanej konfiguracji Auth ani zarządzanego rozszerzenia.
+
+Ograniczenie wdrożenia: wcześniej wystawione signed URLs nie zostały odwołane. Stare tokeny uploadu mogą działać do dwóch godzin, a tokeny odczytu do swojego terminu wygaśnięcia; klient z dawnym SELECT mógł wystawić dłuższe. Nowe API ich nie wystawia. Szczegóły i procedura natychmiastowego odcięcia dawnych uprawnień: [Usuwanie realizacji](USUWANIE-REALIZACJI.md), sekcja „Cykl mediów po poprawkach z 30.09.2026”.
+
+Źródła ostrzeżeń doradcy: [SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [ochrona haseł](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
