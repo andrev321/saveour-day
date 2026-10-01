@@ -109,7 +109,7 @@ test("organizer creates family links, edits recipients and changes access settin
     .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
     .click();
   await expect(
-    page.getByText("family@example.com", { exact: true }),
+    page.getByRole("paragraph").filter({ hasText: /^family@example\.com$/ }),
   ).toBeVisible();
   await page
     .getByRole("combobox", { name: "Dostęp do całej realizacji" })

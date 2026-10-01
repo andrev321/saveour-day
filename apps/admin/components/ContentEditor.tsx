@@ -424,11 +424,8 @@ function RelatedList({
 function SectionRow({
   section,
   visible,
-  index,
-  total,
   onEdit,
   onVisibility,
-  onMove,
   expanded,
   children,
 }: {
@@ -436,16 +433,20 @@ function SectionRow({
   children: ReactNode;
   section: Section;
   visible: boolean;
-  index: number;
-  total: number;
   onEdit: () => void;
   onVisibility: () => void;
-  onMove: (to: number) => void;
 }) {
   const t = useText(),
     types = useTypes();
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: section.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    setActivatorNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
   return (
     <Card
       ref={setNodeRef}
@@ -460,7 +461,17 @@ function SectionRow({
     >
       <Group wrap="nowrap" gap="xs">
         <ActionIcon
+          ref={setActivatorNodeRef}
           variant="subtle"
+          size={44}
+          style={{
+            touchAction: "none",
+            userSelect: "none",
+            WebkitTouchCallout: "none",
+            cursor: isDragging ? "grabbing" : "grab",
+            flexShrink: 0,
+          }}
+          onContextMenu={(e) => e.preventDefault()}
           data-testid={`drag-handle-${section.id}`}
           aria-label={t(
             "Przeciągnij sekcję",
@@ -513,29 +524,6 @@ function SectionRow({
         >
           {visible ? <EyeIcon /> : <EyeSlashIcon />}
         </ActionIcon>
-        {([-1, 1] as const).map((step) => (
-          <ActionIcon
-            key={step}
-            variant="subtle"
-            aria-label={
-              step < 0
-                ? t(
-                    "Przesuń sekcję wyżej",
-                    "Move section up",
-                    "Abschnitt nach oben",
-                  )
-                : t(
-                    "Przesuń sekcję niżej",
-                    "Move section down",
-                    "Abschnitt nach unten",
-                  )
-            }
-            disabled={index + step < 0 || index + step >= total}
-            onClick={() => onMove(index + step)}
-          >
-            {step < 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
-          </ActionIcon>
-        ))}
       </Group>
       <div id={`content-${section.id}`} hidden={!expanded}>
         {expanded && children}
@@ -1249,20 +1237,15 @@ export function ContentEditor(props: ContentEditorProps) {
           strategy={verticalListSortingStrategy}
         >
           <Stack gap="sm">
-            {variant.sections.map((p, i) => {
+            {variant.sections.map((p) => {
               const s = config.sections.find((s) => s.id === p.sectionId)!;
               return (
                 <SectionRow
                   key={s.id}
                   section={s}
                   visible={p.visible}
-                  index={i}
-                  total={variant.sections.length}
                   expanded={selected === s.id}
                   onEdit={() => toggle(s.id)}
-                  onMove={(to) =>
-                    onChange((c) => moveSection(c, variant.id, i, to))
-                  }
                   onVisibility={() =>
                     onChange((c) => ({
                       ...c,

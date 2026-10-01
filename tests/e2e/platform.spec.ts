@@ -134,18 +134,24 @@ test("sections reorder with keyboard and visibility changes the preview", async 
 }) => {
   await content(page);
   const row = page.getByTestId("section-parking");
-  await row.getByRole("button", { name: "Przesuń sekcję wyżej" }).click();
+  const handle = page.getByTestId("drag-handle-parking");
+  await handle.scrollIntoViewIfNeeded();
+  await handle.focus();
+  await handle.press("Space", { delay: 100 });
+  await expect(handle).toHaveAttribute("aria-pressed", "true");
+  await handle.press("ArrowUp", { delay: 100 });
+  await expect(
+    page
+      .getByRole("status")
+      .filter({ hasText: "parking was moved over droppable area party" }),
+  ).toBeVisible();
+  await handle.press("Space", { delay: 100 });
   const ids = await page
     .locator('[data-testid^="section-"]')
     .evaluateAll((rows) => rows.map((r) => r.getAttribute("data-testid")));
   expect(ids.indexOf("section-parking")).toBeLessThan(
     ids.indexOf("section-party"),
   );
-  const handle = page.getByTestId("drag-handle-parking");
-  await handle.focus();
-  await handle.press("Space");
-  await handle.press("ArrowUp");
-  await handle.press("Space");
   await row.getByRole("button", { name: "Ukryj sekcję" }).click();
   await expect(
     page.frameLocator("iframe").getByRole("heading", { name: "Jak dojechać" }),

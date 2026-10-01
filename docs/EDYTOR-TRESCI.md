@@ -4,7 +4,7 @@ Panel ma cztery obszary: Treść, Wygląd, Zdjęcia i Goście. Ustawienia projek
 
 ## Edycja w kontekście
 
-Treść pokazuje kolejność sekcji wybranego wariantu, ich widoczność, początek zaproszenia i stopkę. Kliknięcie nagłówka rozwija formularz w tej samej liście; ponowne kliknięcie go zwija. Edycja nie otwiera osobnego widoku. Wybór sekcji z podglądu rozwija jej formularz i przewija do niego. Sekcje można przesuwać myszą, klawiaturą lub strzałkami. Program umożliwia dodawanie, wybieranie i edycję wydarzeń oraz ich miejsc. Kontakt analogicznie zarządza kontaktami. Galeria zarządza zdjęciami i kadrami każdego użycia. Biblioteka zdjęć służy do uploadu, opisu oraz usuwania plików.
+Treść pokazuje kolejność sekcji wybranego wariantu, ich widoczność, początek zaproszenia i stopkę. Kliknięcie nagłówka rozwija formularz w tej samej liście; ponowne kliknięcie go zwija. Edycja nie otwiera osobnego widoku. Wybór sekcji z podglądu rozwija jej formularz i przewija do niego. Sekcje można przesuwać wyłącznie uchwytem drag and drop: myszą, dotykiem lub klawiaturą (Spacja, strzałki, Spacja). Uchwyt ma 44 px i blokuje natywne przewijanie podczas dotykowego przeciągania; poza uchwytem lista przewija się normalnie. Program umożliwia dodawanie, wybieranie i edycję wydarzeń oraz ich miejsc. Kontakt analogicznie zarządza kontaktami. Galeria zarządza zdjęciami i kadrami każdego użycia. Biblioteka zdjęć służy do uploadu, opisu oraz usuwania plików.
 
 Treści i encje są współdzielone. Edytor pokazuje liczbę użyć i umożliwia utworzenie niezależnej kopii. Usunięcie z sekcji odłącza element; zarządzanie wspólnymi danymi usuwa go z całego szkicu i sprząta odwołania. Wydania i historyczne RSVP pozostają zachowane.
 
