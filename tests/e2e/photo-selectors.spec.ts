@@ -76,7 +76,9 @@ for (const width of [390, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.getByRole("button", { name: "Wszystkie sekcje" }).click();
+    await page
+      .getByRole("button", { name: "Początek zaproszenia", exact: true })
+      .click();
     await page
       .getByTestId("section-gallery")
       .getByRole("button", { name: /Galeria/ })

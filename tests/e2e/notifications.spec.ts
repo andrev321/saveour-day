@@ -27,7 +27,9 @@ test("notices can be dismissed without bypassing validation and return for new e
   ).toBeDisabled();
   await heading.fill("Spotkanie");
 
-  await page.getByRole("button", { name: "Wszystkie sekcje" }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await page
     .getByTestId("section-timeline")
     .getByRole("button", { name: /Plan naszego dnia/ })
@@ -48,9 +50,11 @@ test("notices can be dismissed without bypassing validation and return for new e
   await expect(page.getByText("Popraw konfigurację")).toBeVisible();
   await url.fill("https://example.com");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
-  await page
+  const notice = page
     .getByRole("status")
-    .getByRole("button", { name: "Zamknij powiadomienie" })
-    .click();
-  await expect(page.getByRole("status")).not.toBeVisible();
+    .filter({
+      has: page.getByRole("button", { name: "Zamknij powiadomienie" }),
+    });
+  await notice.getByRole("button", { name: "Zamknij powiadomienie" }).click();
+  await expect(notice).not.toBeVisible();
 });
