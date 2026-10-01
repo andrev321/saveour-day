@@ -40,6 +40,9 @@ test("admin demo edits and saves before simulated publication", async ({
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await expect(
     page.getByText("Demonstracja lokalna", { exact: true }),
   ).toBeVisible();
@@ -69,12 +72,14 @@ test("admin demo forwards custom color tokens to the preview", async ({
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
+  await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
   await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
-  await expect(page.frameLocator("iframe").locator("[data-ui=invitation]")).toHaveCSS(
-    "--accent",
-    "#123456",
-  );
+  await expect(
+    page.frameLocator("iframe").locator("[data-ui=invitation]"),
+  ).toHaveCSS("--accent", "#123456");
 });
 test("panel language preserves the untouched invitation template", async ({
   page,
@@ -85,6 +90,9 @@ test("panel language preserves the untouched invitation template", async ({
   await page.goto(`${adminUrl}/demo`);
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
@@ -105,6 +113,9 @@ test("panel language preserves a customized invitation template", async ({
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await page.getByLabel("Główny napis", { exact: true }).fill("Kasia");
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
@@ -114,119 +125,121 @@ test("panel language preserves a customized invitation template", async ({
       .getByRole("heading", { name: "Kasia", exact: true }),
   ).toBeVisible();
 });
-test("section editor uses Polish section names and supports reordering", async ({
+async function content(page: import("@playwright/test").Page) {
+  await page.goto(`${adminUrl}/demo`);
+  await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+}
+test("sections reorder with keyboard and visibility changes the preview", async ({
   page,
 }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
+  await content(page);
+  const row = page.getByTestId("section-parking");
+  await row.getByRole("button", { name: "Przesuń sekcję wyżej" }).click();
+  const ids = await page
+    .locator('[data-testid^="section-"]')
+    .evaluateAll((rows) => rows.map((r) => r.getAttribute("data-testid")));
+  expect(ids.indexOf("section-parking")).toBeLessThan(
+    ids.indexOf("section-party"),
   );
-  await page.goto(`${adminUrl}/demo`);
-  await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
-  await expect(
-    page.getByText("Przeciągnij sekcje, aby ustawić kolejność", {
-      exact: false,
-    }),
-  ).toBeVisible();
-  const parking = page.getByTestId("section-parking");
   const handle = page.getByTestId("drag-handle-parking");
-  await handle.click();
-  await expect(page.getByLabel("Identyfikator", { exact: true })).toBeHidden();
   await handle.focus();
   await handle.press("Space");
-  await expect(page.locator("[data-ui=section-drag-ghost]")).toBeVisible();
-  await handle.press("Escape");
-  await expect(page.locator("[data-ui=section-drag-ghost]")).toBeHidden();
-  await parking.getByRole("button").first().click();
-  await page.getByRole("button", { name: "Przesuń sekcję wyżej" }).click();
+  await handle.press("ArrowUp");
+  await handle.press("Space");
+  await row.getByRole("button", { name: "Ukryj sekcję" }).click();
   await expect(
-    page.getByRole("button", { name: "Zapisz szkic" }),
-  ).toBeEnabled();
-  await page.getByRole("combobox", { name: "Rodzaj sekcji" }).click();
-  await expect(
-    page.getByRole("option", { name: "Miejsce", exact: true }),
-  ).toBeVisible();
-});
-test("new text sections are visible in the preview", async ({ page }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
-  await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "Sekcje", exact: true }).click();
-  await page.getByRole("button", { name: "Dodaj sekcję" }).click();
-  await expect(
-    page.frameLocator("iframe").getByText("Nowa sekcja", { exact: true }),
-  ).toBeVisible();
-});
-test("editor manages named content variants", async ({ page }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
-  await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "Strony", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Strony" })).toBeVisible();
-  await expect(page.getByLabel(/Przygotuj warianty treści/)).toBeVisible();
-  await page.getByRole("button", { name: "Dodaj stronę" }).click();
-  await page.getByRole("button", { name: "Nowa strona" }).click();
-  await expect(page.getByRole("combobox", { name: /Podgl/ })).toHaveValue(
-    "Nowa strona",
-  );
-  await page.getByLabel("Etykieta", { exact: true }).fill("Dla rodziny");
-  await expect(
-    page.getByRole("button", { name: "Dla rodziny", exact: true }),
-  ).toBeVisible();
-  await expect(
-    page.getByLabel("Adres URL strony", { exact: true }),
+    page.frameLocator("iframe").getByRole("heading", { name: "Jak dojechać" }),
   ).toHaveCount(0);
-});
-test("main page cannot be removed or reordered", async ({ page }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
-  await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "Strony", exact: true }).click();
-
-  await expect(page.getByRole("button", { name: /Główna/ })).toBeVisible();
-  await page.getByRole("button", { name: /Główna/ }).click();
+  await row.getByRole("button", { name: "Pokaż sekcję" }).click();
   await expect(
-    page.getByRole("button", { name: /Usuń stronę/ }),
-  ).toBeDisabled();
-  await expect(page.getByRole("button", { name: /Przeciągnij/ })).toHaveCount(
-    0,
-  );
+    page.frameLocator("iframe").getByRole("heading", { name: "Jak dojechać" }),
+  ).toBeVisible();
 });
-test("page editor supports dragging ordered references", async ({ page }) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
+test("new typed sections appear in preview", async ({ page }) => {
+  await content(page);
+  await page.getByRole("button", { name: "Dodaj sekcję", exact: true }).click();
   await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .getByRole("dialog")
+    .getByRole("button", { name: "Tekst", exact: true })
     .click();
-  await page.getByRole("tab", { name: "Strony", exact: true }).click();
-  await page.getByRole("button", { name: "Dodaj stronę" }).click();
-  await page.getByRole("button", { name: /Nowa strona/ }).click();
-  const handle = page
-    .getByRole("button", { name: "Przeciągnij Ceremonia" })
-    .first();
-  await handle.focus();
-  await handle.press("Space");
-  await expect(page.locator("[data-ui=reference-drag-ghost]")).toBeVisible();
-  await handle.press("Escape");
-  await expect(page.locator("[data-ui=reference-drag-ghost]")).toBeHidden();
-  await page.getByRole("button", { name: "Ukryj: Ceremonia" }).first().click();
-  await expect(page.locator("[data-ui=reference-row][data-visible=false]")).toHaveCount(1);
+  await page.getByLabel("Tytuł sekcji", { exact: true }).fill("Nasza historia");
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Nasza historia" }),
+  ).toBeVisible();
+});
+test("variants share content but keep independent section visibility", async ({
+  page,
+}) => {
+  await content(page);
+  await page.getByRole("button", { name: "Warianty", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog
+    .getByRole("button", { name: "Dodaj wariant na podstawie tego" })
+    .click();
+  await dialog.getByLabel("Nazwa wariantu", { exact: true }).fill("Rodzina");
+  await dialog.getByRole("button", { name: "Gotowe", exact: true }).click();
+  await page
+    .getByTestId("section-party")
+    .getByRole("button", { name: "Ukryj sekcję" })
+    .click();
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Przyjęcie", exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Wariant zaproszenia" }).click();
+  await page.getByRole("option", { name: "Główna", exact: true }).click();
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Przyjęcie", exact: true }),
+  ).toBeVisible();
+  expect(
+    await page.getByRole("combobox", { name: "Wariant zaproszenia" }).count(),
+  ).toBe(1);
+});
+test("program edits events and places without leaving the section", async ({
+  page,
+}) => {
+  await content(page);
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
+  await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Powitanie");
+  await page.getByLabel("Nazwa miejsca", { exact: true }).fill("Ogród");
+  await expect(
+    page.frameLocator("iframe").getByText("Powitanie", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.frameLocator("iframe").getByText("Ogród", { exact: true }).first(),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Dodaj nowy element" }).click();
+  await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Toast");
+  await expect(
+    page.frameLocator("iframe").getByText("Toast", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
+});
+test("preview selection opens the corresponding section editor", async ({
+  page,
+}) => {
+  await content(page);
+  await page
+    .frameLocator("iframe")
+    .locator('[data-kind="contact"]')
+    .getByRole("button", { name: /Edytuj/ })
+    .click();
+  await page
+    .getByRole("button", { name: "Kontakt do organizatorów", exact: true })
+    .click();
+  await page.getByLabel("Imię / nazwa", { exact: true }).fill("Organizator");
+  await expect(
+    page.frameLocator("iframe").getByText("Organizator", { exact: true }),
+  ).toBeVisible();
 });
 test("editor opens the current invitation in a full-screen preview", async ({
   page,
@@ -238,6 +251,9 @@ test("editor opens the current invitation in a full-screen preview", async ({
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await page.getByRole("button", { name: "Powiększ podgląd" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
@@ -248,8 +264,9 @@ test("editor opens the current invitation in a full-screen preview", async ({
   ).toBeVisible();
   await dialog.getByRole("button", { name: "Tablet", exact: true }).click();
   await expect(dialog.locator("iframe")).toHaveCSS("width", "768px");
-  await dialog.getByRole("combobox", { name: "Podgląd wariantu" }).click();
-  await page.getByRole("option", { name: "Główna", exact: true }).click();
+  await expect(
+    dialog.getByRole("combobox", { name: "Podgląd wariantu" }),
+  ).toHaveCount(0);
   await dialog.getByRole("button", { name: "Zamknij podgląd" }).click();
   await expect(dialog).toBeHidden();
 });

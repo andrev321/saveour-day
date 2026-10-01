@@ -1,5 +1,7 @@
 # Konfigurator: Focus × Paper
 
+Aktualna struktura panelu: Treść, Wygląd, Zdjęcia, Goście; osobno Ustawienia i Historia. Model danych i kontekstową edycję opisuje [Edytor treści](EDYTOR-TRESCI.md).
+
 Konfigurator używa układu Focus oraz ciepłej palety Paper: kremowe tło, jasny formularz, szałwiowe zaznaczenia i leśna zieleń. Ikony panelu i formularzy pochodzą z Phosphor (Duotone). Wygląd panelu nie zmienia palety samego zaproszenia.
 
 ## Układ adaptacyjny
@@ -19,11 +21,11 @@ Ustawienia widoku pod boczną nawigacją pozwalają wybrać gęstość Wygodna /
 
 ## Stan i dostępność
 
-### Biblioteka zdjęć
+### Biblioteka zdjęć i kadry
 
-Zakładka Zdjęcia pokazuje miniatury wszystkich plików zapisanych w realizacji, oznaczenia zdjęcia głównego i mobilnego oraz pliki pozostawione tylko w bibliotece. Kliknięcie miniatury otwiera większy podgląd. Punkt kadrowania ustawia się kliknięciem lub przeciąganiem znacznika na zdjęciu; strzałki przesuwają go klawiaturą, a Home i przycisk „Wyśrodkuj kadr” przywracają środek. Komputer i Telefon mają niezależne ustawienia. Przykładowy kadr pokazuje efekt, natomiast ostateczny kształt zależy od motywu i miejsca zdjęcia w zaproszeniu.
+Biblioteka służy do uploadu, podglądu i opisu zdjęć oraz zarządzania plikami. Kadrowanie jest częścią edycji początku zaproszenia albo galerii. To samo zdjęcie może mieć różne kadry w każdym użyciu, osobno na komputerze, tablecie i telefonie. Ramkę można przesuwać myszą lub strzałkami; Home i przycisk „Wyśrodkuj kadr” przywracają środek. Ostateczny kształt kadru zależy od motywu i urządzenia.
 
-W tym samym oknie można zmienić opis dostępności, wybrać zdjęcie główne albo mobilne i dodać zapisany plik do zaproszenia. „Usuń z zaproszenia” usuwa odwołania w nagłówku i galeriach, pozostawiając plik w bibliotece. Zmiany wymagają zapisania szkicu i publikacji. Limit zaproszenia wynosi 30 zdjęć; kolejne uploady mogą pozostać w bibliotece.
+„Usuń z zaproszenia” usuwa odwołania w początku i galeriach, pozostawiając plik w bibliotece. Zmiany wymagają zapisania szkicu i publikacji. Limit zaproszenia wynosi 30 zdjęć; kolejne uploady mogą pozostać w bibliotece.
 
 „Usuń plik z biblioteki” trwale usuwa upload i jego rozmiary po potwierdzeniu. Aby usunąć zdjęcie używane w bieżącej konfiguracji, najpierw wybierz „Usuń z zaproszenia” i zapisz szkic, a następnie otwórz je ponownie w bibliotece. Baza blokuje usuwanie plików obecnych w zapisanym szkicu, dowolnej publikacji lub kopii szkicu. Dzięki temu stare publikacje i przywracanie historii pozostają kompletne.
 
@@ -38,7 +40,7 @@ Po uploadzie edytor pobiera podpisane adresy Storage przed przekazaniem zdjęcia
 - Przełączanie Edycja / Podgląd nie demontuje formularza i zachowuje edytowane wartości, rozwinięte sekcje i pozycję przewijania.
 - Subtelne animacje paneli i nawigacji trwają 160–180 ms i są wyłączane przez `prefers-reduced-motion`.
 - Uchwyt przeciągania sekcji jest osobną kontrolką obok przycisku rozwijania sekcji.
-- Goście i historia publikacji są osobnymi zakładkami. Ikona zmiany szablonu w topbarze otwiera wspólny popup tworzenia/resetowania z ostrzeżeniem i jawnym potwierdzeniem. Kopie szkicu pozostają w Ustawieniach.
+- Goście są osobnym obszarem; historia znajduje się w narzędziach nawigacji. Ikona zmiany szablonu obok wyboru wariantu otwiera wspólny popup tworzenia/resetowania z ostrzeżeniem i jawnym potwierdzeniem. Kopie szkicu pozostają w Ustawieniach.
 
 ## Implementacja i wdrożenie
 
@@ -48,6 +50,7 @@ Własne style aplikacji są implementowane w styled-components, bez ręcznych `c
 
 Obie aplikacje używają `StyledRegistry` z `@invitations/ui/registry`, zbierającego style osobno dla każdego renderowania serwerowego, oraz kompilatora Next.js `styledComponents`. Style trafiają do HTML przed hydratacją. Testy korzystają z ról i stabilnych atrybutów `data-ui`, niezależnych od wygenerowanych klas. Nie należy stylować po `data-ui` ani uzależniać testów od hashów klas.
 
-Zmiana wymaga zwykłego wdrożenia aplikacji admin z aktualnym lockfile. Nie wymaga migracji bazy, dodatkowych zmiennych środowiskowych ani ręcznej konfiguracji usług.
+Przebudowa wymaga wdrożenia obu aplikacji oraz jednorazowej migracji `contextual_editor_v3`. Nie wymaga nowych zmiennych środowiskowych.
 
 Testy przeglądarkowe znajdują się w `tests/e2e/workspace.spec.ts`; obejmują szerokości 320–2560 px, edycję i zapis, menu mobilne, skalowanie desktopowego iframe, obsługę separatora klawiaturą, zapamiętywanie/reset preferencji oraz ograniczenie animacji.
+

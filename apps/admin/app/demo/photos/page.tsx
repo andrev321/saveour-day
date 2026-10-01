@@ -16,12 +16,13 @@ export default function PhotoDemo() {
   const saved = { ...photo, id: "saved", alt: "Zdjęcie z biblioteki" };
   config.media = [photo];
   config.hero.mediaId = photo.id;
+  config.variants[0].sections.push({sectionId:"gallery",visible:true});
   config.sections.push({
     id: "gallery",
     type: "gallery",
     title: "Galeria",
     body: "",
-    enabled: true,
+    crops: {},
     mediaIds: [photo.id],
   });
   return (
@@ -40,3 +41,4 @@ export default function PhotoDemo() {
     />
   );
 }
+

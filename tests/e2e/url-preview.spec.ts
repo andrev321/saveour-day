@@ -11,10 +11,12 @@ test("editing an event URL keeps normal and expanded previews usable", async ({
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(`${admin}/demo`);
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
   await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
-  const url = page
-    .getByLabel("Ceremonia", { exact: true })
-    .getByLabel("Link wydarzenia", { exact: true });
+  const url = page.getByLabel("Link wydarzenia (opcjonalny)", { exact: true });
   await url.fill("f");
   await expect(
     page.getByRole("button", { name: "Zapisz szkic", exact: true }),

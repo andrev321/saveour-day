@@ -9,6 +9,12 @@ export default defineConfig({
   use: {
     baseURL: siteUrl,
     headless: true,
+    launchOptions: process.env.E2E_CHROMIUM_PATH
+      ? {
+          executablePath: process.env.E2E_CHROMIUM_PATH,
+          args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
+        }
+      : undefined,
     screenshot: "only-on-failure",
   },
   webServer: [

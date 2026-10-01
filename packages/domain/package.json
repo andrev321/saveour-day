@@ -9,7 +9,8 @@
     "./legacy": "./src/legacy.ts",
     "./guest": "./src/guest.ts",
     "./access-code": "./src/access-code.ts",
-    "./templates": "./src/templates.ts"
+    "./templates": "./src/templates.ts",
+    "./editor": "./src/editor.ts"
   },
   "dependencies": {
     "zod": "^4.0.0"

@@ -200,7 +200,12 @@ export function createTemplate(
           title: l.invite,
           body: example?.body ?? l.example,
         },
-        { id: nextId(), type: "timeline", title: l.program },
+        {
+          id: nextId(),
+          type: "timeline",
+          eventIds: events.map((e) => e.id),
+          title: l.program,
+        },
         ...venues.map((venue) => ({
           id: nextId(),
           type: "venue",
@@ -210,12 +215,13 @@ export function createTemplate(
         {
           id: nextId(),
           type: "contact",
+          contactIds: [],
           title: l.contact,
           body: l.contactBody,
         },
       ];
   return parseSiteConfig({
-    schemaVersion: 2,
+    schemaVersion: 3,
     id,
     locale,
     timeZone: "Europe/Warsaw",
@@ -257,7 +263,9 @@ export function createTemplate(
         slug: "main",
         label: l.main,
         eventIds: events.map((e) => e.id),
-        sectionIds: sections.map((s) => s.id),
+        sections: sections
+          .map((s) => s.id)
+          .map((sectionId) => ({ sectionId, visible: true })),
       },
     ],
     defaultVariant: mainId,

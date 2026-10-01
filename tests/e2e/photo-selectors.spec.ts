@@ -29,7 +29,7 @@ for (const width of [390, 1440]) {
     await tab("Zdjęcia");
     await page
       .getByRole("button", {
-        name: "Podgląd i kadrowanie: Zdjęcie testowe",
+        name: "Podgląd i opis: Zdjęcie testowe",
         exact: true,
       })
       .click();
@@ -41,13 +41,20 @@ for (const width of [390, 1440]) {
       .getByRole("dialog")
       .getByRole("button", { name: "Gotowe", exact: true })
       .click();
-    await tab("Strona");
-    for (const label of [
-      "Zdjęcie główne",
-      "Zdjęcie mobilne",
-      "Zdjęcie na tablecie",
-    ]) {
-      const select = page.getByRole("combobox", { name: label, exact: true });
+    await tab("Treść");
+    await page
+      .getByRole("button", { name: "Początek zaproszenia", exact: true })
+      .click();
+    for (const device of ["Komputer", "Telefon", "Tablet"]) {
+      await page
+        .getByRole("tabpanel")
+        .filter({ visible: true })
+        .getByRole("button", { name: device, exact: true })
+        .click();
+      const select = page.getByRole("combobox", {
+        name: "Zdjęcie dla wybranego urządzenia",
+        exact: true,
+      });
       await select.click();
       const option = page.getByRole("option", { name: "photo", exact: true });
       await expect(
@@ -57,12 +64,7 @@ for (const width of [390, 1440]) {
         "naturalWidth",
         1200,
       );
-      if ((await select.inputValue()) === "photo") {
-        await select.press("Escape");
-      } else {
-        await select.press("ArrowDown");
-        await select.press("Enter");
-      }
+      await option.click();
       await expect(select).toHaveValue("photo");
     }
     await page.screenshot({
@@ -74,29 +76,24 @@ for (const width of [390, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await tab("Sekcje");
-    await page.getByRole("button", { name: "Galeria", exact: false }).click();
-    const gallery = page.getByTestId("section-gallery");
+    await page.getByRole("button", { name: "Wszystkie sekcje" }).click();
+    await page
+      .getByTestId("section-gallery")
+      .getByRole("button", { name: /Galeria/ })
+      .click();
     await expect(
-      gallery
+      page
         .locator('[data-ui="reference-row"]')
         .filter({ hasText: "photo" })
         .locator('[data-ui="photo-reference-thumbnail"]'),
     ).toBeVisible();
-    await gallery
-      .getByRole("button", { name: "Ukryj: photo", exact: true })
+    await page
+      .locator('[data-ui="reference-row"]')
+      .filter({ hasText: "photo" })
+      .getByRole("button", { name: "Usuń z sekcji" })
       .click();
     await expect(
-      gallery.getByRole("button", { name: "Pokaż: photo", exact: true }),
-    ).toBeVisible();
-    await gallery
-      .getByRole("button", { name: "Pokaż: photo", exact: true })
-      .click();
-    await expect(
-      gallery.getByRole("button", { name: "Ukryj: photo", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("alert").filter({ hasText: "hiddenSectionIds" }),
+      page.frameLocator("iframe").locator('[data-kind="gallery"] img'),
     ).toHaveCount(0);
   });
 }

@@ -32,6 +32,7 @@ export default function Preview() {
   }, []);
   return state ? (
     <Invitation
+      onEditSection={(id)=>window.parent.postMessage({type:"preview-select-section",id},location.origin)}
       config={state.config}
       variantId={state.variant}
       resolveMedia={(src) => state.urls[src] || src}
@@ -40,3 +41,4 @@ export default function Preview() {
     <p style={{ padding: 24 }}>Oczekiwanie na prawidłową konfigurację…</p>
   );
 }
+

@@ -61,7 +61,7 @@ test("creation handler builds selected templates server-side and rejects invalid
     };
     assert.equal(content.identity.displayName, "Sophie");
     assert.equal(content.locale, "en-GB");
-    assert.equal(content.schemaVersion, 2);
+    assert.equal(content.schemaVersion, 3);
     assert.equal(
       (await post({ name: "Empty", templateId: "blank", locale: "pl-PL" }))
         .status,

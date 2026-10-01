@@ -93,7 +93,11 @@ export function importLegacy(
     },
   ];
   config.sections = [
-    config.sections[0]!,
+    {
+      ...config.sections[0]!,
+      type: "timeline",
+      eventIds: config.events.map((e) => e.id),
+    },
     ...config.venues.map((place) => ({
       id: place.id,
       type: "venue" as const,
@@ -102,11 +106,13 @@ export function importLegacy(
           ? reception.sectionTitle || "Poczęstunek"
           : place.name,
       body: "",
-      enabled: true,
       venueId: place.id,
-      mediaIds: [],
     })),
-    config.sections[4]!,
+    {
+      ...config.sections[4]!,
+      type: "contact",
+      contactIds: config.contacts.map((c) => c.id),
+    },
   ];
   config.variants = [
     {
@@ -115,9 +121,9 @@ export function importLegacy(
       label: "Ślub",
       dateLabel: "",
       eventIds: ["ceremony", "reception"],
-      sectionIds: ["timeline", "ceremony", "parking", "reception", "contact"],
-      hiddenEventIds: ["dinner", "grill"],
-      hiddenSectionIds: ["dinner", "grill"],
+      sections: ["timeline", "ceremony", "parking", "reception", "contact"].map(
+        (sectionId) => ({ sectionId, visible: true }),
+      ),
     },
     {
       id: "obiad",
@@ -125,9 +131,9 @@ export function importLegacy(
       label: "Obiad",
       dateLabel: "",
       eventIds: ["ceremony", "reception", "dinner"],
-      sectionIds: ["timeline", "ceremony", "parking", "dinner", "contact"],
-      hiddenEventIds: ["grill"],
-      hiddenSectionIds: ["reception", "grill"],
+      sections: ["timeline", "ceremony", "parking", "dinner", "contact"].map(
+        (sectionId) => ({ sectionId, visible: true }),
+      ),
     },
     {
       id: "grill",
@@ -135,9 +141,9 @@ export function importLegacy(
       label: "Grill",
       dateLabel: grill.heroDate || "",
       eventIds: ["ceremony", "reception", "grill"],
-      sectionIds: ["timeline", "ceremony", "parking", "grill", "contact"],
-      hiddenEventIds: ["dinner"],
-      hiddenSectionIds: ["reception", "dinner"],
+      sections: ["timeline", "ceremony", "parking", "grill", "contact"].map(
+        (sectionId) => ({ sectionId, visible: true }),
+      ),
     },
   ];
   config.defaultVariant = "slub";

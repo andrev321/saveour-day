@@ -30,6 +30,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       "202609200001_platform.sql",
       "202609210001_guest_platform.sql",
       "202609230001_invitation_templates.sql",
+      "20260930204955_contextual_editor_v3.sql",
     ]) {
       const sql = await fs.readFile(`supabase/migrations/${file}`, "utf8");
       await db.exec(
@@ -45,7 +46,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
     config.id = sid;
     const variant = { ...config.variants[0], id: "limited", slug: "limited" };
     config.variants.push(variant);
-    variant.hiddenEventIds = config.events.slice(1).map((e) => e.id);
+    variant.eventIds = config.events.slice(0, 1).map((e) => e.id);
     await db.query<Record<string, unknown>>(
       "select public.create_owned_site($1,'First','first',$2,$3)",
       [actor, sid, JSON.stringify(config)],

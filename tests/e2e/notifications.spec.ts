@@ -7,6 +7,9 @@ test("notices can be dismissed without bypassing validation and return for new e
 }) => {
   await page.goto(`${admin}/demo`);
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   const close = (text: string) =>
     page
       .getByRole("alert")
@@ -24,8 +27,13 @@ test("notices can be dismissed without bypassing validation and return for new e
   ).toBeDisabled();
   await heading.fill("Spotkanie");
 
+  await page.getByRole("button", { name: "Wszystkie sekcje" }).click();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
   await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
-  const url = page.getByLabel("Link wydarzenia", { exact: true });
+  const url = page.getByLabel("Link wydarzenia (opcjonalny)", { exact: true });
   await url.fill("f");
   await expect(
     page.getByText("Uzupełnij główny napis", { exact: false }),

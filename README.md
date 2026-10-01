@@ -6,6 +6,8 @@ Pliki można odtworzyć poleceniem `npm run build:brand`.
 
 Platforma do tworzenia i zarządzania zaproszeniami na różne wydarzenia. Klienci wybierają szablon startowy (np. ślub, urodziny, impreza firmowa) albo pusty szkic, a następnie tworzą zaproszenia dla osób lub rodzin. Szablon można później zmienić z potwierdzeniem resetu; poprzedni zapisany szkic ma kopię do przywrócenia. Publikacja zatwierdza wersję w bazie bez osobnego builda. Dostęp jest publiczny, za kodem lub przez e-mail OTP; panel zbiera RSVP za poszczególnych gości i wydarzenia.
 
+Opis panelu i nowej struktury danych: [Edytor treści](docs/EDYTOR-TRESCI.md).
+
 ## Aplikacje
 
 - `apps/site` — aplikacja Next.js obsługująca wszystkie realizacje, autoryzację gości, chronione media i RSVP.
@@ -63,7 +65,7 @@ npm.cmd run check:production-env -- --site apps/site/.env.production.local
 
 ## Wdrożenie
 
-Wymagane są wszystkie trzy migracje Supabase oraz własny SMTP. Zmiany w repozytorium i lokalne testy nie oznaczają wykonania zdalnych migracji ani wdrożenia produkcyjnego.
+Wymagane są wszystkie migracje Supabase z repozytorium oraz własny SMTP. Zmiany w repozytorium i lokalne testy nie oznaczają wykonania zdalnych migracji ani wdrożenia produkcyjnego.
 
 ## Dokumentacja
 
@@ -77,3 +79,4 @@ Wymagane są wszystkie trzy migracje Supabase oraz własny SMTP. Zmiany w repozy
 - [Decyzje techniczne](docs/DECYZJE-TECHNICZNE.md) — przyjęte rozwiązania, ich uzasadnienia i konsekwencje.
 - [Wdrożenie platformy](docs/WDROZENIE-PLATFORMY.md) — konfiguracja usług, migracja dawnych realizacji i odbiór stagingu.
 - [Self-review publikacji](docs/SELF-REVIEW-PUBLIKACJI.md) — datowany zapis wykonanej kontroli i jej ograniczeń.
+

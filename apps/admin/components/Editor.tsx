@@ -38,7 +38,7 @@ import { useLocalStorage } from "@mantine/hooks";
 import { usePanelI18n } from "../lib/i18n";
 import { templateUi } from "../lib/template-i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
-import { CollectionFields, Fields } from "./ConfigFields";
+import { Fields } from "./ConfigFields";
 import { MediaUrlsContext } from "./PhotoReference";
 import { apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
@@ -47,6 +47,9 @@ import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewToolbar } from "./PreviewToolbar";
+import { ContentEditor } from "./ContentEditor";
+import { VariantManager } from "./VariantManager";
+import { deviceWidths } from "./DeviceSelector";
 import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
@@ -92,6 +95,14 @@ export function Editor({
     [busy, setBusy] = useState(false),
     [variant, setVariant] = useState(config.defaultVariant),
     [previewOpen, setPreviewOpen] = useState(false);
+  const [editRequest, setEditRequest] = useState(0);
+  const [activePanel, setActivePanel] = useState<string | null>("content");
+  const [selectedSection, setSelectedSection] = useState<string | null>(null);
+  const currentVariant = config.variants.some((v) => v.id === variant)
+    ? variant
+    : config.defaultVariant;
+  const selectionRef = useRef({ config, currentVariant });
+  selectionRef.current = { config, currentVariant };
   const [confirm, setConfirm] = useState<"publish" | string | null>(null);
   const frame = useRef<HTMLIFrameElement>(null),
     expandedFrame = useRef<HTMLIFrameElement>(null),
@@ -99,12 +110,34 @@ export function Editor({
   const dirty = JSON.stringify(config) !== saved;
   const validation = siteConfigSchema.safeParse(config);
   const readyToPublish = publishedConfigSchema.safeParse(config).success;
-  const preview = useRef({ config, variant, urls: data.urls });
+  const preview = useRef({ config, variant: currentVariant, urls: data.urls });
   // Keep the last valid draft for both existing and newly opened preview frames.
   if (validation.success)
-    preview.current = { config, variant, urls: data.urls };
+    preview.current = { config, variant: currentVariant, urls: data.urls };
   useEffect(() => {
     const handle = (e: MessageEvent) => {
+      if (
+        e.origin === location.origin &&
+        [
+          frame.current?.contentWindow,
+          expandedFrame.current?.contentWindow,
+        ].includes(e.source as Window) &&
+        e.data?.type === "preview-select-section"
+      ) {
+        const { config, currentVariant } = selectionRef.current;
+        if (
+          e.data.id === "hero" ||
+          config.variants
+            .find((v) => v.id === currentVariant)
+            ?.sections.some((p) => p.sectionId === e.data.id)
+        ) {
+          setSelectedSection(e.data.id);
+          setActivePanel("content");
+          setPreviewOpen(false);
+          setEditRequest((n) => n + 1);
+        }
+      }
+
       if (
         e.origin === location.origin &&
         [
@@ -125,10 +158,15 @@ export function Editor({
     if (!validation.success) return;
     for (const current of [frame.current, expandedFrame.current])
       current?.contentWindow?.postMessage(
-        { type: "preview-config", config, variant, urls: data.urls },
+        {
+          type: "preview-config",
+          config,
+          variant: currentVariant,
+          urls: data.urls,
+        },
         location.origin,
       );
-  }, [config, variant, data.urls, validation.success]);
+  }, [config, currentVariant, data.urls, validation.success]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -316,28 +354,39 @@ export function Editor({
       onWidth={setWidth}
       fit={fit}
       onFit={setFit}
-      variant={variant}
-      onVariant={setVariant}
-      variants={config.variants}
       expanded={previewOpen}
       onExpand={() => setPreviewOpen((value) => !value)}
     />
   );
   const workspace = (
     <EditorWorkspace
+      editRequest={editRequest}
+      active={activePanel}
+      onActive={setActivePanel}
       title={<Title order={1}>{data.site.name}</Title>}
       headerTools={
-        <Tooltip label={tt.change}>
-          <ActionIcon
-            variant="subtle"
-            size="lg"
-            aria-label={tt.change}
-            disabled={busy}
-            onClick={openTemplateDialog}
-          >
-            <SquaresFourIcon size={22} weight="duotone" />
-          </ActionIcon>
-        </Tooltip>
+        <Group wrap="nowrap" mt="md">
+          <VariantManager
+            config={config}
+            onChange={setConfig}
+            active={currentVariant}
+            onSelect={(id) => {
+              setVariant(id);
+              setSelectedSection(null);
+            }}
+          />
+          <Tooltip label={tt.change}>
+            <ActionIcon
+              variant="subtle"
+              size="lg"
+              aria-label={tt.change}
+              disabled={busy}
+              onClick={openTemplateDialog}
+            >
+              <SquaresFourIcon size={22} weight="duotone" />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
       }
       status={
         <Badge color={dirty ? "orange" : "brand"}>
@@ -424,7 +473,7 @@ export function Editor({
             >
               {validation.error.issues.slice(0, 8).map((i, index) => (
                 <Text size="sm" key={index}>
-                  {i.path.join(".")}: {i.message}
+                  {i.message}
                 </Text>
               ))}
             </DismissibleAlert>
@@ -543,78 +592,32 @@ export function Editor({
         </>
       }
     >
-      <Tabs.Panel value="page" pt="lg">
+      <Tabs.Panel value="content" pt="lg">
+        <ContentEditor
+          key={`${currentVariant}-${selectedSection || "list"}`}
+          config={config}
+          onChange={setConfig}
+          variantId={currentVariant}
+          selected={selectedSection}
+          onSelect={setSelectedSection}
+          device={
+            Number(width) < 768
+              ? "mobile"
+              : Number(width) < 1024
+                ? "tablet"
+                : "desktop"
+          }
+          onDevice={(device) => setWidth(deviceWidths[device])}
+        />
+      </Tabs.Panel>
+      <Tabs.Panel value="appearance" pt="lg">
         <Stack>
-          <Title order={3}>{t("hero")}</Title>
+          <ThemePicker config={config} onChange={setConfig} />
+          <Title order={3}>{t("colors")}</Title>
           <Fields
             config={config}
-            value={{
-              ...config.hero,
-              mediaId: config.hero.mediaId || "",
-              mobileMediaId: config.hero.mobileMediaId || "",
-              tabletMediaId: config.hero.tabletMediaId || "",
-            }}
-            onChange={(v) => {
-              if (!v.mediaId) delete v.mediaId;
-              if (!v.mobileMediaId) delete v.mobileMediaId;
-              if (!v.tabletMediaId) delete v.tabletMediaId;
-              replace("hero", v);
-            }}
-          />
-          <Title order={3}>{t("identity")}</Title>
-          <Fields
-            config={config}
-            value={config.identity}
-            onChange={(v) => replace("identity", v)}
-          />
-          <Title order={3}>{t("venues")}</Title>
-          <CollectionFields
-            name="venues"
-            config={config}
-            onChange={setConfig}
-          />
-          <Title order={3}>{t("events")}</Title>
-          <CollectionFields
-            name="events"
-            config={config}
-            onChange={setConfig}
-          />
-          <Title order={3}>{t("contacts")}</Title>
-          <CollectionFields
-            name="contacts"
-            config={config}
-            onChange={setConfig}
-          />
-        </Stack>
-      </Tabs.Panel>
-      <Tabs.Panel value="sections" pt="lg">
-        <Stack>
-          <Title order={3}>{t("structure")}</Title>
-          <CollectionFields
-            name="sections"
-            config={config}
-            onChange={setConfig}
-          />
-        </Stack>
-      </Tabs.Panel>
-      <Tabs.Panel value="pages" pt="lg">
-        <Stack>
-          <Title order={3}>{t("pages")}</Title>
-          <CollectionFields
-            name="variants"
-            config={config}
-            onChange={setConfig}
-            onPageSelect={setVariant}
-          />
-          <Select
-            label={t("mainPage")}
-            data={config.variants.map((v) => ({
-              value: v.id,
-              label: v.label,
-            }))}
-            value={config.defaultVariant}
-            allowDeselect={false}
-            onChange={(v) => replace("defaultVariant", v)}
+            value={config.design}
+            onChange={(value) => replace("design", value)}
           />
         </Stack>
       </Tabs.Panel>
@@ -675,13 +678,6 @@ export function Editor({
       </Tabs.Panel>
       <Tabs.Panel value="settings" pt="lg">
         <Stack>
-          <ThemePicker config={config} onChange={setConfig} />
-          <Title order={3}>{t("colors")}</Title>
-          <Fields
-            config={config}
-            value={config.design}
-            onChange={(value) => replace("design", value)}
-          />
           <Title order={3}>{t("sharing")}</Title>
           <Fields
             config={config}
@@ -691,8 +687,10 @@ export function Editor({
           <Title order={3}>{t("labelsFooter")}</Title>
           <Fields
             config={config}
-            value={config.copy}
-            onChange={(v) => replace("copy", v)}
+            value={Object.fromEntries(
+              Object.entries(config.copy).filter(([key]) => key !== "footer"),
+            )}
+            onChange={(v) => replace("copy", { ...config.copy, ...v })}
           />
           <Accordion variant="separated">
             <Accordion.Item value="template-reset">

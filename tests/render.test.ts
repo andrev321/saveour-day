@@ -24,10 +24,9 @@ test("tablet hero photo survives guest projection and renders independent respon
       src: `/media/${id}.webp`,
       width: 1200,
       height: 800,
-      tabletFocalX: 25,
-      tabletFocalY: 75,
     }),
   );
+  config.hero.crops = { tablet: { x: 25, y: 75 } };
   config.hero.mediaId = "desktop";
   config.hero.tabletMediaId = "tablet";
   config.hero.mobileMediaId = "mobile";
@@ -90,7 +89,9 @@ test("React escapes user text and does not render excluded variant sections", ()
     slug: "limited",
     label: "Limited",
     eventIds: ["ceremony"],
-    sectionIds: ["timeline", "ceremony", "parking", "contact"],
+    sections: ["timeline", "ceremony", "parking", "contact"].map(
+      (sectionId) => ({ sectionId, visible: true }),
+    ),
   });
   const html = renderToStaticMarkup(
     createElement(Invitation, { config, variantId: "limited" }),

@@ -11,9 +11,6 @@ export function PreviewToolbar({
   onWidth,
   fit,
   onFit,
-  variant,
-  onVariant,
-  variants,
   expanded,
   onExpand,
 }: {
@@ -21,9 +18,6 @@ export function PreviewToolbar({
   onWidth: (width: string) => void;
   fit: boolean;
   onFit: (fit: boolean) => void;
-  variant: string;
-  onVariant: (variant: string) => void;
-  variants: { id: string; label: string }[];
   expanded: boolean;
   onExpand: () => void;
 }) {
@@ -41,16 +35,6 @@ export function PreviewToolbar({
               : "desktop"
         }
         onChange={(device) => onWidth(deviceWidths[device])}
-      />
-      <S.PreviewVariant
-        aria-label={t("preview")}
-        size="xs"
-        data={variants.map((v) => ({ value: v.id, label: v.label }))}
-        value={variant}
-        allowDeselect={false}
-        onChange={(v) => {
-          if (typeof v === "string") onVariant(v);
-        }}
       />
       <Tooltip label={`${ui.zoom}: ${fit ? ui.fit : ui.actual}`}>
         <S.PreviewFit
@@ -75,3 +59,4 @@ export function PreviewToolbar({
     </S.PreviewToolbar>
   );
 }
+

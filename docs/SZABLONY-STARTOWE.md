@@ -57,7 +57,7 @@ Zasady działania:
 - Przypisania obowiązują przy tworzeniu i zastępowaniu szablonu. Nie wymagamy zachowania działania ani wyglądu starych szkiców i publikacji; mogą wymagać ponownego utworzenia w nowym formacie.
 - Testy mają potwierdzać przypisania wszystkich szablonów w trzech językach, zgodność podglądu z wynikiem tworzenia oraz zachowanie treści przy zmianie samego motywu.
 
-Nowy format konfiguracji to v2 z `identity.displayName`. Starsze v1 są odczytywane przez adapter, który zachowuje istniejące ID wydarzeń i ich RSVP. Migracja `202609230001_invitation_templates.sql` konwertuje szkice, tworzy ich kopie i aktualizuje funkcje publikacji; historyczne wydania v1 pozostają niezmienione.
+Obecny format to v3: `identity.displayName`, typowane sekcje oraz jawne listy uprawnień i rozmieszczenia sekcji dla każdego wariantu. Jednorazowa migracja `contextual_editor_v3` konwertuje szkice, kopie i wydania. Aplikacja nie zawiera adapterów v1/v2. Szczegóły: [Edytor treści](EDYTOR-TRESCI.md).
 
 Demonstracja pod `/demo` panelu udostępnia przycisk „Utwórz zaproszenie”, otwierający popup. Dopiero zatwierdzenie nazwy i szablonu w popupie otwiera konfigurator. Opcjonalny przycisk „Otwórz gotowy przykład” otwiera wypełniony przykład do szybkiego przeglądu. Reset i kopie również można sprawdzić bez Supabase. Dane demonstracji znikają po odświeżeniu strony. Trwały zapis wymaga konfiguracji usług i wszystkich migracji.
 
@@ -70,3 +70,4 @@ W Ustawieniach pięć przycisków z miniaturami zmienia motyw, paletę, domyśln
 Motywy korzystają z lokalnie dostarczanych fontów: Playfair Display + Inter, Cormorant Garamond + Inter, DM Sans, Bodoni Moda + Inter oraz Fraunces + Nunito Sans. Nie pobierają fontów z zewnętrznej usługi w przeglądarce. Bez zdjęcia hero jest kompozycją typograficzną. Ramki zdjęć i galeria mają warianty zależne od motywu.
 
 Demonstracja `/demo/glowna?theme=classic` obsługuje każdy z pięciu identyfikatorów motywu. Testy obejmują przypisania w PL/EN/DE, widok mobilny i desktop, brak poziomego przepełnienia, renderowanie bez JavaScript, zmianę motywu i wyłączenie dekoracji, a także zdjęcia i galerie w obu układach hero.
+

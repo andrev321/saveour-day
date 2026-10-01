@@ -16,8 +16,8 @@ test("two independent configurations use the same schema", () => {
     second = createDemo("demo-botanical");
   assert.notDeepEqual(first.identity, second.identity);
   assert.notEqual(first.theme, second.theme);
-  assert.equal(parseSiteConfig(first).schemaVersion, 2);
-  assert.equal(parseSiteConfig(second).schemaVersion, 2);
+  assert.equal(parseSiteConfig(first).schemaVersion, 3);
+  assert.equal(parseSiteConfig(second).schemaVersion, 3);
 });
 test("provides localized initial templates and detects a customized template", () => {
   const polish = createDemo("client", "pl-PL");
@@ -114,9 +114,19 @@ test("incomplete URLs produce field errors instead of throwing while editing", (
 
 test("reject cross references, duplicate IDs and duplicate route slugs", () => {
   const config = createDemo();
-  config.sections[1].venueId = "missing";
+  (
+    config.sections[1] as Extract<
+      (typeof config.sections)[number],
+      { type: "venue" }
+    >
+  ).venueId = "missing";
   assert.throws(() => parseSiteConfig(config), /venueId/);
-  config.sections[1].venueId = "ceremony";
+  (
+    config.sections[1] as Extract<
+      (typeof config.sections)[number],
+      { type: "venue" }
+    >
+  ).venueId = "ceremony";
   config.variants.push({
     ...config.variants[0],
     id: "additional",
@@ -139,25 +149,21 @@ test("reject invalid date and time, normalize telephone", () => {
   config.contacts[0].phone = "+48 (123) 456-789";
   assert.equal(parseSiteConfig(config).contacts[0].phone, "+48123456789");
 });
-test("normalizes the main page and validates hidden page elements", () => {
+test("every variant has independent explicit references", () => {
   const config = createDemo();
-  config.variants[0].hiddenEventIds = ["ceremony"];
+  config.variants[0].eventIds = ["party"];
   config.variants.push({
-    ...config.variants[0],
+    ...structuredClone(config.variants[0]),
     id: "limited",
     slug: "limited",
-    eventIds: ["party", "ceremony"],
-    hiddenEventIds: ["ceremony"],
+    eventIds: ["ceremony"],
   });
-
   const parsed = parseSiteConfig(config);
-  assert.deepEqual(parsed.variants[0].hiddenEventIds, []);
-  assert.deepEqual(parsed.variants[1].eventIds, ["party", "ceremony"]);
-  assert.deepEqual(parsed.variants[1].hiddenEventIds, ["ceremony"]);
-
-  config.variants[1].hiddenEventIds = ["missing"];
-  assert.throws(() => parseSiteConfig(config), /hiddenEventIds/);
-  config.variants[1].hiddenEventIds = ["ceremony", "ceremony"];
+  assert.deepEqual(parsed.variants[0].eventIds, ["party"]);
+  assert.deepEqual(parsed.variants[1].eventIds, ["ceremony"]);
+  config.variants[1].eventIds = ["missing"];
+  assert.throws(() => parseSiteConfig(config), /eventIds/);
+  config.variants[1].eventIds = ["ceremony", "ceremony"];
   assert.throws(() => parseSiteConfig(config), /Powt/);
 });
 test("only allow trusted Google embeds; reject paths escaping media directory", () => {
@@ -173,12 +179,7 @@ test("only allow trusted Google embeds; reject paths escaping media directory", 
       width: 10,
       height: 10,
       alt: "",
-      focalX: 50,
-      focalY: 50,
-      tabletFocalX: 50,
-      tabletFocalY: 50,
-      mobileFocalX: 50,
-      mobileFocalY: 50,
+
       variants: [],
     },
   ];
@@ -189,7 +190,10 @@ test("optional maps and descriptions do not disable sections", () => {
   config.venues[1].mapUrl = "";
   config.venues[1].description = "";
   const parsed = parseSiteConfig(config);
-  assert.equal(parsed.sections.find((s) => s.id === "party")!.enabled, true);
+  assert.equal(
+    parsed.variants[0].sections.find((p) => p.sectionId === "party")!.visible,
+    true,
+  );
 });
 test("legacy import rejects null and numeric text fields without logging values", () => {
   for (const value of ["null", '{"venueName":123}', "{broken"])
