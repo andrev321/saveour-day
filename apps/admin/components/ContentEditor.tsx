@@ -26,7 +26,7 @@ import {
 import {
   ArrowUpIcon,
   ArrowDownIcon,
-  DotsSixVerticalIcon,
+  DotsSixIcon,
   EyeIcon,
   EyeSlashIcon,
   TrashIcon,
@@ -462,7 +462,8 @@ function SectionRow({
       <Group wrap="nowrap" gap="xs">
         <ActionIcon
           ref={setActivatorNodeRef}
-          variant="subtle"
+          variant="transparent"
+          color="dimmed"
           size={44}
           style={{
             touchAction: "none",
@@ -481,15 +482,16 @@ function SectionRow({
           {...attributes}
           {...listeners}
         >
-          <DotsSixVerticalIcon />
+          <DotsSixIcon size={20} weight="bold" />
         </ActionIcon>
         <Button
           variant="subtle"
-          style={{ flex: 1, minWidth: 0, height: "auto" }}
+          px={0}
+          style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           onClick={onEdit}
           aria-expanded={expanded}
           aria-controls={`content-${section.id}`}
-          styles={{ label: { width: "100%", minWidth: 0 } }}
+          styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
         >
           <Group gap="xs" wrap="nowrap" w="100%">
             <Stack gap={0} align="start" style={{ flex: 1, minWidth: 0 }}>
@@ -1144,21 +1146,40 @@ function FixedSection({
 }) {
   return (
     <Card withBorder padding="sm">
-      <Button
-        fullWidth
-        variant="subtle"
-        justify="space-between"
-        onClick={onToggle}
-        aria-expanded={expanded}
-        aria-controls={`content-${id}`}
-        rightSection={
-          <CaretDownIcon
-            style={{ transform: expanded ? "rotate(180deg)" : undefined }}
-          />
-        }
-      >
-        {label}
-      </Button>
+      <Group wrap="nowrap" gap="xs">
+        <span aria-hidden="true" style={{ width: 44, flexShrink: 0 }} />
+        <Button
+          variant="subtle"
+          px={0}
+          style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
+          styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
+          onClick={onToggle}
+          aria-expanded={expanded}
+          aria-controls={`content-${id}`}
+        >
+          <Group gap="xs" wrap="nowrap" w="100%">
+            <Text
+              size="sm"
+              fw={600}
+              style={{
+                flex: 1,
+                whiteSpace: "normal",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {label}
+            </Text>
+            <CaretDownIcon
+              size={16}
+              style={{
+                flexShrink: 0,
+                transform: expanded ? "rotate(180deg)" : undefined,
+              }}
+            />
+          </Group>
+        </Button>
+        <span aria-hidden="true" style={{ width: 28, flexShrink: 0 }} />
+      </Group>
       <div id={`content-${id}`} hidden={!expanded}>
         {expanded && children}
       </div>
