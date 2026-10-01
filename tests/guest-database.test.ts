@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { createDemo } from "../packages/domain/src/demo.ts";
+import { schemaSql } from "./helpers/media-database.ts";
 
 test("publication, RLS, guest sessions and RSVP enforce tenant and invitation boundaries", async () => {
   const db = new PGlite();
@@ -13,28 +14,18 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
   const iid = "30000000-0000-4000-8000-000000000001",
     guest = "40000000-0000-4000-8000-000000000001";
   try {
-    await db.exec(`
-      create role anon; create role authenticated; create role service_role bypassrls;
-      alter default privileges in schema public grant all on tables to anon,authenticated;
-      create schema auth; create table auth.users(id uuid primary key,email_confirmed_at timestamptz);
-      create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
-      create function auth.role() returns text language sql stable as $$ select nullif(current_setting('request.jwt.claim.role',true),'') $$;
-      grant usage on schema auth to authenticated,service_role;
-      create schema storage;
-      create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
-      create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
-      alter table storage.objects enable row level security;
-      create function storage.foldername(name text) returns text[] language sql immutable as $$ select string_to_array(name,'/') $$;
-    `);
-    for (const file of [
-      "202609200001_platform.sql",
-      "202609210001_guest_platform.sql",
-      "202609230001_invitation_templates.sql",
-      "20260930204955_contextual_editor_v3.sql",
-    ]) {
-      const sql = await fs.readFile(`supabase/migrations/${file}`, "utf8");
+    await db.exec(schemaSql);
+    await db.exec(
+      "alter default privileges in schema public grant all on tables to anon,authenticated",
+    );
+    for (const file of (await fs.readdir("supabase/migrations"))
+      .filter((f) => f.endsWith(".sql"))
+      .sort()) {
       await db.exec(
-        sql.replace("create extension if not exists pgcrypto;", ""),
+        (await fs.readFile(`supabase/migrations/${file}`, "utf8")).replace(
+          /create extension if not exists \w+;/g,
+          "",
+        ),
       );
     }
     await db.query("insert into auth.users values($1,now()),($2,now())", [
