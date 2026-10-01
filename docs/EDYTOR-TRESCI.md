@@ -26,3 +26,5 @@ Wdrożenie wymaga skoordynowanej publikacji obu aplikacji i migracji bazy. Nie u
 ## Weryfikacja
 
 Testy domeny i PGlite sprawdzają migrację, odwołania, niezależność wariantów, uprawnienia RSVP, izolację kontaktów oraz zachowanie historii. E2E sprawdzają edycję w kontekście, wybór z podglądu, kadry per urządzenie, warianty i ekrany 320–2560 px. Test współbieżności wymaga `TEST_DATABASE_URL`; CI udostępnia PostgreSQL 17.
+
+Migracja obejmuje również archiwalne realizacje oznaczone do usunięcia. Wyłączne blokady tabel obowiązują do końca transakcji; wymagane triggery są przywracane przed zatwierdzeniem. Błąd wycofuje całość. Historia zdalnych wersji migracji znajduje się w `STAGING-STATUS.md`; nie uruchamiaj wszystkich historycznych migracji ponownie na stagingu.

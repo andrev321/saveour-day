@@ -130,3 +130,20 @@ Doradca bezpieczeństwa nadal zgłasza wcześniejsze ostrzeżenia dla `pg_net`, 
 Ograniczenie wdrożenia: wcześniej wystawione signed URLs nie zostały odwołane. Stare tokeny uploadu mogą działać do dwóch godzin, a tokeny odczytu do swojego terminu wygaśnięcia; klient z dawnym SELECT mógł wystawić dłuższe. Nowe API ich nie wystawia. Szczegóły i procedura natychmiastowego odcięcia dawnych uprawnień: [Usuwanie realizacji](USUWANIE-REALIZACJI.md), sekcja „Cykl mediów po poprawkach z 30.09.2026”.
 
 Źródła ostrzeżeń doradcy: [SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [ochrona haseł](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+
+## Edytor kontekstowy v3 — wdrożony 01.10.2026
+
+Zmiana `0a38e3b` przebudowuje panel wokół sekcji zaproszenia. Program zawiera edycję wydarzeń i miejsc, kontakt zawiera edycję osób, a kadry zdjęć należą do konkretnego użycia. Warianty mają własną kolejność, widoczność sekcji i uprawnienia do wydarzeń. Kod przyjmuje wyłącznie konfiguracje v3.
+
+Migracja `20260930204955_contextual_editor_v3.sql` została zastosowana jako zdalna wersja `20261001054945`. Pierwsza próba wycofała się z powodu ochrony archiwalnej, usuniętej realizacji. Poprawka `21b6c9c` konwertuje także archiwa: w transakcji blokuje cztery tabele, zawiesza potrzebne triggery tylko na czas konwersji i przywraca je przed zatwierdzeniem. Nie zmienia stanu usunięcia, identyfikatorów ani ścieżek zdjęć.
+
+Potwierdzono po migracji:
+
+- Wszystkie 7 istniejących konfiguracji szkiców, publikacji i historii przechodzi ścisłą walidację v3 bez dodatkowego normalizowania w aplikacji. Podczas wdrożenia powstała kolejna realizacja; obecny stan to 3 realizacje i szkice, 2 publikacje, 2 migawki i 2 rekordy mediów.
+- Nie pozostały adaptery `upgrade_config_v2` ani pomocnicze funkcje konwersji. Wszystkie triggery ochronne są aktywne.
+- Test procedur przywrócił migawkę, opublikował szkic i odrzucił nieaktualną rewizję. Cała kontrola zakończyła się ROLLBACK, bez trwałych zmian treści użytkownika.
+- Doradca bezpieczeństwa nie zgłosił nowych ostrzeżeń względem stanu przed zmianą. Wcześniejsze uwagi opisano powyżej.
+- Oba projekty Vercel są READY; publiczne demo zaproszeń działa w przeglądarce. Panel wymaga logowania, a deweloperska ścieżka `/demo` pozostaje wyłączona na Vercelu. Pełny edytor zweryfikowano lokalnymi E2E i w CI.
+
+Pełne CI zmiany interfejsu (`0a38e3b`) przeszło: TypeScript, lint, 42 testy z PostgreSQL, buildy oraz 59 E2E. Po poprawce migracji uzupełniono starsze fixture'y testów bazowych o wszystkie poprzedzające migracje; ich skrócony schemat nie zawierał wymaganych triggerów. Bieżący wynik końcowego CI jest dostępny w GitHub Actions.
