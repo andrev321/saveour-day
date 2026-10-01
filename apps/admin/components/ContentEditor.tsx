@@ -24,8 +24,6 @@ import {
   Title,
 } from "@mantine/core";
 import {
-  ArrowUpIcon,
-  ArrowDownIcon,
   DotsSixIcon,
   EyeIcon,
   EyeSlashIcon,
@@ -45,6 +43,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
+  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type {
@@ -278,6 +277,143 @@ function VenueEditor({
     </Stack>
   );
 }
+function useSortSensors() {
+  return useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+}
+function DragHandle({
+  setActivatorNodeRef,
+  attributes,
+  listeners,
+  isDragging,
+  label,
+  testId,
+}: {
+  setActivatorNodeRef: ReturnType<typeof useSortable>["setActivatorNodeRef"];
+  attributes: ReturnType<typeof useSortable>["attributes"];
+  listeners: ReturnType<typeof useSortable>["listeners"];
+  isDragging: boolean;
+  label: string;
+  testId: string;
+}) {
+  return (
+    <ActionIcon
+      ref={setActivatorNodeRef}
+      variant="transparent"
+      color="dimmed"
+      size={44}
+      style={{
+        touchAction: "none",
+        userSelect: "none",
+        WebkitTouchCallout: "none",
+        cursor: isDragging ? "grabbing" : "grab",
+        flexShrink: 0,
+      }}
+      onContextMenu={(e) => e.preventDefault()}
+      data-testid={testId}
+      aria-label={label}
+      {...attributes}
+      {...listeners}
+    >
+      <DotsSixIcon size={20} weight="bold" />
+    </ActionIcon>
+  );
+}
+function RelatedRow({
+  id,
+  item,
+  photo,
+  selected,
+  onSelect,
+  onRemove,
+}: {
+  id: string;
+  item?: { name: string; detail?: string };
+  photo?: MediaAsset;
+  selected: boolean;
+  onSelect: () => void;
+  onRemove: () => void;
+}) {
+  const t = useText();
+  const {
+    setNodeRef,
+    setActivatorNodeRef,
+    attributes,
+    listeners,
+    isDragging,
+    transform,
+    transition,
+  } = useSortable({ id });
+  return (
+    <Card
+      ref={setNodeRef}
+      withBorder
+      padding="sm"
+      data-ui="reference-row"
+      data-testid={`related-item-${id}`}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition: transition,
+        opacity: isDragging ? 0.6 : 1,
+        position: "relative",
+        zIndex: isDragging ? 1 : undefined,
+      }}
+    >
+      <Group wrap="nowrap" gap="xs">
+        <DragHandle
+          setActivatorNodeRef={setActivatorNodeRef}
+          attributes={attributes}
+          listeners={listeners}
+          isDragging={isDragging}
+          testId={`related-handle-${id}`}
+          label={`${t("Przeciągnij element", "Drag item", "Eintrag ziehen")}: ${item?.name || id}`}
+        />
+        <Button
+          variant={selected ? "light" : "subtle"}
+          aria-label={item?.name || id}
+          px={0}
+          style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
+          styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
+          onClick={onSelect}
+        >
+          {photo ? (
+            <PhotoReference photo={photo} />
+          ) : (
+            <Stack gap={0} align="start">
+              <Text
+                size="sm"
+                style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+              >
+                {item?.name || id}
+              </Text>
+              {item?.detail && (
+                <Text size="xs" c="dimmed">
+                  {item.detail}
+                </Text>
+              )}
+            </Stack>
+          )}
+        </Button>
+        <ActionIcon
+          variant="subtle"
+          color="red"
+          aria-label={t(
+            "Usuń z sekcji",
+            "Remove from section",
+            "Aus Abschnitt entfernen",
+          )}
+          onClick={onRemove}
+        >
+          <TrashIcon />
+        </ActionIcon>
+      </Group>
+    </Card>
+  );
+}
 function RelatedList({
   ids,
   options,
@@ -296,6 +432,7 @@ function RelatedList({
   photos?: MediaAsset[];
 }) {
   const t = useText();
+  const sensors = useSortSensors();
   const [existing, setExisting] = useState<string | null>(null);
   return (
     <Stack gap="sm">
@@ -308,74 +445,35 @@ function RelatedList({
           )}
         </Text>
       )}
-      {ids.map((id, i) => {
-        const item = options.find((o) => o.id === id),
-          photo = photos?.find((p) => p.id === id);
-        return (
-          <Card key={id} withBorder padding="sm" data-ui="reference-row">
-            <Group wrap="nowrap" gap="xs">
-              <Button
-                variant={selected === id ? "light" : "subtle"}
-                aria-label={item?.name || id}
-                style={{ flex: 1, minWidth: 0, height: "auto" }}
-                onClick={() => onSelect(selected === id ? null : id)}
-              >
-                {photo ? (
-                  <PhotoReference photo={photo} />
-                ) : (
-                  <Stack gap={0} align="start">
-                    <Text
-                      size="sm"
-                      style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
-                    >
-                      {item?.name || id}
-                    </Text>
-                    {item?.detail && (
-                      <Text size="xs" c="dimmed">
-                        {item.detail}
-                      </Text>
-                    )}
-                  </Stack>
-                )}
-              </Button>
-              {([-1, 1] as const).map((step) => (
-                <ActionIcon
-                  key={step}
-                  variant="subtle"
-                  aria-label={
-                    step < 0
-                      ? t("Przesuń wyżej", "Move up", "Nach oben")
-                      : t("Przesuń niżej", "Move down", "Nach unten")
-                  }
-                  disabled={i + step < 0 || i + step >= ids.length}
-                  onClick={() => {
-                    const next = [...ids];
-                    [next[i], next[i + step]] = [next[i + step], next[i]];
-                    onIds(next);
-                  }}
-                >
-                  {step < 0 ? <ArrowUpIcon /> : <ArrowDownIcon />}
-                </ActionIcon>
-              ))}
-              <ActionIcon
-                variant="subtle"
-                color="red"
-                aria-label={t(
-                  "Usuń z sekcji",
-                  "Remove from section",
-                  "Aus Abschnitt entfernen",
-                )}
-                onClick={() => {
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={({ active, over }) => {
+          if (!over || active.id === over.id) return;
+          const from = ids.indexOf(String(active.id));
+          const to = ids.indexOf(String(over.id));
+          if (from >= 0 && to >= 0) onIds(arrayMove(ids, from, to));
+        }}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          <Stack gap="sm">
+            {ids.map((id) => (
+              <RelatedRow
+                key={id}
+                id={id}
+                item={options.find((o) => o.id === id)}
+                photo={photos?.find((p) => p.id === id)}
+                selected={selected === id}
+                onSelect={() => onSelect(selected === id ? null : id)}
+                onRemove={() => {
                   onIds(ids.filter((x) => x !== id));
                   if (selected === id) onSelect(null);
                 }}
-              >
-                <TrashIcon />
-              </ActionIcon>
-            </Group>
-          </Card>
-        );
-      })}
+              />
+            ))}
+          </Stack>
+        </SortableContext>
+      </DndContext>
       <Button variant="light" onClick={onAdd}>
         {t("Dodaj nowy element", "Add new item", "Neuen Eintrag hinzufügen")}
       </Button>
@@ -439,13 +537,13 @@ function SectionRow({
   const t = useText(),
     types = useTypes();
   const {
-    attributes,
-    listeners,
     setNodeRef,
     setActivatorNodeRef,
+    attributes,
+    listeners,
+    isDragging,
     transform,
     transition,
-    isDragging,
   } = useSortable({ id: section.id });
   return (
     <Card
@@ -460,30 +558,14 @@ function SectionRow({
       }}
     >
       <Group wrap="nowrap" gap="xs">
-        <ActionIcon
-          ref={setActivatorNodeRef}
-          variant="transparent"
-          color="dimmed"
-          size={44}
-          style={{
-            touchAction: "none",
-            userSelect: "none",
-            WebkitTouchCallout: "none",
-            cursor: isDragging ? "grabbing" : "grab",
-            flexShrink: 0,
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-          data-testid={`drag-handle-${section.id}`}
-          aria-label={t(
-            "Przeciągnij sekcję",
-            "Drag section",
-            "Abschnitt ziehen",
-          )}
-          {...attributes}
-          {...listeners}
-        >
-          <DotsSixIcon size={20} weight="bold" />
-        </ActionIcon>
+        <DragHandle
+          setActivatorNodeRef={setActivatorNodeRef}
+          attributes={attributes}
+          listeners={listeners}
+          isDragging={isDragging}
+          testId={`drag-handle-${section.id}`}
+          label={t("Przeciągnij sekcję", "Drag section", "Abschnitt ziehen")}
+        />
         <Button
           variant="subtle"
           px={0}
@@ -1193,12 +1275,7 @@ export function ContentEditor(props: ContentEditorProps) {
   const [adding, setAdding] = useState(false),
     [resources, setResources] = useState(false);
   const variant = config.variants.find((v) => v.id === variantId)!;
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
+  const sensors = useSortSensors();
   const toggle = (id: string) => onSelect(selected === id ? null : id);
   const details = <SectionDetails key={selected} {...props} />;
   const place = (id: string) =>
