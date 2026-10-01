@@ -594,7 +594,7 @@ export function Editor({
     >
       <Tabs.Panel value="content" pt="lg">
         <ContentEditor
-          key={`${currentVariant}-${selectedSection || "list"}`}
+          key={currentVariant}
           config={config}
           onChange={setConfig}
           variantId={currentVariant}

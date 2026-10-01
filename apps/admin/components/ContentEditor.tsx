@@ -1,6 +1,9 @@
 "use client";
 import {
   useState,
+  useEffect,
+  useRef,
+  type ReactNode,
   useContext,
   type Dispatch,
   type SetStateAction,
@@ -27,6 +30,7 @@ import {
   EyeIcon,
   EyeSlashIcon,
   TrashIcon,
+  CaretDownIcon,
 } from "@phosphor-icons/react";
 import {
   DndContext,
@@ -425,7 +429,11 @@ function SectionRow({
   onEdit,
   onVisibility,
   onMove,
+  expanded,
+  children,
 }: {
+  expanded: boolean;
+  children: ReactNode;
   section: Section;
   visible: boolean;
   index: number;
@@ -468,19 +476,31 @@ function SectionRow({
           variant="subtle"
           style={{ flex: 1, minWidth: 0, height: "auto" }}
           onClick={onEdit}
+          aria-expanded={expanded}
+          aria-controls={`content-${section.id}`}
+          styles={{ label: { width: "100%", minWidth: 0 } }}
         >
-          <Stack gap={0} align="start">
-            <Text
-              size="sm"
-              fw={600}
-              style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
-            >
-              {section.title}
-            </Text>
-            <Text size="xs" c="dimmed">
-              {types[section.type]}
-            </Text>
-          </Stack>
+          <Group gap="xs" wrap="nowrap" w="100%">
+            <Stack gap={0} align="start" style={{ flex: 1, minWidth: 0 }}>
+              <Text
+                size="sm"
+                fw={600}
+                style={{ whiteSpace: "normal", overflowWrap: "anywhere" }}
+              >
+                {section.title}
+              </Text>
+              <Text size="xs" c="dimmed">
+                {types[section.type]}
+              </Text>
+            </Stack>
+            <CaretDownIcon
+              size={16}
+              style={{
+                flexShrink: 0,
+                transform: expanded ? "rotate(180deg)" : undefined,
+              }}
+            />
+          </Group>
         </Button>
         <ActionIcon
           variant="subtle"
@@ -517,18 +537,13 @@ function SectionRow({
           </ActionIcon>
         ))}
       </Group>
+      <div id={`content-${section.id}`} hidden={!expanded}>
+        {expanded && children}
+      </div>
     </Card>
   );
 }
-export function ContentEditor({
-  config,
-  onChange,
-  variantId,
-  selected,
-  onSelect,
-  device,
-  onDevice,
-}: {
+type ContentEditorProps = {
   config: SiteConfig;
   onChange: Change;
   variantId: string;
@@ -536,21 +551,22 @@ export function ContentEditor({
   onSelect: (id: string | null) => void;
   device: PhotoDevice;
   onDevice: (d: PhotoDevice) => void;
-}) {
+};
+function SectionDetails({
+  config,
+  onChange,
+  variantId,
+  selected,
+  onSelect,
+  device,
+  onDevice,
+}: ContentEditorProps) {
   const t = useText(),
     types = useTypes();
   const [entity, setEntity] = useState<string | null>(null),
-    [adding, setAdding] = useState(false),
-    [resources, setResources] = useState(false),
     [deleting, setDeleting] = useState(false);
   const variant = config.variants.find((v) => v.id === variantId)!;
   const section = config.sections.find((s) => s.id === selected);
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
   const update = (patch: Partial<Section>) =>
     onChange((c) => ({
       ...c,
@@ -588,25 +604,12 @@ export function ContentEditor({
         x.id === contact?.id ? { ...x, ...patch } : x,
       ),
     }));
-  const place = (id: string) =>
-    onChange((c) => ({
-      ...c,
-      variants: c.variants.map((v) =>
-        v.id === variant.id
-          ? {
-              ...v,
-              sections: [...v.sections, { sectionId: id, visible: true }],
-            }
-          : v,
-      ),
-    }));
+  const formRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    formRef.current?.scrollIntoView({ block: "nearest" });
+  }, []);
   return (
-    <Stack>
-      {selected && (
-        <Button variant="subtle" onClick={() => onSelect(null)}>
-          {t("Wszystkie sekcje", "All sections", "Alle Abschnitte")}
-        </Button>
-      )}
+    <Stack ref={formRef} pt="md">
       {selected === "hero" ? (
         <>
           <Title order={3}>
@@ -1134,99 +1137,175 @@ export function ContentEditor({
             </Alert>
           )}
         </>
-      ) : (
-        <>
-          <Title order={3}>
-            {t("Treść zaproszenia", "Invitation content", "Einladungsinhalt")}
-          </Title>
-          <Text size="sm" c="dimmed">
-            {t(
-              "Wybierz sekcję, aby edytować jej treść. Kolejność i widoczność dotyczą wybranego wariantu.",
-              "Choose a section to edit. Order and visibility apply to the selected variant.",
-              "Wähle einen Abschnitt. Reihenfolge und Sichtbarkeit gelten für die ausgewählte Variante.",
-            )}
-          </Text>
-          <Button variant="light" onClick={() => onSelect("hero")}>
-            {t(
-              "Początek zaproszenia",
-              "Invitation introduction",
-              "Beginn der Einladung",
-            )}
-          </Button>
-          <DndContext
-            id="content-sections"
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={({ active, over }) => {
-              if (over)
-                onChange((c) =>
-                  moveSection(
-                    c,
-                    variant.id,
-                    variant.sections.findIndex(
-                      (p) => p.sectionId === active.id,
-                    ),
-                    variant.sections.findIndex((p) => p.sectionId === over.id),
-                  ),
-                );
-            }}
-          >
-            <SortableContext
-              items={variant.sections.map((p) => p.sectionId)}
-              strategy={verticalListSortingStrategy}
-            >
-              <Stack gap="sm">
-                {variant.sections.map((p, i) => {
-                  const s = config.sections.find((s) => s.id === p.sectionId)!;
-                  return (
-                    <SectionRow
-                      key={s.id}
-                      section={s}
-                      visible={p.visible}
-                      index={i}
-                      total={variant.sections.length}
-                      onEdit={() => onSelect(s.id)}
-                      onMove={(to) =>
-                        onChange((c) => moveSection(c, variant.id, i, to))
-                      }
-                      onVisibility={() =>
-                        onChange((c) => ({
-                          ...c,
-                          variants: c.variants.map((v) =>
-                            v.id === variant.id
-                              ? {
-                                  ...v,
-                                  sections: v.sections.map((x) =>
-                                    x.sectionId === s.id
-                                      ? { ...x, visible: !x.visible }
-                                      : x,
-                                  ),
-                                }
-                              : v,
-                          ),
-                        }))
-                      }
-                    />
-                  );
-                })}
-              </Stack>
-            </SortableContext>
-          </DndContext>
-          <Button onClick={() => setAdding(true)}>
-            {t("Dodaj sekcję", "Add section", "Abschnitt hinzufügen")}
-          </Button>
-          <Button variant="light" onClick={() => onSelect("footer")}>
-            {t("Stopka", "Footer", "Fußzeile")}
-          </Button>
-          <Button variant="subtle" onClick={() => setResources(true)}>
-            {t(
-              "Zarządzaj wspólnymi danymi",
-              "Manage shared data",
-              "Gemeinsame Daten verwalten",
-            )}
-          </Button>
-        </>
-      )}
+      ) : null}
+    </Stack>
+  );
+}
+function FixedSection({
+  id,
+  label,
+  expanded,
+  onToggle,
+  children,
+}: {
+  id: string;
+  label: string;
+  expanded: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <Card withBorder padding="sm">
+      <Button
+        fullWidth
+        variant="subtle"
+        justify="space-between"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        aria-controls={`content-${id}`}
+        rightSection={
+          <CaretDownIcon
+            style={{ transform: expanded ? "rotate(180deg)" : undefined }}
+          />
+        }
+      >
+        {label}
+      </Button>
+      <div id={`content-${id}`} hidden={!expanded}>
+        {expanded && children}
+      </div>
+    </Card>
+  );
+}
+export function ContentEditor(props: ContentEditorProps) {
+  const { config, onChange, variantId, selected, onSelect } = props;
+  const t = useText(),
+    types = useTypes();
+  const [adding, setAdding] = useState(false),
+    [resources, setResources] = useState(false);
+  const variant = config.variants.find((v) => v.id === variantId)!;
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+  const toggle = (id: string) => onSelect(selected === id ? null : id);
+  const details = <SectionDetails key={selected} {...props} />;
+  const place = (id: string) =>
+    onChange((c) => ({
+      ...c,
+      variants: c.variants.map((v) =>
+        v.id === variant.id
+          ? {
+              ...v,
+              sections: [...v.sections, { sectionId: id, visible: true }],
+            }
+          : v,
+      ),
+    }));
+  return (
+    <Stack>
+      <Title order={3}>
+        {t("Treść zaproszenia", "Invitation content", "Einladungsinhalt")}
+      </Title>
+      <Text size="sm" c="dimmed">
+        {t(
+          "Rozwiń sekcję, aby edytować jej treść. Kolejność i widoczność dotyczą wybranego wariantu.",
+          "Expand a section to edit. Order and visibility apply to the selected variant.",
+          "Klappe einen Abschnitt auf. Reihenfolge und Sichtbarkeit gelten für die ausgewählte Variante.",
+        )}
+      </Text>
+      <FixedSection
+        id="hero"
+        label={t(
+          "Początek zaproszenia",
+          "Invitation introduction",
+          "Beginn der Einladung",
+        )}
+        expanded={selected === "hero"}
+        onToggle={() => toggle("hero")}
+      >
+        {selected === "hero" && details}
+      </FixedSection>
+      <DndContext
+        id="content-sections"
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={({ active, over }) => {
+          if (over)
+            onChange((c) =>
+              moveSection(
+                c,
+                variant.id,
+                variant.sections.findIndex((p) => p.sectionId === active.id),
+                variant.sections.findIndex((p) => p.sectionId === over.id),
+              ),
+            );
+        }}
+      >
+        <SortableContext
+          items={variant.sections.map((p) => p.sectionId)}
+          strategy={verticalListSortingStrategy}
+        >
+          <Stack gap="sm">
+            {variant.sections.map((p, i) => {
+              const s = config.sections.find((s) => s.id === p.sectionId)!;
+              return (
+                <SectionRow
+                  key={s.id}
+                  section={s}
+                  visible={p.visible}
+                  index={i}
+                  total={variant.sections.length}
+                  expanded={selected === s.id}
+                  onEdit={() => toggle(s.id)}
+                  onMove={(to) =>
+                    onChange((c) => moveSection(c, variant.id, i, to))
+                  }
+                  onVisibility={() =>
+                    onChange((c) => ({
+                      ...c,
+                      variants: c.variants.map((v) =>
+                        v.id === variant.id
+                          ? {
+                              ...v,
+                              sections: v.sections.map((x) =>
+                                x.sectionId === s.id
+                                  ? { ...x, visible: !x.visible }
+                                  : x,
+                              ),
+                            }
+                          : v,
+                      ),
+                    }))
+                  }
+                >
+                  {selected === s.id && details}
+                </SectionRow>
+              );
+            })}
+          </Stack>
+        </SortableContext>
+      </DndContext>
+      <Button onClick={() => setAdding(true)}>
+        {t("Dodaj sekcję", "Add section", "Abschnitt hinzufügen")}
+      </Button>
+      <FixedSection
+        id="footer"
+        label={t("Stopka", "Footer", "Fußzeile")}
+        expanded={selected === "footer"}
+        onToggle={() => toggle("footer")}
+      >
+        {selected === "footer" && details}
+      </FixedSection>
+      <Button variant="subtle" onClick={() => setResources(true)}>
+        {t(
+          "Zarządzaj wspólnymi danymi",
+          "Manage shared data",
+          "Gemeinsame Daten verwalten",
+        )}
+      </Button>
       <Modal
         opened={adding}
         onClose={() => setAdding(false)}

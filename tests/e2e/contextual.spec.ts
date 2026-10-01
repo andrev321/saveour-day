@@ -36,11 +36,33 @@ for (const width of [390, 1440])
       .getByTestId("section-contact")
       .getByRole("button", { name: /Dajcie znać/ })
       .click();
+    const contactRow = page.getByTestId("section-contact");
+    const contactToggle = contactRow.getByRole("button", {
+      name: /Dajcie znać/,
+    });
+    await expect(contactToggle).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      contactRow.getByLabel("Tytuł sekcji", { exact: true }),
+    ).toBeVisible();
+    await expect(page.getByTestId("section-timeline")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Początek zaproszenia", exact: true }),
+    ).toBeVisible();
+    await contactToggle.press("Enter");
+    await expect(contactToggle).toHaveAttribute("aria-expanded", "false");
+    await expect(
+      contactRow.getByLabel("Tytuł sekcji", { exact: true }),
+    ).toHaveCount(0);
+    await contactToggle.press("Enter");
     await page.getByRole("button", { name: "Dodaj nowy element" }).click();
     await page.getByLabel("Imię / nazwa", { exact: true }).fill("Nowa osoba");
     await page
       .getByRole("textbox", { name: "Telefon", exact: true })
       .fill("+48123456789");
+    await page.screenshot({
+      path: `/tmp/contextual-open-${width}.png`,
+      fullPage: true,
+    });
     if (width < 1100)
       await page.getByRole("button", { name: "Podgląd", exact: true }).click();
     await expect(
@@ -53,7 +75,7 @@ for (const width of [390, 1440])
         .getByRole("button", { name: /Edytuj/ })
         .click();
       await expect(
-        page.getByRole("button", { name: "Wszystkie sekcje" }),
+        page.getByLabel("Tytuł sekcji", { exact: true }),
       ).toBeVisible();
     }
     expect(errors).toEqual([]);
