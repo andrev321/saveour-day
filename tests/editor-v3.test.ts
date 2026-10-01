@@ -236,7 +236,20 @@ test("database conversion preserves media, history and RSVP and removes legacy a
       JSON.stringify([{ guestId: gid, eventId: "ceremony", attending: true }]),
       owner,
     ]);
+    const deletedSid = "50000000-0000-4000-8000-000000000001";
+    const archived = { ...old, media: [], hero: { ...old.hero, mediaId: undefined } };
+    await db.query("select public.create_owned_site($1,'Archived','archived',$2,$3)", [owner, deletedSid, JSON.stringify(archived)]);
+    await db.query("select public.publish_content($1,$2,1,$3,'{}')", [deletedSid, owner, JSON.stringify(archived)]);
+    await db.query("insert into public.draft_snapshots(site_id,config,revision) values($1,$2,1)", [deletedSid, JSON.stringify(archived)]);
+    await db.query("select public.soft_delete_site($1,$2)", [deletedSid, owner]);
     await db.exec(await readFile("supabase/migrations/" + migration, "utf8"));
+    for (const table of ["drafts", "releases", "draft_snapshots"]) {
+      const raw = (await db.query<{config:unknown}>(`select config from public.${table} where site_id=$1`, [deletedSid])).rows[0].config;
+      assert.deepEqual(parseSiteConfig(raw), raw);
+      await assert.rejects(db.query(`update public.${table} set config=config where site_id=$1`, [deletedSid]), /SITE_DELETED/);
+    }
+    assert.equal((await db.query("select tgname from pg_trigger where not tgisinternal and tgname in ('require_active_site','require_available_media') and tgenabled<>'O'")).rows.length, 0);
+
     for (const table of ["drafts", "releases", "draft_snapshots"]) {
       const raw = (
         await db.query<{ config: unknown }>(

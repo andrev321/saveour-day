@@ -60,10 +60,27 @@ begin
  return result||jsonb_build_object('schemaVersion',3,'sections',sections,'variants',variants,'media',photos,'hero',(content->'hero')||jsonb_build_object('description',coalesce(content#>'{hero,description}','""'::jsonb),'crops',crops));
 end $$;
 revoke all on function private.editor_crop(jsonb,text),private.editor_crops(jsonb),private.convert_editor_v3(jsonb) from public,anon,authenticated;
+-- The conversion also covers soft-deleted archives. ALTER TABLE holds exclusive
+-- locks until the migration transaction commits; application writes cannot pass
+-- through while these row guards are suspended. Restore every guard below.
+alter table public.drafts disable trigger require_active_site;
+alter table public.releases disable trigger require_active_site;
+alter table public.draft_snapshots disable trigger require_active_site;
+alter table public.media_assets disable trigger require_active_site;
+alter table public.drafts disable trigger require_available_media;
+alter table public.releases disable trigger require_available_media;
+alter table public.draft_snapshots disable trigger require_available_media;
 update public.drafts set config=private.convert_editor_v3(config),revision=revision+1,updated_at=now() where config->>'schemaVersion' in ('1','2');
 update public.releases set config=private.convert_editor_v3(config) where config->>'schemaVersion' in ('1','2');
 update public.draft_snapshots set config=private.convert_editor_v3(config) where config->>'schemaVersion' in ('1','2');
 update public.media_assets set manifest=manifest-array['focalX','focalY','tabletFocalX','tabletFocalY','mobileFocalX','mobileFocalY'] where manifest is not null;
+alter table public.drafts enable trigger require_active_site;
+alter table public.releases enable trigger require_active_site;
+alter table public.draft_snapshots enable trigger require_active_site;
+alter table public.media_assets enable trigger require_active_site;
+alter table public.drafts enable trigger require_available_media;
+alter table public.releases enable trigger require_available_media;
+alter table public.draft_snapshots enable trigger require_available_media;
 drop function private.convert_editor_v3(jsonb);
 drop function private.editor_crops(jsonb);
 drop function private.editor_crop(jsonb,text);
