@@ -1,4 +1,4 @@
-﻿import { test, expect } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 
 test("templates reset only on confirmation, blank starts empty and saved draft can be restored", async ({
@@ -7,6 +7,9 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
   await page.goto(`${admin}/demo`);
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   const heading = page.getByLabel("Główny napis", { exact: true });
   await expect(heading).toHaveValue("Anna & Jan");
@@ -40,7 +43,7 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
       .getByRole("heading", { name: "Zofia", exact: true })
       .first(),
   ).toBeVisible();
-  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page.getByRole("button", { name: "Ustawienia", exact: true }).click();
   await page.getByRole("button", { name: "Kopie szkicu", exact: true }).click();
   await page.getByRole("combobox", { name: "Kopia zapisanego szkicu" }).click();
   await page.getByRole("option", { name: /Rewizja 1/ }).click();
@@ -59,7 +62,7 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
   await expect(
     page.frameLocator("iframe").getByText("Anna", { exact: false }),
   ).toHaveCount(0);
-  await page.getByRole("tab", { name: "Strona", exact: true }).click();
+  await page.getByRole("tab", { name: "Treść", exact: true }).click();
   await heading.fill("Spotkanie zespołu");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   await expect(
@@ -103,6 +106,9 @@ for (const [label, heading] of [
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "Utwórz zaproszenie", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
     await expect(
       page.getByRole("heading", { name: "Nowy projekt", exact: true }),

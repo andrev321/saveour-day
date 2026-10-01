@@ -177,11 +177,11 @@ export function createDemo(
       ? (["Julia", "Michał"] as const)
       : template.couple;
   return parseSiteConfig({
-    schemaVersion: 1,
+    schemaVersion: 3,
     id,
     locale,
     timeZone: "Europe/Warsaw",
-    couple: { firstName: couple[0], secondName: couple[1] },
+    identity: { displayName: `${couple[0]} & ${couple[1]}` },
     hero: {
       eyebrow: template.eyebrow,
       title: template.title,
@@ -234,7 +234,12 @@ export function createDemo(
       },
     ],
     sections: [
-      { id: "timeline", type: "timeline", title: template.sections[0] },
+      {
+        id: "timeline",
+        type: "timeline",
+        eventIds: ["ceremony", "party"],
+        title: template.sections[0],
+      },
       {
         id: "ceremony",
         type: "venue",
@@ -256,6 +261,7 @@ export function createDemo(
       {
         id: "contact",
         type: "contact",
+        contactIds: ["contact"],
         title: template.sections[4],
         body:
           locale === "pl-PL"
@@ -271,7 +277,9 @@ export function createDemo(
         slug: "glowna",
         label: template.variants[0],
         eventIds: ["ceremony", "party"],
-        sectionIds: ["timeline", "ceremony", "party", "parking", "contact"],
+        sections: ["timeline", "ceremony", "party", "parking", "contact"].map(
+          (sectionId) => ({ sectionId, visible: true }),
+        ),
       },
     ],
     defaultVariant: "slub",

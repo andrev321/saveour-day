@@ -50,6 +50,9 @@ test("photo frames and galleries remain visible in every theme and hero layout",
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   const preview = page.frameLocator("iframe");
   await expect(preview.locator("h1")).toBeVisible();
   const config = createDemo();
@@ -63,12 +66,13 @@ test("photo frames and galleries remain visible in every theme and hero layout",
     }),
   ];
   config.hero.mediaId = "photo";
+  config.variants[0].sections.push({ sectionId: "gallery", visible: true });
   config.sections.push({
     id: "gallery",
     type: "gallery",
     title: "Galeria",
     body: "",
-    enabled: true,
+    crops: {},
     mediaIds: ["photo"],
   });
   for (const theme of themeNames) {
@@ -120,9 +124,12 @@ test("theme picker updates preview, preserves content and toggles ornaments and 
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
+  await page
     .getByLabel("Główny napis", { exact: true })
     .fill("Aleksandra & Konstanty");
-  await page.getByRole("tab", { name: "Ustawienia", exact: true }).click();
+  await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
   await page
     .getByRole("button", { name: "Radosne świętowanie", exact: true })
     .click();

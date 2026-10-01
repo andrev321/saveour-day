@@ -25,10 +25,11 @@ export default async function Demo({
     ...config.variants[0],
     id: "limited",
     slug: "ograniczona",
-    hiddenEventIds: ["party"],
-    hiddenSectionIds: ["party"],
+    eventIds: ["ceremony"],
+    sections: config.variants[0].sections.map(p=>({...p,visible:p.sectionId!=="party"})),
   });
   const variant = config.variants.find((v) => v.slug === slug);
   if (!variant) notFound();
   return <Invitation config={guestContent(config, variant.id)} />;
 }
+

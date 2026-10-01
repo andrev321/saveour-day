@@ -1,6 +1,8 @@
 "use client";
 import {
   navigationUrl,
+  visibleSections,
+  type DeviceCrops,
   themes,
   type MediaAsset,
   type SiteConfig,
@@ -108,12 +110,14 @@ function Photo({
   tablet,
   resolveMedia,
   hero = false,
+  crops = {},
 }: {
   media: MediaAsset;
   mobile?: MediaAsset;
   tablet?: MediaAsset;
   resolveMedia?: (src: string) => string;
   hero?: boolean;
+  crops?: DeviceCrops;
 }) {
   const resolve = resolveMedia || ((src: string) => src);
   const src = resolve(media.src);
@@ -163,9 +167,9 @@ function Photo({
         onLoad={() => setFailedSource(null)}
         style={
           {
-            "--focal": `${media.focalX}% ${media.focalY}%`,
-            "--tablet-focal": `${tablet?.tabletFocalX ?? media.tabletFocalX ?? 50}% ${tablet?.tabletFocalY ?? media.tabletFocalY ?? 50}%`,
-            "--mobile-focal": `${mobile?.mobileFocalX ?? media.mobileFocalX}% ${mobile?.mobileFocalY ?? media.mobileFocalY}%`,
+            "--focal": `${crops.desktop?.x ?? 50}% ${crops.desktop?.y ?? 50}%`,
+            "--tablet-focal": `${crops.tablet?.x ?? crops.desktop?.x ?? 50}% ${crops.tablet?.y ?? crops.desktop?.y ?? 50}%`,
+            "--mobile-focal": `${crops.mobile?.x ?? crops.desktop?.x ?? 50}% ${crops.mobile?.y ?? crops.desktop?.y ?? 50}%`,
           } as CSSProperties
         }
       />
@@ -246,9 +250,11 @@ export function Invitation({
   config,
   variantId,
   resolveMedia,
+  onEditSection,
 }: {
   config: SiteConfig;
   variantId?: string;
+  onEditSection?: (id: string) => void;
   resolveMedia?: (src: string) => string;
 }) {
   const variant = config.variants.find(
@@ -257,23 +263,10 @@ export function Invitation({
   const hero = config.media.find((m) => m.id === config.hero.mediaId);
   const mobile = config.media.find((m) => m.id === config.hero.mobileMediaId);
   const tablet = config.media.find((m) => m.id === config.hero.tabletMediaId);
-  const isMainPage = variant.id === config.defaultVariant;
-  const sections = (
-    isMainPage
-      ? config.sections
-      : variant.sectionIds.map((id) =>
-          config.sections.find((s) => s.id === id)!,
-        )
-  ).filter(
-    (section) =>
-      section.enabled &&
-      (isMainPage || !variant.hiddenSectionIds.includes(section.id)),
-  );
-  const events = isMainPage
-    ? config.events
-    : variant.eventIds
-        .map((id) => config.events.find((e) => e.id === id)!)
-        .filter((event) => !variant.hiddenEventIds.includes(event.id));
+  const sections = visibleSections(config, variant);
+  const events = variant.eventIds
+    .map((id) => config.events.find((e) => e.id === id)!)
+    .filter(Boolean);
   const colors = {
     "--paper": config.design.paper,
     "--surface": config.design.surface,
@@ -329,6 +322,7 @@ export function Invitation({
           <S.InvitationHeroPhoto>
             {hero ? (
               <Photo
+                crops={config.hero.crops}
                 media={hero}
                 mobile={mobile}
                 tablet={tablet}
@@ -341,6 +335,15 @@ export function Invitation({
           </S.InvitationHeroPhoto>
           <S.InvitationHeroCopy>
             <ThemeOrnament config={config} />
+            {onEditSection && (
+              <Button
+                size="xs"
+                variant="subtle"
+                onClick={() => onEditSection("hero")}
+              >
+                Edytuj
+              </Button>
+            )}
             {config.hero.eyebrow && (
               <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
             )}
@@ -376,6 +379,15 @@ export function Invitation({
                   {config.appearance.icons && (
                     <SectionIcon kind={section.type} theme={config.theme} />
                   )}
+                  {onEditSection && (
+                    <Button
+                      size="xs"
+                      variant="subtle"
+                      onClick={() => onEditSection(section.id)}
+                    >
+                      Edytuj: {section.title}
+                    </Button>
+                  )}
                   <Title order={2} size="h3">
                     {section.title}
                   </Title>
@@ -385,45 +397,48 @@ export function Invitation({
                 ) : null}
                 {section.type === "timeline" ? (
                   <S.Schedule>
-                    {events.map((event) => {
-                      return (
-                        <li key={event.id}>
-                          <Text
-                            component="span"
-                            className="event-time"
-                            fw={600}
-                          >
-                            {event.time}
-                          </Text>
-                          <div>
-                            <Title order={3} size="h2">
-                              {event.title}
-                            </Title>
-                            <Text size="sm" c="dimmed">
-                              {event.dateLabel ||
-                                (event.date
-                                  ? new Intl.DateTimeFormat(config.locale, {
-                                      day: "numeric",
-                                      month: "long",
-                                      timeZone: config.timeZone,
-                                    }).format(
-                                      new Date(`${event.date}T12:00:00Z`),
-                                    )
-                                  : "")}
+                    {section.eventIds
+                      .map((id) => events.find((e) => e.id === id))
+                      .filter((e): e is SiteConfig["events"][number] => !!e)
+                      .map((event) => {
+                        return (
+                          <li key={event.id}>
+                            <Text
+                              component="span"
+                              className="event-time"
+                              fw={600}
+                            >
+                              {event.time}
                             </Text>
-                            {event.url ? (
-                              <Anchor
-                                href={event.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              >
-                                {config.copy.eventLink}
-                              </Anchor>
-                            ) : null}
-                          </div>
-                        </li>
-                      );
-                    })}
+                            <div>
+                              <Title order={3} size="h2">
+                                {event.title}
+                              </Title>
+                              <Text size="sm" c="dimmed">
+                                {event.dateLabel ||
+                                  (event.date
+                                    ? new Intl.DateTimeFormat(config.locale, {
+                                        day: "numeric",
+                                        month: "long",
+                                        timeZone: config.timeZone,
+                                      }).format(
+                                        new Date(`${event.date}T12:00:00Z`),
+                                      )
+                                    : "")}
+                              </Text>
+                              {event.url ? (
+                                <Anchor
+                                  href={event.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  {config.copy.eventLink}
+                                </Anchor>
+                              ) : null}
+                            </div>
+                          </li>
+                        );
+                      })}
                   </S.Schedule>
                 ) : null}
                 {section.type === "venue" ? (
@@ -434,13 +449,16 @@ export function Invitation({
                 ) : null}
                 {section.type === "contact" ? (
                   <Stack gap="xl">
-                    {config.contacts.map((contact) => (
-                      <Contact
-                        key={contact.id}
-                        contact={contact}
-                        copy={config.copy}
-                      />
-                    ))}
+                    {section.contactIds
+                      .map((id) => config.contacts.find((c) => c.id === id)!)
+                      .filter(Boolean)
+                      .map((contact) => (
+                        <Contact
+                          key={contact.id}
+                          contact={contact}
+                          copy={config.copy}
+                        />
+                      ))}
                   </Stack>
                 ) : null}
                 {section.type === "gallery" ? (
@@ -448,6 +466,7 @@ export function Invitation({
                     {section.mediaIds.map((id) => (
                       <Photo
                         key={id}
+                        crops={section.crops[id]}
                         media={config.media.find((m) => m.id === id)!}
                         resolveMedia={resolveMedia}
                       />

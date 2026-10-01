@@ -40,6 +40,7 @@ test("soft delete hides all tenant data, disables writes, and purges only expire
       "20260929112149_fix_storage_media_read_policy.sql",
       "20260929112334_delete_unused_media.sql",
       "20260930165858_harden_media_lifecycle.sql",
+      "20260930204955_contextual_editor_v3.sql",
     ]) {
       await db.exec(
         (await readFile(`supabase/migrations/${file}`, "utf8")).replace(

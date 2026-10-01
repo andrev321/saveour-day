@@ -24,12 +24,6 @@ config.media = [
     alt: "",
     width: image.info.width,
     height: image.info.height,
-    focalX: 50,
-    focalY: 50,
-    tabletFocalX: 50,
-    tabletFocalY: 50,
-    mobileFocalX: 50,
-    mobileFocalY: 50,
     variants: [],
   },
 ];
@@ -42,3 +36,4 @@ await fs.writeFile(
 console.log(
   "Zapisano .local/legacy/site.json. Ustaw SITE_CONFIG=.local/legacy/site.json. Oryginalne .env.local nie zostało zmienione.",
 );
+

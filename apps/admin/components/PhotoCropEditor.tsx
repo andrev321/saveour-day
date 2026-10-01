@@ -1,7 +1,7 @@
 "use client";
 import { useRef, type PointerEvent } from "react";
 import { Button, Stack, Text } from "@mantine/core";
-import type { MediaAsset } from "@invitations/domain";
+import type { MediaAsset, DeviceCrops } from "@invitations/domain";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import { cropFrame, cropPosition } from "../lib/crop";
@@ -10,6 +10,7 @@ import * as S from "./PhotoLibrary.styles";
 
 export function PhotoCropEditor({
   photo,
+  crops,
   urls,
   device,
   onDevice,
@@ -17,39 +18,39 @@ export function PhotoCropEditor({
   onChange,
 }: {
   photo: MediaAsset;
+  crops: DeviceCrops;
   urls: Record<string, string>;
   device: PhotoDevice;
   onDevice: (device: PhotoDevice) => void;
   disabled: boolean;
-  onChange: (patch: Partial<MediaAsset>) => void;
+  onChange: (crops: DeviceCrops) => void;
 }) {
   const { language } = usePanelI18n();
   const copy = mediaUi[language];
   const offset = useRef({ x: 0, y: 0 });
-  const xKey =
-    device === "mobile"
-      ? "mobileFocalX"
-      : device === "tablet"
-        ? "tabletFocalX"
-        : "focalX";
-  const yKey =
-    device === "mobile"
-      ? "mobileFocalY"
-      : device === "tablet"
-        ? "tabletFocalY"
-        : "focalY";
+  const xKey = "x",
+    yKey = "y";
+  const change = (patch: { x?: number; y?: number }) =>
+    onChange({
+      ...crops,
+      [device]: {
+        x: crops[device]?.x ?? crops.desktop?.x ?? 50,
+        y: crops[device]?.y ?? crops.desktop?.y ?? 50,
+        ...patch,
+      },
+    });
   const frame = cropFrame(
     photo.width / photo.height,
     device === "mobile" ? 3 / 4 : device === "tablet" ? 1 : 4 / 3,
   );
-  const x = photo[xKey] ?? 50;
-  const y = photo[yKey] ?? 50;
+  const x = crops[device]?.x ?? crops.desktop?.x ?? 50;
+  const y = crops[device]?.y ?? crops.desktop?.y ?? 50;
   const left = ((100 - frame.width) * x) / 100;
   const top = ((100 - frame.height) * y) / 100;
   function position(event: PointerEvent<HTMLDivElement>) {
     const bounds = event.currentTarget.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
-    onChange({
+    change({
       [xKey]: cropPosition(
         ((event.clientX - bounds.left) / bounds.width) * 100 - offset.current.x,
         frame.width,
@@ -125,7 +126,7 @@ export function PhotoCropEditor({
             return;
           event.preventDefault();
           const step = event.shiftKey ? 10 : 2;
-          onChange({
+          change({
             [xKey]:
               event.key === "Home"
                 ? 50
@@ -185,7 +186,7 @@ export function PhotoCropEditor({
       <Button
         variant="subtle"
         disabled={disabled}
-        onClick={() => onChange({ [xKey]: 50, [yKey]: 50 })}
+        onClick={() => change({ [xKey]: 50, [yKey]: 50 })}
       >
         {copy.center}
       </Button>

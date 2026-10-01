@@ -3,6 +3,9 @@ const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 async function openEditor(page: Page) {
   await page.goto(`${admin}/demo`);
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
 }
 
 for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
@@ -46,13 +49,15 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
       preview.locator('[data-ui=preview-device][data-device="phone"]'),
     ).toBeVisible();
     const frame = await preview.locator("iframe").boundingBox();
-    const canvas = await preview.locator("[data-ui=preview-canvas]").boundingBox();
+    const canvas = await preview
+      .locator("[data-ui=preview-canvas]")
+      .boundingBox();
     expect(frame!.width).toBeLessThanOrEqual(canvas!.width);
     if (width < 1100) {
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       await page
         .getByRole("dialog")
-        .getByRole("button", { name: "Ustawienia", exact: true })
+        .getByRole("button", { name: "Wygląd", exact: true })
         .click();
       await expect(
         page.getByLabel("Kolor akcentu", { exact: true }),
@@ -60,7 +65,7 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       await page
         .getByRole("dialog")
-        .getByRole("button", { name: "Strona", exact: true })
+        .getByRole("button", { name: "Treść", exact: true })
         .click();
       await expect(
         page.getByLabel("Główny napis", { exact: true }),
@@ -86,7 +91,10 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
   await page.getByRole("button", { name: "Ustawienia widoku" }).click();
   await page.getByText("Zwarta", { exact: true }).click();
   await page.keyboard.press("Escape");
-  await page.getByRole("button", { name: "Komputer", exact: true }).click();
+  await page
+    .locator("[data-ui=workspace-preview]")
+    .getByRole("button", { name: "Komputer", exact: true })
+    .click();
   await expect(page.locator("iframe")).toHaveCSS("width", "1440px");
   expect(
     await page
@@ -98,6 +106,9 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
   expect(frame!.width).toBeLessThan(1440);
   await page.reload();
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await expect(separator).toHaveAttribute("aria-valuenow", "560");
   await expect(page.locator("[data-ui=editor-workspace]")).toHaveAttribute(
     "data-density",
@@ -107,7 +118,9 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
     page.getByRole("button", { name: "Rozwiń nawigację" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Komputer", exact: true }),
+    page
+      .locator("[data-ui=workspace-preview]")
+      .getByRole("button", { name: "Komputer", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Ustawienia widoku" }).click();
   await page.getByRole("button", { name: "Przywróć układ" }).click();
@@ -117,7 +130,9 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
     "comfortable",
   );
   await expect(
-    page.getByRole("button", { name: "Telefon", exact: true }),
+    page
+      .locator("[data-ui=workspace-preview]")
+      .getByRole("button", { name: "Telefon", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
 });
 
@@ -150,8 +165,12 @@ test("preview toolbar stays in one row in both views and switches device frames"
       ).toBeVisible();
       await expect(scope.locator("iframe")).toHaveCSS("width", width);
     }
-    const device = await scope.locator("[data-ui=preview-device]").boundingBox();
-    const canvas = await scope.locator("[data-ui=preview-canvas]").boundingBox();
+    const device = await scope
+      .locator("[data-ui=preview-device]")
+      .boundingBox();
+    const canvas = await scope
+      .locator("[data-ui=preview-canvas]")
+      .boundingBox();
     expect(device!.height).toBeLessThanOrEqual(canvas!.height);
     await scope.getByRole("button", { name: "Dopasuj", exact: true }).click();
     await expect(scope.locator("[data-ui=preview-canvas]")).toHaveAttribute(
@@ -203,7 +222,8 @@ test("expanded preview fills the viewport after resize and clips the entire phon
     await expect
       .poll(
         async () =>
-          (await dialog.locator("[data-ui=preview-canvas]").boundingBox())!.width,
+          (await dialog.locator("[data-ui=preview-canvas]").boundingBox())!
+            .width,
       )
       .toBeGreaterThan(width - 40);
     const device = dialog.locator("[data-ui=preview-device]");

@@ -12,8 +12,11 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
     ...config.variants[0],
     id: "limited",
     slug: "limited",
-    hiddenEventIds: ["party"],
-    hiddenSectionIds: ["party"],
+    eventIds: ["ceremony"],
+    sections: config.variants[0].sections.map((p) => ({
+      ...p,
+      visible: p.sectionId !== "party",
+    })),
   });
   const visible = guestContent(config, "limited");
   let authorized = false,

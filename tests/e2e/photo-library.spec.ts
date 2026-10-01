@@ -16,21 +16,20 @@ for (const width of [390, 1440])
       route.fulfill({ contentType: "image/webp", body: image }),
     );
     await page.goto(`${admin}/demo/photos`);
-    if (width < 1100) {
-      await page.getByRole("button", { name: "Menu", exact: true }).click();
-      await page
-        .getByRole("dialog")
-        .getByRole("button", { name: "Zdjęcia", exact: true })
-        .click();
-    } else
-      await page.getByRole("tab", { name: "Zdjęcia", exact: true }).click();
+    async function tab(name: string) {
+      if (width < 1100) {
+        await page.getByRole("button", { name: "Menu", exact: true }).click();
+        await page
+          .getByRole("dialog")
+          .getByRole("button", { name, exact: true })
+          .click();
+      } else await page.getByRole("tab", { name, exact: true }).click();
+    }
     await page
-      .getByRole("button", {
-        name: "Podgląd i kadrowanie: Zdjęcie testowe",
-        exact: true,
-      })
+      .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
-    const dialog = page.getByRole("dialog");
+    let dialog = page.getByRole("tabpanel").filter({ visible: true });
+    await dialog.getByRole("button", { name: "Komputer", exact: true }).click();
     const focus = dialog.getByRole("group", { name: "Przesuń ramkę kadru" });
     await expect(focus.locator("img")).toHaveJSProperty("naturalWidth", 1200);
     await focus.scrollIntoViewIfNeeded();
@@ -48,6 +47,7 @@ for (const width of [390, 1440])
       "98% 50%",
     );
     await dialog.getByRole("button", { name: "Telefon", exact: true }).click();
+    await dialog.getByRole("button", { name: "Wyśrodkuj kadr" }).click();
     await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
       "data-position",
       "50% 50%",
@@ -63,6 +63,7 @@ for (const width of [390, 1440])
       "50% 50%",
     );
     await dialog.getByRole("button", { name: "Tablet", exact: true }).click();
+    await dialog.getByRole("button", { name: "Wyśrodkuj kadr" }).click();
     await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
       "data-position",
       "50% 50%",
@@ -87,12 +88,20 @@ for (const width of [390, 1440])
       "82% 50%",
     );
     await expect(dialog.locator('[data-ui="photo-crop-frame"]')).toHaveCount(1);
-    await expect(dialog.locator("img")).toHaveCount(1);
+    await expect(focus.locator("img")).toHaveCount(1);
     await dialog.getByRole("button", { name: "Komputer", exact: true }).click();
     await expect(dialog.getByTestId("photo-crop")).toHaveAttribute(
       "data-position",
       "98% 50%",
     );
+    await tab("Zdjęcia");
+    await page
+      .getByRole("button", {
+        name: "Podgląd i opis: Zdjęcie testowe",
+        exact: true,
+      })
+      .click();
+    dialog = page.getByRole("dialog");
     await dialog
       .getByRole("textbox", { name: "Opis zdjęcia", exact: true })
       .fill("Nasze wspólne zdjęcie");
@@ -108,7 +117,7 @@ for (const width of [390, 1440])
     await dialog.getByRole("button", { name: "Gotowe", exact: true }).click();
     await page
       .getByRole("button", {
-        name: "Podgląd i kadrowanie: Zdjęcie z biblioteki",
+        name: "Podgląd i opis: Zdjęcie z biblioteki",
         exact: true,
       })
       .click();
@@ -118,13 +127,13 @@ for (const width of [390, 1440])
     await dialog.getByRole("button", { name: "Gotowe", exact: true }).click();
     await expect(
       page.getByRole("button", {
-        name: "Podgląd i kadrowanie: Zdjęcie z biblioteki",
+        name: "Podgląd i opis: Zdjęcie z biblioteki",
         exact: true,
       }),
     ).toContainText("Główne");
     await page
       .getByRole("button", {
-        name: "Podgląd i kadrowanie: Nasze wspólne zdjęcie",
+        name: "Podgląd i opis: Nasze wspólne zdjęcie",
         exact: true,
       })
       .click();
@@ -133,7 +142,7 @@ for (const width of [390, 1440])
       .click();
     await expect(
       page.getByRole("button", {
-        name: "Podgląd i kadrowanie: Zdjęcie testowe",
+        name: "Podgląd i opis: Zdjęcie testowe",
         exact: true,
       }),
     ).toContainText("W bibliotece");
@@ -144,7 +153,7 @@ for (const width of [390, 1440])
       .getByRole("button", { name: "Zapisz szkic", exact: true })
       .click();
     const removedPhoto = page.getByRole("button", {
-      name: "Podgląd i kadrowanie: Zdjęcie testowe",
+      name: "Podgląd i opis: Zdjęcie testowe",
       exact: true,
     });
     await removedPhoto.click();

@@ -12,7 +12,6 @@ import {
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import {
   ClockCounterClockwiseIcon,
-  CopyIcon,
   EyeIcon,
   FileTextIcon,
   GearSixIcon,
@@ -21,7 +20,6 @@ import {
   PencilSimpleIcon,
   SidebarSimpleIcon,
   SlidersHorizontalIcon,
-  StackIcon,
   UsersIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
@@ -41,6 +39,9 @@ export function EditorWorkspace({
   preview,
   dialogs,
   onResetView,
+  active,
+  onActive,
+  editRequest,
 }: {
   title: ReactNode;
   headerTools?: ReactNode;
@@ -52,11 +53,20 @@ export function EditorWorkspace({
   preview: ReactNode;
   dialogs: ReactNode;
   onResetView: () => void;
+  editRequest: number;
+  active: string | null;
+  onActive: (value: string | null) => void;
 }) {
   const { t, language } = usePanelI18n();
   const ui = workspaceUi[language];
-  const [active, setActive] = useState<string | null>("page");
-  const [view, setView] = useState("edit");
+
+  const [viewState, setViewState] = useState({
+    mode: "edit",
+    request: editRequest,
+  });
+  const view = viewState.request === editRequest ? viewState.mode : "edit";
+  const setView = (mode: string) =>
+    setViewState({ mode, request: editRequest });
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
   const [viewOptions, setViewOptions] = useState(false);
@@ -90,12 +100,23 @@ export function EditorWorkspace({
     viewport.addEventListener("resize", resize);
     return () => viewport.removeEventListener("resize", resize);
   }, []);
+  const label = (pl: string, en: string, de: string) =>
+    language === "pl" ? pl : language === "en" ? en : de;
   const items = [
-    { value: "page", label: t("page"), icon: FileTextIcon },
-    { value: "sections", label: t("structure"), icon: StackIcon },
-    { value: "pages", label: t("pages"), icon: CopyIcon },
+    {
+      value: "content",
+      label: label("Treść", "Content", "Inhalt"),
+      icon: FileTextIcon,
+    },
+    {
+      value: "appearance",
+      label: label("Wygląd", "Appearance", "Design"),
+      icon: SlidersHorizontalIcon,
+    },
     { value: "media", label: t("media"), icon: ImageIcon },
     { value: "guests", label: ui.guests, icon: UsersIcon },
+  ];
+  const tools = [
     { value: "settings", label: t("settings"), icon: GearSixIcon },
     { value: "history", label: t("history"), icon: ClockCounterClockwiseIcon },
   ];
@@ -131,7 +152,6 @@ export function EditorWorkspace({
           {status}
         </S.WorkspaceProject>
         <S.WorkspaceActions>
-          {headerTools}
           {save}
           <S.DesktopProjectActions>{actions}</S.DesktopProjectActions>
           <Popover
@@ -165,7 +185,7 @@ export function EditorWorkspace({
       </S.WorkspaceHeader>
       <S.WorkspaceBody
         value={active}
-        onChange={setActive}
+        onChange={onActive}
         orientation="vertical"
         keepMounted
       >
@@ -189,6 +209,25 @@ export function EditorWorkspace({
             ))}
           </Tabs.List>
           <S.WorkspaceNavFooter>
+            {tools.map(({ value, label, icon: Icon }) => (
+              <Tooltip key={value} label={label}>
+                <Button
+                  variant="subtle"
+                  aria-label={label}
+                  leftSection={<Icon size={22} />}
+                  onClick={() => onActive(value)}
+                >
+                  {!collapsed &&
+                    (value === "history"
+                      ? language === "pl"
+                        ? "Historia"
+                        : language === "de"
+                          ? "Verlauf"
+                          : "History"
+                      : label)}
+                </Button>
+              </Tooltip>
+            ))}
             <Tooltip
               label={collapsed ? ui.expand : ui.collapse}
               position="right"
@@ -251,6 +290,7 @@ export function EditorWorkspace({
         </S.WorkspaceNav>
         <S.WorkspaceForm id="workspace-edit">
           <S.WorkspaceNotices>{notices}</S.WorkspaceNotices>
+          {headerTools}
           {children}
         </S.WorkspaceForm>
         <S.WorkspaceResizer
@@ -331,13 +371,13 @@ export function EditorWorkspace({
           <Button component="a" href="/" variant="default">
             {t("projects")}
           </Button>
-          {items.map(({ value, label, icon: Icon }) => (
+          {[...items, ...tools].map(({ value, label, icon: Icon }) => (
             <Button
               key={value}
               variant={value === active ? "light" : "subtle"}
               leftSection={<Icon size={23} weight="duotone" />}
               onClick={() => {
-                setActive(value);
+                onActive(value);
                 setView("edit");
                 setMenu(false);
               }}

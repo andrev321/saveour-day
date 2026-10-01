@@ -95,12 +95,6 @@ export const mediaSchema = z
     alt: z.string().max(300).default(""),
     width: z.number().int().positive().max(20000),
     height: z.number().int().positive().max(20000),
-    focalX: z.number().min(0).max(100).default(50),
-    focalY: z.number().min(0).max(100).default(50),
-    tabletFocalX: z.number().min(0).max(100).default(50),
-    tabletFocalY: z.number().min(0).max(100).default(50),
-    mobileFocalX: z.number().min(0).max(100).default(50),
-    mobileFocalY: z.number().min(0).max(100).default(50),
     variants: z
       .array(
         z
@@ -132,32 +126,67 @@ const eventSchema = z
     url: optionalUrl,
   })
   .strict();
-const sectionSchema = z
+export const cropSchema = z
+  .object({ x: z.number().min(0).max(100), y: z.number().min(0).max(100) })
+  .strict();
+export const deviceCropsSchema = z
   .object({
-    id: idSchema,
-    type: z.enum(["timeline", "venue", "contact", "text", "gallery"]),
-    title: text,
-    body: paragraph,
-    enabled: z.boolean().default(true),
-    venueId: idSchema.optional(),
-    mediaIds: z.array(idSchema).max(30).default([]),
+    desktop: cropSchema.optional(),
+    tablet: cropSchema.optional(),
+    mobile: cropSchema.optional(),
   })
   .strict();
+export type DeviceCrops = z.infer<typeof deviceCropsSchema>;
+const references = (max: number) =>
+  z
+    .array(idSchema)
+    .max(max)
+    .refine((ids) => new Set(ids).size === ids.length, "Powtórzone odwołanie");
+const sectionBase = { id: idSchema, title: text, body: paragraph };
+export const sectionSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      ...sectionBase,
+      type: z.literal("timeline"),
+      eventIds: references(50),
+    })
+    .strict(),
+  z
+    .object({ ...sectionBase, type: z.literal("venue"), venueId: idSchema })
+    .strict(),
+  z
+    .object({
+      ...sectionBase,
+      type: z.literal("contact"),
+      contactIds: references(10),
+    })
+    .strict(),
+  z.object({ ...sectionBase, type: z.literal("text") }).strict(),
+  z
+    .object({
+      ...sectionBase,
+      type: z.literal("gallery"),
+      mediaIds: references(30),
+      crops: z.record(idSchema, deviceCropsSchema).default({}),
+    })
+    .strict(),
+]);
+export type Section = z.infer<typeof sectionSchema>;
 const variantSchema = z
   .object({
     id: idSchema,
     slug: idSchema,
     label: text,
     dateLabel: z.string().max(200).default(""),
-    eventIds: z.array(idSchema).max(50),
-    sectionIds: z.array(idSchema).max(30),
-    hiddenEventIds: z.array(idSchema).max(50).optional(),
-    hiddenSectionIds: z.array(idSchema).max(30).optional(),
+    eventIds: references(50),
+    sections: z
+      .array(z.object({ sectionId: idSchema, visible: z.boolean() }).strict())
+      .max(30),
   })
   .strict();
 const currentConfigSchema = z
   .object({
-    schemaVersion: z.literal(2),
+    schemaVersion: z.literal(3),
     id: idSchema,
     locale: z.enum(invitationLocales),
     timeZone: z.literal("Europe/Warsaw"),
@@ -172,6 +201,7 @@ const currentConfigSchema = z
         mobileMediaId: idSchema.optional(),
         tabletMediaId: idSchema.optional(),
         layout: z.enum(["overlay", "split"]),
+        crops: deviceCropsSchema.default({}),
       })
       .strict(),
     theme: z.enum(themeNames),
@@ -229,41 +259,6 @@ const currentConfigSchema = z
     ...value,
     design: value.design ?? themeDesigns[value.theme],
     appearance: value.appearance ?? themes[value.theme].appearance,
-    variants: value.variants.map((variant) => ({
-      ...variant,
-      hiddenEventIds:
-        variant.id === value.defaultVariant
-          ? []
-          : (variant.hiddenEventIds ??
-            value.events
-              .map((event) => event.id)
-              .filter((id) => !variant.eventIds.includes(id))),
-      hiddenSectionIds:
-        variant.id === value.defaultVariant
-          ? []
-          : (variant.hiddenSectionIds ??
-            value.sections
-              .map((section) => section.id)
-              .filter((id) => !variant.sectionIds.includes(id))),
-      eventIds:
-        variant.id === value.defaultVariant
-          ? value.events.map((event) => event.id)
-          : [
-              ...variant.eventIds,
-              ...value.events
-                .map((event) => event.id)
-                .filter((id) => !variant.eventIds.includes(id)),
-            ],
-      sectionIds:
-        variant.id === value.defaultVariant
-          ? value.sections.map((section) => section.id)
-          : [
-              ...variant.sectionIds,
-              ...value.sections
-                .map((section) => section.id)
-                .filter((id) => !variant.sectionIds.includes(id)),
-            ],
-    })),
   }))
   .superRefine((value, ctx) => {
     const issue = (path: (string | number)[], message: string) =>
@@ -294,7 +289,8 @@ const currentConfigSchema = z
       });
     }
     const ref = (
-      collection: "media" | "venues" | "events" | "sections" | "variants",
+      collection:
+        "media" | "venues" | "events" | "sections" | "variants" | "contacts",
       id: string | undefined,
       path: (string | number)[],
     ) => {
@@ -308,80 +304,47 @@ const currentConfigSchema = z
     value.events.forEach((event, i) =>
       ref("venues", event.venueId, ["events", i, "venueId"]),
     );
-    value.sections.forEach((section, i) => {
-      if (section.type === "venue" && !section.venueId)
-        issue(["sections", i, "venueId"], "Sekcja miejsca wymaga lokalizacji");
-      ref("venues", section.venueId, ["sections", i, "venueId"]);
-      section.mediaIds.forEach((id, j) =>
-        ref("media", id, ["sections", i, "mediaIds", j]),
-      );
+    value.sections.forEach((s, i) => {
+      if (s.type === "venue")
+        ref("venues", s.venueId, ["sections", i, "venueId"]);
+      if (s.type === "timeline")
+        s.eventIds.forEach((id, j) =>
+          ref("events", id, ["sections", i, "eventIds", j]),
+        );
+      if (s.type === "contact")
+        s.contactIds.forEach((id, j) =>
+          ref("contacts", id, ["sections", i, "contactIds", j]),
+        );
+      if (s.type === "gallery") {
+        s.mediaIds.forEach((id, j) =>
+          ref("media", id, ["sections", i, "mediaIds", j]),
+        );
+        for (const id of Object.keys(s.crops))
+          if (!s.mediaIds.includes(id))
+            issue(
+              ["sections", i, "crops", id],
+              "Kadr musi dotyczyć zdjęcia w tej galerii",
+            );
+      }
     });
     const slugs = new Set<string>();
-    value.variants.forEach((variant, i) => {
-      if (slugs.has(variant.slug))
+    value.variants.forEach((v, i) => {
+      if (slugs.has(v.slug))
         issue(["variants", i, "slug"], "Powtórzony adres wariantu");
-      slugs.add(variant.slug);
-      for (const field of [
-        "eventIds",
-        "sectionIds",
-        "hiddenEventIds",
-        "hiddenSectionIds",
-      ] as const) {
-        if (new Set(variant[field]).size !== variant[field].length)
-          issue(["variants", i, field], "Powtórzone odwołanie");
-        variant[field].forEach((id, j) =>
-          ref(
-            field === "eventIds" || field === "hiddenEventIds"
-              ? "events"
-              : "sections",
-            id,
-            ["variants", i, field, j],
-          ),
-        );
-      }
-      for (const [hiddenField, orderedField] of [
-        ["hiddenEventIds", "eventIds"],
-        ["hiddenSectionIds", "sectionIds"],
-      ] as const) {
-        variant[hiddenField].forEach((id, j) => {
-          if (!variant[orderedField].includes(id))
-            issue(
-              ["variants", i, hiddenField, j],
-              "Ukryty element musi należeć do kolejności strony",
-            );
-        });
-      }
+      slugs.add(v.slug);
+      v.eventIds.forEach((id, j) =>
+        ref("events", id, ["variants", i, "eventIds", j]),
+      );
+      if (
+        new Set(v.sections.map((p) => p.sectionId)).size !== v.sections.length
+      )
+        issue(["variants", i, "sections"], "Powtórzone odwołanie");
+      v.sections.forEach((p, j) =>
+        ref("sections", p.sectionId, ["variants", i, "sections", j]),
+      );
     });
   });
-/** Convert historical snapshots without changing their stored representation. */
-export function upgradeConfig(input: unknown): unknown {
-  if (
-    !input ||
-    typeof input !== "object" ||
-    !("schemaVersion" in input) ||
-    input.schemaVersion !== 1
-  )
-    return input;
-  const value = input as Record<string, unknown>;
-  const names = z
-    .object({ firstName: text, secondName: text })
-    .strict()
-    .safeParse(value.couple);
-  if (!names.success || "identity" in value) return input;
-  const { couple: _couple, ...rest } = value;
-  void _couple;
-  return {
-    ...rest,
-    schemaVersion: 2,
-    identity: {
-      displayName: names.data.firstName + " & " + names.data.secondName,
-    },
-  };
-}
-export const siteConfigSchema = z.preprocess(
-  upgradeConfig,
-  currentConfigSchema,
-);
+export const siteConfigSchema = currentConfigSchema;
 export const publishedConfigSchema = siteConfigSchema.refine(
   (config) => config.identity.displayName.length > 0,
   {
@@ -406,4 +369,14 @@ export function navigationUrl(venue: SiteConfig["venues"][number]): string {
     venue.navigationUrl ||
     `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address].filter(Boolean).join(", "))}`
   );
+}
+
+export function visibleSections(
+  config: SiteConfig,
+  variant: SiteConfig["variants"][number],
+): Section[] {
+  return variant.sections
+    .filter((p) => p.visible)
+    .map((p) => config.sections.find((s) => s.id === p.sectionId)!)
+    .filter(Boolean);
 }

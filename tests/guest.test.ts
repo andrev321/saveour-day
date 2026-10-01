@@ -2,14 +2,18 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import { guestContent } from "../packages/domain/src/guest.ts";
-import { digest, hashCode, verifyCode } from "../packages/domain/src/access-code.ts";
+import {
+  digest,
+  hashCode,
+  verifyCode,
+} from "../packages/domain/src/access-code.ts";
 
 test("guest projection strips hidden events, sections and unrelated resources", () => {
   const config = createDemo();
   const variant = { ...config.variants[0], id: "limited", slug: "limited" };
   config.variants.push(variant);
-  variant.hiddenEventIds = config.events.slice(1).map((e) => e.id);
-  variant.hiddenSectionIds = config.sections.map((s) => s.id);
+  variant.eventIds = config.events.slice(0, 1).map((e) => e.id);
+  variant.sections = variant.sections.map((p) => ({ ...p, visible: false }));
   const result = guestContent(config, variant.id);
   assert.equal(result.variants.length, 1);
   assert.deepEqual(

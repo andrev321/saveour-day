@@ -16,8 +16,8 @@ import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import * as S from "./PhotoLibrary.styles";
-import { PhotoCropEditor } from "./PhotoCropEditor";
-import type { PhotoDevice } from "./DeviceSelector";
+
+
 
 export function PhotoLibrary({
   config,
@@ -37,7 +37,7 @@ export function PhotoLibrary({
   const { language } = usePanelI18n();
   const copy = mediaUi[language];
   const [selected, setSelected] = useState<string | null>(null);
-  const [device, setDevice] = useState<PhotoDevice>("desktop");
+
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -159,16 +159,6 @@ export function PhotoLibrary({
               <Alert color="orange">{copy.limit}</Alert>
             )}
             {locked && <Alert color="orange">{copy.deleting}</Alert>}
-            {!locked && (
-              <PhotoCropEditor
-                photo={photo}
-                urls={urls}
-                device={device}
-                onDevice={setDevice}
-                disabled={full}
-                onChange={update}
-              />
-            )}
             <TextInput
               label={copy.alt}
               description={copy.altHelp}
@@ -249,7 +239,7 @@ export function PhotoLibrary({
                       },
                       sections: current.sections.map((s) => ({
                         ...s,
-                        mediaIds: s.mediaIds.filter((id) => id !== photo.id),
+                        ...(s.type === "gallery" ? {mediaIds: s.mediaIds.filter((id) => id !== photo.id), crops:Object.fromEntries(Object.entries(s.crops).filter(([id])=>id!==photo.id))} : {}),
                       })),
                     }));
                     setSelected(null);
@@ -337,3 +327,4 @@ export function PhotoLibrary({
     </Stack>
   );
 }
+

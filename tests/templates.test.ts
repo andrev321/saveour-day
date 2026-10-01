@@ -1,4 +1,4 @@
-﻿import { test } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   createTemplate,
@@ -9,17 +9,16 @@ import {
   invitationLocales,
   siteConfigSchema,
   publishedConfigSchema,
-  upgradeConfig,
 } from "../packages/domain/src/index.ts";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import { PGlite } from "@electric-sql/pglite";
-import { readFile } from "node:fs/promises";
+import { readFile, readdir } from "node:fs/promises";
 
 test("all starting templates are independent, localized and structurally valid", () => {
   for (const locale of invitationLocales)
     for (const template of templateIds) {
       const config = createTemplate(template, "example", locale);
-      assert.equal(config.schemaVersion, 2);
+      assert.equal(config.schemaVersion, 3);
       assert.ok(siteConfigSchema.safeParse(config).success);
       assert.equal(
         templateCatalog(locale).find((t) => t.id === template)?.locales.length,
@@ -45,26 +44,11 @@ test("all starting templates are independent, localized and structurally valid",
         assert.equal(config.variants.length, 1);
       }
     }
-  const config = createDemo();
-  const { identity, ...rest } = config;
-  const legacy = {
-    ...rest,
-    schemaVersion: 1,
-    couple: { firstName: "Anna", secondName: "Jan" },
-  };
-  assert.deepEqual(siteConfigSchema.parse(legacy), config);
-  assert.equal(identity.displayName, "Anna & Jan");
-  assert.equal(
-    (upgradeConfig(legacy) as typeof config).identity.displayName,
-    identity.displayName,
-  );
-  assert.equal(
-    siteConfigSchema.safeParse({
-      ...legacy,
-      couple: { firstName: 123, secondName: "Jan" },
-    }).success,
-    false,
-  );
+  for (const schemaVersion of [1, 2])
+    assert.equal(
+      siteConfigSchema.safeParse({ ...createDemo(), schemaVersion }).success,
+      false,
+    );
 });
 
 test("schema migration and template reset preserve releases, RSVP and tenant boundaries", async () => {
@@ -99,7 +83,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
       actor,
       other,
     ]);
-    const old = createDemo(sid);
+    const old = { ...createDemo(sid), schemaVersion: 2 };
     const { identity, ...rest } = old;
     void identity;
     const legacy = {
@@ -140,6 +124,24 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
         )
       ).rows[0].config,
       legacy,
+    );
+    await db.exec(
+      await readFile(
+        "supabase/migrations/" +
+          (await readdir("supabase/migrations")).find((f) =>
+            f.endsWith("_contextual_editor_v3.sql"),
+          ),
+        "utf8",
+      ),
+    );
+    Object.assign(
+      old,
+      (
+        await db.query<{ config: unknown }>(
+          "select config from public.drafts where site_id=$1",
+          [sid],
+        )
+      ).rows[0].config,
     );
     await db.query("select public.publish_content($1,$2,0,$3,'{}',$4)", [
       sid,
@@ -200,8 +202,8 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
         "select public.replace_invitation_draft($1,$2,$3,$4,$5) revision",
         [sid, user, revision, JSON.stringify(config), snapshot],
       );
-    await assert.rejects(reset(2, fresh, other), /FORBIDDEN/);
-    assert.equal((await reset(2)).rows[0].revision, 3);
+    await assert.rejects(reset(3, fresh, other), /FORBIDDEN/);
+    assert.equal((await reset(3)).rows[0].revision, 4);
     await assert.rejects(reset(2), /REVISION_CONFLICT/);
     assert.equal(
       (
@@ -222,18 +224,18 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
     );
     const snapshot = (
       await db.query<{ id: string }>(
-        "select id from public.draft_snapshots where site_id=$1 and revision=2",
+        "select id from public.draft_snapshots where site_id=$1 and revision=3",
         [sid],
       )
     ).rows[0].id;
-    assert.equal((await reset(3, old, actor, snapshot)).rows[0].revision, 4);
-    await assert.rejects(reset(4, fresh, actor, snapshot), /INVALID_SNAPSHOT/);
+    assert.equal((await reset(4, old, actor, snapshot)).rows[0].revision, 5);
+    await assert.rejects(reset(5, fresh, actor, snapshot), /INVALID_SNAPSHOT/);
     const missing = {
       ...fresh,
       variants: fresh.variants.map((v) => ({ ...v, id: "new-main" })),
       defaultVariant: "new-main",
     };
-    await assert.rejects(reset(4, missing), /VARIANT_IN_USE/);
+    await assert.rejects(reset(5, missing), /VARIANT_IN_USE/);
     const blank = createTemplate(
       "blank",
       sid,
@@ -241,17 +243,17 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
       undefined,
       old.defaultVariant,
     );
-    await reset(4, blank);
+    await reset(5, blank);
     await assert.rejects(
-      db.query("select public.publish_content($1,$2,5,$3,'{}')", [
+      db.query("select public.publish_content($1,$2,6,$3,'{}')", [
         sid,
         actor,
         JSON.stringify(blank),
       ]),
       /INVALID_PUBLICATION/,
     );
-    await reset(5, fresh);
-    await db.query("select public.publish_content($1,$2,6,$3,'{}')", [
+    await reset(6, fresh);
+    await db.query("select public.publish_content($1,$2,7,$3,'{}')", [
       sid,
       actor,
       JSON.stringify(fresh),
