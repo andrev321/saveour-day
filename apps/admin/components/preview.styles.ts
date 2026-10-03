@@ -315,12 +315,12 @@ export const PreviewFit = styled(ActionIcon).attrs<{ "data-ui"?: string }>({
     font-size: 11px;
   }
   @container (max-width: 540px) {
-    & span {
+    & [data-ui="preview-fit-label"] {
       display: none;
     }
   }
   @media (max-width: 767px) {
-    & span {
+    & [data-ui="preview-fit-label"] {
       display: none;
     }
   }

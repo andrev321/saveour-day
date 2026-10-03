@@ -44,7 +44,7 @@ export function PreviewToolbar({
           onClick={() => onFit(!fit)}
         >
           <CornersOutIcon size={19} />
-          <span>{fit ? ui.fit : ui.actual}</span>
+          <span data-ui="preview-fit-label">{fit ? ui.fit : ui.actual}</span>
         </S.PreviewFit>
       </Tooltip>
       <Tooltip label={t(expanded ? "closePreview" : "openPreview")}>
