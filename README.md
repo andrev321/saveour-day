@@ -78,5 +78,6 @@ Wymagane są wszystkie migracje Supabase z repozytorium oraz własny SMTP. Zmian
 - [Architektura](docs/ARCHITEKTURA.md) — moduły, model danych, publikacja, uprawnienia i ograniczenia.
 - [Decyzje techniczne](docs/DECYZJE-TECHNICZNE.md) — przyjęte rozwiązania, ich uzasadnienia i konsekwencje.
 - [Wdrożenie platformy](docs/WDROZENIE-PLATFORMY.md) — konfiguracja usług, migracja dawnych realizacji i odbiór stagingu.
+- [Ulepszenia po review produktowym](docs/product-review-improvements.md) — autosave, zarządzanie gośćmi, pytania RSVP, przypomnienia oraz test stagingu.
 - [Self-review publikacji](docs/SELF-REVIEW-PUBLIKACJI.md) — datowany zapis wykonanej kontroli i jej ograniczeń.
 
