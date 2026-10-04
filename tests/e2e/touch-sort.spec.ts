@@ -18,6 +18,11 @@ test("touch handle reorders sections while the rest of the list still scrolls", 
   await expect(
     page.getByRole("button", { name: /Przesuń sekcję/ }),
   ).toHaveCount(0);
+  await handle.evaluate((element) =>
+    element.scrollIntoView({ block: "center" }),
+  );
+  await expect(handle).toBeInViewport();
+  await expect(page.getByTestId("drag-handle-ceremony")).toBeInViewport();
   const source = await handle.boundingBox();
   const target = await page.getByTestId("drag-handle-ceremony").boundingBox();
   expect(source!.width).toBeGreaterThanOrEqual(44);

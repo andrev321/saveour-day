@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { createDemo } from "../../packages/domain/src/demo";
 import { guestContent } from "../../packages/domain/src/guest";
 
+test.use({ locale: "pl-PL" });
+
 // Browser contract tests use a deterministic HTTP fixture. SQL authorization is
 // covered separately in guest-database.test.ts; SMTP is a staging acceptance step.
 test("code gate hides content, then a family submits and corrects RSVP", async ({
@@ -25,6 +27,9 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
   let answers: { guest_id: string; event_id: string; attending: boolean }[] =
     [];
   let conflict = false;
+  await page.addInitScript(() =>
+    Object.defineProperty(navigator, "language", { value: "pl-PL" }),
+  );
   await page.route("**/api/guest/i/test-token", async (route) => {
     if (route.request().method() === "GET")
       return route.fulfill({
@@ -93,7 +98,9 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
   ).toHaveCount(0);
   await page.getByLabel("Kod dostępu").fill("wrong-code");
   await page.getByRole("button", { name: "Otwórz zaproszenie" }).click();
-  await expect(page.getByRole("status")).toContainText("Nieprawidłowy kod");
+  await expect(page.getByRole("main").getByRole("alert")).toContainText(
+    "Nieprawidłowy kod",
+  );
   await page.getByLabel("Kod dostępu").fill("family-2026");
   await page.getByRole("button", { name: "Otwórz zaproszenie" }).click();
   await expect(
@@ -122,7 +129,9 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
   });
   conflict = true;
   await page.getByRole("button", { name: "Zapisz odpowiedzi" }).click();
-  await expect(page.getByRole("status")).toContainText("innej sesji");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "innej sesji" }),
+  ).toContainText("innej sesji");
   await page.getByRole("button", { name: "Odśwież odpowiedzi" }).click();
   await expect(page.getByLabel("Uwagi")).toHaveValue("Dziękujemy!");
   authorized = false;
@@ -181,7 +190,7 @@ test("expired invitations show a recoverable message without content", async ({
     }),
   );
   await page.goto("/i/expired");
-  await expect(page.getByRole("status")).toHaveText(
+  await expect(page.getByRole("main").getByRole("alert")).toHaveText(
     "Zaproszenie jest niedostępne",
   );
   await expect(

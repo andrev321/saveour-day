@@ -1,4 +1,8 @@
 import { rsvpSchema } from "@invitations/domain/guest";
+import {
+  defaultQuestions,
+  guestDetailsSchema,
+} from "@invitations/domain/operations";
 import { z } from "zod";
 import {
   allowed,
@@ -21,12 +25,13 @@ const readContext = (r: Request) => {
 };
 export const GET = endpoint(async (request) => {
   const ctx = await readContext(request);
-  if (!(await allowed(ctx)))
+  if (!(await allowed(ctx))) {
     return {
       mode: ctx.site.access_mode,
       authorized: false,
       requiresLink: ctx.requiresSession && ctx.site.access_mode !== "email",
     };
+  }
   const result = await content(ctx);
   const eventIds = result.config.events.map((e) => e.id);
   const { data: answers, error } =
@@ -49,9 +54,24 @@ export const GET = endpoint(async (request) => {
           guests: ctx.invitation.guests,
           revision: ctx.invitation.rsvp_revision,
           note: ctx.invitation.note,
+          details: Object.fromEntries(
+            ctx.invitation.guests.map((g) => {
+              const detail = ctx.invitation?.guest_details?.[g.id] || {};
+              const questions = ctx.site.rsvp_questions || defaultQuestions;
+              return [
+                g.id,
+                Object.fromEntries(
+                  Object.entries(detail).filter(
+                    ([key]) => questions[key as keyof typeof questions],
+                  ),
+                ),
+              ];
+            }),
+          ),
           answers: answers || [],
         }
       : null,
+    questions: ctx.site.rsvp_questions || defaultQuestions,
     deadline: ctx.site.rsvp_deadline,
     closed:
       !!ctx.site.rsvp_deadline &&
@@ -156,15 +176,21 @@ export const POST = endpoint(async (request) => {
     await grant(ctx);
   const active = await session(ctx);
   if (!active) throw new GuestError(401, "Dostęp wygasł");
-  const p = rsvpSchema.parse(body.payload);
-  const { data, error } = await db().rpc("save_rsvp", {
-    sid: ctx.site.id,
-    iid: ctx.invitation.id,
-    expected_revision: p.revision,
-    answers: p.answers,
-    message: p.note,
-    session_hash: active.token_hash,
-  });
+  const p = rsvpSchema
+    .extend({ details: guestDetailsSchema.optional() })
+    .parse(body.payload);
+  const { data, error } = await db().rpc(
+    p.details ? "save_rsvp_with_details" : "save_rsvp",
+    {
+      sid: ctx.site.id,
+      iid: ctx.invitation.id,
+      expected_revision: p.revision,
+      answers: p.answers,
+      message: p.note,
+      ...(p.details ? { details: p.details } : {}),
+      session_hash: active.token_hash,
+    },
+  );
   check(error);
   return { revision: data };
 });
