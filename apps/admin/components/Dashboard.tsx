@@ -61,7 +61,7 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   if (!response.ok)
     throw new ApiError(
       response.status,
-      result.error || "The operation could not be completed",
+      (result.error || "The operation could not be completed") + (response.status >= 500 && response.headers.get("x-request-id") ? ` [${response.headers.get("x-request-id")}]` : ""),
     );
   return result as T;
 }
@@ -544,3 +544,4 @@ export function Dashboard({
     </S.Page>
   );
 }
+

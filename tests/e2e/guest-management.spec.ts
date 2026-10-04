@@ -112,6 +112,9 @@ test("organizer creates family links, edits recipients and changes access settin
     page.getByRole("paragraph").filter({ hasText: /^family@example\.com$/ }),
   ).toBeVisible();
   await page
+    .getByRole("button", { name: "Publikacja i dostęp", exact: true })
+    .click();
+  await page
     .getByRole("combobox", { name: "Dostęp do całej realizacji" })
     .click();
   await page
@@ -128,5 +131,10 @@ test("organizer creates family links, edits recipients and changes access settin
   await page
     .getByRole("button", { name: "Cofnij dostęp", exact: true })
     .click();
-  await expect(page.getByText("Cofnięte", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Potwierdź", exact: true }).click();
+  await expect(
+    page
+      .getByRole("tabpanel", { name: "Goście" })
+      .getByText("Cofnięte", { exact: true }),
+  ).toBeVisible();
 });

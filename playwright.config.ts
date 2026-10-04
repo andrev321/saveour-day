@@ -4,6 +4,14 @@ const adminUrl = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: false,
+  projects: [
+    { name: "chromium", use: { browserName: "chromium" } },
+    {
+      name: "webkit",
+      use: { browserName: "webkit" },
+      testMatch: /.*(guest|workspace|photo-selectors|product-review)\.spec\.ts/,
+    },
+  ],
   workers: 1,
   timeout: 60000,
   use: {
