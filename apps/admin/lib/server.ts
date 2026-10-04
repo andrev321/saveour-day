@@ -54,7 +54,7 @@ export async function requireSite(siteId: string) {
   const { data, error } = await db
     .from("sites")
     .select(
-      "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline",
+      "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
     )
     .eq("id", siteId)
     .is("deleted_at", null)
@@ -80,18 +80,38 @@ export async function readJson(request: Request) {
 }
 export function api(handler: (request: Request) => Promise<unknown>) {
   return async (request: Request) => {
+    const requestId = crypto.randomUUID();
     try {
       if (!["GET", "HEAD"].includes(request.method)) verifyOrigin(request);
       const result = await handler(request);
       return result instanceof Response
         ? result
         : NextResponse.json(result, {
-            headers: { "Cache-Control": "private, no-store" },
+            headers: {
+              "Cache-Control": "private, no-store",
+              "X-Request-Id": requestId,
+            },
           });
     } catch (error) {
-      if (!(error instanceof HttpError) && !(error instanceof z.ZodError))
+      const status =
+        error instanceof HttpError
+          ? error.status
+          : error instanceof z.ZodError
+            ? 400
+            : 500;
+      if (status >= 500)
         console.error(
-          JSON.stringify({ event: "panel.request.failed", status: 500 }),
+          JSON.stringify({
+            event: "panel.request.failed",
+            requestId,
+            status,
+            method: request.method,
+            route: new URL(request.url).pathname.replace(
+              /\/sites\/[^/]+/,
+              "/sites/:id",
+            ),
+            reason: error instanceof Error ? error.name : "UnknownError",
+          }),
         );
       if (error instanceof z.ZodError)
         return NextResponse.json(
@@ -100,7 +120,10 @@ export function api(handler: (request: Request) => Promise<unknown>) {
               .map((i) => `${i.path.join(".")}: ${i.message}`)
               .join("\n"),
           },
-          { status: 400 },
+          {
+            status: 400,
+            headers: { "Cache-Control": "no-store", "X-Request-Id": requestId },
+          },
         );
       return NextResponse.json(
         {
@@ -111,13 +134,13 @@ export function api(handler: (request: Request) => Promise<unknown>) {
         },
         {
           status: error instanceof HttpError ? error.status : 500,
-          headers: { "Cache-Control": "no-store" },
+          headers: { "Cache-Control": "no-store", "X-Request-Id": requestId },
         },
       );
     }
   };
 }
-export function checkDb(error: { message: string } | null) {
+export function checkDb(error: { message: string; code?: string } | null) {
   if (!error) return;
   if (error.message.includes("REVISION_CONFLICT"))
     throw new HttpError(
@@ -153,5 +176,14 @@ export function checkDb(error: { message: string } | null) {
   for (const [key, message] of Object.entries(messages)) {
     if (error.message.includes(key)) throw new HttpError(409, message);
   }
+  console.error(
+    JSON.stringify({
+      event: "database.operation.failed",
+      code:
+        error.code && /^[A-Z0-9_]{1,32}$/.test(error.code)
+          ? error.code
+          : "unknown",
+    }),
+  );
   throw new HttpError(500, "Nie udało się zapisać danych");
 }
