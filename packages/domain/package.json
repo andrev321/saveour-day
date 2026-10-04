@@ -10,9 +10,12 @@
     "./guest": "./src/guest.ts",
     "./access-code": "./src/access-code.ts",
     "./templates": "./src/templates.ts",
+    "./readiness": "./src/readiness.ts",
+    "./operations": "./src/operations.ts",
     "./editor": "./src/editor.ts"
   },
   "dependencies": {
     "zod": "^4.0.0"
   }
 }
+

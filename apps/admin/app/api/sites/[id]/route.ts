@@ -31,7 +31,7 @@ export const DELETE = api(async (request) => {
 });
 export const GET = api(async (request) => {
   const { db, site } = await requireSite(siteId(request));
-  const [draft, releases, media, snapshots] = await Promise.all([
+  const [draft, releases, media, snapshots, published] = await Promise.all([
     db.from("drafts").select("*").eq("site_id", site.id).single(),
     db
       .from("releases")
@@ -51,8 +51,16 @@ export const GET = api(async (request) => {
       .eq("site_id", site.id)
       .order("created_at", { ascending: false })
       .limit(20),
+    site.published_release_id
+      ? db
+          .from("releases")
+          .select("config")
+          .eq("site_id", site.id)
+          .eq("id", site.published_release_id)
+          .single()
+      : Promise.resolve({ data: null, error: null }),
   ]);
-  for (const result of [draft, releases, media, snapshots])
+  for (const result of [draft, releases, media, snapshots, published])
     checkDb(result.error);
   const urls: Record<string, string> = {};
   const sources = (media.data || [])
@@ -65,6 +73,9 @@ export const GET = api(async (request) => {
   return {
     site,
     draft: { ...draft.data, config: siteConfigSchema.parse(draft.data.config) },
+    publishedConfig: published.data
+      ? siteConfigSchema.parse(published.data.config)
+      : null,
     snapshots: snapshots.data,
     releases: releases.data,
     media: media.data,

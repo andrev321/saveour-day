@@ -66,6 +66,7 @@ export type GuestRecord = {
   rsvp_revision: number;
   note: string;
   label: string;
+  guest_details?: import("@invitations/domain/operations").GuestDetails;
 };
 export type SiteRecord = {
   id: string;
@@ -75,6 +76,7 @@ export type SiteRecord = {
   access_version: number;
   public_variant_id: string;
   rsvp_deadline: string | null;
+  rsvp_questions?: import("@invitations/domain/operations").QuestionSettings;
 };
 export async function context(kind: string, key: string) {
   if (
@@ -99,7 +101,7 @@ export async function context(kind: string, key: string) {
   const result = await client
     .from("sites")
     .select(
-      "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline",
+      "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
     )
     .eq(
       invitation ? "id" : "public_slug",
@@ -219,6 +221,7 @@ export async function unlock(ctx: Context, code: string) {
 }
 export function endpoint(handler: (request: Request) => Promise<unknown>) {
   return async (request: Request) => {
+    const requestId = crypto.randomUUID();
     try {
       if (request.method !== "GET") {
         const expected = new URL(required("SITE_URL")).origin;
@@ -229,13 +232,19 @@ export function endpoint(handler: (request: Request) => Promise<unknown>) {
       return result instanceof Response
         ? result
         : Response.json(result, {
-            headers: { "Cache-Control": "private, no-store" },
+            headers: {
+              "Cache-Control": "private, no-store",
+              "X-Request-Id": requestId,
+            },
           });
     } catch (e) {
       if (!(e instanceof GuestError) || e.status >= 500)
         console.error(
           JSON.stringify({
             event: "guest.request.failed",
+            requestId,
+            method: request.method,
+            reason: e instanceof Error ? e.name : "UnknownError",
             status: e instanceof GuestError ? e.status : 503,
           }),
         );
@@ -255,7 +264,10 @@ export function endpoint(handler: (request: Request) => Promise<unknown>) {
               : e instanceof z.ZodError
                 ? 400
                 : 503,
-          headers: { "Cache-Control": "private, no-store" },
+          headers: {
+            "Cache-Control": "private, no-store",
+            "X-Request-Id": requestId,
+          },
         },
       );
     }

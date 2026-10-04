@@ -1,21 +1,31 @@
 "use client";
 import * as S from "./styles";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
+import {
+  defaultQuestions,
+  type GuestDetails,
+  type QuestionSettings,
+} from "@invitations/domain/operations";
+import type { InvitationLocale } from "@invitations/domain";
 import { BrandLogo } from "@invitations/ui/brand";
+import { guestCopy, guestError } from "../lib/guest-copy";
 type Reply = {
   authorized: boolean;
   mode: string;
+  locale?: InvitationLocale;
   requiresLink?: boolean;
   config?: GuestContent;
   deadline?: string | null;
   closed?: boolean;
+  questions?: QuestionSettings;
   invitation?: {
     label: string;
     guests: { id: string; name: string }[];
     revision: number;
     note: string;
+    details?: GuestDetails;
     answers: { guest_id: string; event_id: string; attending: boolean }[];
   } | null;
 };
@@ -28,18 +38,36 @@ export function GuestPage({
 }) {
   const endpoint = `/api/guest/${kind}/${encodeURIComponent(accessKey)}`;
   const [data, setData] = useState<Reply | null>(null),
-    [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
+    [success, setSuccess] = useState(false),
     [busy, setBusy] = useState(false);
   const [email, setEmail] = useState(""),
     [code, setCode] = useState(""),
     [otp, setOtp] = useState(""),
-    [sent, setSent] = useState(false);
+    [sent, setSent] = useState(false),
+    [cooldown, setCooldown] = useState(0);
   const [links, setLinks] = useState<{ href: string; label: string }[]>([]);
   const [note, setNote] = useState(""),
-    [answers, setAnswers] = useState<Record<string, string>>({});
+    [answers, setAnswers] = useState<Record<string, string>>({}),
+    [details, setDetails] = useState<GuestDetails>({}),
+    [refreshConfirm, setRefreshConfirm] = useState(false);
+  const [browserLocale, setBrowserLocale] = useState<InvitationLocale>("pl-PL");
+  useEffect(() => {
+    const language = navigator.language.toLowerCase();
+    setBrowserLocale(
+      language.startsWith("de")
+        ? "de-DE"
+        : language.startsWith("en")
+          ? "en-GB"
+          : "pl-PL",
+    );
+  }, []);
+  const locale = data?.config?.locale || data?.locale || browserLocale;
+  const copy = guestCopy[locale];
   function accept(next: Reply) {
     setData(next);
     setNote(next.invitation?.note || "");
+    setDetails(next.invitation?.details || {});
     setAnswers(
       Object.fromEntries(
         (next.invitation?.answers || []).map((a) => [
@@ -58,22 +86,34 @@ export function GuestPage({
         accept(result);
       })
       .catch((e) => {
-        if (!controller.signal.aborted) setMessage(e.message);
+        if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
   }, [endpoint]);
+  useEffect(() => {
+    if (!cooldown) return;
+    const timer = window.setTimeout(
+      () => setCooldown((old) => Math.max(0, old - 1)),
+      1000,
+    );
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
   async function reload() {
     const r = await fetch(endpoint, { cache: "no-store" });
     const result = await r.json();
     if (!r.ok) {
-      setData(null);
+      if ([401, 403, 404].includes(r.status)) setData(null);
       throw new Error(result.error);
     }
     accept(result);
+    setError("");
+    setRefreshConfirm(false);
   }
   async function action(action: string, payload: unknown) {
+    if (busy) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setSuccess(false);
     try {
       const r = await fetch(endpoint, {
         method: "POST",
@@ -94,34 +134,62 @@ export function GuestPage({
       }
       if (action === "otp-send") {
         setSent(true);
-        setMessage(result.message);
+        setCooldown(60);
       } else if (result.links) setLinks(result.links);
       else {
         await reload();
-        if (action === "rsvp")
-          setMessage("Dziękujemy! Odpowiedzi zostały zapisane.");
+        if (action === "rsvp") setSuccess(true);
       }
     } catch (e) {
-      setMessage((e as Error).message);
+      setError((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
+  async function refresh() {
+    setBusy(true);
+    try {
+      await reload();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const savedAnswers = Object.fromEntries(
+    (data?.invitation?.answers || []).map((a) => [
+      `${a.guest_id}:${a.event_id}`,
+      String(a.attending),
+    ]),
+  );
+  const dirty =
+    note !== (data?.invitation?.note || "") ||
+    JSON.stringify(answers) !== JSON.stringify(savedAnswers) ||
+    JSON.stringify(details) !== JSON.stringify(data?.invitation?.details || {});
+  useEffect(() => {
+    if (!dirty) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
   if (!data?.authorized)
     return (
-      <S.GuestCard >
+      <S.GuestCard lang={locale.slice(0, 2)}>
         <BrandLogo animated height={52} />
-        <h1>Twoje zaproszenie</h1>
-        {message && <p role="status">{message}</p>}
-        {!data && !message && <p>Wczytywanie…</p>}
+        <h1>{copy.invitation}</h1>
+        {error && <p role="alert">{guestError(error, copy)}</p>}
+        {!data && !error && <p>{copy.loading}</p>}
+        {!data && error && (
+          <button disabled={busy} onClick={() => void refresh()}>
+            {copy.retry}
+          </button>
+        )}
         {links.map((l) => (
-          <S.GuestLink  key={l.href} href={l.href}>
+          <S.GuestLink key={l.href} href={l.href}>
             {l.label}
           </S.GuestLink>
         ))}
-        {data?.requiresLink && (
-          <p>Otwórz oryginalny link otrzymany od organizatora.</p>
-        )}
+        {data?.requiresLink && <p>{copy.original}</p>}
         {data?.mode === "code" && !data.requiresLink && (
           <form
             onSubmit={(e) => {
@@ -130,7 +198,7 @@ export function GuestPage({
             }}
           >
             <label>
-              Kod dostępu
+              {copy.code}
               <input
                 type="password"
                 autoComplete="current-password"
@@ -140,7 +208,7 @@ export function GuestPage({
                 maxLength={128}
               />
             </label>
-            <button disabled={busy}>Otwórz zaproszenie</button>
+            <button disabled={busy}>{copy.open}</button>
           </form>
         )}
         {data?.mode === "email" && !links.length && (
@@ -154,52 +222,100 @@ export function GuestPage({
             }}
           >
             <label>
-              Adres e-mail
+              {copy.email}
               <input
                 type="email"
                 autoComplete="email"
                 value={email}
+                disabled={busy}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setSent(false);
+                  setOtp("");
                 }}
                 required
               />
             </label>
             {sent && (
-              <label>
-                Kod z wiadomości e-mail
-                <input
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  pattern="[0-9]{6,10}"
-                />
-              </label>
+              <>
+                <p role="status">{copy.sent}</p>
+                <label>
+                  {copy.otp}
+                  <input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    required
+                    pattern="[0-9]{6,10}"
+                    maxLength={10}
+                  />
+                </label>
+              </>
             )}
-            <button disabled={busy}>
-              {sent ? "Potwierdź dostęp" : "Wyślij kod"}
+            <button disabled={busy || (!sent && cooldown > 0)}>
+              {sent ? copy.verify : copy.send}
             </button>
             {sent && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void action("otp-send", { email })}
-              >
-                Wyślij ponownie
-              </button>
+              <>
+                <button
+                  type="button"
+                  disabled={busy || cooldown > 0}
+                  onClick={() => void action("otp-send", { email })}
+                >
+                  {copy.resend}
+                  {cooldown ? ` (${cooldown}s)` : ""}
+                </button>
+                <p>{copy.resendHelp}</p>
+              </>
             )}
           </form>
         )}
-        {data?.mode === "public" && (
-          <p>Otwórz oryginalny link otrzymany od organizatora.</p>
-        )}
+        {data?.mode === "public" && <p>{copy.original}</p>}
       </S.GuestCard>
     );
+  const questions = data.questions || defaultQuestions;
+  const theme = data.config?.design;
+  const styles = {
+    "--guest-paper": theme?.paper,
+    "--guest-surface": theme?.surface,
+    "--guest-ink": theme?.ink,
+    "--guest-accent": theme?.accent,
+  } as CSSProperties;
+  const missing =
+    data.invitation?.guests.reduce(
+      (sum, g) =>
+        sum +
+        (data.config?.events.filter((e) => !answers[`${g.id}:${e.id}`])
+          .length || 0),
+      0,
+    ) || 0;
+  function detailValue(id: string, key: "lodging" | "transport") {
+    const value = details[id]?.[key];
+    return value === undefined ? "" : String(value);
+  }
+  const selectedDetails = Object.fromEntries(
+    data.invitation?.guests.map((g) => [
+      g.id,
+      Object.fromEntries(
+        Object.entries(details[g.id] || {}).filter(
+          ([key]) => questions[key as keyof QuestionSettings],
+        ),
+      ),
+    ]) || [],
+  );
   return (
-    <>
+    <div lang={locale.slice(0, 2)} style={styles}>
+      {(data.invitation || data.config?.events.some((e) => e.date)) && (
+        <S.GuestActions aria-label={copy.invitation}>
+          {data.invitation && <a href="#rsvp">{copy.rsvp}</a>}
+          {data.config?.events.some((e) => e.date) && (
+            <a href={`${endpoint}/calendar`} download="zaproszenie.ics">
+              {copy.calendar}
+            </a>
+          )}
+        </S.GuestActions>
+      )}
       <Invitation
         config={data.config!}
         resolveMedia={(src) =>
@@ -207,23 +323,51 @@ export function GuestPage({
         }
       />
       {data.invitation && (
-        <S.GuestCard as="section">
-          <h2>Potwierdź obecność</h2>
+        <S.GuestCard as="section" id="rsvp">
+          <h2>{copy.rsvp}</h2>
           <p>{data.invitation.label}</p>
           {data.deadline && (
             <p>
-              Termin odpowiedzi:{" "}
-              {new Date(data.deadline).toLocaleString("pl-PL", {
+              {copy.deadline}:{" "}
+              {new Intl.DateTimeFormat(locale, {
+                dateStyle: "long",
+                timeStyle: "short",
                 timeZone: "Europe/Warsaw",
-              })}{" "}
-              (Europe/Warsaw)
+              }).format(new Date(data.deadline))}{" "}
+              ({copy.timezone})
             </p>
           )}
-          {data.closed && (
-            <p>
-              Termin odpowiedzi minął. W sprawie zmian skontaktuj się z
-              organizatorem.
-            </p>
+          {data.closed && <p role="status">{copy.closed}</p>}
+          {success && (
+            <S.ResponseSummary role="status">
+              <h3>{copy.saved}</h3>
+              <p>{copy.summary}</p>
+              {data.invitation.guests.map((g) => (
+                <div key={g.id}>
+                  <strong>{g.name}</strong>
+                  <ul>
+                    {data.config!.events.map((e) => {
+                      const value = savedAnswers[`${g.id}:${e.id}`];
+                      return (
+                        <li key={e.id}>
+                          {e.title}:{" "}
+                          {value === "true"
+                            ? copy.yes
+                            : value === "false"
+                              ? copy.no
+                              : copy.missing}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+              {data.invitation.note && (
+                <p>
+                  {copy.notes}: {data.invitation.note}
+                </p>
+              )}
+            </S.ResponseSummary>
           )}
           <form
             onSubmit={(e) => {
@@ -246,13 +390,16 @@ export function GuestPage({
                 revision: data.invitation!.revision,
                 note,
                 answers: values,
+                ...(Object.values(questions).some(Boolean)
+                  ? { details: selectedDetails }
+                  : {}),
               });
             }}
           >
-            {!data.config!.events.length && (
+            {!data.config!.events.length && <p>{copy.noEvents}</p>}
+            {!!data.config!.events.length && (
               <p>
-                Organizator nie dodał jeszcze wydarzeń wymagających
-                potwierdzenia obecności.
+                {copy.pending}: {missing}
               </p>
             )}
             {!!data.config!.events.length &&
@@ -264,46 +411,110 @@ export function GuestPage({
                       {event.title}
                       <select
                         value={answers[`${g.id}:${event.id}`] || ""}
-                        onChange={(e) =>
-                          setAnswers({
-                            ...answers,
-                            [`${g.id}:${event.id}`]: e.target.value,
-                          })
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setAnswers((old) => ({
+                            ...old,
+                            [`${g.id}:${event.id}`]: value,
+                          }));
+                          setSuccess(false);
+                        }}
                       >
                         <option value="" disabled>
-                          Brak odpowiedzi
+                          {copy.missing}
                         </option>
-                        <option value="true">Będę</option>
-                        <option value="false">Nie będę</option>
+                        <option value="true">{copy.yes}</option>
+                        <option value="false">{copy.no}</option>
                       </select>
                     </label>
                   ))}
+                  {questions.diet && (
+                    <label>
+                      {copy.diet}
+                      <input
+                        maxLength={300}
+                        value={details[g.id]?.diet || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setDetails((old) => ({
+                            ...old,
+                            [g.id]: { ...old[g.id], diet: value },
+                          }));
+                        }}
+                      />
+                    </label>
+                  )}
+                  {(["lodging", "transport"] as const)
+                    .filter((key) => questions[key])
+                    .map((key) => (
+                      <label key={key}>
+                        {copy[key]}
+                        <select
+                          value={detailValue(g.id, key)}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setDetails((old) => ({
+                              ...old,
+                              [g.id]: { ...old[g.id], [key]: value === "true" },
+                            }));
+                          }}
+                        >
+                          <option value="" disabled>
+                            {copy.choose}
+                          </option>
+                          <option value="true">{copy.yesShort}</option>
+                          <option value="false">{copy.noShort}</option>
+                        </select>
+                      </label>
+                    ))}
                 </fieldset>
               ))}
+            {Object.values(questions).some(Boolean) && (
+              <p>{copy.privateInfo}</p>
+            )}
             <label>
-              Uwagi
+              {copy.notes}
               <textarea
                 maxLength={2000}
                 value={note}
                 disabled={busy || data.closed}
-                onChange={(e) => setNote(e.target.value)}
+                onChange={(e) => {
+                  setNote(e.target.value);
+                  setSuccess(false);
+                }}
               />
             </label>
-            <button disabled={busy || data.closed}>Zapisz odpowiedzi</button>
+            <button
+              disabled={busy || data.closed || !data.config!.events.length}
+            >
+              {copy.save}
+            </button>
             <button
               type="button"
               disabled={busy}
-              onClick={() => {
-                void reload().catch((e) => setMessage(e.message));
-              }}
+              onClick={() => (dirty ? setRefreshConfirm(true) : void refresh())}
             >
-              Odśwież odpowiedzi
+              {copy.refresh}
             </button>
+            {refreshConfirm && (
+              <div role="alert">
+                <p>{copy.refreshWarning}</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void refresh()}
+                >
+                  {copy.discard}
+                </button>
+                <button type="button" onClick={() => setRefreshConfirm(false)}>
+                  {copy.cancel}
+                </button>
+              </div>
+            )}
           </form>
-          {message && <p role="status">{message}</p>}
+          {error && <p role="alert">{guestError(error, copy)}</p>}
         </S.GuestCard>
       )}
-    </>
+    </div>
   );
 }

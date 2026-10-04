@@ -29,10 +29,12 @@ export function QrCodeCard({
   url,
   published,
   onMessage,
+  title,
 }: {
   url: string;
   published: boolean;
   onMessage: (message: string) => void;
+  title?: string;
 }) {
   const container = useRef<HTMLDivElement>(null);
   const [dotStyle, setDotStyle] = useState<DotType>("rounded");
@@ -87,9 +89,9 @@ export function QrCodeCard({
     <Card withBorder>
       <Stack>
         <div>
-          <Title order={3}>Kod QR strony</Title>
+          <Title order={3}>{title || "Kod QR strony"}</Title>
           <Text size="sm" c="dimmed">
-            Kod powstaje lokalnie w przeglądarce i prowadzi do publicznego
+            Kod powstaje lokalnie w przeglądarce i prowadzi do wskazanego
             adresu zaproszenia.
           </Text>
         </div>

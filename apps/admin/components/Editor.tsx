@@ -22,6 +22,7 @@ import {
   Text,
   Title,
   Tooltip,
+  Checkbox,
 } from "@mantine/core";
 import {
   FloppyDiskIcon as IconDeviceFloppy,
@@ -29,6 +30,8 @@ import {
   PaperPlaneTiltIcon as IconRocket,
   UploadSimpleIcon as IconUpload,
   SquaresFourIcon,
+  ArrowCounterClockwiseIcon,
+  ArrowClockwiseIcon,
 } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import * as S from "./preview.styles";
@@ -40,7 +43,11 @@ import { templateUi } from "../lib/template-i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import { Fields } from "./ConfigFields";
 import { MediaUrlsContext } from "./PhotoReference";
-import { apiFetch } from "./Dashboard";
+import { useDraft } from "../lib/use-draft";
+import { recoverDraft } from "../lib/draft-recovery";
+import { mergeDraft } from "../lib/draft-merge";
+import { publicationWarnings } from "@invitations/domain/readiness";
+import { ApiError, apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
 import { DismissibleAlert } from "./DismissibleAlert";
 import { GuestManagement } from "./GuestManagement";
@@ -54,6 +61,24 @@ import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
 type RevisionResponse = { revision: number };
+const draftFieldLabelKeys: Partial<Record<keyof SiteConfig, string>> = {
+  identity: "identity",
+  hero: "hero",
+  events: "events",
+  contacts: "contacts",
+  venues: "venues",
+  media: "media",
+  variants: "pages",
+  sections: "structure",
+  theme: "theme",
+  design: "colors",
+  appearance: "appearance",
+  copy: "labelsFooter",
+  metadata: "settings",
+  locale: "language",
+  defaultVariant: "mainPage",
+};
+
 export type EditorData = {
   site: {
     id: string;
@@ -66,6 +91,7 @@ export type EditorData = {
   snapshots?: { id: string; created_at: string; revision: number }[];
   media: { id: string; manifest: MediaAsset; status?: string }[];
   urls: Record<string, string>;
+  publishedConfig?: SiteConfig | null;
 };
 export function Editor({
   initial,
@@ -88,9 +114,51 @@ export function Editor({
     key: "invitations-view-v1-fit",
     defaultValue: true,
   });
-  const [data, setData] = useState(initial),
-    [config, setConfig] = useState(initial.draft.config),
-    [saved, setSaved] = useState(JSON.stringify(initial.draft.config));
+  const [data, setData] = useState(initial);
+  const { config, setConfig, reset, current, undo, redo, canUndo, canRedo } =
+    useDraft(initial.draft.config);
+  const [saved, setSaved] = useState(JSON.stringify(initial.draft.config));
+  const [saveError, setSaveError] = useState("");
+  const [recovery, setRecovery] = useState<SiteConfig | null>(null);
+  const [conflict, setConflict] = useState<{
+    remote: EditorData;
+    merged: SiteConfig;
+    fields: (keyof SiteConfig)[];
+  } | null>(null);
+  const [remoteFields, setRemoteFields] = useState<string[]>([]);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+  const saving = useRef(false);
+  const localKey = `invitation-draft-v1:${initial.site.id}`;
+  const serverDraft = useRef(initial.draft);
+  const label = (pl: string, en: string, de: string) =>
+    language === "pl" ? pl : language === "en" ? en : de;
+  useEffect(() => {
+    let alive = true;
+    Promise.resolve().then(() => {
+      if (!alive) return;
+      try {
+        const raw = sessionStorage.getItem(localKey);
+        if (raw) {
+          const cache = JSON.parse(raw);
+          const recovered = recoverDraft(cache.config);
+          if (
+            recovered &&
+            recovered.id === initial.site.id &&
+            cache.expires > Date.now() &&
+            JSON.stringify(recovered) !== JSON.stringify(initial.draft.config)
+          )
+            setRecovery(recovered);
+          else sessionStorage.removeItem(localKey);
+        }
+      } catch {
+        /* Saving still works when storage is unavailable. */
+      }
+      setRecoveryReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [localKey, initial]);
   const [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
     [variant, setVariant] = useState(config.defaultVariant),
@@ -108,6 +176,24 @@ export function Editor({
     expandedFrame = useRef<HTMLIFrameElement>(null),
     demoSnapshots = useRef(new Map<string, SiteConfig>());
   const dirty = JSON.stringify(config) !== saved;
+  const warnings = publicationWarnings(config, language);
+  const publishedConfig = data.publishedConfig;
+  const unpublishedChanges =
+    !publishedConfig ||
+    JSON.stringify(config) !== JSON.stringify(publishedConfig);
+  useEffect(() => {
+    if (!recoveryReady || recovery) return;
+    try {
+      if (dirty)
+        sessionStorage.setItem(
+          localKey,
+          JSON.stringify({ config, expires: Date.now() + 7 * 86400_000 }),
+        );
+      else sessionStorage.removeItem(localKey);
+    } catch {
+      /* Restricted browsers may disable tab storage. */
+    }
+  }, [config, dirty, localKey, recoveryReady, recovery]);
   const validation = siteConfigSchema.safeParse(config);
   const readyToPublish = publishedConfigSchema.safeParse(config).success;
   const preview = useRef({ config, variant: currentVariant, urls: data.urls });
@@ -232,7 +318,8 @@ export function Editor({
         });
         await reload();
       }
-      setConfig(result.config);
+      reset(result.config);
+      serverDraft.current = result;
       setSaved(JSON.stringify(result.config));
       setVariant(result.config.defaultVariant);
       setTemplateConfirm(false);
@@ -250,6 +337,7 @@ export function Editor({
     setData(next);
   }
   async function task(fn: () => Promise<void>) {
+    if (saving.current) return;
     setBusy(true);
     setMessage("");
     try {
@@ -260,28 +348,106 @@ export function Editor({
       setBusy(false);
     }
   }
-  async function save() {
-    await task(async () => {
-      const parsed = siteConfigSchema.parse(config);
+  async function save(automatic = false) {
+    if (saving.current || conflict || recovery) return;
+    saving.current = true;
+    setBusy(true);
+    setSaveError("");
+    const sent = current.current;
+    const base = serverDraft.current;
+    try {
+      const parsed = siteConfigSchema.parse(sent);
       const result = demo
-        ? { revision: data.draft.revision + 1 }
+        ? { revision: base.revision + 1 }
         : await apiFetch<RevisionResponse>(endpoint, {
             method: "PATCH",
-            body: JSON.stringify({
-              revision: data.draft.revision,
-              config: parsed,
-            }),
+            body: JSON.stringify({ revision: base.revision, config: parsed }),
           });
-      setConfig(parsed);
-      setSaved(JSON.stringify(parsed));
-      setData({
-        ...data,
-        draft: { config: parsed, revision: result.revision },
-      });
-      setMessage(t("savedDraft"));
+      serverDraft.current = { config: parsed, revision: result.revision };
+      // Acknowledging a save must not create an undo step or replace newer edits.
+      setSaved(JSON.stringify(sent));
+      setData((previous) => ({ ...previous, draft: serverDraft.current }));
+      if (!automatic)
+        setMessage(
+          label(
+            "Szkic zapisany. Publikacja wymaga osobnego zatwierdzenia.",
+            "Draft saved. Publish separately to update the invitation.",
+            "Entwurf gespeichert. Zum Aktualisieren bitte veröffentlichen.",
+          ),
+        );
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 409 && !demo) {
+        try {
+          const remote = await apiFetch<EditorData>(endpoint);
+          const merged = mergeDraft(
+            base.config,
+            current.current,
+            remote.draft.config,
+          );
+          setRemoteFields([]);
+          setConflict({
+            remote,
+            merged: merged.config,
+            fields: merged.conflicts,
+          });
+        } catch (readError) {
+          setSaveError((readError as Error).message);
+        }
+      } else setSaveError((error as Error).message);
+    } finally {
+      saving.current = false;
+      setBusy(false);
+    }
+  }
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    if (
+      !dirty ||
+      busy ||
+      !validation.success ||
+      saveError ||
+      conflict ||
+      recovery ||
+      !recoveryReady ||
+      demo
+    )
+      return;
+    const timer = window.setTimeout(() => void saveRef.current(true), 1800);
+    return () => window.clearTimeout(timer);
+  }, [
+    dirty,
+    busy,
+    validation.success,
+    saveError,
+    conflict,
+    recovery,
+    recoveryReady,
+    demo,
+    config,
+  ]);
+  function exportDraft() {
+    const blob = new Blob([JSON.stringify(current.current, null, 2)], {
+      type: "application/json",
     });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${config.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
   async function publish() {
+    if (dirty || saving.current) {
+      setMessage(
+        label(
+          "Poczekaj na zapis szkicu przed publikacją.",
+          "Wait for the draft to save before publishing.",
+          "Vor Veröffentlichung auf Speicherung warten.",
+        ),
+      );
+      return;
+    }
     const requested = confirm;
     setConfirm(null);
     await task(async () => {
@@ -390,14 +556,18 @@ export function Editor({
       }
       status={
         <Badge color={dirty ? "orange" : "brand"}>
-          {dirty ? t("unsaved") : `${t("draft")} #${data.draft.revision}`}
+          {busy
+            ? label("Zapisywanie…", "Saving…", "Speichern…")
+            : dirty
+              ? t("unsaved")
+              : label("Szkic zapisany", "Draft saved", "Entwurf gespeichert")}
         </Badge>
       }
       save={
         <>
           {" "}
           <Button
-            onClick={save}
+            onClick={() => void save()}
             loading={busy}
             disabled={!dirty || !validation.success}
             leftSection={<IconDeviceFloppy size={16} />}
@@ -434,6 +604,24 @@ export function Editor({
           >
             {t("export")}
           </Button>
+          <Tooltip label={label("Cofnij", "Undo", "Rückgängig")}>
+            <ActionIcon
+              aria-label={label("Cofnij", "Undo", "Rückgängig")}
+              disabled={!canUndo}
+              onClick={undo}
+            >
+              <ArrowCounterClockwiseIcon size={20} />
+            </ActionIcon>
+          </Tooltip>
+          <Tooltip label={label("Ponów", "Redo", "Wiederholen")}>
+            <ActionIcon
+              aria-label={label("Ponów", "Redo", "Wiederholen")}
+              disabled={!canRedo}
+              onClick={redo}
+            >
+              <ArrowClockwiseIcon size={20} />
+            </ActionIcon>
+          </Tooltip>
           <LanguageSelect />
         </>
       }
@@ -449,6 +637,77 @@ export function Editor({
                   : "Änderungen bleiben nur bis zum Aktualisieren der Seite erhalten. Die Veröffentlichung wird simuliert und stellt keine Verbindung zu Vercel her."}
             </DismissibleAlert>
           ) : null}
+          <Text size="sm" c="dimmed">
+            {data.site.published_release_id
+              ? unpublishedChanges
+                ? label(
+                    "Goście widzą poprzednią publikację. Masz zmiany w szkicu.",
+                    "Guests see the previous publication. Your draft has changes.",
+                    "Gäste sehen die vorherige Veröffentlichung. Der Entwurf enthält Änderungen.",
+                  )
+                : label(
+                    "Goście widzą tę wersję zaproszenia.",
+                    "Guests see this version.",
+                    "Gäste sehen diese Version.",
+                  )
+              : label(
+                  "Zaproszenie nie jest jeszcze opublikowane.",
+                  "The invitation is not published yet.",
+                  "Die Einladung ist noch nicht veröffentlicht.",
+                )}
+          </Text>
+          {saveError && (
+            <Alert color="red" role="alert">
+              <Text>{saveError}</Text>
+              <Button mt="sm" onClick={() => void save()}>
+                {label("Ponów zapis", "Retry save", "Erneut speichern")}
+              </Button>
+            </Alert>
+          )}
+          {!data.site.published_release_id && (
+            <Card withBorder>
+              <Text fw={600}>
+                {label(
+                  "Przygotuj zaproszenie w czterech krokach",
+                  "Prepare your invitation in four steps",
+                  "Einladung in vier Schritten vorbereiten",
+                )}
+              </Text>
+              <Group mt="xs">
+                {[
+                  ["content", "1. Dane i miejsca"],
+                  ["appearance", "2. Wygląd"],
+                  ["guests", "3. Goście i dostęp"],
+                ].map(([panel, text]) => (
+                  <Button
+                    key={panel}
+                    size="xs"
+                    variant="light"
+                    onClick={() => setActivePanel(panel)}
+                  >
+                    {language === "pl"
+                      ? text
+                      : panel === "content"
+                        ? label("", "1. Details & venues", "1. Details & Orte")
+                        : panel === "appearance"
+                          ? label("", "2. Appearance", "2. Design")
+                          : label(
+                              "",
+                              "3. Guests & access",
+                              "3. Gäste & Zugang",
+                            )}
+                  </Button>
+                ))}
+                <Text size="sm">
+                  {label(
+                    "4. Sprawdź i opublikuj",
+                    "4. Review & publish",
+                    "4. Prüfen & veröffentlichen",
+                  )}
+                </Text>
+              </Group>
+            </Card>
+          )}
           {message ? (
             <DismissibleAlert
               key={message}
@@ -472,9 +731,40 @@ export function Editor({
               role="alert"
             >
               {validation.error.issues.slice(0, 8).map((i, index) => (
-                <Text size="sm" key={index}>
+                <Button
+                  key={index}
+                  display="block"
+                  variant="subtle"
+                  size="xs"
+                  onClick={() => {
+                    const root = String(i.path[0]);
+                    setActivePanel(
+                      ["design", "theme", "appearance"].includes(root)
+                        ? "appearance"
+                        : ["metadata", "copy"].includes(root)
+                          ? "settings"
+                          : "content",
+                    );
+                    const section =
+                      root === "sections"
+                        ? config.sections[Number(i.path[1])]?.id
+                        : root === "hero" || root === "identity"
+                          ? "hero"
+                          : config.sections.find((s) =>
+                              root === "events"
+                                ? s.type === "timeline"
+                                : root === "venues"
+                                  ? s.type === "venue"
+                                  : root === "contacts"
+                                    ? s.type === "contact"
+                                    : false,
+                            )?.id;
+                    setSelectedSection(section || null);
+                    setEditRequest((n) => n + 1);
+                  }}
+                >
                   {i.message}
-                </Text>
+                </Button>
               ))}
             </DismissibleAlert>
           ) : null}
@@ -506,6 +796,123 @@ export function Editor({
       }
       dialogs={
         <>
+          <Modal
+            opened={!!recovery}
+            onClose={() => {}}
+            title={label(
+              "Odzyskaj niezapisany szkic",
+              "Recover unsaved draft",
+              "Ungespeicherten Entwurf wiederherstellen",
+            )}
+            closeOnClickOutside={false}
+            closeOnEscape={false}
+            withCloseButton={false}
+          >
+            <Stack>
+              <Text>
+                {label(
+                  "Znaleziono zmiany z poprzedniej sesji tej karty. Możesz je odzyskać lub zachować wersję zapisaną na serwerze.",
+                  "This tab has changes from a previous session. Recover them or keep the server version.",
+                  "Dieser Tab enthält Änderungen aus einer früheren Sitzung. Wiederherstellen oder Serverversion behalten.",
+                )}
+              </Text>
+              <Button
+                onClick={() => {
+                  if (recovery) setConfig(recovery);
+                  setRecovery(null);
+                }}
+              >
+                {label(
+                  "Odzyskaj szkic",
+                  "Recover draft",
+                  "Entwurf wiederherstellen",
+                )}
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => {
+                  try {
+                    sessionStorage.removeItem(localKey);
+                  } catch {
+                    /* Optional storage. */
+                  }
+                  setRecovery(null);
+                }}
+              >
+                {label(
+                  "Zachowaj wersję serwera",
+                  "Keep server version",
+                  "Serverversion behalten",
+                )}
+              </Button>
+            </Stack>
+          </Modal>
+          <Modal
+            opened={!!conflict}
+            onClose={() => {}}
+            title={label(
+              "Połącz zmiany z innej sesji",
+              "Merge changes from another session",
+              "Änderungen zusammenführen",
+            )}
+            closeOnClickOutside={false}
+            closeOnEscape={false}
+            withCloseButton={false}
+          >
+            <Stack>
+              <Text>
+                {label(
+                  "Twoje zmiany są zachowane. Niezależne zmiany zostaną połączone. Dla konfliktów wybierz wersję z serwera; niezaznaczone pola zachowają Twoją wersję.",
+                  "Your edits are preserved. Independent changes will be merged. Select conflicting fields to keep the server version; unselected fields keep your edits.",
+                  "Ihre Änderungen bleiben erhalten. Unabhängige Änderungen werden zusammengeführt. Ausgewählte Konfliktfelder übernehmen die Serverversion.",
+                )}
+              </Text>
+              {conflict?.fields.map((key) => (
+                <Checkbox
+                  key={key}
+                  label={`${t(draftFieldLabelKeys[key] || "settings")} — ${label("użyj wersji serwera", "use server version", "Serverversion verwenden")}`}
+                  checked={remoteFields.includes(key)}
+                  onChange={(e) =>
+                    setRemoteFields((previous) =>
+                      e.currentTarget.checked
+                        ? [...previous, key]
+                        : previous.filter((v) => v !== key),
+                    )
+                  }
+                />
+              ))}
+              <Button variant="default" onClick={exportDraft}>
+                {label(
+                  "Pobierz kopię moich zmian",
+                  "Download my edits",
+                  "Eigene Änderungen herunterladen",
+                )}
+              </Button>
+              <Button
+                onClick={() => {
+                  if (!conflict) return;
+                  const merged = { ...conflict.merged };
+                  for (const key of remoteFields)
+                    Object.assign(merged, {
+                      [key]:
+                        conflict.remote.draft.config[key as keyof SiteConfig],
+                    });
+                  serverDraft.current = conflict.remote.draft;
+                  setData(conflict.remote);
+                  setSaved(JSON.stringify(conflict.remote.draft.config));
+                  setConfig(merged);
+                  setConflict(null);
+                  setSaveError("");
+                }}
+              >
+                {label(
+                  "Zastosuj połączenie",
+                  "Apply merge",
+                  "Zusammenführung übernehmen",
+                )}
+              </Button>
+            </Stack>
+          </Modal>
           <TemplateDialog
             opened={templateConfirm && !snapshotId}
             onClose={() => setTemplateConfirm(false)}
@@ -560,7 +967,53 @@ export function Editor({
           >
             <Stack>
               <Text>{t("publishWarning")}</Text>
-              <Button onClick={publish}>
+              {confirm === "publish" && (
+                <>
+                  <Text fw={600}>
+                    {label(
+                      "Sprawdź przed publikacją",
+                      "Check before publishing",
+                      "Vor Veröffentlichung prüfen",
+                    )}
+                  </Text>
+                  {warnings.length ? (
+                    warnings.map((warning, index) => (
+                      <Alert key={index} color="orange">
+                        <Text>{warning.message}</Text>
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          onClick={() => {
+                            setConfirm(null);
+                            setActivePanel(warning.panel);
+                            setSelectedSection(warning.section);
+                            setEditRequest((n) => n + 1);
+                          }}
+                        >
+                          {label("Przejdź do poprawy", "Review", "Prüfen")}
+                        </Button>
+                      </Alert>
+                    ))
+                  ) : (
+                    <Text>
+                      {label(
+                        "Treść przeszła podstawową kontrolę.",
+                        "Content passed the basic checks.",
+                        "Grundprüfung bestanden.",
+                      )}
+                    </Text>
+                  )}
+                  <Text size="sm">
+                    {label(
+                      "Sprawdź też termin RSVP i dostęp w zakładce Goście.",
+                      "Also check the RSVP deadline and access in Guests.",
+                      "Auch Rückmeldefrist und Zugang unter Gäste prüfen.",
+                    )}
+                  </Text>
+                </>
+              )}
+
+              <Button onClick={publish} disabled={dirty || busy}>
                 {demo ? t("startSimulation") : t("confirmPublish")}
               </Button>
             </Stack>
@@ -788,7 +1241,7 @@ export function Editor({
         {" "}
         {!demo && (
           <GuestManagement
-            key={data.releases[0]?.id || `draft-${data.draft.revision}`}
+            key={data.site.published_release_id || "draft"}
             siteId={data.site.id}
           />
         )}
