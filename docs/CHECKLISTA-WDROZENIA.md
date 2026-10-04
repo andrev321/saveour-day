@@ -70,6 +70,8 @@ Hasło SMTP wpisujesz w Supabase, nie w Vercel. Wiadomości uwierzytelniające w
 | `SUPABASE_SERVICE_ROLE_KEY` | Tak, sekret | Tak, sekret | Serwerowy klucz tego projektu |
 | `APP_URL` | Tak | Nie | Kanoniczny adres panelu, np. `https://app.twojamarka.pl` |
 | `SITE_URL` | Tak | Tak | Kanoniczny adres zaproszeń, np. `https://zaproszenia.twojamarka.pl` |
+| `RESEND_API_KEY` | Opcjonalnie, sekret | Nie | Klucz wysyłkowy Resend dla przypomnień RSVP |
+| `REMINDER_FROM` | Opcjonalnie | Nie | Nadawca przypomnień ze zweryfikowanej domeny Resend |
 
 Adresy wpisuj bez ścieżek i parametrów. Oba projekty mają ten sam `SITE_URL` i ten sam Supabase w danym środowisku. Nie przekazuj produkcyjnych sekretów niezaufanym preview. Formularze wymagają originów zgodnych z konfiguracją; losowy URL preview nie zastępuje stagingu.
 
@@ -86,6 +88,10 @@ Nie potrzebujesz tokena Vercel w aplikacji, webhooka builda, projektu dla każde
 - [ ] W prywatnym oknie sprawdź stronę i zdjęcia w trzech trybach dostępu. Dla OTP najpierw przypisz adres skrzynki do rodzinnego zaproszenia.
 - [ ] Utwórz rodzinę z dwiema osobami, skopiuj link, odpowiedz za obie i sprawdź wynik w panelu.
 - [ ] Sprawdź zmianę kodu, cofnięcie zaproszenia i wycofanie publikacji przy istniejącej sesji.
+- [ ] Sprawdź autosave, odzyskanie zmian po odświeżeniu, undo/redo i konflikt szkicu między dwiema kartami. Publikacja pozostaje osobnym krokiem.
+- [ ] Sprawdź import i eksport CSV, archiwizację oraz przywrócenie osoby bez utraty RSVP, pytania o dietę/nocleg/transport i kalendarz ICS.
+- [ ] Uruchom workflow **Staging smoke** na dedykowanym koncie: ustaw `STAGING_ADMIN_URL`, `STAGING_SITE_URL` i sekret `STAGING_PANEL_STORAGE_STATE` w środowisku GitHub `staging`. Test tworzy własną realizację, sprawdza zdjęcie, szkic, publikację, kod dostępu, RSVP i kalendarz, a następnie usuwa swoją realizację. Nie używaj sesji produkcyjnej; test nie wysyła e-maili. Chroniony staging wymaga również dostępu testowego do ochrony Vercel.
+- [ ] Jeśli włączasz przypomnienia, ustaw `RESEND_API_KEY` i `REMINDER_FROM` wyłącznie w panelu, wykonaj Redeploy i sprawdź podgląd odbiorców oraz treści. Odbiór wysyłki wykonaj wyłącznie na uzgodnionej skrzynce testowej.
 - [ ] Drugim kontem organizatora sprawdź brak dostępu do pierwszej realizacji.
 - [ ] Wykonaj pełny odbiór z [instrukcji technicznej](WDROZENIE-PLATFORMY.md). Zapisz datę, commit i wyniki.
 - [ ] Jeśli istniały stare publiczne strony, wykonaj opisaną tam migrację dawnych realizacji. Zmiana DNS nie usuwa publicznych kopii. Pustego projektu ten krok nie dotyczy.
@@ -104,7 +110,7 @@ Nie potrzebujesz tokena Vercel w aplikacji, webhooka builda, projektu dla każde
 
 ## Resend SMTP i instalacja monorepo — uzupełnienie 2026-09-25
 
-Resend: host `smtp.resend.com`, port `465`, użytkownik `resend`, hasło: klucz API Resend z uprawnieniem wysyłki. Do wysyłki do różnych odbiorców adres nadawcy musi być w zweryfikowanej domenie. Do testu bez własnej domeny użyj `onboarding@resend.dev`, wyłącznie do dokładnego adresu właściciela konta Resend. Hasło wpisz bezpośrednio w Supabase Authentication → Emails → SMTP Settings. SDK Resend w aplikacji i zmienna RESEND_API_KEY na Vercelu nie są potrzebne: wiadomości wysyła Supabase Auth przez SMTP.
+Resend: host `smtp.resend.com`, port `465`, użytkownik `resend`, hasło: klucz API Resend z uprawnieniem wysyłki. Do wysyłki do różnych odbiorców adres nadawcy musi być w zweryfikowanej domenie. Do testu bez własnej domeny użyj `onboarding@resend.dev`, wyłącznie do dokładnego adresu właściciela konta Resend. Hasło wpisz bezpośrednio w Supabase Authentication → Emails → SMTP Settings. Do logowania OTP i potwierdzania konta zmienna `RESEND_API_KEY` na Vercelu nie jest potrzebna: te wiadomości wysyła Supabase Auth przez SMTP. Opcjonalne przypomnienia RSVP wysyła natomiast API panelu; wymagają serwerowych zmiennych `RESEND_API_KEY` oraz `REMINDER_FROM` w projekcie panelu Vercel. Użyj klucza z uprawnieniem wysyłki, najlepiej ograniczonego do domeny nadawcy. Szczegóły: [ulepszenia po review](product-review-improvements.md).
 
 Obecny panel Supabase wymaga custom SMTP do edycji szablonów. Skonfiguruj je dopiero po poprawnym ustawieniu SMTP. Bez własnej domeny `onboarding@resend.dev` umożliwia testy tylko do adresu właściciela konta Resend; nie wystarcza do testowania maili do organizatorów i gości. [Instrukcja Resend](https://resend.com/docs/send-with-supabase-smtp).
 
