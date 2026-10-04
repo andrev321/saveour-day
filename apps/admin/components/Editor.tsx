@@ -49,6 +49,7 @@ import { mergeDraft } from "../lib/draft-merge";
 import { publicationWarnings } from "@invitations/domain/readiness";
 import { ApiError, apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
+import { PreparationChecklist } from "./PreparationChecklist";
 import { DismissibleAlert } from "./DismissibleAlert";
 import { GuestManagement } from "./GuestManagement";
 import { LanguageSelect } from "./LanguageSelect";
@@ -665,48 +666,13 @@ export function Editor({
             </Alert>
           )}
           {!data.site.published_release_id && (
-            <Card withBorder>
-              <Text fw={600}>
-                {label(
-                  "Przygotuj zaproszenie w czterech krokach",
-                  "Prepare your invitation in four steps",
-                  "Einladung in vier Schritten vorbereiten",
-                )}
-              </Text>
-              <Group mt="xs">
-                {[
-                  ["content", "1. Dane i miejsca"],
-                  ["appearance", "2. Wygląd"],
-                  ["guests", "3. Goście i dostęp"],
-                ].map(([panel, text]) => (
-                  <Button
-                    key={panel}
-                    size="xs"
-                    variant="light"
-                    onClick={() => setActivePanel(panel)}
-                  >
-                    {language === "pl"
-                      ? text
-                      : panel === "content"
-                        ? label("", "1. Details & venues", "1. Details & Orte")
-                        : panel === "appearance"
-                          ? label("", "2. Appearance", "2. Design")
-                          : label(
-                              "",
-                              "3. Guests & access",
-                              "3. Gäste & Zugang",
-                            )}
-                  </Button>
-                ))}
-                <Text size="sm">
-                  {label(
-                    "4. Sprawdź i opublikuj",
-                    "4. Review & publish",
-                    "4. Prüfen & veröffentlichen",
-                  )}
-                </Text>
-              </Group>
-            </Card>
+            <PreparationChecklist
+              siteId={initial.site.id}
+              language={language}
+              onSelect={setActivePanel}
+              onReview={() => setConfirm("publish")}
+              reviewDisabled={!readyToPublish || dirty || busy}
+            />
           )}
           {message ? (
             <DismissibleAlert
