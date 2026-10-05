@@ -1,12 +1,24 @@
 import { z } from "zod";
 import { themeNames, themeDesigns, themes } from "./themes.ts";
+import { contrastRatio } from "./colors.ts";
+export {
+  contrastRatio,
+  colorLuminance,
+  isDarkColor,
+  textOnColor,
+} from "./colors.ts";
 export {
   themeNames,
   themeDesigns,
   themes,
+  themePalettes,
+  matchingThemePalette,
+  applyTheme,
+  applyThemePalette,
   type ThemeName,
   type ThemeDesign,
   type ThemeAppearance,
+  type ThemePalette,
 } from "./themes.ts";
 
 const text = z.string().trim().min(1).max(500);
@@ -41,21 +53,6 @@ const designSchema = z
     accent: hexColor,
   })
   .strict();
-const contrastRatio = (first: string, second: string) => {
-  const luminance = (color: string) => {
-    const channels = [1, 3, 5].map(
-      (offset) => Number.parseInt(color.slice(offset, offset + 2), 16) / 255,
-    );
-    const [red, green, blue] = channels.map((channel) =>
-      channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4,
-    );
-    return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
-  };
-  const [lighter, darker] = [luminance(first), luminance(second)].sort(
-    (a, b) => b - a,
-  );
-  return (lighter + 0.05) / (darker + 0.05);
-};
 const mapUrl = optionalUrl.refine((value) => {
   if (!value) return true;
   try {

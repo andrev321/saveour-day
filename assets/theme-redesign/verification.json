@@ -1,0 +1,74 @@
+{
+  "checkedAt": "2026-09-29T16:58:23.108Z",
+  "checks": [
+    {
+      "concept": "classic-a",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "classic-b",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "botanical-a",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "botanical-b",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "editorial-a",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "editorial-b",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "evening-a",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "evening-b",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "celebration-a",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    },
+    {
+      "concept": "celebration-b",
+      "desktopOverflow": false,
+      "mobileOverflow": false,
+      "dialogWorks": true
+    }
+  ],
+  "pageErrors": [],
+  "gallery": {
+    "proposals": 10,
+    "viewSwitch": true,
+    "exclusiveSelection": true,
+    "selectionPersists": true,
+    "mobileOverflow": false,
+    "pageErrors": []
+  }
+}

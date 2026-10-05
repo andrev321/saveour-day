@@ -85,8 +85,10 @@ export function TemplatePicker({
           <ThemePreview
             theme={selected.style.theme}
             design={selected.style.design}
+            title={selected.label}
           />
           <Text size="sm" fw={600}>
+            {themes[selected.style.theme].name} ·{" "}
             {themes[selected.style.theme].labels[language]}
           </Text>
         </div>

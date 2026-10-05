@@ -2,8 +2,8 @@
   invitationLocales,
   parseSiteConfig,
   themes,
+  themePalettes,
   type ThemeName,
-  type ThemeDesign,
   type ThemeAppearance,
   type InvitationLocale,
 } from "./index.ts";
@@ -54,19 +54,21 @@ export const templateThemes: Record<TemplateId, ThemeName> = {
 export function templateStyle(id: TemplateId) {
   const theme = templateThemes[id];
   const preset = themes[theme];
-  const palettes: Partial<Record<TemplateId, Partial<ThemeDesign>>> = {
-    anniversary: { accent: "#58616b" },
-    "family-ceremony": { paper: "#f8faf4", accent: "#54694a" },
-    "baby-shower": { paper: "#fff5ef", surface: "#edf4fa", accent: "#496582" },
-    housewarming: { paper: "#fcf2e6", accent: "#974a32" },
+  const palettes: Partial<Record<TemplateId, string>> = {
+    anniversary: "graphite",
+    "family-ceremony": "sage",
+    "baby-shower": "ocean",
+    housewarming: "apricot",
+    workshop: "moss",
   };
+  const palette = themePalettes[theme].find((item) => item.id === palettes[id]);
   const appearance: ThemeAppearance = { ...preset.appearance };
   if (["baby-shower", "housewarming"].includes(id))
     appearance.decorations = "subtle";
   if (id === "workshop") appearance.icons = true;
   return {
     theme,
-    design: { ...preset.design, ...palettes[id] },
+    design: { ...(palette?.design ?? preset.design) },
     appearance,
     layout: preset.layout,
   };

@@ -1,0 +1,177 @@
+[
+  {
+    "id": "classic-a",
+    "theme": "classic",
+    "code": "01 A",
+    "name": "Maison",
+    "family": "Klasyczna elegancja",
+    "mood": "Ciepła, spokojna elegancja",
+    "palette": [
+      "#f6f2e9",
+      "#292923",
+      "#897452"
+    ],
+    "font": "Cormorant + DM Sans",
+    "description": "Duże szeryfowe imiona, szerokie marginesy i jedno zdjęcie w pionie. Informacje prowadzone cienką linią zamiast zamykane w ramkach.",
+    "change": "Zostaje krem i szeryf. Znikają podwójne obramowania oraz konkurujące ze sobą tytuły.",
+    "use": "Najbardziej uniwersalna propozycja dla eleganckiego ślubu.",
+    "recommendation": true
+  },
+  {
+    "id": "classic-b",
+    "theme": "classic",
+    "code": "01 B",
+    "name": "The Modern Vow",
+    "family": "Klasyczna elegancja",
+    "mood": "Zaproszenie jak współczesny druk",
+    "palette": [
+      "#f8f5ef",
+      "#4b292b",
+      "#b8aaa0"
+    ],
+    "font": "Bodoni Moda + DM Sans",
+    "description": "Kompozycja oparta na literach: inicjały, monumentalne imiona i burgundowy akcent. Pełny charakter także bez zdjęcia.",
+    "change": "Klasyczna symetria zostaje, a fotografię na pierwszym ekranie zastępuje typografia.",
+    "use": "Dla osób, które chcą eleganckiego zaproszenia bez sesji zdjęciowej."
+  },
+  {
+    "id": "botanical-a",
+    "theme": "botanical",
+    "code": "02 A",
+    "name": "Olive Atelier",
+    "family": "Botaniczny ogród",
+    "mood": "Naturalny, śródziemnomorski spokój",
+    "palette": [
+      "#f1f0e5",
+      "#304939",
+      "#a6ae91"
+    ],
+    "font": "Cormorant + DM Sans",
+    "description": "Oliwkowy kolor, miękka kursywa, pojedyncza gałązka i fotograficzna opowieść. Asymetria nadaje całości lekkość.",
+    "change": "Znika duży łuk zdjęcia i zaokrąglone kafelki. Botanika staje się detalem kompozycji.",
+    "use": "Ślub w ogrodzie, oranżerii lub w plenerze.",
+    "recommendation": true
+  },
+  {
+    "id": "botanical-b",
+    "theme": "botanical",
+    "code": "02 B",
+    "name": "The Garden Society",
+    "family": "Botaniczny ogród",
+    "mood": "Botaniczny salon po zmroku",
+    "palette": [
+      "#1d392d",
+      "#ecebdc",
+      "#b7c69a"
+    ],
+    "font": "Cormorant + DM Sans",
+    "description": "Głęboka zieleń, spokojna symetria i jasne panele przypominające karty z zielnika. Ogród w bardziej uroczystej odsłonie.",
+    "change": "Jasną szałwię zastępuje leśna zieleń, a duży blok na fotografii — otwarta kompozycja.",
+    "use": "Wieczorne przyjęcie w ogrodzie lub elegancka oranżeria."
+  },
+  {
+    "id": "editorial-a",
+    "theme": "editorial",
+    "code": "03 A",
+    "name": "The Wedding Issue",
+    "family": "Nowoczesny editorial",
+    "mood": "Prywatne wydanie magazynu",
+    "palette": [
+      "#f4f1eb",
+      "#24231f",
+      "#796c5d"
+    ],
+    "font": "Bodoni Moda + DM Sans",
+    "description": "Imiona jak tytuł magazynu, szeroki kadr i układ kolumnowy. Każda sekcja ma własny rytm, ale jedną precyzyjną siatkę.",
+    "change": "Zamiast wyglądu strony firmowej pojawia się język współczesnej fotografii i magazynów.",
+    "use": "Dla par ceniących fotografię i odważną typografię."
+  },
+  {
+    "id": "editorial-b",
+    "theme": "editorial",
+    "code": "03 B",
+    "name": "Gallery 12",
+    "family": "Nowoczesny editorial",
+    "mood": "Minimalizm galerii sztuki",
+    "palette": [
+      "#f4f5f0",
+      "#253e8d",
+      "#242823"
+    ],
+    "font": "DM Sans",
+    "description": "Wyrazista typografia bezszeryfowa, asymetryczna siatka i kobaltowy pas z datą. Zdjęcie jest pojedynczym eksponatem.",
+    "change": "Zostaje kobalt. Znika powtarzalny układ nagłówek–kafelki; rośnie rola proporcji i numeracji.",
+    "use": "Nowoczesna przestrzeń miejska, galeria, także wydarzenie firmowe.",
+    "recommendation": true
+  },
+  {
+    "id": "evening-a",
+    "theme": "evening",
+    "code": "04 A",
+    "name": "Midnight Cinema",
+    "family": "Wieczorowy blask",
+    "mood": "Filmowy wieczór przy świecach",
+    "palette": [
+      "#141b21",
+      "#f4ebda",
+      "#cab48d"
+    ],
+    "font": "Bodoni Moda + DM Sans",
+    "description": "Pełny fotograficzny kadr, duże jasne litery i łagodne przyciemnienie tła. Poniżej otwarty, spokojny program wieczoru.",
+    "change": "Ciężki granatowy prostokąt znika ze zdjęcia. Światło i typografia tworzą nastrój.",
+    "use": "Eleganckie przyjęcie wieczorne, black tie, kolacja.",
+    "recommendation": true
+  },
+  {
+    "id": "evening-b",
+    "theme": "evening",
+    "code": "04 B",
+    "name": "Champagne Club",
+    "family": "Wieczorowy blask",
+    "mood": "Dyskretny charakter art déco",
+    "palette": [
+      "#2a2624",
+      "#ebdec4",
+      "#bca37a"
+    ],
+    "font": "Bodoni Moda + DM Sans",
+    "description": "Espresso i szampan, smukła geometria oraz kompozycja na osi. Zaproszenie premium, które nie potrzebuje fotografii.",
+    "change": "Złoto staje się oszczędną linią. Program wieczoru ma własną lekką strukturę.",
+    "use": "Hotelowe przyjęcie, jubileusz lub uroczysta gala."
+  },
+  {
+    "id": "celebration-a",
+    "theme": "celebration",
+    "code": "05 A",
+    "name": "Aperitivo",
+    "family": "Radosne świętowanie",
+    "mood": "Słońce, wino i wspólny stół",
+    "palette": [
+      "#f5edbf",
+      "#692d35",
+      "#e9b29e"
+    ],
+    "font": "Fraunces + DM Sans",
+    "description": "Maślana żółć i wino, duża miękka typografia i rytm jak w karcie restauracji. Radosny charakter bez konfetti i przechylonych ramek.",
+    "change": "Znika efekt albumu ze zdjęciami. Radość budują kolor, litery i zwięzła treść.",
+    "use": "Letnie wesele, urodziny lub swobodne przyjęcie.",
+    "recommendation": true
+  },
+  {
+    "id": "celebration-b",
+    "theme": "celebration",
+    "code": "05 B",
+    "name": "Modern Muse",
+    "family": "Radosne świętowanie",
+    "mood": "Rzeźbiarski romantyzm",
+    "palette": [
+      "#f1dfe1",
+      "#553142",
+      "#b5bbc8"
+    ],
+    "font": "Fraunces + DM Sans",
+    "description": "Pudrowy róż, śliwka, duży znak „&” i układ z mocnym podziałem koloru. Romantyczny, ale graficzny i uporządkowany.",
+    "change": "Pastelowa baza zostaje. Zamiast wielu ozdób pojawia się jeden wyrazisty motyw typograficzny.",
+    "use": "Współczesny ślub, rocznica lub kameralna celebracja."
+  }
+]

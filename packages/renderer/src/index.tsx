@@ -4,13 +4,14 @@ import {
   visibleSections,
   type DeviceCrops,
   themes,
+  isDarkColor,
+  textOnColor,
   type MediaAsset,
   type SiteConfig,
 } from "@invitations/domain";
 import {
   Anchor,
   Button,
-  Container,
   Group,
   MantineProvider,
   Stack,
@@ -19,7 +20,7 @@ import {
   createTheme,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { useState, type CSSProperties } from "react";
+import { useState, type CSSProperties, type ReactNode } from "react";
 import * as S from "./styles";
 import {
   ClockIcon,
@@ -27,7 +28,6 @@ import {
   ChatCircleIcon,
   ImagesIcon,
   EnvelopeOpenIcon,
-  LeafIcon,
   SparkleIcon,
   DiamondIcon,
 } from "@phosphor-icons/react";
@@ -86,7 +86,7 @@ export function InvitationProvider({
     fontFamily: preset.bodyFont,
     headings: {
       fontFamily: preset.headingFont,
-      fontWeight: "600",
+      fontWeight: "400",
     },
     defaultRadius: preset.radius,
     components: {
@@ -98,7 +98,7 @@ export function InvitationProvider({
   return (
     <MantineProvider
       theme={theme}
-      forceColorScheme={config.theme === "evening" ? "dark" : "light"}
+      forceColorScheme={isDarkColor(config.design.paper) ? "dark" : "light"}
     >
       {children}
     </MantineProvider>
@@ -251,11 +251,13 @@ export function Invitation({
   variantId,
   resolveMedia,
   onEditSection,
+  children,
 }: {
   config: SiteConfig;
   variantId?: string;
   onEditSection?: (id: string) => void;
   resolveMedia?: (src: string) => string;
+  children?: ReactNode;
 }) {
   const variant = config.variants.find(
     (v) => v.id === (variantId || config.defaultVariant),
@@ -272,14 +274,60 @@ export function Invitation({
     "--surface": config.design.surface,
     "--ink": config.design.ink,
     "--accent": config.design.accent,
+    "--on-accent": textOnColor(config.design.accent),
   } as CSSProperties;
+  const labels =
+    config.locale === "pl-PL"
+      ? {
+          respond: "Potwierdź obecność",
+          contact: "Skontaktuj się",
+          details: "Zobacz szczegóły",
+          navigation: "Nawigacja zaproszenia",
+        }
+      : config.locale === "en-GB"
+        ? {
+            respond: "RSVP",
+            contact: "Get in touch",
+            details: "View details",
+            navigation: "Invitation navigation",
+          }
+        : {
+            respond: "Teilnahme bestätigen",
+            contact: "Kontakt aufnehmen",
+            details: "Details ansehen",
+            navigation: "Einladungsnavigation",
+          };
+  const response = Boolean(children);
+  const contact = sections.find(
+    (section) =>
+      section.type === "contact" && (section.contactIds.length || section.body),
+  );
+  const actionTarget = response
+    ? "invitation-response"
+    : contact
+      ? `section-${contact.id}`
+      : sections[0]
+        ? `section-${sections[0].id}`
+        : undefined;
+  const actionLabel = response
+    ? labels.respond
+    : contact
+      ? labels.contact
+      : labels.details;
+  const navigation = [
+    sections.find((section) => section.type === "timeline"),
+    sections.find((section) => section.type === "venue"),
+  ].filter((section) => section !== undefined);
+  const heading = config.identity.displayName || config.hero.title;
+  const dateLabel = variant.dateLabel || config.hero.dateLabel;
   if (
     !config.identity.displayName &&
     !config.hero.title &&
     !config.hero.description &&
     !config.hero.eyebrow &&
     !hero &&
-    !sections.length
+    !sections.length &&
+    !children
   ) {
     return (
       <InvitationProvider config={config}>
@@ -307,32 +355,29 @@ export function Invitation({
         data-decorations={config.appearance.decorations}
         style={colors}
       >
-        <Container size="xl" py="lg">
-          <Group justify="space-between">
-            <Text size="sm" fw={600}>
-              {config.identity.displayName}
-            </Text>
-            <Text size="sm">{variant.dateLabel || config.hero.dateLabel}</Text>
-          </Group>
-        </Container>
+        <S.InvitationHeader>
+          <span>{config.identity.displayName || config.hero.eyebrow}</span>
+          {navigation.length || actionTarget ? (
+            <nav aria-label={labels.navigation}>
+              {navigation
+                .filter((section) => `section-${section.id}` !== actionTarget)
+                .map((section) => (
+                  <a key={section.id} href={`#section-${section.id}`}>
+                    {section.title}
+                  </a>
+                ))}
+              {actionTarget && (
+                <a href={`#${actionTarget}`}>
+                  {actionLabel} <span aria-hidden="true">↗</span>
+                </a>
+              )}
+            </nav>
+          ) : null}
+        </S.InvitationHeader>
         <S.InvitationHero
           data-layout={config.hero.layout}
           data-has-photo={Boolean(hero)}
         >
-          <S.InvitationHeroPhoto>
-            {hero ? (
-              <Photo
-                crops={config.hero.crops}
-                media={hero}
-                mobile={mobile}
-                tablet={tablet}
-                resolveMedia={resolveMedia}
-                hero
-              />
-            ) : (
-              <S.InvitationPhotoFallback as="div" />
-            )}
-          </S.InvitationHeroPhoto>
           <S.InvitationHeroCopy>
             <ThemeOrnament config={config} />
             {onEditSection && (
@@ -347,10 +392,20 @@ export function Invitation({
             {config.hero.eyebrow && (
               <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
             )}
-            {config.identity.displayName && (
-              <Title order={1}>{config.identity.displayName}</Title>
+            {heading && (
+              <Title order={1} data-long={heading.length > 32}>
+                {heading.split(/( & )/).map((part, index) =>
+                  part === " & " ? (
+                    <span key={index} className="title-ampersand">
+                      {part}
+                    </span>
+                  ) : (
+                    part
+                  ),
+                )}
+              </Title>
             )}
-            {config.hero.title && (
+            {config.identity.displayName && config.hero.title && (
               <S.InvitationTagline order={2}>
                 {config.hero.title}
               </S.InvitationTagline>
@@ -358,27 +413,49 @@ export function Invitation({
             {config.hero.description && (
               <S.InvitationProse>{config.hero.description}</S.InvitationProse>
             )}
-            {(variant.dateLabel || config.hero.dateLabel) && (
-              <Text fw={600} mt="xl">
-                {variant.dateLabel || config.hero.dateLabel}
-              </Text>
+            {dateLabel && <S.HeroDate>{dateLabel}</S.HeroDate>}
+            {actionTarget && (
+              <S.HeroAction href={`#${actionTarget}`}>
+                {actionLabel}
+                <span aria-hidden="true">↗</span>
+              </S.HeroAction>
             )}
           </S.InvitationHeroCopy>
+          {hero && (
+            <S.InvitationHeroPhoto>
+              <Photo
+                crops={config.hero.crops}
+                tablet={tablet}
+                media={hero}
+                mobile={mobile}
+                resolveMedia={resolveMedia}
+                hero
+              />
+            </S.InvitationHeroPhoto>
+          )}
         </S.InvitationHero>
-        <Container component="main" size="lg" py={{ base: 32, md: 64 }}>
+        {config.theme === "editorial" && dateLabel && (
+          <S.DateBand>{dateLabel}</S.DateBand>
+        )}
+        <S.InvitationMain>
           <S.SectionGrid>
-            {sections.map((section) => (
+            {sections.map((section, index) => (
               <S.InvitationSection
                 component="section"
                 key={section.id}
-                withBorder
-                p={{ base: "lg", sm: "xl" }}
+                id={`section-${section.id}`}
                 data-kind={section.type}
               >
-                <Group gap="sm" mb="lg">
+                <S.SectionHeading>
+                  <span aria-hidden="true">
+                    {String(index + 1).padStart(2, "0")} /
+                  </span>
                   {config.appearance.icons && (
                     <SectionIcon kind={section.type} theme={config.theme} />
                   )}
+                  <Title order={2} size="h3">
+                    {section.title}
+                  </Title>
                   {onEditSection && (
                     <Button
                       size="xs"
@@ -388,10 +465,7 @@ export function Invitation({
                       Edytuj: {section.title}
                     </Button>
                   )}
-                  <Title order={2} size="h3">
-                    {section.title}
-                  </Title>
-                </Group>
+                </S.SectionHeading>
                 {section.body ? (
                   <S.InvitationProse mb="lg">{section.body}</S.InvitationProse>
                 ) : null}
@@ -476,11 +550,16 @@ export function Invitation({
               </S.InvitationSection>
             ))}
           </S.SectionGrid>
-        </Container>
+        </S.InvitationMain>
+        {children && (
+          <S.InvitationResponse id="invitation-response">
+            {children}
+          </S.InvitationResponse>
+        )}
         {config.copy.footer && (
-          <Container component="footer" ta="center" py="xl">
+          <S.InvitationFooter>
             <Text>{config.copy.footer}</Text>
-          </Container>
+          </S.InvitationFooter>
         )}
       </S.ThemedInvitation>
     </InvitationProvider>
@@ -512,12 +591,19 @@ function SectionIcon({
 }
 function ThemeOrnament({ config }: { config: SiteConfig }) {
   if (config.appearance.decorations === "none") return null;
-  const Icon =
-    config.theme === "botanical"
-      ? LeafIcon
-      : config.theme === "celebration"
-        ? SparkleIcon
-        : DiamondIcon;
+  if (config.theme === "botanical")
+    return (
+      <S.Ornament aria-hidden="true">
+        <svg viewBox="0 0 180 160" fill="none">
+          <path
+            d="M38 144C60 107 88 70 139 24M64 108C38 110 30 92 27 78C49 78 67 89 64 108ZM82 85C74 61 84 40 97 35C105 59 98 76 82 85ZM98 67C120 78 141 67 148 55C127 46 107 53 98 67ZM118 45C107 29 113 13 124 5C135 21 131 37 118 45ZM54 122C75 127 97 118 103 103C81 96 62 107 54 122Z"
+            stroke="currentColor"
+            strokeWidth="1.4"
+          />
+        </svg>
+      </S.Ornament>
+    );
+  const Icon = config.theme === "celebration" ? SparkleIcon : DiamondIcon;
   return (
     <S.Ornament aria-hidden="true">
       <span />
