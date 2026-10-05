@@ -1,9 +1,67 @@
 import { test, expect } from "@playwright/test";
-import { themeNames, themes } from "../../packages/domain/src/themes";
+import {
+  themeNames,
+  themes,
+  themePalettes,
+} from "../../packages/domain/src/themes";
 import { createDemo } from "../../packages/domain/src/demo";
 import { mediaSchema, parseSiteConfig } from "../../packages/domain/src/index";
 import sharp from "sharp";
 const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
+
+test("all palette controls update actual colors without changing event content", async ({
+  page,
+}) => {
+  await page.goto(`${admin}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
+  await page
+    .getByLabel("Główny napis", { exact: true })
+    .fill("Spotkanie zespołu");
+  await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
+  const preview = page.frameLocator("iframe");
+  for (const theme of themeNames) {
+    await page
+      .getByRole("button", { name: themes[theme].labels.pl, exact: true })
+      .click();
+    for (const palette of themePalettes[theme]) {
+      const option = page.getByRole("button", {
+        name: palette.labels.pl,
+        exact: true,
+      });
+      await option.click();
+      await expect(option).toHaveAttribute("aria-pressed", "true");
+      await expect(preview.locator("h1")).toHaveText("Spotkanie zespołu");
+      await expect(preview.locator(".title-ampersand")).toHaveCount(0);
+      await expect
+        .poll(() =>
+          preview
+            .locator('[data-ui="invitation"]')
+            .evaluate((el) => el.style.getPropertyValue("--paper")),
+        )
+        .toBe(palette.design.paper);
+    }
+  }
+  await page.getByLabel("Kolor akcentu", { exact: true }).fill("#502030");
+  await expect(page.locator('[data-ui="selected-palette"]')).toHaveText(
+    "Własne kolory",
+  );
+  await page
+    .getByRole("button", { name: themes.celebration.labels.pl, exact: true })
+    .click();
+  await expect(page.getByLabel("Kolor akcentu", { exact: true })).toHaveValue(
+    "#502030",
+  );
+  await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
+  await page.getByRole("tab", { name: "Treść", exact: true }).click();
+  await expect(page.getByLabel("Główny napis", { exact: true })).toHaveValue(
+    "Spotkanie zespołu",
+  );
+});
 
 test("five themes render on desktop and mobile without overflow or runtime errors", async ({
   page,

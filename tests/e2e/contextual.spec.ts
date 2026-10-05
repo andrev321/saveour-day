@@ -17,14 +17,14 @@ async function open(page: Page) {
 for (const width of [390, 1440])
   test(`contextual editor overview stays readable at ${width}px`, async ({
     page,
-  }) => {
+  }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
     await open(page);
     await page.screenshot({
-      path: `/tmp/contextual-${width}.png`,
+      path: testInfo.outputPath(`contextual-${width}.png`),
       fullPage: true,
     });
     expect(
@@ -60,7 +60,7 @@ for (const width of [390, 1440])
       .getByRole("textbox", { name: "Telefon", exact: true })
       .fill("+48123456789");
     await page.screenshot({
-      path: `/tmp/contextual-open-${width}.png`,
+      path: testInfo.outputPath(`contextual-open-${width}.png`),
       fullPage: true,
     });
     if (width < 1100)

@@ -2,11 +2,23 @@
 import {
   themes,
   themeNames,
+  themePalettes,
+  matchingThemePalette,
+  applyTheme,
+  applyThemePalette,
   type SiteConfig,
   type ThemeDesign,
   type ThemeName,
 } from "@invitations/domain";
-import { SimpleGrid, Stack, Switch, Select, Text } from "@mantine/core";
+import {
+  SimpleGrid,
+  Stack,
+  Switch,
+  Select,
+  Text,
+  Group,
+  Badge,
+} from "@mantine/core";
 import { styled } from "styled-components";
 import { usePanelI18n } from "../lib/i18n";
 
@@ -42,6 +54,7 @@ const Miniature = styled.div<{ $theme: ThemeName; $design: ThemeDesign }>`
     gap: 14px;
     align-items: center;
     margin-bottom: 16px;
+    flex-direction: row-reverse;
   }
   .mini-photo {
     width: 40%;
@@ -72,11 +85,12 @@ const Miniature = styled.div<{ $theme: ThemeName; $design: ThemeDesign }>`
     display: none;
   }
   &[data-theme="classic"] .mini-module {
-    border-style: double;
-    border-width: 3px;
+    background: transparent;
+    border: 0;
+    border-top: 1px solid currentColor;
   }
   &[data-theme="botanical"] .mini-photo {
-    border-radius: 50% 50% 4px 4px;
+    border-radius: 0 28px 0 0;
   }
   &[data-theme="editorial"] .mini-title {
     font-weight: 600;
@@ -88,23 +102,59 @@ const Miniature = styled.div<{ $theme: ThemeName; $design: ThemeDesign }>`
     border-top: 1px solid currentColor;
   }
   &[data-theme="evening"] .mini-hero {
-    border: 1px solid ${({ $design: d }) => d.accent};
-    justify-content: center;
-    padding: 12px;
+    background: ${({ $design: d }) => d.surface};
+    justify-content: flex-end;
+    align-items: flex-end;
+    min-height: 85px;
+    padding: 14px;
   }
   &[data-theme="evening"] .mini-photo {
     display: none;
   }
   &[data-theme="celebration"] .mini-photo {
-    transform: rotate(-7deg);
-    border: 5px solid white;
-    border-bottom-width: 12px;
+    background: ${({ $design: d }) => d.surface};
+    border: 8px solid ${({ $design: d }) => d.surface};
+    height: 90px;
+  }
+  &[data-theme="editorial"] .mini-modules {
+    background: ${({ $design: d }) => d.accent};
+    height: 15px;
+  }
+  &[data-theme="editorial"] .mini-module {
+    display: none;
+  }
+  .mini-title {
+    overflow-wrap: anywhere;
+    min-width: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+`;
+const PaletteChoice = styled(Choice)`
+  padding: 12px;
+  border-width: 1px;
+  border-radius: 8px;
+  &[aria-pressed="true"] {
+    background: #f0f3fb;
+  }
+`;
+const Swatches = styled.div`
+  display: flex;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid #00000020;
+  border-radius: 3px;
+  margin-bottom: 8px;
+  > span {
+    flex: 1;
   }
 `;
 export function ThemePreview({
   theme,
   design = themes[theme].design,
-  title = "Aa & Aa",
+  title = "Aa",
 }: {
   theme: ThemeName;
   design?: ThemeDesign;
@@ -136,10 +186,16 @@ export function ThemePicker({
   onChange: (config: SiteConfig) => void;
 }) {
   const { language } = usePanelI18n();
+  const selectedPalette = matchingThemePalette(config.theme, config.design);
   const text =
     language === "pl"
       ? {
           title: "Motyw strony",
+          palettes: "Wersja kolorystyczna",
+          custom: "Własne kolory",
+          preview: "Twoje wydarzenie",
+          paletteHint:
+            "Paleta zmienia tylko kolory. Możesz je dopasować poniżej — dla dowolnego rodzaju wydarzenia.",
           icons: "Ikony modułów",
           decorations: "Dekoracje",
           levels: ["Brak", "Subtelne", "Pełne"],
@@ -148,6 +204,11 @@ export function ThemePicker({
       : language === "en"
         ? {
             title: "Page theme",
+            palettes: "Colour palette",
+            custom: "Custom colours",
+            preview: "Your event",
+            paletteHint:
+              "A palette changes colours only. Adjust them below for any kind of event.",
             icons: "Section icons",
             decorations: "Decorations",
             levels: ["None", "Subtle", "Full"],
@@ -155,6 +216,11 @@ export function ThemePicker({
           }
         : {
             title: "Seitenmotiv",
+            palettes: "Farbpalette",
+            custom: "Eigene Farben",
+            preview: "Dein Event",
+            paletteHint:
+              "Eine Palette ändert nur die Farben. Passe sie unten an jeden Anlass an.",
             icons: "Abschnittssymbole",
             decorations: "Dekorationen",
             levels: ["Keine", "Dezent", "Voll"],
@@ -169,18 +235,18 @@ export function ThemePicker({
             key={theme}
             type="button"
             aria-pressed={config.theme === theme}
-            onClick={() =>
-              onChange({
-                ...config,
-                theme,
-                design: { ...themes[theme].design },
-                appearance: { ...themes[theme].appearance },
-                hero: { ...config.hero, layout: themes[theme].layout },
-              })
-            }
+            aria-label={themes[theme].labels[language]}
+            onClick={() => onChange(applyTheme(config, theme))}
           >
-            <ThemePreview theme={theme} />
+            <ThemePreview
+              theme={theme}
+              design={config.theme === theme ? config.design : undefined}
+              title={config.identity.displayName || text.preview}
+            />
             <Text component="span" size="sm" fw={600}>
+              {themes[theme].name}
+            </Text>
+            <Text size="xs" c="dimmed">
               {themes[theme].labels[language]}
             </Text>
           </Choice>
@@ -188,6 +254,40 @@ export function ThemePicker({
       </SimpleGrid>
       <Text size="sm" c="dimmed">
         {text.hint}
+      </Text>
+      <Text size="sm">{themes[config.theme].description[language]}</Text>
+      <Group justify="space-between">
+        <Text fw={600}>{text.palettes}</Text>
+        <Badge variant="light" data-ui="selected-palette">
+          {selectedPalette?.labels[language] ?? text.custom}
+        </Badge>
+      </Group>
+      <SimpleGrid
+        cols={{ base: 2, sm: 2 }}
+        role="group"
+        aria-label={text.palettes}
+      >
+        {themePalettes[config.theme].map((palette) => (
+          <PaletteChoice
+            key={palette.id}
+            type="button"
+            aria-label={palette.labels[language]}
+            aria-pressed={selectedPalette?.id === palette.id}
+            onClick={() => onChange(applyThemePalette(config, palette.id))}
+          >
+            <Swatches aria-hidden="true">
+              {Object.entries(palette.design).map(([key, color]) => (
+                <span key={key} style={{ backgroundColor: color }} />
+              ))}
+            </Swatches>
+            <Text component="span" size="xs" fw={600}>
+              {palette.labels[language]}
+            </Text>
+          </PaletteChoice>
+        ))}
+      </SimpleGrid>
+      <Text size="xs" c="dimmed">
+        {text.paletteHint}
       </Text>
       <Switch
         label={text.icons}

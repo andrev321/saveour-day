@@ -1,5 +1,11 @@
 "use client";
-import { Checkbox, Stack, TextInput, Textarea } from "@mantine/core";
+import {
+  Checkbox,
+  ColorInput,
+  Stack,
+  TextInput,
+  Textarea,
+} from "@mantine/core";
 import type { SiteConfig } from "@invitations/domain";
 import { usePanelI18n } from "../lib/i18n";
 const labels: Record<string, [string, string, string]> = {
@@ -47,6 +53,14 @@ export function Fields({
               onChange={(e) =>
                 onChange({ ...value, [key]: e.currentTarget.checked })
               }
+            />
+          ) : ["paper", "surface", "ink", "accent"].includes(key) ? (
+            <ColorInput
+              key={key}
+              label={labels[key][i]}
+              value={String(v)}
+              format="hex"
+              onChange={(color) => onChange({ ...value, [key]: color })}
             />
           ) : key === "description" || key === "footer" ? (
             <Textarea

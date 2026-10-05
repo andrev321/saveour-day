@@ -321,200 +321,209 @@ export function GuestPage({
         resolveMedia={(src) =>
           `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
         }
-      />
-      {data.invitation && (
-        <S.GuestCard as="section" id="rsvp">
-          <h2>{copy.rsvp}</h2>
-          <p>{data.invitation.label}</p>
-          {data.deadline && (
-            <p>
-              {copy.deadline}:{" "}
-              {new Intl.DateTimeFormat(locale, {
-                dateStyle: "long",
-                timeStyle: "short",
-                timeZone: "Europe/Warsaw",
-              }).format(new Date(data.deadline))}{" "}
-              ({copy.timezone})
-            </p>
-          )}
-          {data.closed && <p role="status">{copy.closed}</p>}
-          {success && (
-            <S.ResponseSummary role="status">
-              <h3>{copy.saved}</h3>
-              <p>{copy.summary}</p>
-              {data.invitation.guests.map((g) => (
-                <div key={g.id}>
-                  <strong>{g.name}</strong>
-                  <ul>
-                    {data.config!.events.map((e) => {
-                      const value = savedAnswers[`${g.id}:${e.id}`];
-                      return (
-                        <li key={e.id}>
-                          {e.title}:{" "}
-                          {value === "true"
-                            ? copy.yes
-                            : value === "false"
-                              ? copy.no
-                              : copy.missing}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              ))}
-              {data.invitation.note && (
-                <p>
-                  {copy.notes}: {data.invitation.note}
-                </p>
-              )}
-            </S.ResponseSummary>
-          )}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              const values = data.invitation!.guests.flatMap((g) =>
-                data.config!.events.flatMap((event) => {
-                  const value = answers[`${g.id}:${event.id}`];
-                  return value === "true" || value === "false"
-                    ? [
-                        {
-                          guestId: g.id,
-                          eventId: event.id,
-                          attending: value === "true",
-                        },
-                      ]
-                    : [];
-                }),
-              );
-              void action("rsvp", {
-                revision: data.invitation!.revision,
-                note,
-                answers: values,
-                ...(Object.values(questions).some(Boolean)
-                  ? { details: selectedDetails }
-                  : {}),
-              });
-            }}
-          >
-            {!data.config!.events.length && <p>{copy.noEvents}</p>}
-            {!!data.config!.events.length && (
+      >
+        {data.invitation && (
+          <div id="rsvp">
+            <h2>{copy.rsvp}</h2>
+            <p>{data.invitation.label}</p>
+            {data.deadline && (
               <p>
-                {copy.pending}: {missing}
+                {copy.deadline}:{" "}
+                {new Intl.DateTimeFormat(locale, {
+                  dateStyle: "long",
+                  timeStyle: "short",
+                  timeZone: "Europe/Warsaw",
+                }).format(new Date(data.deadline))}{" "}
+                ({copy.timezone})
               </p>
             )}
-            {!!data.config!.events.length &&
-              data.invitation.guests.map((g) => (
-                <fieldset key={g.id} disabled={busy || data.closed}>
-                  <legend>{g.name}</legend>
-                  {data.config!.events.map((event) => (
-                    <label key={event.id}>
-                      {event.title}
-                      <select
-                        value={answers[`${g.id}:${event.id}`] || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setAnswers((old) => ({
-                            ...old,
-                            [`${g.id}:${event.id}`]: value,
-                          }));
-                          setSuccess(false);
-                        }}
-                      >
-                        <option value="" disabled>
-                          {copy.missing}
-                        </option>
-                        <option value="true">{copy.yes}</option>
-                        <option value="false">{copy.no}</option>
-                      </select>
-                    </label>
-                  ))}
-                  {questions.diet && (
-                    <label>
-                      {copy.diet}
-                      <input
-                        maxLength={300}
-                        value={details[g.id]?.diet || ""}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setDetails((old) => ({
-                            ...old,
-                            [g.id]: { ...old[g.id], diet: value },
-                          }));
-                        }}
-                      />
-                    </label>
-                  )}
-                  {(["lodging", "transport"] as const)
-                    .filter((key) => questions[key])
-                    .map((key) => (
-                      <label key={key}>
-                        {copy[key]}
+            {data.closed && <p role="status">{copy.closed}</p>}
+            {success && (
+              <S.ResponseSummary role="status">
+                <h3>{copy.saved}</h3>
+                <p>{copy.summary}</p>
+                {data.invitation.guests.map((g) => (
+                  <div key={g.id}>
+                    <strong>{g.name}</strong>
+                    <ul>
+                      {data.config!.events.map((e) => {
+                        const value = savedAnswers[`${g.id}:${e.id}`];
+                        return (
+                          <li key={e.id}>
+                            {e.title}:{" "}
+                            {value === "true"
+                              ? copy.yes
+                              : value === "false"
+                                ? copy.no
+                                : copy.missing}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+                {data.invitation.note && (
+                  <p>
+                    {copy.notes}: {data.invitation.note}
+                  </p>
+                )}
+              </S.ResponseSummary>
+            )}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const values = data.invitation!.guests.flatMap((g) =>
+                  data.config!.events.flatMap((event) => {
+                    const value = answers[`${g.id}:${event.id}`];
+                    return value === "true" || value === "false"
+                      ? [
+                          {
+                            guestId: g.id,
+                            eventId: event.id,
+                            attending: value === "true",
+                          },
+                        ]
+                      : [];
+                  }),
+                );
+                void action("rsvp", {
+                  revision: data.invitation!.revision,
+                  note,
+                  answers: values,
+                  ...(Object.values(questions).some(Boolean)
+                    ? { details: selectedDetails }
+                    : {}),
+                });
+              }}
+            >
+              {!data.config!.events.length && <p>{copy.noEvents}</p>}
+              {!!data.config!.events.length && (
+                <p>
+                  {copy.pending}: {missing}
+                </p>
+              )}
+              {!!data.config!.events.length &&
+                data.invitation.guests.map((g) => (
+                  <fieldset key={g.id} disabled={busy || data.closed}>
+                    <legend>{g.name}</legend>
+                    {data.config!.events.map((event) => (
+                      <label key={event.id}>
+                        {event.title}
                         <select
-                          value={detailValue(g.id, key)}
+                          value={answers[`${g.id}:${event.id}`] || ""}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setAnswers((old) => ({
+                              ...old,
+                              [`${g.id}:${event.id}`]: value,
+                            }));
+                            setSuccess(false);
+                          }}
+                        >
+                          <option value="" disabled>
+                            {copy.missing}
+                          </option>
+                          <option value="true">{copy.yes}</option>
+                          <option value="false">{copy.no}</option>
+                        </select>
+                      </label>
+                    ))}
+                    {questions.diet && (
+                      <label>
+                        {copy.diet}
+                        <input
+                          maxLength={300}
+                          value={details[g.id]?.diet || ""}
                           onChange={(e) => {
                             const value = e.target.value;
                             setDetails((old) => ({
                               ...old,
-                              [g.id]: { ...old[g.id], [key]: value === "true" },
+                              [g.id]: { ...old[g.id], diet: value },
                             }));
                           }}
-                        >
-                          <option value="" disabled>
-                            {copy.choose}
-                          </option>
-                          <option value="true">{copy.yesShort}</option>
-                          <option value="false">{copy.noShort}</option>
-                        </select>
+                        />
                       </label>
-                    ))}
-                </fieldset>
-              ))}
-            {Object.values(questions).some(Boolean) && (
-              <p>{copy.privateInfo}</p>
-            )}
-            <label>
-              {copy.notes}
-              <textarea
-                maxLength={2000}
-                value={note}
-                disabled={busy || data.closed}
-                onChange={(e) => {
-                  setNote(e.target.value);
-                  setSuccess(false);
-                }}
-              />
-            </label>
-            <button
-              disabled={busy || data.closed || !data.config!.events.length}
-            >
-              {copy.save}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => (dirty ? setRefreshConfirm(true) : void refresh())}
-            >
-              {copy.refresh}
-            </button>
-            {refreshConfirm && (
-              <div role="alert">
-                <p>{copy.refreshWarning}</p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void refresh()}
-                >
-                  {copy.discard}
-                </button>
-                <button type="button" onClick={() => setRefreshConfirm(false)}>
-                  {copy.cancel}
-                </button>
-              </div>
-            )}
-          </form>
-          {error && <p role="alert">{guestError(error, copy)}</p>}
-        </S.GuestCard>
-      )}
+                    )}
+                    {(["lodging", "transport"] as const)
+                      .filter((key) => questions[key])
+                      .map((key) => (
+                        <label key={key}>
+                          {copy[key]}
+                          <select
+                            value={detailValue(g.id, key)}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setDetails((old) => ({
+                                ...old,
+                                [g.id]: {
+                                  ...old[g.id],
+                                  [key]: value === "true",
+                                },
+                              }));
+                            }}
+                          >
+                            <option value="" disabled>
+                              {copy.choose}
+                            </option>
+                            <option value="true">{copy.yesShort}</option>
+                            <option value="false">{copy.noShort}</option>
+                          </select>
+                        </label>
+                      ))}
+                  </fieldset>
+                ))}
+              {Object.values(questions).some(Boolean) && (
+                <p>{copy.privateInfo}</p>
+              )}
+              <label>
+                {copy.notes}
+                <textarea
+                  maxLength={2000}
+                  value={note}
+                  disabled={busy || data.closed}
+                  onChange={(e) => {
+                    setNote(e.target.value);
+                    setSuccess(false);
+                  }}
+                />
+              </label>
+              <button
+                disabled={busy || data.closed || !data.config!.events.length}
+              >
+                {copy.save}
+              </button>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() =>
+                  dirty ? setRefreshConfirm(true) : void refresh()
+                }
+              >
+                {copy.refresh}
+              </button>
+              {refreshConfirm && (
+                <div role="alert">
+                  <p>{copy.refreshWarning}</p>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void refresh()}
+                  >
+                    {copy.discard}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRefreshConfirm(false)}
+                  >
+                    {copy.cancel}
+                  </button>
+                </div>
+              )}
+            </form>
+            {error && <p role="alert">{guestError(error, copy)}</p>}
+          </div>
+        )}
+      </Invitation>
     </div>
   );
 }
