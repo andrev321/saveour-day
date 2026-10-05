@@ -234,11 +234,24 @@ test("preview selection opens the corresponding section editor", async ({
   page,
 }) => {
   await content(page);
-  await page
-    .frameLocator("iframe")
-    .locator('[data-kind="contact"]')
-    .getByRole("button", { name: /Edytuj/ })
-    .click();
+  const preview = page.frameLocator("iframe");
+  const section = preview.locator('[data-kind="contact"]');
+  const control = section.locator('[data-ui="preview-edit-control"]');
+  const edit = section.getByRole("button", { name: /Edytuj:/ });
+  await page.mouse.move(0, 0);
+  await expect(control).toHaveCSS("opacity", "0");
+  await section.hover();
+  await expect(control).toHaveCSS("opacity", "1");
+  await expect(edit).toHaveText("");
+  await edit.hover();
+  await expect(preview.getByRole("tooltip")).toHaveText(
+    (await edit.getAttribute("aria-label")) as string,
+  );
+  await page.mouse.move(0, 0);
+  await expect(control).toHaveCSS("opacity", "0");
+  await edit.focus();
+  await expect(control).toHaveCSS("opacity", "1");
+  await edit.click();
   await page
     .getByRole("button", { name: "Kontakt do organizatorów", exact: true })
     .click();
