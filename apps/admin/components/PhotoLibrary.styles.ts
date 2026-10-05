@@ -23,6 +23,14 @@ export const Tile = styled.button`
     outline: 3px solid #52679d;
     outline-offset: 3px;
   }
+  &[aria-pressed="true"] {
+    border-color: #52679d;
+    box-shadow: 0 0 0 2px #52679d;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
   & img {
     display: block;
     width: 100%;

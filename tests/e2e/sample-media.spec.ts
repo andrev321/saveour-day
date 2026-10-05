@@ -30,8 +30,42 @@ test("starter sample loads, can be removed from the project and restored with un
     .poll(() => photo.evaluate((el) => (el as HTMLImageElement).naturalWidth))
     .toBeGreaterThan(0);
   await page.getByRole("tab", { name: "Zdjęcia", exact: true }).click();
+  const scenes = page.getByRole("button", { name: /^Wybierz scenerię:/ });
+  await expect(scenes).toHaveCount(3);
+  await page
+    .getByRole("heading", { name: "Gotowe scenerie", exact: true })
+    .scrollIntoViewIfNeeded();
+  await page.screenshot({
+    path: "test-results/starter-scenes.png",
+    fullPage: true,
+  });
+  await scenes.nth(1).click();
+  await expect(photo).toHaveAttribute("src", /birthday-garden-v1/);
+  await scenes.nth(0).click();
+  await expect(photo).toHaveAttribute("src", /birthday-v1/);
+  await page.getByRole("combobox", { name: "Okazja", exact: true }).click();
+  await page.getByRole("option", { name: "Baby shower", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Wybierz scenerię: Dziewczynka", exact: true })
+    .click();
+  await expect(photo).toHaveAttribute("src", /baby-shower-girl-v1/);
+  await page
+    .getByRole("button", { name: "Wybierz scenerię: Chłopiec", exact: true })
+    .click();
+  await expect(photo).toHaveAttribute("src", /baby-shower-v1/);
+  // The editor groups rapid changes into one undo step.
+  await page.waitForTimeout(800);
+  await page
+    .getByRole("button", { name: "Wybierz scenerię: Neutralny", exact: true })
+    .click();
+  await expect(photo).toHaveAttribute("src", /baby-shower-neutral-v1/);
+  await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+  await expect(photo).toHaveAttribute("src", /baby-shower-v1/);
+  await page.getByRole("combobox", { name: "Okazja", exact: true }).click();
+  await page.getByRole("option", { name: "Urodziny", exact: true }).click();
+  await scenes.nth(0).click();
   const tile = page.getByRole("button", {
-    name: "Podgląd i opis: Przykładowe zdjęcie — spotkanie przy stole",
+    name: "Podgląd i opis: Przykładowe zdjęcie — tort i dekoracje urodzinowe",
     exact: true,
   });
   await tile.click();
@@ -41,6 +75,7 @@ test("starter sample loads, can be removed from the project and restored with un
   await expect(
     page.getByRole("button", { name: "Usuń plik z biblioteki", exact: true }),
   ).toHaveCount(0);
+  await page.waitForTimeout(800);
   await page
     .getByRole("button", { name: "Usuń z zaproszenia", exact: true })
     .click();
@@ -49,6 +84,7 @@ test("starter sample loads, can be removed from the project and restored with un
   await page.getByRole("button", { name: "Cofnij", exact: true }).click();
   await expect(tile).toBeVisible();
   await expect(photo).toBeVisible();
+  await expect(photo).toHaveAttribute("src", /birthday-v1/);
   await page.screenshot({
     path: "test-results/template-sample-photo.png",
     fullPage: true,

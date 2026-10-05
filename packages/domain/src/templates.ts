@@ -40,16 +40,16 @@ const definitions = [
 ] as const;
 export type TemplateId = (typeof definitions)[number][0];
 export const templatePhotos: Partial<Record<TemplateId, SamplePhotoKey>> = {
-  wedding: "garden",
-  reception: "evening",
-  "wedding-reception": "garden",
-  birthday: "gathering",
-  corporate: "gathering",
-  anniversary: "evening",
-  "family-ceremony": "gathering",
-  "baby-shower": "gathering",
-  housewarming: "gathering",
-  workshop: "gathering",
+  wedding: "wedding",
+  reception: "reception",
+  "wedding-reception": "wedding",
+  birthday: "birthday",
+  corporate: "corporate",
+  anniversary: "anniversary",
+  "family-ceremony": "baptism",
+  "baby-shower": "baby-shower-neutral",
+  housewarming: "housewarming",
+  workshop: "workshop",
 };
 export const templateThemes: Record<TemplateId, ThemeName> = {
   wedding: "classic",
