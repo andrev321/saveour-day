@@ -11,13 +11,15 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
-import type { MediaAsset, SiteConfig } from "@invitations/domain";
+import {
+  isSampleMedia,
+  type MediaAsset,
+  type SiteConfig,
+} from "@invitations/domain";
 import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import * as S from "./PhotoLibrary.styles";
-
-
 
 export function PhotoLibrary({
   config,
@@ -115,6 +117,11 @@ export function PhotoLibrary({
                 {item.width} × {item.height} px
               </Text>
               <Group gap={4}>
+                {isSampleMedia(item) && (
+                  <Badge size="xs" variant="outline">
+                    {copy.example}
+                  </Badge>
+                )}
                 {config.hero.mediaId === item.id && (
                   <Badge size="xs">{copy.main}</Badge>
                 )}
@@ -155,6 +162,7 @@ export function PhotoLibrary({
       >
         {photo && (
           <Stack gap="lg">
+            {isSampleMedia(photo) && <Alert>{copy.exampleHelp}</Alert>}
             {full && !locked && !deleting && (
               <Alert color="orange">{copy.limit}</Alert>
             )}
@@ -239,7 +247,18 @@ export function PhotoLibrary({
                       },
                       sections: current.sections.map((s) => ({
                         ...s,
-                        ...(s.type === "gallery" ? {mediaIds: s.mediaIds.filter((id) => id !== photo.id), crops:Object.fromEntries(Object.entries(s.crops).filter(([id])=>id!==photo.id))} : {}),
+                        ...(s.type === "gallery"
+                          ? {
+                              mediaIds: s.mediaIds.filter(
+                                (id) => id !== photo.id,
+                              ),
+                              crops: Object.fromEntries(
+                                Object.entries(s.crops).filter(
+                                  ([id]) => id !== photo.id,
+                                ),
+                              ),
+                            }
+                          : {}),
                       })),
                     }));
                     setSelected(null);
@@ -248,71 +267,75 @@ export function PhotoLibrary({
                   {copy.remove}
                 </Button>
                 <Text size="xs" c="dimmed">
-                  {copy.removeHelp}
+                  {isSampleMedia(photo)
+                    ? copy.exampleRemoveHelp
+                    : copy.removeHelp}
                 </Text>
               </Stack>
             )}
-            <Stack gap="xs">
-              {deleteError && (
-                <Alert color="red" role="alert">
-                  {deleteError}
-                </Alert>
-              )}
-              {included || !canDelete ? (
-                <Text size="sm" c="dimmed">
-                  {copy.saveFirst}
-                </Text>
-              ) : null}
-              {confirmDelete ? (
-                <Alert color="red" title={copy.deleteTitle}>
-                  <Stack gap="sm">
-                    <Text size="sm">{copy.deleteBody}</Text>
-                    <Group>
-                      <Button
-                        variant="default"
-                        disabled={deleting}
-                        onClick={() => setConfirmDelete(false)}
-                      >
-                        {copy.cancel}
-                      </Button>
-                      <Button
-                        color="red"
-                        loading={deleting}
-                        disabled={included || !canDelete}
-                        onClick={async () => {
-                          setDeleting(true);
-                          setDeleteError("");
-                          try {
-                            await onDelete(photo.id);
-                            setSelected(null);
-                            setConfirmDelete(false);
-                          } catch (error) {
-                            setDeleteError(
-                              error instanceof Error
-                                ? error.message
-                                : copy.deleteError,
-                            );
-                          } finally {
-                            setDeleting(false);
-                          }
-                        }}
-                      >
-                        {copy.deleteConfirm}
-                      </Button>
-                    </Group>
-                  </Stack>
-                </Alert>
-              ) : (
-                <Button
-                  color="red"
-                  variant="light"
-                  disabled={included || !canDelete}
-                  onClick={() => setConfirmDelete(true)}
-                >
-                  {copy.deleteFile}
-                </Button>
-              )}
-            </Stack>
+            {!isSampleMedia(photo) && (
+              <Stack gap="xs">
+                {deleteError && (
+                  <Alert color="red" role="alert">
+                    {deleteError}
+                  </Alert>
+                )}
+                {included || !canDelete ? (
+                  <Text size="sm" c="dimmed">
+                    {copy.saveFirst}
+                  </Text>
+                ) : null}
+                {confirmDelete ? (
+                  <Alert color="red" title={copy.deleteTitle}>
+                    <Stack gap="sm">
+                      <Text size="sm">{copy.deleteBody}</Text>
+                      <Group>
+                        <Button
+                          variant="default"
+                          disabled={deleting}
+                          onClick={() => setConfirmDelete(false)}
+                        >
+                          {copy.cancel}
+                        </Button>
+                        <Button
+                          color="red"
+                          loading={deleting}
+                          disabled={included || !canDelete}
+                          onClick={async () => {
+                            setDeleting(true);
+                            setDeleteError("");
+                            try {
+                              await onDelete(photo.id);
+                              setSelected(null);
+                              setConfirmDelete(false);
+                            } catch (error) {
+                              setDeleteError(
+                                error instanceof Error
+                                  ? error.message
+                                  : copy.deleteError,
+                              );
+                            } finally {
+                              setDeleting(false);
+                            }
+                          }}
+                        >
+                          {copy.deleteConfirm}
+                        </Button>
+                      </Group>
+                    </Stack>
+                  </Alert>
+                ) : (
+                  <Button
+                    color="red"
+                    variant="light"
+                    disabled={included || !canDelete}
+                    onClick={() => setConfirmDelete(true)}
+                  >
+                    {copy.deleteFile}
+                  </Button>
+                )}
+              </Stack>
+            )}
             <Text size="sm" c="dimmed">
               {copy.changes}
             </Text>
@@ -327,4 +350,3 @@ export function PhotoLibrary({
     </Stack>
   );
 }
-

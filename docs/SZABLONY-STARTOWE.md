@@ -53,7 +53,7 @@ Zasady działania:
 - Szablon ustawia motyw, jego paletę, domyślną kompozycję i poziom dekoracji. Warianty kolorów nie są dodatkowymi motywami.
 - Każdy motyw jest dostępny dla każdego typu wydarzenia. Późniejsza zmiana samego motywu zachowuje treści, kolejność modułów i ustawienia widoczności; zastąpienie całego szablonu zachowuje opisane wyżej zasady resetu.
 - Przypisania są wspólne dla PL/EN/DE i mają jedno źródło w katalogu szablonów, używane przez tworzenie zaproszenia, reset i miniatury wyboru.
-- Miniatury pokazują przypisany wygląd oraz nazwę motywu. Podgląd musi dobrze wyglądać również bez zdjęcia, ponieważ szablony nie dostarczają zdjęć.
+- Miniatury pokazują przypisany wygląd oraz nazwę motywu. Podgląd musi dobrze wyglądać również po usunięciu przykładowego zdjęcia.
 - Przypisania obowiązują przy tworzeniu i zastępowaniu szablonu. Nie wymagamy zachowania działania ani wyglądu starych szkiców i publikacji; mogą wymagać ponownego utworzenia w nowym formacie.
 - Testy mają potwierdzać przypisania wszystkich szablonów w trzech językach, zgodność podglądu z wynikiem tworzenia oraz zachowanie treści przy zmianie samego motywu.
 
@@ -64,6 +64,16 @@ Demonstracja pod `/demo` panelu udostępnia przycisk „Utwórz zaproszenie”, 
 Testy obejmują katalog we wszystkich językach, walidację pustego szkicu, tworzenie przez API, migrację v1, SQL resetu i kopii, izolację użytkowników, konflikty rewizji, zależności wariantów, zachowanie RSVP i publikacji oraz potwierdzenie/anulowanie resetu w przeglądarce.
 
 ## Personalizacja motywu
+
+### Przykładowe zdjęcia
+
+Od 2026-10-05 każdy z dziesięciu wypełnionych szablonów ma przykładowe zdjęcie główne. Pusty szablon nadal nie zawiera zdjęć. Ślubne przykłady korzystają z grafiki spaceru w ogrodzie, wesele i jubileusz z kolacji przy świecach, a pozostałe okazje ze spotkania przy stole. Przypisania znajdują się w `templatePhotos`.
+
+W zakładce **Zdjęcia** grafiki mają oznaczenie **Przykładowe zdjęcie** i informację, że powstały przy użyciu AI. Można pozostawić je w opublikowanym zaproszeniu, zmienić opis lub kadr, zastąpić własnym zdjęciem albo wybrać **Usuń z zaproszenia**. Usunięcie czyści przypisania tej grafiki w całym projekcie i można je cofnąć w edytorze. Nie usuwa pliku z innych projektów. Własne zdjęcia dodaje się standardowym przyciskiem przesyłania plików i wybiera jako zdjęcie główne.
+
+Grafiki pochodzą z `assets/theme-redesign/media`; prompty zapisano w `PROMPTS.md` w tym katalogu. Obie aplikacje dostarczają identyczne pliki WebP w rozmiarach 640, 1280 i 1536 px, pod publicznymi, wersjonowanymi adresami `/media/examples/`. Katalog `packages/domain/src/sample-media.ts` dopuszcza wyłącznie konkretne manifesty tych grafik. Prywatne zdjęcia użytkowników nadal podlegają dotychczasowej kontroli własności i dostępu. Plików i manifestów v1 nie należy nadpisywać ani usuwać, ponieważ mogą być używane przez opublikowane zaproszenia.
+
+Przed wdrożeniem aplikacji należy zastosować migrację `20261005123525_template_sample_media.sql`, która dopuszcza te manifesty przy zapisie, tworzeniu projektu, kopiach szkicu i publikacji. Migracja została sprawdzona lokalnie na pełnym łańcuchu migracji. Nie dodaje zdjęć do istniejących projektów; pojawiają się przy tworzeniu projektu lub potwierdzonym zastąpieniu szablonu.
 
 W Ustawieniach pięć przycisków z miniaturami zmienia motyw, paletę, domyślny układ hero i oprawę. Treści i kolejność sekcji pozostają zachowane. Ikony modułów można wyłączyć niezależnie od dekoracji (brak / subtelne / pełne). Kolory nadal można edytować osobno. Wybór szablonu startowego pokazuje jego domyślną paletę i nazwę motywu.
 

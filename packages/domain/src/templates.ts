@@ -8,6 +8,7 @@
   type InvitationLocale,
 } from "./index.ts";
 import { personalTemplateExample } from "./template-examples.ts";
+import { samplePhoto, type SamplePhotoKey } from "./sample-media.ts";
 
 const definitions = [
   ["wedding", "Ślub", "Wedding ceremony", "Trauung"],
@@ -38,6 +39,18 @@ const definitions = [
   ["blank", "Puste zaproszenie", "Blank invitation", "Leere Einladung"],
 ] as const;
 export type TemplateId = (typeof definitions)[number][0];
+export const templatePhotos: Partial<Record<TemplateId, SamplePhotoKey>> = {
+  wedding: "garden",
+  reception: "evening",
+  "wedding-reception": "garden",
+  birthday: "gathering",
+  corporate: "gathering",
+  anniversary: "evening",
+  "family-ceremony": "gathering",
+  "baby-shower": "gathering",
+  housewarming: "gathering",
+  workshop: "gathering",
+};
 export const templateThemes: Record<TemplateId, ThemeName> = {
   wedding: "classic",
   reception: "evening",
@@ -222,6 +235,8 @@ export function createTemplate(
           body: l.contactBody,
         },
       ];
+  const photoKey = templatePhotos[templateId];
+  const photo = photoKey ? samplePhoto(photoKey, locale) : undefined;
   return parseSiteConfig({
     schemaVersion: 3,
     id,
@@ -234,6 +249,7 @@ export function createTemplate(
       description: blank ? "" : (example?.body ?? l.welcome),
       dateLabel: "",
       layout: item.style.layout,
+      ...(photo ? { mediaId: photo.id } : {}),
     },
     theme: item.style.theme,
     design: item.style.design,
@@ -255,7 +271,7 @@ export function createTemplate(
       variantLabel: l.variantLabel,
     },
     contacts: [],
-    media: [],
+    media: photo ? [photo] : [],
     venues,
     events,
     sections,

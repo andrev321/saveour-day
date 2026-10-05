@@ -147,3 +147,11 @@ Potwierdzono po migracji:
 - Oba projekty Vercel są READY; publiczne demo zaproszeń działa w przeglądarce. Panel wymaga logowania, a deweloperska ścieżka `/demo` pozostaje wyłączona na Vercelu. Pełny edytor zweryfikowano lokalnymi E2E i w CI.
 
 Pełne CI zmiany interfejsu (`0a38e3b`) przeszło: TypeScript, lint, 42 testy z PostgreSQL, buildy oraz 59 E2E. Po poprawce migracji uzupełniono starsze fixture'y testów bazowych o wszystkie poprzedzające migracje; ich skrócony schemat nie zawierał wymaganych triggerów. Bieżący wynik końcowego CI jest dostępny w GitHub Actions.
+
+## Przykładowe zdjęcia — 2026-10-05
+
+Zastosowano migrację `template_sample_media` na stagingu `ymhffmoxwmrvkviuwajw`; wersja historii zdalnej: `20261005193143`, plik lokalny: `20261005123525_template_sample_media.sql`. Wcześniejsze migracje zweryfikowano po nazwach (historia zdalna ma inne znaczniki czasu).
+
+Kontrola SQL potwierdziła akceptację kompletnego manifestu przykładu, odrzucenie podmienionej ścieżki i brak bezpośredniego EXECUTE dla anon/authenticated na nowej funkcji prywatnej. Lokalnie: 55 testów poprawnych, 1 test zewnętrznego PostgreSQL pominięty; 9 E2E, lint, TypeScript i oba buildy poprawne.
+
+Advisors nie wskazał nowych funkcji tej migracji. Zgłosił istniejące ustawienia poza jej zakresem: pg_net w public, dostępność wcześniejszych funkcji SECURITY DEFINER, wyłączoną ochronę wyciekłych haseł oraz informacyjne RLS bez polityk na tabelach obsługiwanych przez serwer. Odnośniki do analizy: [rozszerzenia](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [funkcje dostępne anonimowo](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funkcje użytkowników](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [ochrona haseł](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).

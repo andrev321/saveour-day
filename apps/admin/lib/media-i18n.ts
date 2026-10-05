@@ -1,5 +1,10 @@
 export const mediaUi = {
   pl: {
+    example: "Przykładowe zdjęcie",
+    exampleHelp:
+      "Grafika wygenerowana AI, dołączona do szablonu. Możesz wykorzystać ją w swoim zaproszeniu, usunąć z projektu lub zastąpić własnym zdjęciem.",
+    exampleRemoveHelp:
+      "Zdjęcie zniknie z tego projektu, również z nagłówka i galerii. Możesz cofnąć tę zmianę w edytorze.",
     title: "Twoje zdjęcia",
     deleteFile: "Usuń plik z biblioteki",
     deleteTitle: "Trwale usunąć zdjęcie?",
@@ -49,6 +54,11 @@ export const mediaUi = {
       "Zmiany trafiają do szkicu. Zapisz i opublikuj zaproszenie, aby zobaczyli je goście.",
   },
   en: {
+    example: "Example photo",
+    exampleHelp:
+      "AI-generated artwork included with this template. You can use it in your invitation, remove it from this project or replace it with your own photo.",
+    exampleRemoveHelp:
+      "The photo will be removed from this project, including the hero and galleries. You can undo this change in the editor.",
     title: "Your photos",
     deleteFile: "Delete file from library",
     deleteTitle: "Permanently delete photo?",
@@ -98,6 +108,11 @@ export const mediaUi = {
       "Changes update your draft. Save and publish the invitation to show them to guests.",
   },
   de: {
+    example: "Beispielfoto",
+    exampleHelp:
+      "KI-generiertes Bild aus dieser Vorlage. Du kannst es in deiner Einladung verwenden, aus dem Projekt entfernen oder durch dein eigenes Foto ersetzen.",
+    exampleRemoveHelp:
+      "Das Foto wird aus diesem Projekt entfernt, auch aus dem Titelbereich und den Galerien. Du kannst diese Änderung im Editor rückgängig machen.",
     title: "Deine Fotos",
     deleteFile: "Datei aus Bibliothek löschen",
     deleteTitle: "Foto dauerhaft löschen?",
@@ -147,4 +162,3 @@ export const mediaUi = {
       "Änderungen werden im Entwurf übernommen. Speichere und veröffentliche die Einladung für deine Gäste.",
   },
 };
-

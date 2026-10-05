@@ -6,6 +6,7 @@ import {
   themes,
   isDarkColor,
   textOnColor,
+  isSampleMediaSource,
   type MediaAsset,
   type SiteConfig,
 } from "@invitations/domain";
@@ -119,7 +120,8 @@ function Photo({
   hero?: boolean;
   crops?: DeviceCrops;
 }) {
-  const resolve = resolveMedia || ((src: string) => src);
+  const resolve = (src: string) =>
+    isSampleMediaSource(src) ? src : (resolveMedia?.(src) ?? src);
   const src = resolve(media.src);
   const mobileSrc = mobile ? resolve(mobile.src) : undefined;
   const srcSet = media.variants.length
