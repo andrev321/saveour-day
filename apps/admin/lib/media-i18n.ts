@@ -1,5 +1,11 @@
 export const mediaUi = {
   pl: {
+    scenes: "Gotowe scenerie",
+    scenesHelp:
+      "Wybierz grafikę pasującą do okazji. Kliknięcie ustawi ją jako zdjęcie główne. Grafiki powstały przy użyciu AI; możesz też dodać własne zdjęcia.",
+    occasion: "Okazja",
+    chooseScene: "Wybierz scenerię",
+    babyChoices: ["Neutralny", "Dziewczynka", "Chłopiec"],
     example: "Przykładowe zdjęcie",
     exampleHelp:
       "Grafika wygenerowana AI, dołączona do szablonu. Możesz wykorzystać ją w swoim zaproszeniu, usunąć z projektu lub zastąpić własnym zdjęciem.",
@@ -54,6 +60,12 @@ export const mediaUi = {
       "Zmiany trafiają do szkicu. Zapisz i opublikuj zaproszenie, aby zobaczyli je goście.",
   },
   en: {
+    scenes: "Ready-made scenes",
+    scenesHelp:
+      "Choose artwork for your occasion. Select a scene to use it as the main photo. These images were created with AI; you can also upload your own photos.",
+    occasion: "Occasion",
+    chooseScene: "Choose scene",
+    babyChoices: ["Neutral", "Girl", "Boy"],
     example: "Example photo",
     exampleHelp:
       "AI-generated artwork included with this template. You can use it in your invitation, remove it from this project or replace it with your own photo.",
@@ -108,6 +120,12 @@ export const mediaUi = {
       "Changes update your draft. Save and publish the invitation to show them to guests.",
   },
   de: {
+    scenes: "Fertige Szenen",
+    scenesHelp:
+      "Wähle ein Bild für deinen Anlass. Ein Klick setzt es als Hauptbild. Diese Bilder wurden mit KI erstellt; du kannst auch eigene Fotos hochladen.",
+    occasion: "Anlass",
+    chooseScene: "Szene wählen",
+    babyChoices: ["Neutral", "Mädchen", "Junge"],
     example: "Beispielfoto",
     exampleHelp:
       "KI-generiertes Bild aus dieser Vorlage. Du kannst es in deiner Einladung verwenden, aus dem Projekt entfernen oder durch dein eigenes Foto ersetzen.",

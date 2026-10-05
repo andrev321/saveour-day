@@ -14,6 +14,10 @@ import {
   isSampleMedia,
   mediaSchema,
   invitationLocales,
+  samplePhotoGroups,
+  samplePhotoOptions,
+  selectSamplePhoto,
+  parseSiteConfig,
 } from "../packages/domain/src/index.ts";
 import { Invitation } from "../packages/renderer/src/index.tsx";
 import {
@@ -22,6 +26,43 @@ import {
   other,
   sid,
 } from "./helpers/media-database.ts";
+
+test("curated scenes switch the hero without duplicating photos or replacing independent device photos", () => {
+  for (const locale of invitationLocales) {
+    for (const group of Object.keys(
+      samplePhotoGroups,
+    ) as (keyof typeof samplePhotoGroups)[]) {
+      const options = samplePhotoOptions(group, locale);
+      assert.equal(options.length, 3);
+      assert.equal(new Set(options.map((item) => item.id)).size, 3);
+      for (const photo of options) assert.ok(isSampleMedia(photo));
+    }
+    const start = createTemplate("baby-shower", "choices", locale);
+    start.hero.crops = { desktop: { x: 5, y: 10 }, mobile: { x: 20, y: 30 } };
+    const changed = selectSamplePhoto(start, "baby-shower-girl");
+    assert.equal(changed.hero.mediaId, "example-baby-shower-girl-v1");
+    assert.equal(changed.hero.crops.desktop, undefined);
+    assert.equal(changed.hero.crops.mobile, undefined);
+    assert.equal(start.media.length, 1);
+    const back = selectSamplePhoto(changed, "baby-shower-neutral");
+    assert.equal(back.media.length, 2);
+    assert.deepEqual(parseSiteConfig(back).identity, start.identity);
+    back.hero.mobileMediaId = start.media[0].id;
+    back.hero.crops.mobile = { x: 15, y: 20 };
+    const next = selectSamplePhoto(back, "baby-shower");
+    assert.equal(next.hero.mobileMediaId, start.media[0].id);
+    assert.deepEqual(next.hero.crops.mobile, { x: 15, y: 20 });
+    assert.equal(selectSamplePhoto(next, "baby-shower"), next);
+    const full = {
+      ...start,
+      media: Array.from({ length: 30 }, (_, i) => ({
+        ...start.media[0],
+        id: `upload-${i}`,
+      })),
+    };
+    assert.equal(selectSamplePhoto(full, "baby-shower-girl"), full);
+  }
+});
 
 test("all non-blank starters have a localized, independently removable sample photo", () => {
   for (const locale of invitationLocales)
@@ -59,6 +100,32 @@ test("public samples are byte-identical in both apps and match the versioned man
       if (variant.src === photo.src)
         assert.equal(metadata.height, photo.height);
     }
+});
+
+test("starters choose occasion-specific photos and retain historical media", () => {
+  const expected = {
+    wedding: "wedding",
+    reception: "reception",
+    "wedding-reception": "wedding",
+    birthday: "birthday",
+    corporate: "corporate",
+    anniversary: "anniversary",
+    "family-ceremony": "baptism",
+    "baby-shower": "baby-shower-neutral",
+    housewarming: "housewarming",
+    workshop: "workshop",
+  } as const;
+  for (const locale of invitationLocales)
+    for (const [template, photo] of Object.entries(expected)) {
+      const config = createTemplate(
+        template as keyof typeof expected,
+        "test",
+        locale,
+      );
+      assert.equal(config.media[0].id, `example-${photo}-v1`);
+    }
+  for (const key of ["garden", "gathering", "evening"] as const)
+    assert.ok(isSampleMedia(samplePhotos[key]));
 });
 
 test("only exact sample manifests bypass private media resolution", () => {

@@ -3,6 +3,12 @@ import { themeNames, themeDesigns, themes } from "./themes.ts";
 import { contrastRatio } from "./colors.ts";
 import { isSampleMedia } from "./sample-media.ts";
 export {
+  samplePhotoGroups,
+  samplePhotoOptions,
+  selectSamplePhoto,
+  type SamplePhotoGroup,
+} from "./sample-photo-options.ts";
+export {
   samplePhoto,
   samplePhotos,
   isSampleMedia,

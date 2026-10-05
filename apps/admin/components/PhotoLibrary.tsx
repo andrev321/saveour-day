@@ -6,6 +6,7 @@ import {
   Button,
   Group,
   Modal,
+  Select,
   Stack,
   Text,
   TextInput,
@@ -13,12 +14,17 @@ import {
 } from "@mantine/core";
 import {
   isSampleMedia,
+  samplePhotoGroups,
+  samplePhotoOptions,
+  selectSamplePhoto,
+  type SamplePhotoGroup,
   type MediaAsset,
   type SiteConfig,
 } from "@invitations/domain";
 import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
+import { templateCatalog } from "@invitations/domain/templates";
 import * as S from "./PhotoLibrary.styles";
 
 export function PhotoLibrary({
@@ -38,6 +44,23 @@ export function PhotoLibrary({
 }) {
   const { language } = usePanelI18n();
   const copy = mediaUi[language];
+  const panelLocale =
+    language === "pl" ? "pl-PL" : language === "en" ? "en-GB" : "de-DE";
+  const [sampleGroup, setSampleGroup] = useState<SamplePhotoGroup>(
+    () =>
+      (Object.keys(samplePhotoGroups) as SamplePhotoGroup[]).find(
+        (group) =>
+          samplePhotoOptions(group, config.locale)[0].id ===
+          config.hero.mediaId,
+      ) ??
+      (Object.keys(samplePhotoGroups) as SamplePhotoGroup[]).find((group) =>
+        samplePhotoOptions(group, config.locale).some(
+          (item) => item.id === config.hero.mediaId,
+        ),
+      ) ??
+      "wedding",
+  );
+  const sampleChoices = samplePhotoOptions(sampleGroup, config.locale);
   const [selected, setSelected] = useState<string | null>(null);
 
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -79,6 +102,58 @@ export function PhotoLibrary({
   }
   return (
     <Stack>
+      <Title order={3}>{copy.scenes}</Title>
+      <Text size="sm" c="dimmed">
+        {copy.scenesHelp}
+      </Text>
+      <Select
+        label={copy.occasion}
+        value={sampleGroup}
+        allowDeselect={false}
+        data={templateCatalog(panelLocale)
+          .filter((item) => item.id !== "blank")
+          .map((item) => ({ value: item.id, label: item.label }))}
+        onChange={(value) => {
+          if (value && value in samplePhotoGroups)
+            setSampleGroup(value as SamplePhotoGroup);
+        }}
+      />
+      <S.Grid>
+        {sampleChoices.map((item, index) => {
+          const active = config.hero.mediaId === item.id;
+          const label =
+            sampleGroup === "baby-shower" ? copy.babyChoices[index] : item.alt;
+          return (
+            <S.Tile
+              key={item.id}
+              type="button"
+              aria-label={`${copy.chooseScene}: ${label}`}
+              aria-pressed={active}
+              disabled={
+                !config.media.some((m) => m.id === item.id) &&
+                config.media.length >= 30
+              }
+              onClick={() =>
+                onChange((current) =>
+                  selectSamplePhoto(
+                    current,
+                    samplePhotoGroups[sampleGroup][index],
+                  ),
+                )
+              }
+            >
+              <img src={item.variants[0].src} alt="" loading="lazy" />
+              <Stack p="sm" gap={6}>
+                <Text fw={600} size="sm">
+                  {label}
+                </Text>
+                {active && <Badge size="xs">{copy.selectedMain}</Badge>}
+              </Stack>
+            </S.Tile>
+          );
+        })}
+      </S.Grid>
+      {config.media.length >= 30 && <Alert color="orange">{copy.limit}</Alert>}
       <Title order={3}>{copy.title}</Title>
       <Text size="sm" c="dimmed">
         {copy.help}
