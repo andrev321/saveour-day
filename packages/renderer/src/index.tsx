@@ -12,12 +12,14 @@ import {
 } from "@invitations/domain";
 import {
   Anchor,
+  ActionIcon,
   Button,
   Group,
   MantineProvider,
   Stack,
   Text,
   Title,
+  Tooltip,
   createTheme,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
@@ -31,7 +33,37 @@ import {
   EnvelopeOpenIcon,
   SparkleIcon,
   DiamondIcon,
+  PencilSimpleIcon,
 } from "@phosphor-icons/react";
+
+function PreviewEditButton({
+  title,
+  onClick,
+}: {
+  title: string;
+  onClick: () => void;
+}) {
+  const label = `Edytuj: ${title}`;
+  return (
+    <S.PreviewEditControl>
+      <Tooltip
+        label={label}
+        position="left"
+        withArrow
+        events={{ hover: true, focus: true, touch: false }}
+      >
+        <ActionIcon
+          size={30}
+          variant="default"
+          aria-label={label}
+          onClick={onClick}
+        >
+          <PencilSimpleIcon size={16} aria-hidden="true" />
+        </ActionIcon>
+      </Tooltip>
+    </S.PreviewEditControl>
+  );
+}
 
 type Palette = [
   string,
@@ -380,17 +412,14 @@ export function Invitation({
           data-layout={config.hero.layout}
           data-has-photo={Boolean(hero)}
         >
+          {onEditSection && (
+            <PreviewEditButton
+              title="Nagłówek"
+              onClick={() => onEditSection("hero")}
+            />
+          )}
           <S.InvitationHeroCopy>
             <ThemeOrnament config={config} />
-            {onEditSection && (
-              <Button
-                size="xs"
-                variant="subtle"
-                onClick={() => onEditSection("hero")}
-              >
-                Edytuj
-              </Button>
-            )}
             {config.hero.eyebrow && (
               <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
             )}
@@ -448,6 +477,12 @@ export function Invitation({
                 id={`section-${section.id}`}
                 data-kind={section.type}
               >
+                {onEditSection && (
+                  <PreviewEditButton
+                    title={section.title}
+                    onClick={() => onEditSection(section.id)}
+                  />
+                )}
                 <S.SectionHeading>
                   <span aria-hidden="true">
                     {String(index + 1).padStart(2, "0")} /
@@ -458,15 +493,6 @@ export function Invitation({
                   <Title order={2} size="h3">
                     {section.title}
                   </Title>
-                  {onEditSection && (
-                    <Button
-                      size="xs"
-                      variant="subtle"
-                      onClick={() => onEditSection(section.id)}
-                    >
-                      Edytuj: {section.title}
-                    </Button>
-                  )}
                 </S.SectionHeading>
                 {section.body ? (
                   <S.InvitationProse mb="lg">{section.body}</S.InvitationProse>

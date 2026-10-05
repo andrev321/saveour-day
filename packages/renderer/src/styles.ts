@@ -2,6 +2,31 @@
 import { Box, Card, Text, Title } from "@mantine/core";
 import { styled } from "styled-components";
 
+export const PreviewEditControl = styled.div.attrs<{ "data-ui"?: string }>({
+  "data-ui": "preview-edit-control",
+})`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+
+  [data-ui="invitation-hero"]:hover > &,
+  [data-ui="invitation-section"]:hover > &,
+  &:focus-within {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  & button {
+    box-shadow: 0 2px 8px #00000018;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
+
 export const InvitationPhotoFallback = styled(Box).attrs<{
   "data-ui"?: string;
 }>({
@@ -366,6 +391,7 @@ export const InvitationMain = styled.main`
 export const InvitationSection = styled(Card).attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation-section",
 })`
+  position: relative;
   min-width: 0;
   background: transparent;
   color: var(--ink);
