@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { themeNames, themeDesigns, themes } from "./themes.ts";
 import { contrastRatio } from "./colors.ts";
+import { isSampleMedia } from "./sample-media.ts";
+export {
+  samplePhoto,
+  samplePhotos,
+  isSampleMedia,
+  isSampleMediaSource,
+} from "./sample-media.ts";
 export {
   contrastRatio,
   colorLuminance,
@@ -101,7 +108,15 @@ export const mediaSchema = z
       .max(8)
       .default([]),
   })
-  .strict();
+  .strict()
+  .refine((media) => {
+    const reserved =
+      media.id.startsWith("example-") ||
+      [media.src, ...media.variants.map((v) => v.src)].some((src) =>
+        src.startsWith("/media/examples/"),
+      );
+    return !reserved || isSampleMedia(media);
+  }, "Nieprawidłowe zdjęcie przykładowe");
 const venueSchema = z
   .object({
     id: idSchema,

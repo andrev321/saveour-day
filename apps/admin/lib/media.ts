@@ -1,7 +1,11 @@
 import "server-only";
 import sharp from "sharp";
 import { randomBytes, randomUUID } from "node:crypto";
-import { mediaSchema, type SiteConfig } from "@invitations/domain";
+import {
+  mediaSchema,
+  isSampleMedia,
+  type SiteConfig,
+} from "@invitations/domain";
 import { checkDb, HttpError, serviceDb, sessionDb } from "./server";
 
 export async function deleteMedia(
@@ -136,7 +140,12 @@ export async function uploadMedia(
 }
 export async function validateMedia(siteId: string, config: SiteConfig) {
   const paths: Record<string, string> = {};
-  if (!config.media.length) return paths;
+  // Only exact bundled manifests bypass private Storage ownership lookup.
+  // Reparse here too, so callers cannot pass a forged reserved ID or source.
+  const uploads = config.media
+    .map((media) => mediaSchema.parse(media))
+    .filter((media) => !isSampleMedia(media));
+  if (!uploads.length) return paths;
   const { data, error } = await serviceDb()
     .from("media_assets")
     .select("id,manifest,original_path")
@@ -144,10 +153,10 @@ export async function validateMedia(siteId: string, config: SiteConfig) {
     .eq("status", "ready")
     .in(
       "id",
-      config.media.map((m) => m.id),
+      uploads.map((m) => m.id),
     );
   checkDb(error);
-  for (const media of config.media) {
+  for (const media of uploads) {
     const row = data?.find((a) => a.id === media.id);
     if (!row)
       throw new HttpError(
