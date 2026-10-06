@@ -745,10 +745,6 @@ export function Editor({
           )}
         </>
       }
-      onResetView={() => {
-        setWidth("390");
-        setFit(true);
-      }}
       preview={
         <>
           {!previewOpen && previewControls}
