@@ -309,6 +309,7 @@ export const PreviewFit = styled(ActionIcon).attrs<{ "data-ui"?: string }>({
   "data-ui": "preview-fit",
 })`
   ${PreviewToolbar} & {
+    margin-left: auto;
     width: auto;
     padding: 0 6px;
     gap: 4px;
