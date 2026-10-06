@@ -19,6 +19,8 @@ import {
   Accordion,
   Pagination,
   SimpleGrid,
+  Loader,
+  Skeleton,
 } from "@mantine/core";
 import { apiFetch } from "./Dashboard";
 import {
@@ -128,6 +130,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     URL.revokeObjectURL(url);
   }
   const endpoint = `/api/sites/${siteId}/guests`;
+  const [loading, setLoading] = useState(true);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [data, setData] = useState<Management | null>(null),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false);
@@ -172,11 +176,14 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       })
       .catch((e) => {
         if (alive) setMessage(e.message);
+      })
+      .finally(() => {
+        if (alive) setLoading(false);
       });
     return () => {
       alive = false;
     };
-  }, [endpoint]);
+  }, [endpoint, loadAttempt]);
   async function action(action: string, payload: unknown) {
     setBusy(true);
     setMessage("");
@@ -328,7 +335,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     download("odpowiedzi-rsvp.csv", csvFile(rows));
   }
   return (
-    <Card withBorder>
+    <Card withBorder aria-busy={loading}>
       <Stack>
         <Title order={2}>
           {labelText(
@@ -338,6 +345,52 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           )}
         </Title>
         {message && <Alert role="status">{message}</Alert>}
+        {loading && (
+          <Stack gap="lg">
+            <Group role="status" aria-live="polite" gap="sm">
+              <Loader size="sm" aria-hidden="true" />
+              <Text size="sm" c="dimmed">
+                {labelText(
+                  "Wczytujemy zaproszenia i odpowiedzi RSVP…",
+                  "Loading invitations and RSVP responses…",
+                  "Einladungen und RSVP-Antworten werden geladen…",
+                )}
+              </Text>
+            </Group>
+            <Stack aria-hidden="true" gap="lg">
+              <SimpleGrid cols={{ base: 1, sm: 3 }}>
+                {[0, 1, 2].map((index) => (
+                  <Card withBorder key={index}>
+                    <Skeleton height={16} width="75%" mb="sm" />
+                    <Skeleton height={28} width={48} />
+                  </Card>
+                ))}
+              </SimpleGrid>
+              <Skeleton height={24} width="45%" />
+              {[0, 1, 2].map((index) => (
+                <Card withBorder key={index}>
+                  <Stack gap="sm">
+                    <Skeleton height={20} width="40%" />
+                    <Skeleton height={14} width="60%" />
+                    <Skeleton height={14} width="80%" />
+                  </Stack>
+                </Card>
+              ))}
+            </Stack>
+          </Stack>
+        )}
+        {!loading && !data && message && (
+          <Button
+            variant="light"
+            onClick={() => {
+              setMessage("");
+              setLoading(true);
+              setLoadAttempt((attempt) => attempt + 1);
+            }}
+          >
+            {labelText("Spróbuj ponownie", "Try again", "Erneut versuchen")}
+          </Button>
+        )}
         {data && (
           <>
             <SimpleGrid cols={{ base: 1, sm: 3 }}>
