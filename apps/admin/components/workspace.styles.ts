@@ -421,15 +421,6 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     border-color: #DCE2EE;
     background: #FFFFFF;
   }
-  ${EditorWorkspace}[data-density="compact"] & {
-    padding: 16px;
-  }
-  ${EditorWorkspace}[data-density="compact"] & .mantine-Stack-root {
-    gap: 10px;
-  }
-  ${EditorWorkspace}[data-density="compact"] & .mantine-Input-input {
-    min-height: 32px;
-  }
   @media (max-width: 1099px) {
     & {
       height: 100%;
@@ -467,13 +458,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
       max-width: 100%;
     }
   }
-  @media (pointer: coarse) {
-    ${EditorWorkspace}[data-density="compact"]
-    &
-    .mantine-Input-input {
-      min-height: 44px;
-    }
-  }
+
 `;
 
 export const WorkspaceNotices = styled.div.attrs<{ "data-ui"?: string }>({

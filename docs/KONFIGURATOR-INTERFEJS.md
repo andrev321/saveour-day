@@ -17,7 +17,7 @@ Na desktopie formularz i podgląd przewijają się niezależnie. Nawigację moż
 
 Podgląd ma przyciski z ikonami: Telefon (390 px), Tablet (768 px) i Komputer (1440 px). Zapisana wcześniej szerokość 320 px pozostaje obsługiwana. Wspólny, jednowierszowy pasek zawiera etykietę, urządzenia, wariant, przełącznik dopasowania i powiększenie/zamknięcie. Telefon i tablet mają obudowę, a ekran jest przycinany jedną maską zaokrągleń. Tryb „Dopasuj” skaluje całe urządzenie do szerokości i wysokości dostępnego miejsca, zachowując rzeczywistą szerokość iframe i breakpointy zaproszenia. Wyłączenie dopasowania daje skalę 100% i przewijanie w panelu. Podgląd powiększony zajmuje pełną szerokość i wysokość okna, także po zmianie jego rozmiaru.
 
-Ustawienia widoku pod boczną nawigacją pozwalają wybrać gęstość Wygodna / Zwarta i przywrócić układ. Na urządzeniach dotykowych kontrolki zachowują minimum 44 px wysokości. Mobilne menu również pozwala przywrócić układ. Powiększanie przeglądarki pozostaje dostępne; obszar pracy reaguje na wysokość visualViewport przy otwartej klawiaturze ekranowej.
+Edytor korzysta ze stałego, wygodnego układu. Przycisk pod boczną nawigacją pozwala przywrócić układ. Mobilne menu również pozwala przywrócić układ. Powiększanie przeglądarki pozostaje dostępne; obszar pracy reaguje na wysokość visualViewport przy otwartej klawiaturze ekranowej.
 
 ## Stan i dostępność
 
@@ -35,7 +35,7 @@ Po uploadzie edytor pobiera podpisane adresy Storage przed przekazaniem zdjęcia
 
 ### Preferencje edytora
 
-- Preferencje urządzenia zapisują się w localStorage pod kluczami `invitations-view-v1-*`: szerokość formularza, zwinięcie nawigacji, gęstość, szerokość i dopasowanie podglądu.
+- Preferencje urządzenia zapisują się w localStorage pod kluczami `invitations-view-v1-*`: szerokość formularza, zwinięcie nawigacji, szerokość i dopasowanie podglądu.
 - Preferencje nie są częścią konfiguracji zaproszenia, szkicu ani publikacji.
 - Przełączanie Edycja / Podgląd nie demontuje formularza i zachowuje edytowane wartości, rozwinięte sekcje i pozycję przewijania.
 - Subtelne animacje paneli i nawigacji trwają 160–180 ms i są wyłączane przez `prefers-reduced-motion`.
