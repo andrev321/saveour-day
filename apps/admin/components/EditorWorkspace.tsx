@@ -4,9 +4,7 @@ import {
   Button,
   Drawer,
   Popover,
-  SegmentedControl,
   Tabs,
-  Text,
   Tooltip,
 } from "@mantine/core";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
@@ -69,14 +67,9 @@ export function EditorWorkspace({
     setViewState({ mode, request: editRequest });
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
-  const [viewOptions, setViewOptions] = useState(false);
   const [collapsed, setCollapsed] = useLocalStorage({
     key: "invitations-view-v1-collapsed",
     defaultValue: false,
-  });
-  const [density, setDensity] = useLocalStorage({
-    key: "invitations-view-v1-density",
-    defaultValue: "comfortable",
   });
   const [panelWidth, setPanelWidth] = useLocalStorage({
     key: "invitations-view-v1-width",
@@ -123,7 +116,6 @@ export function EditorWorkspace({
   return (
     <S.EditorWorkspace
       data-collapsed={collapsed}
-      data-density={density}
       data-view={view}
       style={
         {
@@ -241,51 +233,20 @@ export function EditorWorkspace({
                 <SidebarSimpleIcon size={23} weight="duotone" />
               </ActionIcon>
             </Tooltip>
-            <Popover
-              position="right-end"
-              opened={viewOptions}
-              onChange={setViewOptions}
-              trapFocus
-            >
-              <Popover.Target>
-                <ActionIcon
-                  variant="subtle"
-                  size="lg"
-                  aria-label={ui.view}
-                  onClick={() => setViewOptions((value) => !value)}
-                >
-                  <SlidersHorizontalIcon size={23} weight="duotone" />
-                </ActionIcon>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text size="sm" mb="xs">
-                  {ui.density}
-                </Text>
-                <SegmentedControl
-                  aria-label={ui.density}
-                  value={density}
-                  onChange={setDensity}
-                  data={[
-                    { value: "comfortable", label: ui.comfortable },
-                    { value: "compact", label: ui.compact },
-                  ]}
-                />
-                <Button
-                  variant="subtle"
-                  display="block"
-                  mt="sm"
-                  onClick={() => {
-                    setCollapsed(false);
-                    setDensity("comfortable");
-                    setPanelWidth(460);
-                    onResetView();
-                    setViewOptions(false);
-                  }}
-                >
-                  {ui.reset}
-                </Button>
-              </Popover.Dropdown>
-            </Popover>
+            <Tooltip label={ui.reset} position="right">
+              <ActionIcon
+                variant="subtle"
+                size="lg"
+                aria-label={ui.reset}
+                onClick={() => {
+                  setCollapsed(false);
+                  setPanelWidth(460);
+                  onResetView();
+                }}
+              >
+                <ClockCounterClockwiseIcon size={23} weight="duotone" />
+              </ActionIcon>
+            </Tooltip>
           </S.WorkspaceNavFooter>
         </S.WorkspaceNav>
         <S.WorkspaceForm id="workspace-edit">
@@ -389,7 +350,6 @@ export function EditorWorkspace({
             variant="default"
             onClick={() => {
               setCollapsed(false);
-              setDensity("comfortable");
               setPanelWidth(460);
               onResetView();
             }}

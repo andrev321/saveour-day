@@ -88,9 +88,6 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
   await page.keyboard.press("End");
   await expect(separator).toHaveAttribute("aria-valuenow", "560");
   await page.getByRole("button", { name: "Zwiń nawigację" }).click();
-  await page.getByRole("button", { name: "Ustawienia widoku" }).click();
-  await page.getByText("Zwarta", { exact: true }).click();
-  await page.keyboard.press("Escape");
   await page
     .locator("[data-ui=workspace-preview]")
     .getByRole("button", { name: "Komputer", exact: true })
@@ -110,10 +107,6 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   await expect(separator).toHaveAttribute("aria-valuenow", "560");
-  await expect(page.locator("[data-ui=editor-workspace]")).toHaveAttribute(
-    "data-density",
-    "compact",
-  );
   await expect(
     page.getByRole("button", { name: "Rozwiń nawigację" }),
   ).toBeVisible();
@@ -122,13 +115,8 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
       .locator("[data-ui=workspace-preview]")
       .getByRole("button", { name: "Komputer", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Ustawienia widoku" }).click();
   await page.getByRole("button", { name: "Przywróć układ" }).click();
   await expect(separator).toHaveAttribute("aria-valuenow", "460");
-  await expect(page.locator("[data-ui=editor-workspace]")).toHaveAttribute(
-    "data-density",
-    "comfortable",
-  );
   await expect(
     page
       .locator("[data-ui=workspace-preview]")
