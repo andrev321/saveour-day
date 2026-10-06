@@ -36,7 +36,6 @@ export function EditorWorkspace({
   children,
   preview,
   dialogs,
-  onResetView,
   active,
   onActive,
   editRequest,
@@ -50,7 +49,6 @@ export function EditorWorkspace({
   children: ReactNode;
   preview: ReactNode;
   dialogs: ReactNode;
-  onResetView: () => void;
   editRequest: number;
   active: string | null;
   onActive: (value: string | null) => void;
@@ -233,20 +231,6 @@ export function EditorWorkspace({
                 <SidebarSimpleIcon size={23} weight="duotone" />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label={ui.reset} position="right">
-              <ActionIcon
-                variant="subtle"
-                size="lg"
-                aria-label={ui.reset}
-                onClick={() => {
-                  setCollapsed(false);
-                  setPanelWidth(460);
-                  onResetView();
-                }}
-              >
-                <ClockCounterClockwiseIcon size={23} weight="duotone" />
-              </ActionIcon>
-            </Tooltip>
           </S.WorkspaceNavFooter>
         </S.WorkspaceNav>
         <S.WorkspaceForm id="workspace-edit">
@@ -346,16 +330,6 @@ export function EditorWorkspace({
               {label}
             </Button>
           ))}
-          <Button
-            variant="default"
-            onClick={() => {
-              setCollapsed(false);
-              setPanelWidth(460);
-              onResetView();
-            }}
-          >
-            {ui.reset}
-          </Button>
         </S.WorkspaceDrawerNav>
       </Drawer>
       {dialogs}
