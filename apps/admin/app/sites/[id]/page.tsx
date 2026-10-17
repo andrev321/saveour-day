@@ -1,6 +1,6 @@
 "use client";
 import { use, useEffect, useState } from "react";
-import { Alert, Button, Container } from "@mantine/core";
+import { Alert, Button, Container, Group } from "@mantine/core";
 import { Editor, type EditorData } from "../../../components/Editor";
 import { EditorLoading } from "../../../components/EditorLoading";
 import { apiFetch } from "../../../components/Dashboard";
@@ -38,15 +38,19 @@ function SiteContent({ id }: { id: string }) {
         <Alert color="red" role="alert">
           {error}
         </Alert>
-        <Button
-          mt="md"
-          onClick={() => {
-            setError("");
-            setAttempt((n) => n + 1);
-          }}
-        >
-          {loadingText(language, "retry")}
-        </Button>
+        <Group mt="md">
+          <Button
+            onClick={() => {
+              setError("");
+              setAttempt((n) => n + 1);
+            }}
+          >
+            {loadingText(language, "retry")}
+          </Button>
+          <Button component="a" href="/" variant="light">
+            {loadingText(language, "backToProjects")}
+          </Button>
+        </Group>
       </Container>
     );
   return data ? <Editor initial={data} /> : <EditorLoading />;

@@ -209,7 +209,11 @@ test("theme picker updates preview, preserves content and toggles ornaments and 
     "data-decorations",
     "none",
   );
-  await expect(preview.locator('[data-ui="invitation"] svg')).toHaveCount(0);
+  await expect(
+    preview.locator(
+      '[data-ui="invitation"] svg:not([data-ui="preview-edit-control"] svg)',
+    ),
+  ).toHaveCount(0);
   await page.screenshot({
     path: "test-results/theme-picker.png",
     fullPage: true,

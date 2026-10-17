@@ -15,6 +15,11 @@ const messages = {
     "This is taking a little longer. Thank you for waiting.",
     "Das dauert etwas länger. Vielen Dank für Ihre Geduld.",
   ],
+  backToProjects: [
+    "Wróć do logowania i projektów",
+    "Back to sign-in and projects",
+    "Zurück zu Anmeldung und Projekten",
+  ],
   retry: ["Spróbuj ponownie", "Try again", "Erneut versuchen"],
   previewError: [
     "Nie udało się przygotować podglądu.",
