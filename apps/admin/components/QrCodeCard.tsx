@@ -2,6 +2,7 @@
 
 import {
   ActionIcon,
+  Button,
   Alert,
   Card,
   Group,
@@ -14,6 +15,10 @@ import {
 import { ClipboardIcon } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import type { DotType } from "qr-code-styling/lib/types";
+
+import { LoadingState, useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
+import { usePanelI18n } from "../lib/i18n";
 
 const foreground = "#302F2B";
 const background = "#FFFFFF";
@@ -36,36 +41,48 @@ export function QrCodeCard({
   onMessage: (message: string) => void;
   title?: string;
 }) {
+  const { language } = usePanelI18n();
+  const { busy, start, end } = useOperation();
+  const [attempt, setAttempt] = useState(0);
+  const [failure, setFailure] = useState<string | null>(null);
   const container = useRef<HTMLDivElement>(null);
   const [dotStyle, setDotStyle] = useState<DotType>("rounded");
   const [png, setPng] = useState<{ key: string; blob: Blob } | null>(null);
-  const qrKey = `${url}|${dotStyle}`;
+  const qrKey = `${url}|${dotStyle}|${attempt}`;
 
   useEffect(() => {
     let active = true;
-    void import("qr-code-styling").then(async ({ default: QRCodeStyling }) => {
-      if (!active || !container.current) return;
-      const instance = new QRCodeStyling({
-        type: "canvas",
-        width: 280,
-        height: 280,
-        margin: 12,
-        data: url,
-        qrOptions: { errorCorrectionLevel: "H" },
-        dotsOptions: { color: foreground, type: dotStyle },
-        cornersSquareOptions: { color: foreground, type: "extra-rounded" },
-        cornersDotOptions: { color: foreground, type: "dot" },
-        backgroundOptions: { color: background },
+    void import("qr-code-styling")
+      .then(async ({ default: QRCodeStyling }) => {
+        if (!active || !container.current) return;
+        const instance = new QRCodeStyling({
+          type: "canvas",
+          width: 280,
+          height: 280,
+          margin: 12,
+          data: url,
+          qrOptions: { errorCorrectionLevel: "H" },
+          dotsOptions: { color: foreground, type: dotStyle },
+          cornersSquareOptions: { color: foreground, type: "extra-rounded" },
+          cornersDotOptions: { color: foreground, type: "dot" },
+          backgroundOptions: { color: background },
+        });
+        container.current.replaceChildren();
+        instance.append(container.current);
+        await instance.getRawData("png");
+        if (!active || !container.current) return;
+        const canvas = container.current.querySelector("canvas");
+        if (!canvas) throw new Error("Missing QR canvas");
+        canvas.toBlob((result) => {
+          if (active) {
+            if (result) setPng({ key: qrKey, blob: result });
+            else setFailure(qrKey);
+          }
+        }, "image/png");
+      })
+      .catch(() => {
+        if (active) setFailure(qrKey);
       });
-      container.current.replaceChildren();
-      instance.append(container.current);
-      await instance.getRawData("png");
-      const canvas = container.current.querySelector("canvas");
-      if (!canvas) return;
-      canvas.toBlob((result) => {
-        if (active && result) setPng({ key: qrKey, blob: result });
-      }, "image/png");
-    });
     return () => {
       active = false;
     };
@@ -73,6 +90,7 @@ export function QrCodeCard({
 
   async function copyImage() {
     if (!png || png.key !== qrKey || !published) return;
+    if (!start("copy")) return;
     try {
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": png.blob }),
@@ -82,6 +100,8 @@ export function QrCodeCard({
       onMessage(
         "Przeglądarka nie pozwoliła skopiować obrazu. Spróbuj w Chrome lub Edge i zezwól na dostęp do schowka.",
       );
+    } finally {
+      end();
     }
   }
 
@@ -91,8 +111,8 @@ export function QrCodeCard({
         <div>
           <Title order={3}>{title || "Kod QR strony"}</Title>
           <Text size="sm" c="dimmed">
-            Kod powstaje lokalnie w przeglądarce i prowadzi do wskazanego
-            adresu zaproszenia.
+            Kod powstaje lokalnie w przeglądarce i prowadzi do wskazanego adresu
+            zaproszenia.
           </Text>
         </div>
         {!published && (
@@ -104,16 +124,55 @@ export function QrCodeCard({
         <Group align="flex-start" gap="xl" wrap="wrap">
           <Stack gap="xs" align="center">
             <div
-              ref={container}
-              aria-label="Podgląd kodu QR"
-              style={{ minHeight: 280, minWidth: 280 }}
-            />
-            <Tooltip label="Kopiuj kod QR jako obraz">
+              style={{ position: "relative", width: 280, height: 280 }}
+              aria-busy={png?.key !== qrKey}
+            >
+              {png?.key !== qrKey && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    zIndex: 1,
+                    background: "white",
+                    display: "grid",
+                    placeContent: "center",
+                  }}
+                >
+                  {failure === qrKey ? (
+                    <div role="alert">
+                      <Text>{loadingText(language, "qrError")}</Text>
+                      <Button onClick={() => setAttempt((n) => n + 1)}>
+                        {loadingText(language, "retry")}
+                      </Button>
+                    </div>
+                  ) : (
+                    <LoadingState
+                      label={loadingText(language, "qr")}
+                      slowLabel={loadingText(language, "slow")}
+                    />
+                  )}
+                </div>
+              )}
+              <div
+                ref={container}
+                aria-label="Podgląd kodu QR"
+                style={{ minHeight: 280, minWidth: 280 }}
+              />
+            </div>
+            <Tooltip
+              label={
+                busy
+                  ? loadingText(language, "copy")
+                  : "Kopiuj kod QR jako obraz"
+              }
+            >
               <ActionIcon
                 size="lg"
                 variant="light"
                 aria-label="Kopiuj kod QR jako obraz"
-                disabled={!published || !png || png.key !== qrKey}
+                loading={busy}
+                aria-busy={busy}
+                disabled={busy || !published || !png || png.key !== qrKey}
                 onClick={() => void copyImage()}
               >
                 <ClipboardIcon />

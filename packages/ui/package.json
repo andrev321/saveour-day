@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": { "./registry": "./src/registry.tsx", "./brand": "./src/brand.tsx" },
-  "peerDependencies": { "react": "^19.0.0", "next": "^16.3.5", "styled-components": "^6.5.3" }
+  "exports": {
+    "./registry": "./src/registry.tsx",
+    "./brand": "./src/brand.tsx",
+    "./loading": "./src/loading.tsx",
+    "./loading-copy": "./src/loading-copy.ts"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "next": "^16.3.5",
+    "styled-components": "^6.5.3"
+  }
 }

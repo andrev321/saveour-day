@@ -23,7 +23,15 @@ import {
   createTheme,
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
-import { useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { LoadingSkeleton, LoadingState } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
 import {
   ClockIcon,
@@ -167,6 +175,12 @@ function Photo({
     tabletSrc,
     srcSet,
   ]);
+  const image = useRef<HTMLImageElement>(null);
+  const [loadedSource, setLoadedSource] = useState<string | null>(null);
+  useEffect(() => {
+    if (image.current?.complete && image.current.naturalWidth)
+      setLoadedSource(sourceKey);
+  }, [sourceKey]);
   const [failedSource, setFailedSource] = useState<string | null>(null);
   // Signed URLs can arrive after the first render or be refreshed later.
   // A failure belongs to that request, not permanently to the photo component.
@@ -178,7 +192,18 @@ function Photo({
       />
     );
   return (
-    <picture>
+    <S.PhotoFrame aria-busy={loadedSource !== sourceKey}>
+      {loadedSource !== sourceKey && (
+        <LoadingSkeleton
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            borderRadius: "inherit",
+            pointerEvents: "none",
+          }}
+        />
+      )}
       {mobile ? (
         <source media="(max-width: 47.99em)" srcSet={mobileSrc} />
       ) : null}
@@ -189,6 +214,8 @@ function Photo({
         />
       ) : null}
       <S.InvitationPhoto
+        ref={image}
+        data-loaded={loadedSource === sourceKey}
         src={src}
         srcSet={srcSet}
         sizes="(max-width: 48em) 100vw, 60vw"
@@ -198,7 +225,10 @@ function Photo({
         loading={hero ? "eager" : "lazy"}
         fetchPriority={hero ? "high" : "auto"}
         onError={() => setFailedSource(sourceKey)}
-        onLoad={() => setFailedSource(null)}
+        onLoad={() => {
+          setFailedSource(null);
+          setLoadedSource(sourceKey);
+        }}
         style={
           {
             "--focal": `${crops.desktop?.x ?? 50}% ${crops.desktop?.y ?? 50}%`,
@@ -207,7 +237,7 @@ function Photo({
           } as CSSProperties
         }
       />
-    </picture>
+    </S.PhotoFrame>
   );
 }
 function Venue({
@@ -218,6 +248,14 @@ function Venue({
   config: SiteConfig;
 }) {
   const [showMap, setShowMap] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  const [mapSlow, setMapSlow] = useState(false);
+  const [mapAttempt, setMapAttempt] = useState(0);
+  useEffect(() => {
+    if (!showMap || mapReady) return;
+    const timer = setTimeout(() => setMapSlow(true), 20000);
+    return () => clearTimeout(timer);
+  }, [showMap, mapReady, mapAttempt]);
   return (
     <Stack gap="md">
       <Title order={3} size="h2">
@@ -244,12 +282,43 @@ function Venue({
         ) : null}
       </Group>
       {venue.mapUrl && showMap ? (
-        <S.InvitationMap
-          src={venue.mapUrl}
-          title={venue.name}
-          loading="lazy"
-          referrerPolicy="no-referrer"
-        />
+        <div style={{ position: "relative" }} aria-busy={!mapReady}>
+          {!mapReady && (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 1,
+                display: "grid",
+                placeContent: "center",
+                background: "var(--paper)",
+              }}
+            >
+              <LoadingState
+                label={loadingText(config.locale.slice(0, 2), "loading")}
+                slowLabel={loadingText(config.locale.slice(0, 2), "slow")}
+              />
+              {mapSlow && (
+                <Button
+                  onClick={() => {
+                    setMapSlow(false);
+                    setMapAttempt((n) => n + 1);
+                  }}
+                >
+                  {loadingText(config.locale.slice(0, 2), "retry")}
+                </Button>
+              )}
+            </div>
+          )}
+          <S.InvitationMap
+            key={mapAttempt}
+            onLoad={() => setMapReady(true)}
+            src={venue.mapUrl}
+            title={venue.name}
+            loading="lazy"
+            referrerPolicy="no-referrer"
+          />
+        </div>
       ) : null}
     </Stack>
   );

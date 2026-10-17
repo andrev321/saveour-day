@@ -1,4 +1,7 @@
 "use client";
+import { LoadingImage } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
+import { ActionButton } from "./ActionButton";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   Alert,
@@ -142,7 +145,13 @@ export function PhotoLibrary({
                 )
               }
             >
-              <img src={item.variants[0].src} alt="" loading="lazy" />
+              <LoadingImage
+                src={item.variants[0].src}
+                alt=""
+                loading="lazy"
+                style={{ aspectRatio: "4 / 3" }}
+                unavailable={loadingText(language, "unavailable")}
+              />
               <Stack p="sm" gap={6}>
                 <Text fw={600} size="sm">
                   {label}
@@ -178,7 +187,9 @@ export function PhotoLibrary({
                 {copy.deleting}
               </Text>
             ) : (
-              <img
+              <LoadingImage
+                style={{ aspectRatio: "4 / 3" }}
+                unavailable={loadingText(language, "unavailable")}
                 src={urls[item.variants[0]?.src || item.src] || item.src}
                 alt=""
                 loading="lazy"
@@ -372,9 +383,10 @@ export function PhotoLibrary({
                         >
                           {copy.cancel}
                         </Button>
-                        <Button
+                        <ActionButton
                           color="red"
                           loading={deleting}
+                          pendingLabel={loadingText(language, "remove")}
                           disabled={included || !canDelete}
                           onClick={async () => {
                             setDeleting(true);
@@ -395,7 +407,7 @@ export function PhotoLibrary({
                           }}
                         >
                           {copy.deleteConfirm}
-                        </Button>
+                        </ActionButton>
                       </Group>
                     </Stack>
                   </Alert>

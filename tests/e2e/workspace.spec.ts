@@ -76,7 +76,7 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
   });
 }
 
-test("view settings persist, resize is keyboard accessible, and reset restores defaults", async ({
+test("view settings persist, resize is keyboard accessible, and controls remain adjustable", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1920, height: 1000 });
@@ -115,8 +115,14 @@ test("view settings persist, resize is keyboard accessible, and reset restores d
       .locator("[data-ui=workspace-preview]")
       .getByRole("button", { name: "Komputer", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Przywróć układ" }).click();
-  await expect(separator).toHaveAttribute("aria-valuenow", "460");
+  await page.getByRole("button", { name: "Rozwiń nawigację" }).click();
+  await separator.focus();
+  await page.keyboard.press("ArrowLeft");
+  await expect(separator).toHaveAttribute("aria-valuenow", "540");
+  await page
+    .locator("[data-ui=workspace-preview]")
+    .getByRole("button", { name: "Telefon", exact: true })
+    .click();
   await expect(
     page
       .locator("[data-ui=workspace-preview]")

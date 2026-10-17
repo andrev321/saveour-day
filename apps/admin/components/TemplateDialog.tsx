@@ -1,4 +1,6 @@
 "use client";
+import { loadingText } from "@invitations/ui/loading-copy";
+import { ActionButton } from "./ActionButton";
 import type { ReactNode } from "react";
 import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
 import type { InvitationLocale } from "@invitations/domain";
@@ -85,14 +87,18 @@ export function TemplateDialog({
             <Button variant="default" disabled={busy} onClick={onClose}>
               {tt.cancel}
             </Button>
-            <Button
+            <ActionButton
               type="submit"
               color={reset ? "orange" : undefined}
               disabled={disabled || !templateId}
               loading={busy}
+              pendingLabel={loadingText(
+                language,
+                reset ? "template" : "create",
+              )}
             >
               {submitLabel}
-            </Button>
+            </ActionButton>
           </Group>
         </Stack>
       </form>

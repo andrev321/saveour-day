@@ -36,6 +36,14 @@ export const InvitationPhotoFallback = styled(Box).attrs<{
   min-height: 240px;
   background: linear-gradient(135deg, var(--surface), var(--paper));
 `;
+export const PhotoFrame = styled.picture`
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+`;
 export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation-photo",
 })`
@@ -44,6 +52,8 @@ export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
     width: 100%;
     height: 100%;
     object-fit: cover;
+    position: relative;
+    z-index: 1;
     object-position: var(--focal, 50% 50%);
     border-radius: inherit;
   }
