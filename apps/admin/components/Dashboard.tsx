@@ -1,4 +1,7 @@
 "use client";
+import { ActionButton } from "./ActionButton";
+import { LoadingState, useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import { useEffect, useState } from "react";
 import {
   ActionIcon,
@@ -61,7 +64,10 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   if (!response.ok)
     throw new ApiError(
       response.status,
-      (result.error || "The operation could not be completed") + (response.status >= 500 && response.headers.get("x-request-id") ? ` [${response.headers.get("x-request-id")}]` : ""),
+      (result.error || "The operation could not be completed") +
+        (response.status >= 500 && response.headers.get("x-request-id")
+          ? ` [${response.headers.get("x-request-id")}]`
+          : ""),
     );
   return result as T;
 }
@@ -84,7 +90,7 @@ export function Dashboard({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-  const [busy, setBusy] = useState(false);
+  const { operation, busy, start, end } = useOperation();
   const [query, setQuery] = useState("");
   const [deleting, setDeleting] = useState<Site | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
@@ -119,7 +125,7 @@ export function Dashboard({
     window.history.replaceState(window.history.state, "", url);
   }
   async function login() {
-    setBusy(true);
+    if (!start("login")) return;
     setMessage("");
     try {
       const { error } = await browserDb().auth.signInWithPassword({
@@ -132,7 +138,7 @@ export function Dashboard({
     } catch (error) {
       setMessage((error as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   async function remove() {
@@ -199,13 +205,14 @@ export function Dashboard({
               >
                 {copy.cancel}
               </Button>
-              <Button
+              <ActionButton
                 color="red"
                 loading={deleteBusy}
+                pendingLabel={loadingText(language, "remove")}
                 onClick={() => void remove()}
               >
                 {copy.confirm}
-              </Button>
+              </ActionButton>
             </Group>
           </Stack>
         </Modal>
@@ -214,11 +221,13 @@ export function Dashboard({
           <Group gap="sm">
             <LanguageSelect />
             {logged && (
-              <Button
+              <ActionButton
                 variant="subtle"
-                loading={busy}
+                loading={operation === "logout"}
+                pendingLabel={loadingText(language, "logout")}
+                disabled={busy}
                 onClick={async () => {
-                  setBusy(true);
+                  if (!start("logout")) return;
                   setMessage("");
                   try {
                     const { error } = await browserDb().auth.signOut();
@@ -228,12 +237,12 @@ export function Dashboard({
                   } catch (error) {
                     setMessage((error as Error).message);
                   } finally {
-                    setBusy(false);
+                    end();
                   }
                 }}
               >
                 {t("logout")}
-              </Button>
+              </ActionButton>
             )}
           </Group>
         </S.Header>
@@ -253,8 +262,12 @@ export function Dashboard({
             </Alert>
           )}
           {status === "loading" && (
-            <Stack mt={36} gap="xl" role="status" aria-label={copy.loading}>
-              <Text fw={600}>{copy.loading}</Text>
+            <Stack mt={36} gap="xl">
+              <LoadingState
+                compact
+                label={copy.loading}
+                slowLabel={loadingText(language, "slow")}
+              />
               <div aria-hidden="true">
                 <Skeleton height={40} width="65%" mb="md" />
                 <Skeleton height={18} width="85%" />
@@ -327,14 +340,21 @@ export function Dashboard({
                       value={password}
                       onChange={(e) => setPassword(e.currentTarget.value)}
                     />
-                    <Button type="submit" loading={busy}>
+                    <ActionButton
+                      type="submit"
+                      loading={operation === "login"}
+                      disabled={busy}
+                      pendingLabel={loadingText(language, "login")}
+                    >
                       {t("login")}
-                    </Button>
-                    <Button
+                    </ActionButton>
+                    <ActionButton
                       variant="light"
+                      loading={operation === "signup"}
+                      pendingLabel={loadingText(language, "signup")}
                       disabled={busy || !email || password.length < 12}
                       onClick={async () => {
-                        setBusy(true);
+                        if (!start("signup")) return;
                         setMessage("");
                         try {
                           const { error } = await browserDb().auth.signUp({
@@ -349,20 +369,22 @@ export function Dashboard({
                         } catch (error) {
                           setMessage((error as Error).message);
                         } finally {
-                          setBusy(false);
+                          end();
                         }
                       }}
                     >
                       {copy.signup}
-                    </Button>
+                    </ActionButton>
                     <Text size="sm" c="dimmed">
                       {copy.passwordHelp}
                     </Text>
-                    <Button
+                    <ActionButton
                       variant="subtle"
+                      loading={operation === "reset"}
+                      pendingLabel={loadingText(language, "reset")}
                       disabled={busy || !email}
                       onClick={async () => {
-                        setBusy(true);
+                        if (!start("reset")) return;
                         setMessage("");
                         try {
                           const { error } =
@@ -374,12 +396,12 @@ export function Dashboard({
                         } catch (error) {
                           setMessage((error as Error).message);
                         } finally {
-                          setBusy(false);
+                          end();
                         }
                       }}
                     >
                       {t("forgot")}
-                    </Button>
+                    </ActionButton>
                   </Stack>
                 </form>
               </Card>
@@ -544,4 +566,3 @@ export function Dashboard({
     </S.Page>
   );
 }
-

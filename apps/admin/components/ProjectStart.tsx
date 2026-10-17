@@ -30,10 +30,9 @@ export function ProjectStart({
     setError("");
     try {
       await onCreate({ name: name.trim(), templateId, locale });
-      setOpened(false);
+      // Keep the dialog pending until the new editor replaces this screen.
     } catch (e) {
       setError(e instanceof Error ? e.message : t("error"));
-    } finally {
       setBusy(false);
     }
   }

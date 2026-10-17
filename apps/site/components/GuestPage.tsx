@@ -1,4 +1,6 @@
 "use client";
+import { LoadingState, BusyLabel, useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
 import { useEffect, useState, type CSSProperties } from "react";
 import { Invitation } from "@invitations/renderer";
@@ -39,8 +41,8 @@ export function GuestPage({
   const endpoint = `/api/guest/${kind}/${encodeURIComponent(accessKey)}`;
   const [data, setData] = useState<Reply | null>(null),
     [error, setError] = useState(""),
-    [success, setSuccess] = useState(false),
-    [busy, setBusy] = useState(false);
+    [success, setSuccess] = useState(false);
+  const { operation, busy, start, end } = useOperation();
   const [email, setEmail] = useState(""),
     [code, setCode] = useState(""),
     [otp, setOtp] = useState(""),
@@ -63,6 +65,7 @@ export function GuestPage({
     );
   }, []);
   const locale = data?.config?.locale || data?.locale || browserLocale;
+  const language = locale.slice(0, 2);
   const copy = guestCopy[locale];
   function accept(next: Reply) {
     setData(next);
@@ -79,7 +82,10 @@ export function GuestPage({
   }
   useEffect(() => {
     const controller = new AbortController();
-    fetch(endpoint, { cache: "no-store", signal: controller.signal })
+    fetch(endpoint, {
+      cache: "no-store",
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]),
+    })
       .then(async (r) => {
         const result = await r.json();
         if (!r.ok) throw new Error(result.error);
@@ -110,8 +116,7 @@ export function GuestPage({
     setRefreshConfirm(false);
   }
   async function action(action: string, payload: unknown) {
-    if (busy) return;
-    setBusy(true);
+    if (!start(action)) return;
     setError("");
     setSuccess(false);
     try {
@@ -143,17 +148,17 @@ export function GuestPage({
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   async function refresh() {
-    setBusy(true);
+    if (!start("refresh")) return;
     try {
       await reload();
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   const savedAnswers = Object.fromEntries(
@@ -178,10 +183,24 @@ export function GuestPage({
         <BrandLogo animated height={52} />
         <h1>{copy.invitation}</h1>
         {error && <p role="alert">{guestError(error, copy)}</p>}
-        {!data && !error && <p>{copy.loading}</p>}
+        {!data && !error && (
+          <LoadingState
+            label={copy.loading}
+            slowLabel={loadingText(language, "slow")}
+          />
+        )}
         {!data && error && (
-          <button disabled={busy} onClick={() => void refresh()}>
-            {copy.retry}
+          <button
+            disabled={busy}
+            aria-busy={busy || undefined}
+            onClick={() => void refresh()}
+          >
+            <BusyLabel
+              busy={operation === "refresh"}
+              label={loadingText(language, "refresh")}
+            >
+              {copy.retry}
+            </BusyLabel>
           </button>
         )}
         {links.map((l) => (
@@ -208,7 +227,14 @@ export function GuestPage({
                 maxLength={128}
               />
             </label>
-            <button disabled={busy}>{copy.open}</button>
+            <button disabled={busy} aria-busy={busy || undefined}>
+              <BusyLabel
+                busy={operation === "code"}
+                label={loadingText(language, "verify")}
+              >
+                {copy.open}
+              </BusyLabel>
+            </button>
           </form>
         )}
         {data?.mode === "email" && !links.length && (
@@ -228,6 +254,7 @@ export function GuestPage({
                 autoComplete="email"
                 value={email}
                 disabled={busy}
+                aria-busy={busy || undefined}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setSent(false);
@@ -254,7 +281,15 @@ export function GuestPage({
               </>
             )}
             <button disabled={busy || (!sent && cooldown > 0)}>
-              {sent ? copy.verify : copy.send}
+              <BusyLabel
+                busy={operation === "otp-send" || operation === "otp-verify"}
+                label={loadingText(
+                  language,
+                  operation === "otp-verify" ? "verify" : "send",
+                )}
+              >
+                {sent ? copy.verify : copy.send}
+              </BusyLabel>
             </button>
             {sent && (
               <>
@@ -263,7 +298,12 @@ export function GuestPage({
                   disabled={busy || cooldown > 0}
                   onClick={() => void action("otp-send", { email })}
                 >
-                  {copy.resend}
+                  <BusyLabel
+                    busy={operation === "otp-send"}
+                    label={loadingText(language, "send")}
+                  >
+                    {copy.resend}
+                  </BusyLabel>
                   {cooldown ? ` (${cooldown}s)` : ""}
                 </button>
                 <p>{copy.resendHelp}</p>
@@ -490,16 +530,27 @@ export function GuestPage({
               <button
                 disabled={busy || data.closed || !data.config!.events.length}
               >
-                {copy.save}
+                <BusyLabel
+                  busy={operation === "rsvp"}
+                  label={loadingText(language, "save")}
+                >
+                  {copy.save}
+                </BusyLabel>
               </button>
               <button
                 type="button"
                 disabled={busy}
+                aria-busy={busy || undefined}
                 onClick={() =>
                   dirty ? setRefreshConfirm(true) : void refresh()
                 }
               >
-                {copy.refresh}
+                <BusyLabel
+                  busy={operation === "refresh"}
+                  label={loadingText(language, "refresh")}
+                >
+                  {copy.refresh}
+                </BusyLabel>
               </button>
               {refreshConfirm && (
                 <div role="alert">
@@ -507,9 +558,15 @@ export function GuestPage({
                   <button
                     type="button"
                     disabled={busy}
+                    aria-busy={busy || undefined}
                     onClick={() => void refresh()}
                   >
-                    {copy.discard}
+                    <BusyLabel
+                      busy={operation === "refresh"}
+                      label={loadingText(language, "refresh")}
+                    >
+                      {copy.discard}
+                    </BusyLabel>
                   </button>
                   <button
                     type="button"
