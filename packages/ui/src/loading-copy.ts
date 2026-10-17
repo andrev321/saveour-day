@@ -38,6 +38,13 @@ const messages = {
     "Entwurf wird vorbereitet…",
   ],
   upload: ["Dodajemy zdjęcie…", "Adding photo…", "Foto wird hinzugefügt…"],
+  unpublish: [
+    "Wycofujemy publikację…",
+    "Unpublishing…",
+    "Veröffentlichung wird zurückgezogen…",
+  ],
+  rotate: ["Zmieniamy link…", "Replacing link…", "Link wird ersetzt…"],
+  revoke: ["Wyłączamy dostęp…", "Revoking access…", "Zugang wird widerrufen…"],
   remove: ["Usuwamy…", "Deleting…", "Wird gelöscht…"],
   create: [
     "Tworzymy zaproszenie…",

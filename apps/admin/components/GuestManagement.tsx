@@ -137,6 +137,20 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [data, setData] = useState<Management | null>(null),
     [message, setMessage] = useState("");
   const { operation, busy, start, end } = useOperation();
+  const operationMessage = loadingText(
+    language,
+    operation === "import"
+      ? "import"
+      : operation === "create"
+        ? "create"
+        : operation === "unpublish"
+          ? "unpublish"
+          : operation === "rotate"
+            ? "rotate"
+            : operation === "revoke"
+              ? "revoke"
+              : "save",
+  );
   const [mode, setMode] = useState("public"),
     [code, setCode] = useState(""),
     [variant, setVariant] = useState(""),
@@ -351,14 +365,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         {busy && (
           <LoadingState
             compact
-            label={loadingText(
-              language,
-              operation === "import"
-                ? "import"
-                : operation === "create"
-                  ? "create"
-                  : "save",
-            )}
+            label={operationMessage}
             slowLabel={loadingText(language, "slow")}
           />
         )}
@@ -1518,6 +1525,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               <ActionButton
                 disabled={busy}
                 color="red"
+                pendingLabel={operationMessage}
                 loading={
                   !!operation &&
                   ["rotate", "revoke", "unpublish"].includes(operation)

@@ -54,6 +54,13 @@ export class ApiError extends Error {
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
+    signal:
+      !init?.method || init.method === "GET"
+        ? AbortSignal.any([
+            ...(init?.signal ? [init.signal] : []),
+            AbortSignal.timeout(30000),
+          ])
+        : init.signal,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   const result = response.headers
