@@ -1,4 +1,5 @@
 "use client";
+import { useOperation } from "@invitations/ui/loading";
 import { useState } from "react";
 import { Button, TextInput } from "@mantine/core";
 import { PlusIcon } from "@phosphor-icons/react";
@@ -22,18 +23,17 @@ export function ProjectStart({
   const [templateId, setTemplateId] = useState<TemplateId | null>(null);
   const [chosenLocale, setLocale] = useState<InvitationLocale | null>(null);
   const locale = chosenLocale || invitationLocaleFor(language);
-  const [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
+  const { busy, start, end } = useOperation();
+  const [error, setError] = useState("");
   async function create() {
-    if (!templateId || !name.trim() || busy) return;
-    setBusy(true);
+    if (!templateId || !name.trim() || !start("create")) return;
     setError("");
     try {
       await onCreate({ name: name.trim(), templateId, locale });
       // Keep the dialog pending until the new editor replaces this screen.
     } catch (e) {
       setError(e instanceof Error ? e.message : t("error"));
-      setBusy(false);
+      end();
     }
   }
   return (
