@@ -16,11 +16,11 @@ for (const width of [390, 1440]) {
       const invitation = page.locator("[data-ui=invitation]");
       await expect(invitation).toHaveCSS(
         "background-color",
-        "rgb(250, 247, 241)",
+        "rgb(248, 245, 239)",
       );
       const hero = page.locator("[data-ui=invitation-hero]");
       await expect(hero).toHaveCSS("display", "flex");
-      await expect(hero).toHaveCSS("flex-direction", "column-reverse");
+      await expect(hero).toHaveCSS("flex-direction", "column");
       await expect(
         page.locator("[data-ui=invitation-hero-photo]"),
       ).toBeHidden();

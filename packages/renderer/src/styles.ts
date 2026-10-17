@@ -52,14 +52,8 @@ export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
     width: 100%;
     height: 100%;
     object-fit: cover;
-    opacity: 0;
-    transition: opacity 180ms;
-    &[data-loaded="true"] {
-      opacity: 1;
-    }
-    @media (prefers-reduced-motion: reduce) {
-      transition: none;
-    }
+    position: relative;
+    z-index: 1;
     object-position: var(--focal, 50% 50%);
     border-radius: inherit;
   }

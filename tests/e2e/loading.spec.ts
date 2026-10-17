@@ -49,7 +49,12 @@ test("editor loading preserves layout and offers retry after a failed request", 
   );
   await page.screenshot({ path: "test-results/editor-loading.png" });
   pending.release();
-  await expect(page.getByRole("alert")).toContainText("Offline");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Offline" }),
+  ).toContainText("Offline");
+  await expect(
+    page.getByRole("link", { name: "Wróć do logowania i projektów" }),
+  ).toHaveAttribute("href", "/");
   await page
     .getByRole("button", { name: "Spróbuj ponownie", exact: true })
     .click();
@@ -127,5 +132,26 @@ test("guest code submission explains pending state and prevents duplicate reques
   expect(requests).toBe(1);
   pending.release();
   await expect(page.locator("form button").first()).toBeEnabled();
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(
+    page.getByRole("alert").filter({ hasText: "Invalid code" }),
+  ).toBeVisible();
+});
+
+test("project load error offers direct navigation to sign-in and projects", async ({
+  page,
+}) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.route(`**/api/sites/${id}`, (route) =>
+    route.fulfill({ status: 401, json: { error: "Session expired" } }),
+  );
+  await page.goto(`${admin}/sites/${id}`);
+  await page
+    .getByRole("link", { name: "Wróć do logowania i projektów" })
+    .click();
+  await expect(page).toHaveURL(`${admin}/`);
+  await expect(page.getByText("Session expired", { exact: true })).toHaveCount(
+    0,
+  );
 });
