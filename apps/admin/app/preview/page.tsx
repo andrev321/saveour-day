@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
 import { siteConfigSchema, type SiteConfig } from "@invitations/domain";
+import { LoadingState } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
+import { usePanelI18n } from "../../lib/i18n";
 import { Invitation } from "@invitations/renderer";
 export default function Preview() {
+  const { language } = usePanelI18n();
   const [state, setState] = useState<{
     config: SiteConfig;
     variant?: string;
@@ -10,6 +14,14 @@ export default function Preview() {
   } | null>(null);
   useEffect(() => {
     const listener = (e: MessageEvent) => {
+      if (
+        e.origin === location.origin &&
+        e.source === window.parent &&
+        e.data?.type === "preview-request"
+      ) {
+        window.parent.postMessage({ type: "preview-ready" }, location.origin);
+        return;
+      }
       if (
         e.origin !== location.origin ||
         e.source !== window.parent ||
@@ -30,15 +42,26 @@ export default function Preview() {
     window.parent.postMessage({ type: "preview-ready" }, location.origin);
     return () => window.removeEventListener("message", listener);
   }, []);
+  useEffect(() => {
+    if (state)
+      window.parent.postMessage({ type: "preview-rendered" }, location.origin);
+  }, [state]);
   return state ? (
     <Invitation
-      onEditSection={(id)=>window.parent.postMessage({type:"preview-select-section",id},location.origin)}
+      onEditSection={(id) =>
+        window.parent.postMessage(
+          { type: "preview-select-section", id },
+          location.origin,
+        )
+      }
       config={state.config}
       variantId={state.variant}
       resolveMedia={(src) => state.urls[src] || src}
     />
   ) : (
-    <p style={{ padding: 24 }}>Oczekiwanie na prawidłową konfigurację…</p>
+    <LoadingState
+      label={loadingText(language, "preview")}
+      slowLabel={loadingText(language, "slow")}
+    />
   );
 }
-

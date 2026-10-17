@@ -1,5 +1,9 @@
 "use client";
 import { useEffect, useRef, useState, type RefObject } from "react";
+import { LoadingState } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
+import { usePanelI18n } from "../lib/i18n";
+import { Button } from "@mantine/core";
 import * as S from "./preview.styles";
 
 /** Scale the surface, not its viewport: desktop breakpoints remain accurate. */
@@ -14,6 +18,32 @@ export function PreviewCanvas({
   frame: RefObject<HTMLIFrameElement | null>;
   title: string;
 }) {
+  const { language } = usePanelI18n();
+  const [attempt, setAttempt] = useState(0);
+  const [ready, setReady] = useState(false);
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    let loaded = false;
+    const receive = (e: MessageEvent) => {
+      if (
+        e.origin === location.origin &&
+        e.source === frame.current?.contentWindow &&
+        e.data?.type === "preview-rendered"
+      ) {
+        loaded = true;
+        setReady(true);
+        setFailed(false);
+      }
+    };
+    window.addEventListener("message", receive);
+    const timer = setTimeout(() => {
+      if (!loaded) setFailed(true);
+    }, 20000);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("message", receive);
+    };
+  }, [attempt, frame]);
   const host = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
@@ -57,7 +87,10 @@ export function PreviewCanvas({
             transform: `scale(${scale})`,
           }}
         >
-          <S.PreviewDeviceScreen>
+          <S.PreviewDeviceScreen
+            style={{ position: "relative" }}
+            aria-busy={!ready}
+          >
             <S.PreviewDeviceStatus style={{ height: top }} aria-hidden="true">
               {device === "phone" ? (
                 <>
@@ -71,7 +104,49 @@ export function PreviewCanvas({
                 <S.PreviewTabletCamera />
               )}
             </S.PreviewDeviceStatus>
+            {!ready && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  zIndex: 1,
+                  background: "#fff",
+                  display: "grid",
+                  placeContent: "center",
+                  padding: 20,
+                }}
+              >
+                {failed ? (
+                  <div role="alert" style={{ textAlign: "center" }}>
+                    <p>{loadingText(language, "previewError")}</p>
+                    <Button
+                      onClick={() => {
+                        setReady(false);
+                        setFailed(false);
+                        setAttempt((n) => n + 1);
+                      }}
+                    >
+                      {loadingText(language, "retry")}
+                    </Button>
+                  </div>
+                ) : (
+                  <LoadingState
+                    label={loadingText(language, "preview")}
+                    slowLabel={loadingText(language, "slow")}
+                  />
+                )}
+              </div>
+            )}
             <iframe
+              key={attempt}
+              onLoad={() =>
+                frame.current?.contentWindow?.postMessage(
+                  { type: "preview-request" },
+                  location.origin,
+                )
+              }
+              aria-hidden={!ready}
+              tabIndex={ready ? undefined : -1}
               ref={frame}
               src="/preview"
               title={title}

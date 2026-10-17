@@ -1,4 +1,7 @@
 "use client";
+import { ActionButton } from "./ActionButton";
+import { LoadingState, useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import { useEffect, useState } from "react";
 import {
   Alert,
@@ -19,7 +22,6 @@ import {
   Accordion,
   Pagination,
   SimpleGrid,
-  Loader,
   Skeleton,
 } from "@mantine/core";
 import { apiFetch } from "./Dashboard";
@@ -133,8 +135,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [loading, setLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [data, setData] = useState<Management | null>(null),
-    [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false);
+    [message, setMessage] = useState("");
+  const { operation, busy, start, end } = useOperation();
   const [mode, setMode] = useState("public"),
     [code, setCode] = useState(""),
     [variant, setVariant] = useState(""),
@@ -185,7 +187,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     };
   }, [endpoint, loadAttempt]);
   async function action(action: string, payload: unknown) {
-    setBusy(true);
+    if (!start(action)) return;
     setMessage("");
     try {
       const result = await apiFetch<{
@@ -214,6 +216,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         accept(refreshed);
         setCode("");
       } else setData(refreshed);
+      setConfirmation(null);
       setEditing(null);
       setEditingInvite(null);
       setMessage(
@@ -228,7 +231,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   const options = (data?.variants || []).map((v) => ({
@@ -345,18 +348,31 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           )}
         </Title>
         {message && <Alert role="status">{message}</Alert>}
+        {busy && (
+          <LoadingState
+            compact
+            label={loadingText(
+              language,
+              operation === "import"
+                ? "import"
+                : operation === "create"
+                  ? "create"
+                  : "save",
+            )}
+            slowLabel={loadingText(language, "slow")}
+          />
+        )}
         {loading && (
           <Stack gap="lg">
-            <Group role="status" aria-live="polite" gap="sm">
-              <Loader size="sm" aria-hidden="true" />
-              <Text size="sm" c="dimmed">
-                {labelText(
-                  "Wczytujemy zaproszenia i odpowiedzi RSVP…",
-                  "Loading invitations and RSVP responses…",
-                  "Einladungen und RSVP-Antworten werden geladen…",
-                )}
-              </Text>
-            </Group>
+            <LoadingState
+              compact
+              label={labelText(
+                "Wczytujemy zaproszenia i odpowiedzi RSVP…",
+                "Loading invitations and RSVP responses…",
+                "Einladungen und Antworten werden geladen…",
+              )}
+              slowLabel={loadingText(language, "slow")}
+            />
             <Stack aria-hidden="true" gap="lg">
               <SimpleGrid cols={{ base: 1, sm: 3 }}>
                 {[0, 1, 2].map((index) => (
@@ -650,13 +666,17 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                             "Neue Einstellungen beenden bestehende Sitzungen. Wiederherstellung von Inhalten ändert keine Einstellungen oder Antworten.",
                           )}
                         </Text>
-                        <Button type="submit" loading={busy}>
+                        <ActionButton
+                          disabled={busy}
+                          type="submit"
+                          loading={operation === "settings"}
+                        >
                           {labelText(
                             "Zapisz ustawienia dostępu",
                             "Save access settings",
                             "Zugangseinstellungen speichern",
                           )}
-                        </Button>
+                        </ActionButton>
                       </Stack>
                     </form>
                   </Stack>
@@ -710,8 +730,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         }
                       />
                     ))}
-                    <Button
-                      loading={busy}
+                    <ActionButton
+                      disabled={busy}
+                      loading={operation === "questions"}
                       onClick={() =>
                         void action("questions", {
                           questions,
@@ -724,7 +745,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         "Save questions",
                         "Fragen speichern",
                       )}
-                    </Button>
+                    </ActionButton>
                   </Stack>
                 </Accordion.Panel>
               </Accordion.Item>
@@ -1013,7 +1034,15 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   onChange={(v) => setInviteVariant(v || "")}
                   required
                 />
-                <Button type="submit" loading={busy}>
+                <ActionButton
+                  disabled={busy}
+                  type="submit"
+                  loading={operation === "create" || operation === "update"}
+                  pendingLabel={loadingText(
+                    language,
+                    operation === "create" ? "create" : "save",
+                  )}
+                >
                   {editingInvite
                     ? labelText(
                         "Zapisz zaproszenie",
@@ -1025,7 +1054,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         "Create invitation and link",
                         "Einladung und Link erstellen",
                       )}
-                </Button>
+                </ActionButton>
                 {editingInvite && (
                   <Button
                     variant="subtle"
@@ -1436,13 +1465,17 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                           onChange={(e) => setNote(e.currentTarget.value)}
                           maxLength={2000}
                         />
-                        <Button type="submit" loading={busy}>
+                        <ActionButton
+                          disabled={busy}
+                          type="submit"
+                          loading={operation === "rsvp"}
+                        >
                           {labelText(
                             "Zapisz poprawkę RSVP",
                             "Save RSVP correction",
                             "RSVP-Korrektur speichern",
                           )}
-                        </Button>
+                        </ActionButton>
                       </Stack>
                     </form>
                   )}
@@ -1468,24 +1501,36 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           )}
         >
           <Stack>
+            {message && (
+              <Alert role="alert" color="red">
+                {message}
+              </Alert>
+            )}
             <Text>{confirmation?.description}</Text>
             <Group>
-              <Button variant="default" onClick={() => setConfirmation(null)}>
+              <Button
+                variant="default"
+                disabled={busy}
+                onClick={() => setConfirmation(null)}
+              >
                 {labelText("Anuluj", "Cancel", "Abbrechen")}
               </Button>
-              <Button
+              <ActionButton
+                disabled={busy}
                 color="red"
-                loading={busy}
+                loading={
+                  !!operation &&
+                  ["rotate", "revoke", "unpublish"].includes(operation)
+                }
                 onClick={() => {
                   if (confirmation) {
                     const value = confirmation;
-                    setConfirmation(null);
                     void action(value.action, value.payload);
                   }
                 }}
               >
                 {labelText("Potwierdź", "Confirm", "Bestätigen")}
-              </Button>
+              </ActionButton>
             </Group>
           </Stack>
         </Modal>
@@ -1536,8 +1581,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               )}
             </Text>
             {message && <Alert>{message}</Alert>}
-            <Button
-              loading={busy}
+            <ActionButton
+              loading={operation === "import"}
+              pendingLabel={loadingText(language, "import")}
               disabled={
                 data?.site.access_mode === "email" &&
                 imported.some((i) => !i.emails.length)
@@ -1554,7 +1600,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 "Confirm import",
                 "Import bestätigen",
               )}
-            </Button>
+            </ActionButton>
             {data?.site.access_mode === "email" &&
               imported.some((i) => !i.emails.length) && (
                 <Text c="red">
