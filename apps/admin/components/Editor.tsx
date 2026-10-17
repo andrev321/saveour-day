@@ -1,4 +1,7 @@
 "use client";
+import { ActionButton } from "./ActionButton";
+import { LoadingState, useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import {
   publishedConfigSchema,
   siteConfigSchema,
@@ -161,9 +164,10 @@ export function Editor({
     };
   }, [localKey, initial]);
   const [message, setMessage] = useState(""),
-    [busy, setBusy] = useState(false),
     [variant, setVariant] = useState(config.defaultVariant),
     [previewOpen, setPreviewOpen] = useState(false);
+  const { operation, busy, start, end } = useOperation();
+  const [uploadName, setUploadName] = useState("");
   const [editRequest, setEditRequest] = useState(0);
   const [activePanel, setActivePanel] = useState<string | null>("content");
   const [selectedSection, setSelectedSection] = useState<string | null>(null);
@@ -279,7 +283,7 @@ export function Editor({
   }
   async function replaceDraft() {
     if (!snapshotId && !templateId) return;
-    await task(async () => {
+    await task("template", async () => {
       let result: { config: SiteConfig; revision: number };
       if (demo) {
         const next = snapshotId
@@ -337,22 +341,20 @@ export function Editor({
     const next = await apiFetch<EditorData>(endpoint);
     setData(next);
   }
-  async function task(fn: () => Promise<void>) {
-    if (saving.current) return;
-    setBusy(true);
+  async function task(name: string, fn: () => Promise<void>) {
+    if (saving.current || !start(name)) return;
     setMessage("");
     try {
       await fn();
     } catch (e) {
       setMessage((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   async function save(automatic = false) {
-    if (saving.current || conflict || recovery) return;
+    if (saving.current || conflict || recovery || !start("save")) return;
     saving.current = true;
-    setBusy(true);
     setSaveError("");
     const sent = current.current;
     const base = serverDraft.current;
@@ -397,7 +399,7 @@ export function Editor({
       } else setSaveError((error as Error).message);
     } finally {
       saving.current = false;
-      setBusy(false);
+      end();
     }
   }
   const saveRef = useRef(save);
@@ -451,7 +453,7 @@ export function Editor({
     }
     const requested = confirm;
     setConfirm(null);
-    await task(async () => {
+    await task(requested === "publish" ? "publish" : "restore", async () => {
       if (requested === "publish")
         publishedConfigSchema.parse(data.draft.config);
       if (demo) {
@@ -486,7 +488,8 @@ export function Editor({
   }
   async function upload(file: File | null) {
     if (!file) return;
-    await task(async () => {
+    await task("upload", async () => {
+      setUploadName(file.name);
       if (demo) throw new Error(t("uploadNeedsSupabase"));
       if (file.size > 8388608) throw new Error(t("maxPhotoSize"));
       const response = await fetch(`${endpoint}/media`, {
@@ -557,8 +560,8 @@ export function Editor({
       }
       status={
         <Badge color={dirty ? "orange" : "brand"}>
-          {busy
-            ? label("Zapisywanie…", "Saving…", "Speichern…")
+          {operation === "save"
+            ? loadingText(language, "save")
             : dirty
               ? t("unsaved")
               : label("Szkic zapisany", "Draft saved", "Entwurf gespeichert")}
@@ -567,27 +570,29 @@ export function Editor({
       save={
         <>
           {" "}
-          <Button
+          <ActionButton
             onClick={() => void save()}
-            loading={busy}
-            disabled={!dirty || !validation.success}
+            loading={operation === "save"}
+            disabled={busy || !dirty || !validation.success}
             leftSection={<IconDeviceFloppy size={16} />}
           >
             {t("save")}
-          </Button>
+          </ActionButton>
         </>
       }
       actions={
         <>
           {" "}
-          <Button
+          <ActionButton
             onClick={() => setConfirm("publish")}
+            loading={operation === "publish"}
+            pendingLabel={loadingText(language, "publish")}
             disabled={dirty || busy || !readyToPublish}
             color="brand"
             leftSection={<IconRocket size={16} />}
           >
             {demo ? t("simulate") : t("publish")}
-          </Button>
+          </ActionButton>
           <Button
             variant="subtle"
             leftSection={<IconDownload size={16} />}
@@ -672,6 +677,22 @@ export function Editor({
               onSelect={setActivePanel}
               onReview={() => setConfirm("publish")}
               reviewDisabled={!readyToPublish || dirty || busy}
+            />
+          )}
+          {operation && operation !== "save" && (
+            <LoadingState
+              compact
+              label={loadingText(
+                language,
+                operation === "publish"
+                  ? "publish"
+                  : operation === "restore"
+                    ? "restore"
+                    : operation === "upload"
+                      ? "upload"
+                      : "template",
+              )}
+              slowLabel={loadingText(language, "slow")}
             />
           )}
           {message ? (
@@ -910,13 +931,14 @@ export function Editor({
                 >
                   {tt.cancel}
                 </Button>
-                <Button
+                <ActionButton
                   color="red"
-                  loading={busy}
+                  loading={operation === "template"}
+                  pendingLabel={loadingText(language, "template")}
                   onClick={() => void replaceDraft()}
                 >
                   {tt.replace}
-                </Button>
+                </ActionButton>
               </Group>
             </Stack>
           </Modal>
@@ -1043,9 +1065,11 @@ export function Editor({
             accept="image/png,image/jpeg,image/webp"
           >
             {(props) => (
-              <Button
+              <ActionButton
                 {...props}
-                loading={busy}
+                loading={operation === "upload"}
+                disabled={busy}
+                pendingLabel={loadingText(language, "upload")}
                 leftSection={<IconUpload size={16} />}
               >
                 {language === "pl"
@@ -1053,7 +1077,7 @@ export function Editor({
                   : language === "en"
                     ? "Add photo"
                     : "Foto hinzufügen"}
-              </Button>
+              </ActionButton>
             )}
           </FileButton>
           <Text size="sm" c="dimmed">
@@ -1063,6 +1087,12 @@ export function Editor({
                 ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
                 : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
           </Text>
+          {operation === "upload" && (
+            <Card withBorder aria-busy="true">
+              <Text size="sm">{uploadName}</Text>
+              <LoadingState compact label={loadingText(language, "upload")} />
+            </Card>
+          )}
           <PhotoLibrary
             config={config}
             library={data.media}

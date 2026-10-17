@@ -1,10 +1,11 @@
 "use client";
-import { MantineProvider, createTheme } from "@mantine/core";
+import { MantineProvider, Loader, createTheme } from "@mantine/core";
 import { IconContext } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
 const theme = createTheme({
   respectReducedMotion: true,
+  components: { Loader: Loader.extend({ defaultProps: { type: "dots" } }) },
   black: "#242B59",
   primaryColor: "brand",
   colors: {

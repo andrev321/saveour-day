@@ -1,7 +1,9 @@
 "use client";
 import { createContext, useContext } from "react";
 import type { MediaAsset } from "@invitations/domain";
-import { Image, Group, Text } from "@mantine/core";
+import { Group, Text } from "@mantine/core";
+
+import { LoadingImage } from "@invitations/ui/loading";
 
 export const MediaUrlsContext = createContext<Record<string, string>>({});
 
@@ -13,15 +15,11 @@ export function PhotoThumbnail({ photo }: { photo: MediaAsset }) {
   const urls = useContext(MediaUrlsContext);
   const source = photo.variants[0]?.src || photo.src;
   return (
-    <Image
+    <LoadingImage
       src={urls[source] || urls[photo.src] || source}
       alt=""
-      w={36}
-      h={36}
-      radius="sm"
-      fit="cover"
       loading="lazy"
-      style={{ flexShrink: 0 }}
+      style={{ flexShrink: 0, width: 36, height: 36, borderRadius: 4 }}
       data-ui="photo-reference-thumbnail"
     />
   );

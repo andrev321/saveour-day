@@ -1,6 +1,9 @@
 "use client";
+import { ActionButton } from "./ActionButton";
+import { useOperation } from "@invitations/ui/loading";
+import { loadingText } from "@invitations/ui/loading-copy";
 import { useState } from "react";
-import { Accordion, Alert, Button, Checkbox, Stack, Text } from "@mantine/core";
+import { Accordion, Alert, Checkbox, Stack, Text } from "@mantine/core";
 import { apiFetch } from "./Dashboard";
 import { usePanelI18n } from "../lib/i18n";
 type Preview = {
@@ -32,8 +35,8 @@ export function Reminders({
     language === "pl" ? pl : language === "en" ? en : de;
   const [preview, setPreview] = useState<Preview | null>(null),
     [selected, setSelected] = useState<string[]>([]),
-    [busy, setBusy] = useState(false),
     [error, setError] = useState("");
+  const { operation, busy, start, end } = useOperation();
   const [results, setResults] = useState<
     { id: string; email: string; status: string }[]
   >([]);
@@ -43,7 +46,7 @@ export function Reminders({
       selected.includes(`${r.id}:${r.email}`),
     ) || [];
   async function load() {
-    setBusy(true);
+    if (!start("preview")) return;
     setError("");
     try {
       const next = await apiFetch<Preview>(endpoint);
@@ -53,12 +56,12 @@ export function Reminders({
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   async function send() {
     if (!preview) return;
-    setBusy(true);
+    if (!start("send")) return;
     setError("");
     try {
       const result = await apiFetch<{
@@ -98,7 +101,7 @@ export function Reminders({
     } catch (e) {
       setError((e as Error).message);
     } finally {
-      setBusy(false);
+      end();
     }
   }
   return (
@@ -116,8 +119,10 @@ export function Reminders({
                 "Erinnerungen gehen nur an Familien mit fehlenden Antworten. E-Mail-Zugang ist für den sicheren Zugriff erforderlich.",
               )}
             </Text>
-            <Button
+            <ActionButton
               variant="light"
+              loading={operation === "preview"}
+              pendingLabel={loadingText(language, "preview")}
               disabled={busy || mode !== "email" || !published}
               onClick={() => void load()}
             >
@@ -126,7 +131,7 @@ export function Reminders({
                 "Preview recipients and message",
                 "Empfänger und Nachricht ansehen",
               )}
-            </Button>
+            </ActionButton>
             {error && (
               <Alert color="red" role="alert">
                 {error}
@@ -179,9 +184,10 @@ export function Reminders({
                     "Jeder Empfänger erhält eine eigene Nachricht. Maximal 10 Empfänger je Versand und eine Erinnerung je Einladungsadresse täglich.",
                   )}
                 </Text>
-                <Button
-                  loading={busy}
-                  disabled={!preview?.configured}
+                <ActionButton
+                  loading={operation === "send"}
+                  pendingLabel={loadingText(language, "send")}
+                  disabled={busy || !preview?.configured}
                   onClick={() => void send()}
                 >
                   {tr(
@@ -190,7 +196,7 @@ export function Reminders({
                     "An ausgewählte Empfänger senden",
                   )}{" "}
                   ({Math.min(10, selectedRecipients.length)})
-                </Button>
+                </ActionButton>
               </>
             )}
             {results.map((r) => (
