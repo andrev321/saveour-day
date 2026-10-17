@@ -27,13 +27,13 @@ test("editor loading preserves layout and offers retry after a failed request", 
   page,
 }) => {
   const pending = gate();
-  let attempt = 0;
+  let recovered = false;
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.addInitScript(() =>
     localStorage.setItem("wedding-panel-language", "pl"),
   );
   await page.route(`**/api/sites/${id}`, async (route) => {
-    if (attempt++ === 0) {
+    if (!recovered) {
       await pending.promise;
       await route.fulfill({ status: 503, json: { error: "Offline" } });
     } else await route.fulfill({ json: editorData() });
@@ -55,6 +55,7 @@ test("editor loading preserves layout and offers retry after a failed request", 
   await expect(
     page.getByRole("link", { name: "Wróć do logowania i projektów" }),
   ).toHaveAttribute("href", "/");
+  recovered = true;
   await page
     .getByRole("button", { name: "Spróbuj ponownie", exact: true })
     .click();
@@ -132,9 +133,9 @@ test("guest code submission explains pending state and prevents duplicate reques
   expect(requests).toBe(1);
   pending.release();
   await expect(page.locator("form button").first()).toBeEnabled();
-  await expect(
-    page.getByRole("alert").filter({ hasText: "Invalid code" }),
-  ).toBeVisible();
+  await expect(page.locator('main [role="alert"]')).toHaveText(
+    "Nie udało się wykonać operacji. Spróbuj ponownie.",
+  );
 });
 
 test("project load error offers direct navigation to sign-in and projects", async ({
