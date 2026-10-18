@@ -1,4 +1,5 @@
 "use client";
+import { FormRow } from "./form-layout.styles";
 import {
   useState,
   useEffect,
@@ -194,9 +195,8 @@ function VenueEditor({
       .length;
   return (
     <Stack>
-      <Group align="end">
+      <FormRow>
         <Select
-          style={{ flex: 1 }}
           label={t("Miejsce", "Venue", "Ort")}
           searchable
           clearable
@@ -227,7 +227,7 @@ function VenueEditor({
         >
           {t("Dodaj miejsce", "Add venue", "Ort hinzufügen")}
         </Button>
-      </Group>
+      </FormRow>
       {venue && (
         <>
           <Shared
@@ -478,9 +478,8 @@ function RelatedList({
         {t("Dodaj nowy element", "Add new item", "Neuen Eintrag hinzufügen")}
       </Button>
       {options.some((o) => !ids.includes(o.id)) && (
-        <Group align="end">
+        <FormRow>
           <Select
-            style={{ flex: 1 }}
             searchable
             label={t(
               "Dodaj istniejący",
@@ -514,7 +513,7 @@ function RelatedList({
           >
             {t("Dodaj", "Add", "Hinzufügen")}
           </Button>
-        </Group>
+        </FormRow>
       )}
     </Stack>
   );

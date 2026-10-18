@@ -5,6 +5,21 @@ export const AdminGlobalStyles = createGlobalStyle`body {margin: 0;
 background: #F4F6FB;
 color: #242B59;}
 * {box-sizing: border-box;}
+/* Portalled dialogs need the same mobile affordances as the editor. */
+@media (pointer: coarse) {
+  .mantine-Input-input { min-height: 44px; font-size: 16px; }
+  .mantine-Button-root { min-height: 44px; }
+  .mantine-ActionIcon-root { min-width: 44px; min-height: 44px; }
+}
+@media (max-width: 767px) {
+  .mantine-Modal-body .mantine-Button-root {
+    height: auto;
+    padding-block: 10px;
+    max-width: 100%;
+  }
+  .mantine-Modal-body .mantine-Button-label { white-space: normal; }
+  .mantine-Modal-body .mantine-InputWrapper-root { min-width: 0; }
+}
 `;
 
 const workspaceEnter = keyframes`from {
@@ -96,6 +111,7 @@ export const WorkspaceHeader = styled.header.attrs<{ "data-ui"?: string }>({
     align-items: center;
     gap: 20px;
     min-height: 60px;
+    flex-shrink: 0;
     padding: 8px 20px 8px 0;
     border-bottom: 1px solid var(--panel-border);
   }
@@ -184,6 +200,7 @@ export const WorkspaceProject = styled.div.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Badge-root {
     flex-shrink: 0;
+    max-width: 100%;
   }
   @media (min-width: 1100px) and (max-width: 1599px) {
     & {
@@ -217,6 +234,7 @@ export const WorkspaceActions = styled.div.attrs<{ "data-ui"?: string }>({
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
   }
   & .mantine-Select-root {
     width: 144px;
@@ -421,6 +439,26 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     border-color: #DCE2EE;
     background: #FFFFFF;
   }
+  & .mantine-Text-root,
+  & .mantine-Title-root,
+  & .mantine-InputWrapper-label,
+  & .mantine-Checkbox-label {
+    overflow-wrap: anywhere;
+  }
+  & .mantine-Button-root {
+    max-width: 100%;
+    height: auto;
+    min-height: 36px;
+    padding-block: 8px;
+  }
+  & .mantine-Button-label {
+    white-space: normal;
+  }
+  @media (pointer: coarse) {
+    & .mantine-Button-root {
+      min-height: 44px;
+    }
+  }
   @media (max-width: 1099px) {
     & {
       height: 100%;
@@ -458,7 +496,6 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
       max-width: 100%;
     }
   }
-
 `;
 
 export const WorkspaceNotices = styled.div.attrs<{ "data-ui"?: string }>({
@@ -574,6 +611,7 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
 })`
   & {
     display: none;
+    flex-shrink: 0;
   }
   @media (max-width: 1099px) {
     & {
@@ -598,8 +636,19 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
   @media (max-width: 767px) {
     & .mantine-Button-root {
       flex: 1;
+      min-width: 0;
       padding-inline: 8px;
     }
+    & .mantine-Button-label {
+      white-space: normal;
+    }
+    & .mantine-Button-section {
+      margin-inline-end: 6px;
+    }
+  }
+  @media (max-width: 359px) {
+    & .mantine-Button-root { padding-inline: 4px; font-size: 12px; }
+    & .mantine-Button-section { margin-inline-end: 4px; }
   }
 `;
 

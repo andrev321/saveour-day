@@ -1,4 +1,5 @@
 "use client";
+import { QrPreview } from "./form-layout.styles";
 
 import {
   ActionIcon,
@@ -122,11 +123,12 @@ export function QrCodeCard({
           </Alert>
         )}
         <Group align="flex-start" gap="xl" wrap="wrap">
-          <Stack gap="xs" align="center">
-            <div
-              style={{ position: "relative", width: 280, height: 280 }}
-              aria-busy={png?.key !== qrKey}
-            >
+          <Stack
+            gap="xs"
+            align="center"
+            style={{ width: "100%", maxWidth: 280, minWidth: 0 }}
+          >
+            <QrPreview aria-busy={png?.key !== qrKey}>
               {png?.key !== qrKey && (
                 <div
                   style={{
@@ -156,9 +158,9 @@ export function QrCodeCard({
               <div
                 ref={container}
                 aria-label="Podgląd kodu QR"
-                style={{ minHeight: 280, minWidth: 280 }}
+                style={{ width: "100%" }}
               />
-            </div>
+            </QrPreview>
             <Tooltip
               label={
                 busy

@@ -36,6 +36,7 @@ import {
 import { usePanelI18n } from "../lib/i18n";
 import { Reminders } from "./Reminders";
 import { QrCodeCard } from "./QrCodeCard";
+import { FilterGrid, FormRow } from "./form-layout.styles";
 type Guest = { id: string; name: string };
 type InvitationRow = {
   id: string;
@@ -935,9 +936,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 {editingInvite ? (
                   <Stack>
                     {members.map((member, index) => (
-                      <Group key={member.id || `new-${index}`} align="end">
+                      <FormRow key={member.id || `new-${index}`}>
                         <TextInput
-                          style={{ flex: 1 }}
                           label={`${labelText("Gość", "Guest", "Gast")} ${index + 1}`}
                           value={member.name}
                           required
@@ -967,7 +967,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                             "Person entfernen",
                           )}
                         </Button>
-                      </Group>
+                      </FormRow>
                     ))}
                     <Button
                       variant="light"
@@ -1162,7 +1162,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 )}
               </Text>
             )}
-            <Group>
+            <FilterGrid>
               <TextInput
                 label={labelText(
                   "Szukaj gościa, rodziny lub e-maila",
@@ -1174,7 +1174,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   setQuery(e.currentTarget.value);
                   setPage(1);
                 }}
-                style={{ flex: 1 }}
               />
               <Select
                 label={labelText("Odpowiedzi", "Responses", "Antworten")}
@@ -1210,7 +1209,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   },
                 ]}
               />
-            </Group>
+            </FilterGrid>
             {!filtered.length && !!data.invitations.length && (
               <Text>
                 {labelText(
