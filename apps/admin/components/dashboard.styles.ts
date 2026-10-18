@@ -48,6 +48,17 @@ export const Stats = styled.div`
   padding: 24px 32px;
   background: #e9edf8;
   border-radius: 20px;
+  max-width: 100%;
+  @media (max-width: 40em) {
+    width: 100%;
+    gap: 20px;
+    padding: 20px;
+    & > div {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
   & strong {
     display: block;
     font-size: 32px;
