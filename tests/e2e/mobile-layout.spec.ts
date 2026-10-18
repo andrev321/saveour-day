@@ -159,7 +159,7 @@ for (const width of [320, 390]) {
       "Wygląd",
       "Zdjęcia",
       "Ustawienia",
-      "Historia",
+      "Historia publikacji",
     ]) {
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       await page
