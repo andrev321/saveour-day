@@ -9,7 +9,8 @@
     "./loading": "./src/loading.tsx",
     "./loading-copy": "./src/loading-copy.ts",
     "./motion": "./src/motion.ts",
-    "./motion-styles": "./src/motion-styles.ts"
+    "./motion-styles": "./src/motion-styles.ts",
+    "./motion-components": "./src/motion-components.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

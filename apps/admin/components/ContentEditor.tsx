@@ -1,4 +1,5 @@
 "use client";
+import { MotionDisclosure } from "@invitations/ui/motion-components";
 import { FormRow } from "./form-layout.styles";
 import {
   useState,
@@ -588,6 +589,7 @@ function SectionRow({
               </Text>
             </Stack>
             <CaretDownIcon
+              className="content-disclosure-chevron"
               size={16}
               style={{
                 flexShrink: 0,
@@ -608,9 +610,9 @@ function SectionRow({
           {visible ? <EyeIcon /> : <EyeSlashIcon />}
         </ActionIcon>
       </Group>
-      <div id={`content-${section.id}`} hidden={!expanded}>
-        {expanded && children}
-      </div>
+      <MotionDisclosure id={`content-${section.id}`} open={expanded}>
+        {children}
+      </MotionDisclosure>
     </Card>
   );
 }
@@ -1251,6 +1253,7 @@ function FixedSection({
               {label}
             </Text>
             <CaretDownIcon
+              className="content-disclosure-chevron"
               size={16}
               style={{
                 flexShrink: 0,
@@ -1261,9 +1264,9 @@ function FixedSection({
         </Button>
         <span aria-hidden="true" style={{ width: 28, flexShrink: 0 }} />
       </Group>
-      <div id={`content-${id}`} hidden={!expanded}>
-        {expanded && children}
-      </div>
+      <MotionDisclosure id={`content-${id}`} open={expanded}>
+        {children}
+      </MotionDisclosure>
     </Card>
   );
 }

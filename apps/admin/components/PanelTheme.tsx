@@ -1,11 +1,36 @@
 "use client";
-import { MantineProvider, Loader, createTheme } from "@mantine/core";
+import {
+  MantineProvider,
+  Loader,
+  Modal,
+  Drawer,
+  createTheme,
+} from "@mantine/core";
 import { IconContext } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 
 const theme = createTheme({
   respectReducedMotion: true,
-  components: { Loader: Loader.extend({ defaultProps: { type: "dots" } }) },
+  components: {
+    Loader: Loader.extend({ defaultProps: { type: "dots" } }),
+    Modal: Modal.extend({
+      defaultProps: {
+        transitionProps: {
+          transition: "fade-up",
+          duration: 200,
+          timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      },
+    }),
+    Drawer: Drawer.extend({
+      defaultProps: {
+        transitionProps: {
+          duration: 240,
+          timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        },
+      },
+    }),
+  },
   black: "#242B59",
   primaryColor: "brand",
   colors: {

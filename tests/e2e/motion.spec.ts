@@ -1,5 +1,54 @@
 import { test, expect } from "@playwright/test";
 
+const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
+
+for (const width of [390, 1280]) {
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    test(`studio controls stay still and disclosures retain edits at ${width}px (${reducedMotion})`, async ({
+      page,
+    }, testInfo) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ reducedMotion });
+      const errors: string[] = [];
+      page.on("pageerror", (error) => errors.push(error.message));
+      await page.goto(`${admin}/demo`);
+      await page
+        .getByRole("button", { name: "Otwórz gotowy przykład" })
+        .click();
+      const toggle = page.getByRole("button", {
+        name: "Początek zaproszenia",
+        exact: true,
+      });
+      await toggle.scrollIntoViewIfNeeded();
+      await toggle.hover();
+      const before = await toggle.boundingBox();
+      await page.mouse.down();
+      await expect(toggle).toHaveCSS("transform", "none");
+      await expect(toggle).toHaveCSS("translate", "none");
+      expect(await toggle.boundingBox()).toEqual(before);
+      await page.mouse.up();
+      const input = page.getByLabel("Główny napis", { exact: true });
+      await expect(input).toBeVisible();
+      await input.fill("Nasze spotkanie");
+      const body = page.locator("#content-hero > div");
+      await expect(body).toHaveCSS("overflow", "visible");
+      await toggle.press("Enter");
+      await expect(input).toHaveCount(0);
+      // Reverse an opening/closing transition before it can finish.
+      await toggle.press("Enter");
+      await toggle.press("Enter");
+      await toggle.press("Enter");
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(input).toHaveValue("Nasze spotkanie");
+      await expect(body).toHaveCSS("overflow", "visible");
+      await page.screenshot({
+        path: testInfo.outputPath(`studio-${width}-${reducedMotion}.png`),
+      });
+      expect(errors).toEqual([]);
+    });
+  }
+}
+
 for (const width of [390, 1280]) {
   for (const reducedMotion of ["no-preference", "reduce"] as const) {
     test(`invitation motion is optional and sections enter once at ${width}px (${reducedMotion})`, async ({

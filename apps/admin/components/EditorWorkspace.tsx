@@ -64,7 +64,10 @@ export function EditorWorkspace({
   const view = viewState.request === editRequest ? viewState.mode : "edit";
   const setView = (mode: string) =>
     setViewState({ mode, request: editRequest });
-  const formMotion = useViewMotion(`${active}:${view}`);
+  const formMotion = useViewMotion(
+    `${active}:${view}`,
+    '[role="tabpanel"]:not([hidden])',
+  );
   const previewMotion = useViewMotion(view);
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
