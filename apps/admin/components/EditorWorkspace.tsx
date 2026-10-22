@@ -24,6 +24,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { usePanelI18n } from "../lib/i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import * as S from "./workspace.styles";
+import { useViewMotion } from "@invitations/ui/motion";
 import { BrandLogo } from "@invitations/ui/brand";
 
 export function EditorWorkspace({
@@ -63,6 +64,8 @@ export function EditorWorkspace({
   const view = viewState.request === editRequest ? viewState.mode : "edit";
   const setView = (mode: string) =>
     setViewState({ mode, request: editRequest });
+  const formMotion = useViewMotion(`${active}:${view}`);
+  const previewMotion = useViewMotion(view);
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
   const [collapsed, setCollapsed] = useLocalStorage({
@@ -233,7 +236,7 @@ export function EditorWorkspace({
             </Tooltip>
           </S.WorkspaceNavFooter>
         </S.WorkspaceNav>
-        <S.WorkspaceForm id="workspace-edit">
+        <S.WorkspaceForm ref={formMotion} id="workspace-edit">
           <S.WorkspaceNotices>{notices}</S.WorkspaceNotices>
           {headerTools}
           {children}
@@ -275,7 +278,11 @@ export function EditorWorkspace({
             event.currentTarget.releasePointerCapture(event.pointerId)
           }
         />
-        <S.WorkspacePreview id="workspace-preview" aria-label={ui.live}>
+        <S.WorkspacePreview
+          ref={previewMotion}
+          id="workspace-preview"
+          aria-label={ui.live}
+        >
           {preview}
         </S.WorkspacePreview>
       </S.WorkspaceBody>

@@ -1,9 +1,15 @@
 "use client";
 import { createGlobalStyle, styled } from "styled-components";
+import { subtleControls } from "@invitations/ui/motion-styles";
 export const SiteGlobalStyles = createGlobalStyle`body {margin: 0;
 background: #faf7f1;
 color: #34322d;
 font-family: Inter, sans-serif;}
+${subtleControls}
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 `;
 
 export const GuestCard = styled.main.attrs<{ "data-ui"?: string }>({
