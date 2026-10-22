@@ -9,7 +9,7 @@ export default defineConfig({
     {
       name: "webkit",
       use: { browserName: "webkit" },
-      testMatch: /.*(guest|workspace|photo-selectors|product-review)\.spec\.ts/,
+      testMatch: /.*(guest|workspace|photo-selectors|product-review|motion)\.spec\.ts/,
     },
   ],
   workers: 1,

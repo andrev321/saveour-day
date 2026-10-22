@@ -1,10 +1,16 @@
 "use client";
 import { ActionIcon, Tabs } from "@mantine/core";
-import { createGlobalStyle, keyframes, styled } from "styled-components";
+import { createGlobalStyle, styled } from "styled-components";
+import { subtleControls } from "@invitations/ui/motion-styles";
 export const AdminGlobalStyles = createGlobalStyle`body {margin: 0;
 background: #F4F6FB;
 color: #242B59;}
 * {box-sizing: border-box;}
+${subtleControls}
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
 /* Portalled dialogs need the same mobile affordances as the editor. */
 @media (pointer: coarse) {
   .mantine-Input-input { min-height: 44px; font-size: 16px; }
@@ -21,15 +27,6 @@ color: #242B59;}
   .mantine-Modal-body .mantine-InputWrapper-root { min-width: 0; }
 }
 `;
-
-const workspaceEnter = keyframes`from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-to {
-    opacity: 1;
-    transform: translateY(0);
-  }`;
 
 export const EditorWorkspace = styled.div.attrs<{ "data-ui"?: string }>({
   "data-ui": "editor-workspace",
@@ -412,9 +409,6 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Tabs-panel {
     padding-top: 0;
-  }
-  & .mantine-Tabs-panel:not([hidden]) {
-    animation: ${workspaceEnter} 180ms ease-out;
   }
   & h3 {
     font-size: 18px;

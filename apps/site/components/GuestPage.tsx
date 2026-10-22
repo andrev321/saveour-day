@@ -1,4 +1,5 @@
 "use client";
+import { useViewMotion } from "@invitations/ui/motion";
 import { LoadingState, BusyLabel, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
@@ -42,6 +43,9 @@ export function GuestPage({
   const [data, setData] = useState<Reply | null>(null),
     [error, setError] = useState(""),
     [success, setSuccess] = useState(false);
+  const viewMotion = useViewMotion(
+    `${Boolean(data)}:${data?.authorized}:${success}`,
+  );
   const { operation, busy, start, end } = useOperation();
   const [email, setEmail] = useState(""),
     [code, setCode] = useState(""),
@@ -179,7 +183,7 @@ export function GuestPage({
   }, [dirty]);
   if (!data?.authorized)
     return (
-      <S.GuestCard lang={locale.slice(0, 2)}>
+      <S.GuestCard ref={viewMotion} lang={locale.slice(0, 2)}>
         <BrandLogo animated height={52} />
         <h1>{copy.invitation}</h1>
         {error && <p role="alert">{guestError(error, copy)}</p>}
@@ -345,7 +349,7 @@ export function GuestPage({
     ]) || [],
   );
   return (
-    <div lang={locale.slice(0, 2)} style={styles}>
+    <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
       {(data.invitation || data.config?.events.some((e) => e.date)) && (
         <S.GuestActions aria-label={copy.invitation}>
           {data.invitation && <a href="#rsvp">{copy.rsvp}</a>}
