@@ -1,5 +1,6 @@
 "use client";
 import { Box, Card, Text, Title } from "@mantine/core";
+import { subtleControls } from "@invitations/ui/motion-styles";
 import { styled } from "styled-components";
 
 export const PreviewEditControl = styled.div.attrs<{ "data-ui"?: string }>({
@@ -86,6 +87,7 @@ export const InvitationMap = styled.iframe.attrs<{ "data-ui"?: string }>({
 export const Invitation = styled(Box).attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation",
 })`
+  ${subtleControls}
   --gutter: clamp(24px, 5.55vw, 80px);
   --line: color-mix(in srgb, var(--ink) 22%, var(--paper));
   --muted: color-mix(in srgb, var(--ink) 80%, var(--paper));

@@ -33,6 +33,7 @@ import {
 import { LoadingSkeleton, LoadingState } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
+import { useInvitationMotion } from "@invitations/ui/motion";
 import {
   ClockIcon,
   MapPinIcon,
@@ -121,6 +122,7 @@ export function InvitationProvider({
 }) {
   const preset = themes[config.theme];
   const theme = createTheme({
+    respectReducedMotion: true,
     colors: { accent: createAccentPalette(config.design.accent) },
     primaryColor: "accent",
     primaryShade: 6,
@@ -372,6 +374,9 @@ export function Invitation({
   const events = variant.eventIds
     .map((id) => config.events.find((e) => e.id === id)!)
     .filter(Boolean);
+  const motionRef = useInvitationMotion(
+    `${variant.id}:${sections.map((section) => section.id).join(":")}:${Boolean(children)}`,
+  );
   const colors = {
     "--paper": config.design.paper,
     "--surface": config.design.surface,
@@ -435,6 +440,7 @@ export function Invitation({
     return (
       <InvitationProvider config={config}>
         <S.ThemedInvitation
+          ref={motionRef}
           p="xl"
           data-theme={config.theme}
           data-decorations={config.appearance.decorations}
@@ -454,6 +460,7 @@ export function Invitation({
   return (
     <InvitationProvider config={config}>
       <S.ThemedInvitation
+        ref={motionRef}
         data-theme={config.theme}
         data-decorations={config.appearance.decorations}
         style={colors}
