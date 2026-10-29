@@ -395,6 +395,27 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
     justify-content: center;
     gap: 8px;
   }
+  [data-collapsed="true"] & {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 4px;
+  }
+  [data-collapsed="true"] & .mantine-Button-root,
+  [data-collapsed="true"] & .mantine-ActionIcon-root {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  [data-collapsed="true"] & .mantine-Button-section {
+    margin: 0;
+  }
+  [data-collapsed="true"] & .mantine-Button-label {
+    display: none;
+  }
 `;
 
 export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
