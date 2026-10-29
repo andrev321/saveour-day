@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 import { useState } from "react";
 import { Button, Container, Stack, Text } from "@mantine/core";
 import { createDemo } from "@invitations/domain/demo";
 import { createTemplate } from "@invitations/domain/templates";
 import { Editor, type EditorData } from "./Editor";
 import { ProjectStart } from "./ProjectStart";
-import { LanguageSelect } from "./LanguageSelect";
+import { PanelPreferences } from "./PanelPreferences";
 import { usePanelI18n } from "../lib/i18n";
 import type { SiteConfig } from "@invitations/domain";
 import { BrandLogo } from "@invitations/ui/brand";
@@ -25,7 +25,7 @@ export function DemoWorkspace() {
     <Container size="sm" py="xl">
       <Stack>
         <BrandLogo animated height={56} />
-        <LanguageSelect />
+        <PanelPreferences />
         <ProjectStart
           onCreate={({ name, templateId, locale }) =>
             open(createTemplate(templateId, crypto.randomUUID(), locale), name)

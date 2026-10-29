@@ -55,7 +55,7 @@ import { EditorWorkspace } from "./EditorWorkspace";
 import { PreparationChecklist } from "./PreparationChecklist";
 import { DismissibleAlert } from "./DismissibleAlert";
 import { GuestManagement } from "./GuestManagement";
-import { LanguageSelect } from "./LanguageSelect";
+import { PanelPreferences } from "./PanelPreferences";
 import { PreviewCanvas } from "./PreviewCanvas";
 import { PreviewToolbar } from "./PreviewToolbar";
 import { ContentEditor } from "./ContentEditor";
@@ -628,7 +628,7 @@ export function Editor({
               <ArrowClockwiseIcon size={20} />
             </ActionIcon>
           </Tooltip>
-          <LanguageSelect />
+          <PanelPreferences />
         </>
       }
       notices={

@@ -41,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pl" {...mantineHtmlProps}>
       <head>
-        <ColorSchemeScript forceColorScheme="light" />
+        <ColorSchemeScript defaultColorScheme="light" />
       </head>
       <body>
         <StyledRegistry>

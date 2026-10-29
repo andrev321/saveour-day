@@ -1,19 +1,19 @@
 :root {
-  --panel-shell: #F4F6FB;
-  --panel-text: #242B59;
-  --panel-border: #DCE2EE;
-  --panel-accent: #3D518B;
-  --panel-muted: #59647D;
-  --panel-selected: #DFF0F4;
-  --panel-selected-text: #24485C;
-  --panel-hover: #EAF0FA;
-  --panel-surface: #FFFFFF;
-  --panel-input-border: #CDD6E7;
-  --panel-label: #303B59;
-  --panel-resizer: #E8EDF6;
-  --panel-handle: #9BAAC9;
-  --panel-resizer-hover: #CDDAF4;
-  --panel-preview: #EDF2F8;
+  --panel-shell: #f4f6fb;
+  --panel-text: #242b59;
+  --panel-border: #dce2ee;
+  --panel-accent: #3d518b;
+  --panel-muted: #59647d;
+  --panel-selected: #dff0f4;
+  --panel-selected-text: #24485c;
+  --panel-hover: #eaf0fa;
+  --panel-surface: #ffffff;
+  --panel-input-border: #cdd6e7;
+  --panel-label: #303b59;
+  --panel-resizer: #e8edf6;
+  --panel-handle: #9baac9;
+  --panel-resizer-hover: #cddaf4;
+  --panel-preview: #edf2f8;
   --panel-page: #f5f7fb;
   --panel-separator: #e2e7f0;
   --panel-stats: #e9edf8;
@@ -25,13 +25,93 @@
   --panel-illustration: #819bcf;
   --panel-field-border: #e9ecef;
   --panel-field-hover: #f8f9fa;
-  --panel-field-accent: #9FB4DD;
+  --panel-field-accent: #9fb4dd;
   --panel-field-muted: #697386;
   --panel-photo-border: #dbe2ef;
   --panel-photo-accent: #52679d;
   --panel-photo-background: #edf1f8;
   --panel-choice-border: #d9dfec;
   --panel-choice-selected: #f0f3fb;
-  --panel-canvas: #DFE7F1;
-  --panel-toolbar: #DCE5F1;
+  --panel-canvas: #dfe7f1;
+  --panel-toolbar: #dce5f1;
+}
+
+html[data-mantine-color-scheme="dark"] {
+  color-scheme: dark;
+  --panel-shell: #151e2d;
+  --panel-text: #e8edf7;
+  --panel-border: #3b4961;
+  --panel-accent: #aabde5;
+  --panel-muted: #aab8cf;
+  --panel-selected: #244450;
+  --panel-selected-text: #b9e4ee;
+  --panel-hover: #273449;
+  --panel-surface: #1c2739;
+  --panel-input-border: #52627b;
+  --panel-label: #cbd5e6;
+  --panel-resizer: #273449;
+  --panel-handle: #8799b6;
+  --panel-resizer-hover: #3b4961;
+  --panel-preview: #151e2d;
+  --panel-page: #151e2d;
+  --panel-separator: #3b4961;
+  --panel-stats: #273449;
+  --panel-card-border: #3b4961;
+  --panel-border-hover: #8799b6;
+  --panel-shadow: #00000040;
+  --panel-subtle: #273449;
+  --panel-empty-border: #52627b;
+  --panel-illustration: #aabde5;
+  --panel-field-border: #52627b;
+  --panel-field-hover: #273449;
+  --panel-field-accent: #8799b6;
+  --panel-field-muted: #aab8cf;
+  --panel-photo-border: #3b4961;
+  --panel-photo-accent: #aabde5;
+  --panel-photo-background: #273449;
+  --panel-choice-border: #52627b;
+  --panel-choice-selected: #273449;
+  --panel-canvas: #101724;
+  --panel-toolbar: #273449;
+}
+
+[data-ui="panel-preferences"] {
+  min-width: 0;
+  max-width: 100%;
+}
+[data-ui="panel-preferences"] > .mantine-Select-root {
+  flex: 1;
+  min-width: 100px;
+}
+[data-ui="panel-preferences"] > .mantine-ActionIcon-root {
+  flex-shrink: 0;
+}
+.panel-dark-icon {
+  display: none;
+}
+html[data-mantine-color-scheme="dark"] .panel-light-icon {
+  display: none;
+}
+html[data-mantine-color-scheme="dark"] .panel-dark-icon {
+  display: block;
+}
+
+/* Brand recoloring is scoped to the admin document, never the invitation iframe. */
+html[data-mantine-color-scheme="dark"] [data-brand] > path {
+  fill: #f5f3ff;
+}
+html[data-mantine-color-scheme="dark"]
+  [data-brand]
+  .sod-back
+  > path:first-child {
+  fill: #b2c0ff;
+}
+html[data-mantine-color-scheme="dark"]
+  [data-brand]
+  .sod-back
+  > path:last-child {
+  fill: #8e9fe5;
+}
+html[data-mantine-color-scheme="dark"] [data-brand] .sod-front {
+  fill: #90cdda;
 }

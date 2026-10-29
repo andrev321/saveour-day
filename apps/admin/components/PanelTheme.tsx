@@ -40,7 +40,21 @@ const theme = createTheme({
   },
   black: "#242B59",
   primaryColor: "brand",
+  primaryShade: { light: 6, dark: 3 },
+  autoContrast: true,
   colors: {
+    dark: [
+      "#E8EDF7",
+      "#CBD5E6",
+      "#AAB8CF",
+      "#8799B6",
+      "#52627B",
+      "#3B4961",
+      "#273449",
+      "#1C2739",
+      "#151E2D",
+      "#101724",
+    ],
     brand: [
       "#F1F4FC",
       "#E1E8F8",
@@ -61,7 +75,7 @@ const theme = createTheme({
 const icons = { weight: "duotone" as const };
 export function PanelTheme({ children }: { children: ReactNode }) {
   return (
-    <MantineProvider theme={theme} forceColorScheme="light">
+    <MantineProvider theme={theme} defaultColorScheme="light">
       <IconContext.Provider value={icons}>{children}</IconContext.Provider>
     </MantineProvider>
   );

@@ -29,7 +29,7 @@ import {
 import { browserDb } from "../lib/browser";
 import { usePanelI18n } from "../lib/i18n";
 import { dashboardUi } from "../lib/dashboard-i18n";
-import { LanguageSelect } from "./LanguageSelect";
+import { PanelPreferences } from "./PanelPreferences";
 import { ProjectStart } from "./ProjectStart";
 import { BrandLogo } from "@invitations/ui/brand";
 import * as S from "./dashboard.styles";
@@ -226,7 +226,7 @@ export function Dashboard({
         <S.Header>
           <BrandLogo animated height={44} />
           <Group gap="sm">
-            <LanguageSelect />
+            <PanelPreferences />
             {logged && (
               <ActionButton
                 variant="subtle"
