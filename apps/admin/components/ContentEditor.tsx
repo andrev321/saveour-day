@@ -568,7 +568,8 @@ function SectionRow({
         />
         <Button
           variant="subtle"
-          px={0}
+          px="sm"
+          py="xs"
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           onClick={onEdit}
           aria-expanded={expanded}
@@ -1233,7 +1234,8 @@ function FixedSection({
         <span aria-hidden="true" style={{ width: 44, flexShrink: 0 }} />
         <Button
           variant="subtle"
-          px={0}
+          px="sm"
+          py="xs"
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
           onClick={onToggle}
