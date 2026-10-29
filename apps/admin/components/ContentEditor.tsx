@@ -549,7 +549,7 @@ function SectionRow({
     <Card
       ref={setNodeRef}
       withBorder
-      padding="sm"
+      padding="xs"
       data-testid={`section-${section.id}`}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -569,7 +569,7 @@ function SectionRow({
         <Button
           variant="subtle"
           px="sm"
-          py="xs"
+          py={4}
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           onClick={onEdit}
           aria-expanded={expanded}
@@ -1229,13 +1229,13 @@ function FixedSection({
   children: ReactNode;
 }) {
   return (
-    <Card withBorder padding="sm">
+    <Card withBorder padding="xs">
       <Group wrap="nowrap" gap="xs">
         <span aria-hidden="true" style={{ width: 44, flexShrink: 0 }} />
         <Button
           variant="subtle"
           px="sm"
-          py="xs"
+          py={4}
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
           onClick={onToggle}

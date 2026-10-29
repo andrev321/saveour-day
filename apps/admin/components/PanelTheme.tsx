@@ -11,6 +11,13 @@ import type { ReactNode } from "react";
 
 const theme = createTheme({
   respectReducedMotion: true,
+  spacing: {
+    xs: "0.5rem",
+    sm: "0.625rem",
+    md: "0.75rem",
+    lg: "1rem",
+    xl: "1.5rem",
+  },
   components: {
     Loader: Loader.extend({ defaultProps: { type: "dots" } }),
     Modal: Modal.extend({

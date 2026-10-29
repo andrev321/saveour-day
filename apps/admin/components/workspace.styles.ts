@@ -329,7 +329,7 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 24px 12px 16px;
+    padding: 16px 8px 12px;
     border-right: 1px solid var(--panel-border);
   }
   & .mantine-Tabs-list {
@@ -345,9 +345,9 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     flex-shrink: 0;
     border: 0;
     border-radius: 10px;
-    padding: 14px 16px;
+    padding: 10px 12px;
     color: #59647D;
-    min-height: 48px;
+    min-height: 44px;
     transition:
       background-color 160ms,
       color 160ms;
@@ -372,7 +372,7 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     display: none;
   }
   [data-collapsed="true"] & .mantine-Tabs-tab {
-    padding: 14px;
+    padding: 10px;
   }
   [data-collapsed="true"] & .mantine-Tabs-tabSection {
     margin: 0;
@@ -389,7 +389,7 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
 })`
   & {
     margin-top: auto;
-    padding-top: 24px;
+    padding-top: 16px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -403,7 +403,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   & {
     overflow: auto;
     min-width: 0;
-    padding: 24px;
+    padding: 16px;
     background: #FFFFFF;
     scrollbar-gutter: stable;
   }
@@ -412,7 +412,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   & h3 {
     font-size: 18px;
-    margin-top: 12px;
+    margin-top: 4px;
   }
   & .mantine-Input-input {
     border-color: #CDD6E7;
@@ -422,7 +422,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     border-color: #3D518B;
   }
   & .mantine-InputWrapper-label {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     color: #303B59;
   }
   & .mantine-Accordion-item {
@@ -443,7 +443,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     max-width: 100%;
     height: auto;
     min-height: 36px;
-    padding-block: 8px;
+    padding-block: 6px;
   }
   & .mantine-Button-label {
     white-space: normal;
@@ -461,7 +461,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   @media (max-width: 1099px) {
     & {
-      padding: 24px max(20px, calc((100% - 720px) / 2));
+      padding: 16px max(16px, calc((100% - 720px) / 2));
     }
   }
   @media (max-width: 1099px) {
@@ -471,7 +471,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   @media (max-width: 767px) {
     & {
-      padding: 16px;
+      padding: 12px;
     }
   }
   @media (max-width: 767px) {
@@ -500,7 +500,7 @@ export const WorkspaceNotices = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 8px;
   }
   &:not(:empty) {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
   & .mantine-Alert-root {
     padding: 12px;

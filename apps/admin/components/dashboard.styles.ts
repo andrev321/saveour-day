@@ -7,9 +7,9 @@ export const Page = styled.div`
   color: #242b59;
 `;
 export const Content = styled(Container)`
-  padding-block: 28px 64px;
+  padding-block: 20px 40px;
   @media (max-width: 40em) {
-    padding-block: 20px 40px;
+    padding-block: 16px 28px;
   }
 `;
 export const Header = styled.header`
@@ -17,7 +17,7 @@ export const Header = styled.header`
   justify-content: space-between;
   align-items: center;
   gap: 20px;
-  padding-bottom: 28px;
+  padding-bottom: 20px;
   border-bottom: 1px solid #e2e7f0;
   @media (max-width: 40em) {
     flex-wrap: wrap;
@@ -25,11 +25,11 @@ export const Header = styled.header`
   }
 `;
 export const Hero = styled.section`
-  margin-block: 36px;
+  margin-block: 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 36px;
+  gap: 24px;
   & h1 {
     font-size: clamp(2rem, 4vw, 3rem);
     letter-spacing: -0.04em;
@@ -38,21 +38,21 @@ export const Hero = styled.section`
   @media (max-width: 48em) {
     align-items: flex-start;
     flex-direction: column;
-    gap: 24px;
+    gap: 16px;
   }
 `;
 export const Stats = styled.div`
   display: flex;
-  gap: 36px;
+  gap: 24px;
   flex-shrink: 0;
-  padding: 24px 32px;
+  padding: 16px 24px;
   background: #e9edf8;
   border-radius: 20px;
   max-width: 100%;
   @media (max-width: 40em) {
     width: 100%;
     gap: 20px;
-    padding: 20px;
+    padding: 16px;
     & > div {
       flex: 1;
       min-width: 0;
@@ -70,7 +70,7 @@ export const ProjectCard = styled(Card)`
   border: 1px solid #e1e6ef;
   border-radius: 20px;
   background: white;
-  padding: 24px;
+  padding: 16px;
   min-width: 0;
   transition:
     box-shadow 0.18s,
@@ -99,22 +99,22 @@ export const Monogram = styled.div`
   letter-spacing: -0.05em;
 `;
 export const Empty = styled.section`
-  padding: 56px 24px;
+  padding: 36px 20px;
   background: white;
   border: 1px dashed #cbd4e7;
   border-radius: 24px;
   text-align: center;
   & > svg {
     color: #819bcf;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
   }
 `;
 export const Login = styled.section`
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 64px;
-  padding-block: 64px;
+  gap: 40px;
+  padding-block: 40px;
   & h1 {
     font-size: clamp(2.4rem, 4vw, 3.6rem);
     letter-spacing: -0.04em;
@@ -122,7 +122,7 @@ export const Login = styled.section`
   }
   @media (max-width: 48em) {
     grid-template-columns: 1fr;
-    gap: 28px;
-    padding-block: 32px;
+    gap: 20px;
+    padding-block: 24px;
   }
 `;

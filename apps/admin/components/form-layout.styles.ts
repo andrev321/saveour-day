@@ -9,7 +9,7 @@ export const FilterGrid = styled.div.attrs<{ "data-ui"?: string }>({
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   align-items: end;
-  gap: 16px;
+  gap: 12px;
   & > * {
     min-width: 0;
   }
