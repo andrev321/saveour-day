@@ -42,13 +42,13 @@ export function PanelPreferences() {
       <Menu position="bottom-end" withinPortal={false}>
         <Menu.Target>
           <ActionIcon
-            variant="default"
-            size={44}
+            variant="subtle"
+            size="md"
             aria-label={text.appearance}
             title={text.appearance}
           >
-            <SunIcon size={21} className="panel-light-icon" />
-            <MoonIcon size={21} className="panel-dark-icon" />
+            <SunIcon size={20} className="panel-light-icon" />
+            <MoonIcon size={20} className="panel-dark-icon" />
           </ActionIcon>
         </Menu.Target>
         <Menu.Dropdown>

@@ -85,6 +85,14 @@ html[data-mantine-color-scheme="dark"] {
 }
 [data-ui="panel-preferences"] > .mantine-ActionIcon-root {
   flex-shrink: 0;
+  margin-bottom: 4px;
+}
+@media (pointer: coarse) {
+  [data-ui="panel-preferences"] > .mantine-ActionIcon-root {
+    min-width: 44px;
+    min-height: 44px;
+    margin-bottom: 0;
+  }
 }
 .panel-dark-icon {
   display: none;
