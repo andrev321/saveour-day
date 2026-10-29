@@ -7,13 +7,13 @@ export const ReferenceRow = styled(Group).attrs<{ "data-ui"?: string }>({
   & {
     min-height: 2.25rem;
     padding: 0.25rem 0.375rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--panel-field-border);
     border-radius: 0.5rem;
-    background: #fff;
+    background: var(--panel-surface);
   }
   &[data-visible="false"] {
     opacity: 0.55;
-    background: #f8f9fa;
+    background: var(--panel-field-hover);
   }
 `;
 
@@ -47,9 +47,9 @@ export const ReferenceDragGhost = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 0.5rem;
     min-width: 12rem;
     padding: 0.5rem 0.75rem;
-    border: 1px solid #9FB4DD;
+    border: 1px solid var(--panel-field-accent);
     border-radius: 0.5rem;
-    background: #fff;
+    background: var(--panel-surface);
     box-shadow: 0 12px 30px rgb(0 0 0 / 15%);
   }
 `;
@@ -61,7 +61,7 @@ export const SectionTypeIcon = styled.span.attrs<{ "data-ui"?: string }>({
     display: inline-grid;
     width: 1.25rem;
     place-items: center;
-    color: #697386;
+    color: var(--panel-field-muted);
     font-size: 0.9rem;
     line-height: 1;
   }
@@ -149,9 +149,9 @@ export const SectionDragGhost = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 0.75rem;
     min-width: 15rem;
     padding: 0.75rem 1rem;
-    border: 1px solid #9FB4DD;
+    border: 1px solid var(--panel-field-accent);
     border-radius: 0.5rem;
-    background: white;
+    background: var(--panel-surface);
     box-shadow: 0 12px 30px rgb(0 0 0 / 15%);
   }
 `;

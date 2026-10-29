@@ -1,0 +1,37 @@
+:root {
+  --panel-shell: #F4F6FB;
+  --panel-text: #242B59;
+  --panel-border: #DCE2EE;
+  --panel-accent: #3D518B;
+  --panel-muted: #59647D;
+  --panel-selected: #DFF0F4;
+  --panel-selected-text: #24485C;
+  --panel-hover: #EAF0FA;
+  --panel-surface: #FFFFFF;
+  --panel-input-border: #CDD6E7;
+  --panel-label: #303B59;
+  --panel-resizer: #E8EDF6;
+  --panel-handle: #9BAAC9;
+  --panel-resizer-hover: #CDDAF4;
+  --panel-preview: #EDF2F8;
+  --panel-page: #f5f7fb;
+  --panel-separator: #e2e7f0;
+  --panel-stats: #e9edf8;
+  --panel-card-border: #e1e6ef;
+  --panel-border-hover: #aabde5;
+  --panel-shadow: #242b590a;
+  --panel-subtle: #edf1fa;
+  --panel-empty-border: #cbd4e7;
+  --panel-illustration: #819bcf;
+  --panel-field-border: #e9ecef;
+  --panel-field-hover: #f8f9fa;
+  --panel-field-accent: #9FB4DD;
+  --panel-field-muted: #697386;
+  --panel-photo-border: #dbe2ef;
+  --panel-photo-accent: #52679d;
+  --panel-photo-background: #edf1f8;
+  --panel-choice-border: #d9dfec;
+  --panel-choice-selected: #f0f3fb;
+  --panel-canvas: #DFE7F1;
+  --panel-toolbar: #DCE5F1;
+}

@@ -3,8 +3,8 @@ import { ActionIcon, Tabs } from "@mantine/core";
 import { createGlobalStyle, styled } from "styled-components";
 import { subtleControls } from "@invitations/ui/motion-styles";
 export const AdminGlobalStyles = createGlobalStyle`body {margin: 0;
-background: #F4F6FB;
-color: #242B59;}
+background: var(--panel-shell);
+color: var(--panel-text);}
 * {box-sizing: border-box;}
 ${subtleControls}
 html { scroll-behavior: smooth; }
@@ -33,18 +33,17 @@ export const EditorWorkspace = styled.div.attrs<{ "data-ui"?: string }>({
 })`
   & {
     --nav-width: 208px;
-    --panel-border: #DCE2EE;
     height: min(100dvh, var(--visual-height, 100dvh));
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #F4F6FB;
+    background: var(--panel-shell);
   }
   &[data-collapsed="true"] {
     --nav-width: 76px;
   }
   & :focus-visible {
-    outline: 2px solid #3D518B;
+    outline: 2px solid var(--panel-accent);
     outline-offset: 3px;
   }
   @media (min-width: 1100px) and (max-width: 1599px) {
@@ -143,7 +142,7 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
     display: flex;
     align-items: center;
     gap: 12px;
-    color: #3D518B;
+    color: var(--panel-accent);
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
@@ -346,19 +345,19 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     border: 0;
     border-radius: 10px;
     padding: 10px 12px;
-    color: #59647D;
+    color: var(--panel-muted);
     min-height: 44px;
     transition:
       background-color 160ms,
       color 160ms;
   }
   & .mantine-Tabs-tab[data-active] {
-    background: #DFF0F4;
-    color: #24485C;
+    background: var(--panel-selected);
+    color: var(--panel-selected-text);
     font-weight: 600;
   }
   & .mantine-Tabs-tab:hover {
-    background: #EAF0FA;
+    background: var(--panel-hover);
   }
   & .mantine-Tabs-tabSection {
     margin-inline-end: 12px;
@@ -425,7 +424,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     overflow: auto;
     min-width: 0;
     padding: 16px;
-    background: #FFFFFF;
+    background: var(--panel-surface);
     scrollbar-gutter: stable;
   }
   & .mantine-Tabs-panel {
@@ -436,23 +435,23 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     margin-top: 4px;
   }
   & .mantine-Input-input {
-    border-color: #CDD6E7;
-    background: #FFFFFF;
+    border-color: var(--panel-input-border);
+    background: var(--panel-surface);
   }
   & .mantine-Input-input:focus {
-    border-color: #3D518B;
+    border-color: var(--panel-accent);
   }
   & .mantine-InputWrapper-label {
     margin-bottom: 4px;
-    color: #303B59;
+    color: var(--panel-label);
   }
   & .mantine-Accordion-item {
-    border-color: #DCE2EE;
-    background: #FFFFFF;
+    border-color: var(--panel-border);
+    background: var(--panel-surface);
   }
   & .mantine-Card-root {
-    border-color: #DCE2EE;
-    background: #FFFFFF;
+    border-color: var(--panel-border);
+    background: var(--panel-surface);
   }
   & .mantine-Text-root,
   & .mantine-Title-root,
@@ -535,8 +534,8 @@ export const WorkspaceResizer = styled.div.attrs<{ "data-ui"?: string }>({
   & {
     cursor: col-resize;
     touch-action: none;
-    border-inline: 1px solid #DCE2EE;
-    background: #E8EDF6;
+    border-inline: 1px solid var(--panel-border);
+    background: var(--panel-resizer);
     position: relative;
   }
   &::after {
@@ -546,17 +545,17 @@ export const WorkspaceResizer = styled.div.attrs<{ "data-ui"?: string }>({
     left: 2px;
     width: 2px;
     height: 48px;
-    background: #9BAAC9;
+    background: var(--panel-handle);
     border-radius: 4px;
   }
   &:hover {
-    background: #CDDAF4;
-    outline: 2px solid #3D518B;
+    background: var(--panel-resizer-hover);
+    outline: 2px solid var(--panel-accent);
     outline-offset: -2px;
   }
   &:focus-visible {
-    background: #CDDAF4;
-    outline: 2px solid #3D518B;
+    background: var(--panel-resizer-hover);
+    outline: 2px solid var(--panel-accent);
     outline-offset: -2px;
   }
   @media (max-width: 1099px) {
@@ -576,7 +575,7 @@ export const WorkspacePreview = styled.section.attrs<{ "data-ui"?: string }>({
     min-height: 0;
     padding: 24px;
     gap: 18px;
-    background: #EDF2F8;
+    background: var(--panel-preview);
   }
   & h2 {
     font-size: 18px;
@@ -634,8 +633,8 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
       justify-content: center;
       gap: 12px;
       padding: 8px 12px max(8px, env(safe-area-inset-bottom));
-      border-top: 1px solid #DCE2EE;
-      background: #FFFFFF;
+      border-top: 1px solid var(--panel-border);
+      background: var(--panel-surface);
     }
   }
   @media (max-width: 1099px) {

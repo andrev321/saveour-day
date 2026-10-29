@@ -9,23 +9,23 @@ export const Tile = styled.button`
   appearance: none;
   padding: 0;
   overflow: hidden;
-  border: 1px solid #dbe2ef;
+  border: 1px solid var(--panel-photo-border);
   border-radius: 16px;
-  background: white;
+  background: var(--panel-surface);
   text-align: left;
   color: inherit;
   font: inherit;
   cursor: pointer;
   &:hover {
-    border-color: #52679d;
+    border-color: var(--panel-photo-accent);
   }
   &:focus-visible {
-    outline: 3px solid #52679d;
+    outline: 3px solid var(--panel-photo-accent);
     outline-offset: 3px;
   }
   &[aria-pressed="true"] {
-    border-color: #52679d;
-    box-shadow: 0 0 0 2px #52679d;
+    border-color: var(--panel-photo-accent);
+    box-shadow: 0 0 0 2px var(--panel-photo-accent);
   }
   &:disabled {
     opacity: 0.5;
@@ -43,11 +43,11 @@ export const Focus = styled.div`
   width: 100%;
   overflow: hidden;
   border-radius: 12px;
-  background: #edf1f8;
+  background: var(--panel-photo-background);
   cursor: pointer;
   touch-action: none;
   &:focus-visible {
-    outline: 3px solid #52679d;
+    outline: 3px solid var(--panel-photo-accent);
     outline-offset: 3px;
   }
   & img {

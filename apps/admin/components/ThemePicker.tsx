@@ -26,18 +26,18 @@ const Choice = styled.button`
   padding: 8px;
   text-align: left;
   cursor: pointer;
-  background: white;
-  color: #242b59;
-  border: 2px solid #d9dfec;
+  background: var(--panel-surface);
+  color: var(--panel-text);
+  border: 2px solid var(--panel-choice-border);
   border-radius: 12px;
   min-width: 0;
   font: inherit;
   &[aria-pressed="true"] {
-    border-color: #3d518b;
-    box-shadow: 0 0 0 1px #3d518b;
+    border-color: var(--panel-accent);
+    box-shadow: 0 0 0 1px var(--panel-accent);
   }
   &:focus-visible {
-    outline: 3px solid #3d518b;
+    outline: 3px solid var(--panel-accent);
     outline-offset: 3px;
   }
 `;
@@ -137,7 +137,7 @@ const PaletteChoice = styled(Choice)`
   border-width: 1px;
   border-radius: 8px;
   &[aria-pressed="true"] {
-    background: #f0f3fb;
+    background: var(--panel-choice-selected);
   }
 `;
 const Swatches = styled.div`

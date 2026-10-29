@@ -9,7 +9,7 @@ export const PreviewDialog = styled.div.attrs<{ "data-ui"?: string }>({
     flex-direction: column;
     height: 100dvh;
     overflow: hidden;
-    background: #EDF2F8;
+    background: var(--panel-preview);
     width: 100%;
   }
 `;
@@ -20,8 +20,8 @@ export const PreviewDialogHeader = styled(Modal.Header).attrs<{
   & {
     min-height: 52px;
     padding: 8px 16px;
-    background: #F4F6FB;
-    border-bottom: 1px solid #DCE2EE;
+    background: var(--panel-shell);
+    border-bottom: 1px solid var(--panel-border);
   }
   @media (max-width: 767px) {
     & {
@@ -66,7 +66,7 @@ export const PreviewCanvas = styled.div.attrs<{ "data-ui"?: string }>({
     min-height: 0;
     overflow: auto;
     border-radius: 16px;
-    background: #DFE7F1;
+    background: var(--panel-canvas);
   }
 `;
 
@@ -274,7 +274,7 @@ export const PreviewDeviceButtons = styled.div.attrs<{ "data-ui"?: string }>({
     gap: 2px;
     padding: 2px;
     border-radius: 9px;
-    background: #DCE5F1;
+    background: var(--panel-toolbar);
   }
 `;
 

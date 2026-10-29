@@ -3,8 +3,8 @@ import { styled } from "styled-components";
 import { Card, Container } from "@mantine/core";
 export const Page = styled.div`
   min-height: 100vh;
-  background: #f5f7fb;
-  color: #242b59;
+  background: var(--panel-page);
+  color: var(--panel-text);
 `;
 export const Content = styled(Container)`
   padding-block: 20px 40px;
@@ -18,7 +18,7 @@ export const Header = styled.header`
   align-items: center;
   gap: 20px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #e2e7f0;
+  border-bottom: 1px solid var(--panel-separator);
   @media (max-width: 40em) {
     flex-wrap: wrap;
     gap: 16px;
@@ -46,7 +46,7 @@ export const Stats = styled.div`
   gap: 24px;
   flex-shrink: 0;
   padding: 16px 24px;
-  background: #e9edf8;
+  background: var(--panel-stats);
   border-radius: 20px;
   max-width: 100%;
   @media (max-width: 40em) {
@@ -67,17 +67,17 @@ export const Stats = styled.div`
   }
 `;
 export const ProjectCard = styled(Card)`
-  border: 1px solid #e1e6ef;
+  border: 1px solid var(--panel-card-border);
   border-radius: 20px;
-  background: white;
+  background: var(--panel-surface);
   padding: 16px;
   min-width: 0;
   transition:
     box-shadow 0.18s,
     border-color 0.18s;
   &:hover {
-    border-color: #aabde5;
-    box-shadow: 0 8px 24px #242b590a;
+    border-color: var(--panel-border-hover);
+    box-shadow: 0 8px 24px var(--panel-shadow);
   }
   & h2 {
     overflow-wrap: anywhere;
@@ -92,20 +92,20 @@ export const Monogram = styled.div`
   display: grid;
   place-items: center;
   border-radius: 20px 20px 5px 5px;
-  background: #edf1fa;
-  color: #3d518b;
+  background: var(--panel-subtle);
+  color: var(--panel-accent);
   font-size: 23px;
   font-weight: 600;
   letter-spacing: -0.05em;
 `;
 export const Empty = styled.section`
   padding: 36px 20px;
-  background: white;
-  border: 1px dashed #cbd4e7;
+  background: var(--panel-surface);
+  border: 1px dashed var(--panel-empty-border);
   border-radius: 24px;
   text-align: center;
   & > svg {
-    color: #819bcf;
+    color: var(--panel-illustration);
     margin-bottom: 12px;
   }
 `;
