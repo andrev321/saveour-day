@@ -370,8 +370,15 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   [data-collapsed="true"] & .mantine-Tabs-tabLabel {
     display: none;
   }
+  [data-collapsed="true"] & .mantine-Tabs-list {
+    align-items: center;
+    gap: 4px;
+  }
   [data-collapsed="true"] & .mantine-Tabs-tab {
-    padding: 10px;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
   }
   [data-collapsed="true"] & .mantine-Tabs-tabSection {
     margin: 0;
