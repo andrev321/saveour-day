@@ -73,7 +73,7 @@ export const GET = api(async (request) => {
   return {
     site,
     variants: config?.variants.map(({ id, label }) => ({ id, label })) || [],
-    url: new URL(`/s/${site.public_slug}`, required("SITE_URL")).href,
+    url: new URL(`/s/${site.id}`, required("SITE_URL")).href,
     invitations: invitations.map((i) => ({
       ...i,
       events:

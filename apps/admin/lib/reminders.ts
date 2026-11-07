@@ -4,7 +4,6 @@ import { siteConfigSchema } from "@invitations/domain";
 import { checkDb, required, serviceDb, HttpError } from "./server";
 export async function reminderPreview(site: {
   id: string;
-  public_slug: string;
   access_mode: string;
   published_release_id: string | null;
   rsvp_deadline: string | null;
@@ -69,7 +68,7 @@ export async function reminderPreview(site: {
     answers.map((a) => `${a.invitation_id}:${a.guest_id}:${a.event_id}`),
   );
   const locale = config.locale;
-  const url = new URL(`/s/${site.public_slug}`, required("SITE_URL")).href;
+  const url = new URL(`/s/${site.id}`, required("SITE_URL")).href;
   const date = site.rsvp_deadline
     ? new Intl.DateTimeFormat(locale, {
         dateStyle: "long",

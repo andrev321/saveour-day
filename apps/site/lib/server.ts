@@ -98,19 +98,23 @@ export async function context(kind: string, key: string) {
     if (!invitation || invitation.revoked)
       throw new GuestError(404, "Zaproszenie jest niedostępne");
   }
-  const result = await client
-    .from("sites")
-    .select(
-      "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
-    )
-    .eq(
-      invitation ? "id" : "public_slug",
-      invitation ? invitation.site_id : key,
-    )
-    .is("deleted_at", null)
-    .maybeSingle();
-  check(result.error);
-  const site = result.data as SiteRecord | null;
+  const findSite = async (field: "id" | "public_slug", value: string) => {
+    const result = await client
+      .from("sites")
+      .select(
+        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
+      )
+      .eq(field, value)
+      .is("deleted_at", null)
+      .maybeSingle();
+    check(result.error);
+    return result.data as SiteRecord | null;
+  };
+  // Existing public links still resolve through their stored slug.
+  const site = invitation
+    ? await findSite("id", invitation.site_id)
+    : (z.uuid().safeParse(key).success ? await findSite("id", key) : null) ??
+      await findSite("public_slug", key);
   if (!site?.published_release_id)
     throw new GuestError(404, "Strona jest niedostępna");
   return { site, invitation, requiresSession: kind === "v" };

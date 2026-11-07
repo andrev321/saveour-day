@@ -43,18 +43,10 @@ export const POST = api(async (request) => {
     .parse(await readJson(request));
   const id = randomUUID();
   const config = createTemplate(templateId, id, locale);
-  const stem =
-    name
-      .normalize("NFKD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 50) || "zaproszenie";
   const { error } = await serviceDb().rpc("create_owned_site", {
     actor: user.id,
     title: name,
-    slug: stem + "-" + id,
+    slug: id,
     sid: id,
     content: config,
   });
