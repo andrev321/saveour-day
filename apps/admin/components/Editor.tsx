@@ -1090,10 +1090,10 @@ export function Editor({
           </FileButton>
           <Text size="sm" c="dimmed">
             {language === "pl"
-              ? "JPEG, PNG lub WebP; do 10 MB i 20 megapikseli."
+              ? "JPEG, PNG lub WebP do 10 MB. Duże zdjęcia zmniejszamy automatycznie."
               : language === "en"
-                ? "JPEG, PNG or WebP; up to 10 MB and 20 megapixels."
-                : "JPEG, PNG oder WebP; bis zu 10 MB und 20 Megapixel."}
+                ? "JPEG, PNG or WebP up to 10 MB. Large photos are resized automatically."
+                : "JPEG, PNG oder WebP bis zu 10 MB. Große Fotos werden automatisch verkleinert."}
           </Text>
           {operation === "upload" && (
             <Card withBorder aria-busy="true">
