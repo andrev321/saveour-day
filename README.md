@@ -1,24 +1,24 @@
 # saveour.day
 
-Identyfikacja marki: [warianty logo i instrukcja użycia](assets/brand/README.md),
-[podgląd wersji jasnych, ciemnych i animacji](assets/brand/index.html).
-Pliki można odtworzyć poleceniem `npm run build:brand`.
+Brand identity: [logo variants and usage guidelines](assets/brand/README.md),
+[preview of light and dark versions and animations](assets/brand/index.html).
+You can regenerate the files with `npm run build:brand`.
 
-Platforma do tworzenia i zarządzania zaproszeniami na różne wydarzenia. Klienci wybierają szablon startowy (np. ślub, urodziny, impreza firmowa) albo pusty szkic, a następnie tworzą zaproszenia dla osób lub rodzin. Szablon można później zmienić z potwierdzeniem resetu; poprzedni zapisany szkic ma kopię do przywrócenia. Publikacja zatwierdza wersję w bazie bez osobnego builda. Dostęp jest publiczny, za kodem lub przez e-mail OTP; panel zbiera RSVP za poszczególnych gości i wydarzenia.
+A platform for creating and managing invitations for different types of events. Clients choose a starter template (such as a wedding, birthday, or company event) or a blank draft, then create invitations for individuals or families. The template can be changed later after confirming a reset; a backup of the previous saved draft is available for restoration. Publishing commits a version to the database without a separate build. Access can be public, protected by a code, or authenticated through an email OTP; the dashboard collects RSVPs for individual guests and events.
 
-Opis panelu i nowej struktury danych: [Edytor treści](docs/EDYTOR-TRESCI.md).
+For an overview of the dashboard and the new data structure, see [Content editor](docs/EDYTOR-TRESCI.md).
 
-## Aplikacje
+## Applications
 
-- `apps/site` — aplikacja Next.js obsługująca wszystkie realizacje, autoryzację gości, chronione media i RSVP.
-- `apps/admin` — panel Next.js dla administratora i klientów.
-- `packages/domain` — schemat Zod, walidacja danych oraz dane demonstracyjne.
-- `packages/renderer` — wspólny renderer React/Mantine używany przez stronę i podgląd w panelu.
-- `supabase/migrations` — baza, reguły RLS i procedury wersjonowania.
+- `apps/site` — a Next.js application serving all client sites, guest authentication, protected media, and RSVPs.
+- `apps/admin` — a Next.js dashboard for administrators and clients.
+- `packages/domain` — the Zod schema, data validation, and demo data.
+- `packages/renderer` — a shared React/Mantine renderer used by the site and the dashboard preview.
+- `supabase/migrations` — the database, RLS policies, and versioning procedures.
 
-Do pracy używaj Node.js 24 (tak jak w CI) i npm 11. `npm ci` instaluje wersje zapisane w lockfile.
+Use Node.js 24 (as in CI) and npm 11 for development. `npm ci` installs the versions recorded in the lockfile.
 
-## Uruchomienie lokalne
+## Running locally
 
 ```powershell
 npm.cmd ci
@@ -27,19 +27,19 @@ Copy-Item apps/site/.env.example apps/site/.env.local
 npm.cmd run dev
 ```
 
-Panel uruchomisz osobno poleceniem `npm.cmd run dev:admin`. Aplikacja gości działa na `http://127.0.0.1:5173`, panel na `http://127.0.0.1:3000`. Uzupełnij pliki `.env.local` zgodnie z [instrukcją wdrożenia](docs/WDROZENIE-PLATFORMY.md).
+To run the dashboard separately, use `npm.cmd run dev:admin`. The guest application runs at `http://127.0.0.1:5173`, and the dashboard at `http://127.0.0.1:3000`. Fill in the `.env.local` files according to the [deployment guide](docs/WDROZENIE-PLATFORMY.md).
 
-Bez konfiguracji Supabase można sprawdzić panel pod `http://127.0.0.1:3000/demo` oraz zaproszenia pod `http://127.0.0.1:5173/demo/glowna`, `/demo/pelna` i `/demo/ograniczona`. Demonstracja panelu symuluje publikację lokalnie; nie zapisuje jej w bazie.
+Without configuring Supabase, you can try the dashboard at `http://127.0.0.1:3000/demo` and invitations at `http://127.0.0.1:5173/demo/glowna`, `/demo/pelna`, and `/demo/ograniczona`. The dashboard demo simulates publishing locally; it does not save anything to the database.
 
-Konwersję danych poprzedniej strony do lokalnego JSON uruchomisz poleceniem:
+To convert data from the previous site into local JSON, run:
 
 ```powershell
 npm.cmd run import:legacy -- "Imię 1" "Imię 2"
 ```
 
-Skrypt odczytuje dawne zmienne `VITE_CONFIG_*` z głównego `.env.local` i tworzy lokalny, ignorowany przez Git katalog `.local/legacy`. Nie zapisuje realizacji w Supabase. Panel ma eksport JSON, ale nie ma formularza importu: wynik służy jako materiał do przeniesienia treści lub osobnej migracji danych. Zdjęcie trzeba dodać przez bibliotekę mediów i przypisać w konfiguracji. Obecny runtime nie używa `SITE_CONFIG`; komunikat starego importera o tej zmiennej nie jest instrukcją uruchomienia aplikacji.
+The script reads the legacy `VITE_CONFIG_*` variables from the root `.env.local` file and creates a local `.local/legacy` directory ignored by Git. It does not save client sites to Supabase. The dashboard supports JSON export but has no import form: the output is intended as a source for transferring content or for a separate data migration. The photo must be added through the media library and assigned in the configuration. The current runtime does not use `SITE_CONFIG`; the legacy importer's message about this variable is not an instruction for running the application.
 
-## Kontrola jakości
+## Quality checks
 
 ```powershell
 npm.cmd run typecheck
@@ -50,34 +50,34 @@ npm.cmd run build:admin
 npm.cmd run test:e2e
 ```
 
-Testy sprawdzają SQL/RLS w PGlite, izolację wariantów, dostęp gości i RSVP, interfejsy panelu oraz widoki 320–1920 px. Testy formularzy w przeglądarce używają kontrolowanych odpowiedzi HTTP; rzeczywiste SMTP i Storage wymagają odbioru na stagingu.
+Tests cover SQL/RLS in PGlite, variant isolation, guest access and RSVPs, dashboard interfaces, and viewports from 320 to 1920 px. Browser form tests use controlled HTTP responses; actual SMTP and Storage require verification in staging.
 
-CI uruchamia także testy rzeczywistych handlerów API z kontrolowanym HTTP Supabase i magazynem ciasteczek. Nazwa skryptu `build:demo` pozostała dla zgodności z CI — skrypt buduje obecnie pełną aplikację Next.js `apps/site`.
+CI also tests the actual API handlers using controlled Supabase HTTP responses and a cookie store. The `build:demo` script name is retained for CI compatibility — the script now builds the full `apps/site` Next.js application.
 
-`npm.cmd run build` buduje wspólną aplikację Next.js bez danych klientów. Konfiguracja jest pobierana dopiero w runtime po autoryzacji. Demonstracje dostępne są jawnie pod `/demo/glowna`, `/demo/pelna` i `/demo/ograniczona`. Brak konfiguracji usług nie uruchamia przykładowej realizacji pod adresem klienta.
+`npm.cmd run build` builds the shared Next.js application without client data. Configuration is fetched only at runtime after authorization. Demos are publicly available at `/demo/glowna`, `/demo/pelna`, and `/demo/ograniczona`. Missing service configuration does not cause a demo site to be served at a client's URL.
 
-Przed wpisaniem sekretów w Vercel można sprawdzić ich kompletność bez wyświetlania wartości:
+Before entering secrets in Vercel, you can check that they are complete without displaying their values:
 
 ```powershell
 npm.cmd run check:production-env -- apps/admin/.env.production.local
 npm.cmd run check:production-env -- --site apps/site/.env.production.local
 ```
 
-## Wdrożenie
+## Deployment
 
-Wymagane są wszystkie migracje Supabase z repozytorium oraz własny SMTP. Zmiany w repozytorium i lokalne testy nie oznaczają wykonania zdalnych migracji ani wdrożenia produkcyjnego.
+All Supabase migrations from the repository and your own SMTP service are required. Repository changes and local tests do not mean that remote migrations have been applied or that a production deployment has taken place.
 
-## Dokumentacja
+## Documentation
 
-- [Interfejs konfiguratora](docs/KONFIGURATOR-INTERFEJS.md) — Focus × Paper, układ mobilny, skalowanie podglądu i preferencje widoku.
+- [Configurator interface](docs/KONFIGURATOR-INTERFEJS.md) — Focus × Paper, mobile layout, preview scaling, and view preferences.
 
-- [Szablony startowe](docs/SZABLONY-STARTOWE.md) — wybór, reset, kopie szkicu oraz zgodność starszych zaproszeń.
+- [Starter templates](docs/SZABLONY-STARTOWE.md) — selection, reset, draft backups, and compatibility with older invitations.
 
-- [Samodzielne wdrożenie — checklista](docs/CHECKLISTA-WDROZENIA.md) — co zapewnić, gdzie wpisać ustawienia i jak odebrać wdrożenie.
+- [Self-hosted deployment checklist](docs/CHECKLISTA-WDROZENIA.md) — what to prepare, where to enter settings, and how to verify the deployment.
 
-- [Architektura](docs/ARCHITEKTURA.md) — moduły, model danych, publikacja, uprawnienia i ograniczenia.
-- [Decyzje techniczne](docs/DECYZJE-TECHNICZNE.md) — przyjęte rozwiązania, ich uzasadnienia i konsekwencje.
-- [Wdrożenie platformy](docs/WDROZENIE-PLATFORMY.md) — konfiguracja usług, migracja dawnych realizacji i odbiór stagingu.
-- [Ulepszenia po review produktowym](docs/product-review-improvements.md) — autosave, zarządzanie gośćmi, pytania RSVP, przypomnienia oraz test stagingu.
-- [Self-review publikacji](docs/SELF-REVIEW-PUBLIKACJI.md) — datowany zapis wykonanej kontroli i jej ograniczeń.
+- [Architecture](docs/ARCHITEKTURA.md) — modules, data model, publishing, permissions, and limitations.
+- [Technical decisions](docs/DECYZJE-TECHNICZNE.md) — adopted solutions, their rationale, and consequences.
+- [Platform deployment](docs/WDROZENIE-PLATFORMY.md) — service configuration, migration of legacy client sites, and staging verification.
+- [Product review improvements](docs/product-review-improvements.md) — autosave, guest management, RSVP questions, reminders, and staging testing.
+- [Publishing self-review](docs/SELF-REVIEW-PUBLIKACJI.md) — a dated record of the completed review and its limitations.
 
