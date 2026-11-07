@@ -10,6 +10,7 @@
 | Configure a new environment | [Deployment checklist](CHECKLISTA-WDROZENIA.md) |
 | Migrate or validate a release | [Deployment](WDROZENIE-PLATFORMY.md) |
 | Run checks and staging smoke | [Testing](TESTING.md) |
+| Provision production and release manually | [Production operations](PRODUCTION-OPERATIONS.md) |
 | Manage staging addresses/deploys | [Staging operations](STAGING-OPERATIONS.md) |
 
 ## Product behavior
