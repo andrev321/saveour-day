@@ -2,7 +2,7 @@
 import { ActionButton } from "./ActionButton";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActionIcon,
   Alert,
@@ -97,6 +97,8 @@ export function Dashboard({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const [messageKind, setMessageKind] = useState<"error" | "success" | "warning">("error");
+  const pendingEmails = useRef(new Set<string>());
   const { operation, busy, start, end } = useOperation();
   const [query, setQuery] = useState("");
   const [deleting, setDeleting] = useState<Site | null>(null);
@@ -134,12 +136,21 @@ export function Dashboard({
   async function login() {
     if (!start("login")) return;
     setMessage("");
+    setMessageKind("error");
+    const emailKey = email.trim().toLowerCase();
     try {
       const { error } = await browserDb().auth.signInWithPassword({
         email,
         password,
       });
+      if (error?.code === "email_not_confirmed") {
+        pendingEmails.current.add(emailKey);
+        setMessageKind("warning");
+        setMessage(copy.signupPending);
+        return;
+      }
       if (error) throw new Error(t("invalidLogin"));
+      pendingEmails.current.delete(emailKey);
       setStatus("loading");
       setReload((value) => value + 1);
     } catch (error) {
@@ -236,6 +247,7 @@ export function Dashboard({
                 onClick={async () => {
                   if (!start("logout")) return;
                   setMessage("");
+                  setMessageKind("error");
                   try {
                     const { error } = await browserDb().auth.signOut();
                     if (error) throw error;
@@ -264,7 +276,11 @@ export function Dashboard({
             </Alert>
           )}
           {message && (
-            <Alert mt="lg" color="red" role="alert">
+            <Alert
+              mt="lg"
+              color={{ error: "red", success: "green", warning: "yellow" }[messageKind]}
+              role={messageKind === "success" ? "status" : "alert"}
+            >
               {message}
             </Alert>
           )}
@@ -363,8 +379,15 @@ export function Dashboard({
                       onClick={async () => {
                         if (!start("signup")) return;
                         setMessage("");
+                        setMessageKind("error");
+                        const emailKey = email.trim().toLowerCase();
                         try {
-                          const { error } = await browserDb().auth.signUp({
+                          if (pendingEmails.current.has(emailKey)) {
+                            setMessageKind("warning");
+                            setMessage(copy.signupPending);
+                            return;
+                          }
+                          const { data, error } = await browserDb().auth.signUp({
                             email,
                             password,
                             options: {
@@ -372,7 +395,15 @@ export function Dashboard({
                                 location.origin + "/auth/confirm",
                             },
                           });
-                          setMessage(error ? error.message : copy.signupSent);
+                          if (error) throw error;
+                          if (data.user?.identities?.length === 0) {
+                            setMessageKind("warning");
+                            setMessage(copy.signupCheckEmail);
+                            return;
+                          }
+                          pendingEmails.current.add(emailKey);
+                          setMessageKind("success");
+                          setMessage(copy.signupSent);
                         } catch (error) {
                           setMessage((error as Error).message);
                         } finally {
@@ -393,13 +424,16 @@ export function Dashboard({
                       onClick={async () => {
                         if (!start("reset")) return;
                         setMessage("");
+                        setMessageKind("error");
                         try {
                           const { error } =
                             await browserDb().auth.resetPasswordForEmail(
                               email,
                               { redirectTo: `${location.origin}/account` },
                             );
-                          setMessage(error ? error.message : t("resetSent"));
+                          if (error) throw error;
+                          setMessageKind("success");
+                          setMessage(t("resetSent"));
                         } catch (error) {
                           setMessage((error as Error).message);
                         } finally {

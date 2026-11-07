@@ -36,7 +36,9 @@ export const dashboardUi = {
     loginHelp: "Zaloguj się, aby zarządzać realizacjami i odpowiedziami gości.",
     signup: "Utwórz konto",
     passwordHelp: "Nowe konto: hasło musi mieć co najmniej 12 znaków.",
-    signupSent: "Sprawdź e-mail, aby potwierdzić konto. Następnie zaloguj się.",
+    signupSent: "Wysłaliśmy e-mail z linkiem do potwierdzenia konta.",
+    signupPending: "Konto jest już zarejestrowane. Potwierdź je linkiem z e-maila, a potem się zaloguj.",
+    signupCheckEmail: "Sprawdź skrzynkę. Jeśli konto czeka na potwierdzenie, użyj linku z wcześniejszego e-maila.",
   },
   en: {
     eyebrow: "YOUR INVITATION STUDIO",
@@ -75,7 +77,9 @@ export const dashboardUi = {
     loginHelp: "Sign in to manage your projects and guest responses.",
     signup: "Create account",
     passwordHelp: "New accounts require a password of at least 12 characters.",
-    signupSent: "Check your email to confirm your account, then sign in.",
+    signupSent: "We sent an email with a link to confirm your account.",
+    signupPending: "Your account is registered. Confirm it using the link in your email, then sign in.",
+    signupCheckEmail: "Check your inbox. If your account still needs confirmation, use the link from the earlier email.",
   },
   de: {
     eyebrow: "DEIN EINLADUNGSSTUDIO",
@@ -118,6 +122,8 @@ export const dashboardUi = {
     passwordHelp:
       "Neue Konten benötigen ein Passwort mit mindestens 12 Zeichen.",
     signupSent:
-      "Bestätige dein Konto über die E-Mail und melde dich anschließend an.",
+      "Wir haben dir eine E-Mail mit einem Link zur Kontobestätigung gesendet.",
+    signupPending: "Dein Konto ist registriert. Bestätige es über den Link in deiner E-Mail und melde dich danach an.",
+    signupCheckEmail: "Prüfe dein Postfach. Falls dein Konto noch bestätigt werden muss, nutze den Link aus der früheren E-Mail.",
   },
 };
