@@ -39,11 +39,10 @@ Provisioned and verified:
 - Supabase Auth Site URL is the production admin origin. The allowlist includes exactly `https://example-admin-production.example.com/auth/confirm`.
 - Vercel Authentication is configured for preview deployments; production guests should not require a Vercel account.
 - A separate Supabase project was created after a quote of USD 0/month. This is the creation quote, not a guarantee about future usage or plan changes.
-- The first nine repository migrations were applied in dependency order, through `20260930165858_harden_media_lifecycle.sql`. The upload/media lifecycle migration was completed after explicit authorization.
+- All 13 repository migrations were applied in dependency order. A database query confirmed 13 migration records, a private `site-media` bucket, the reminder delivery table, and zero sites.
 
 **Not live / incomplete:**
 
-- Automatic approval review blocked `20260930204955_contextual_editor_v3.sql` as a production schema/permission change beyond the approved media migration. That migration and the subsequent `product_review_improvements`, `template_sample_media`, and `contextual_sample_media` migrations remain unapplied. A read-only check confirmed that sites, drafts, releases, snapshots, invitations, RSVP answers, media assets, and Auth users are all empty.
 - The production server key still needs to be saved as `SUPABASE_SERVICE_ROLE_KEY` in both Vercel projects, restricted to Production. Never copy the staging key or put the key in Git, documentation, chat, or a public variable.
 - Configure confirmation, recovery, and numeric OTP templates and custom SMTP using the [deployment checklist](CHECKLISTA-WDROZENIA.md). Real email delivery remains unverified. The connected Resend account has no configured domains; Supabase currently requires custom SMTP before editing these templates. A verified sender domain or another production SMTP provider is still required.
 - Deploy the retention worker and configure its schedule after the complete migration chain; see [media lifecycle](USUWANIE-REALIZACJI.md).
@@ -58,6 +57,6 @@ Roll back each application only to a build compatible with the production schema
 
 Never run staging smoke tests against production using staging credentials. Keep production server secrets out of Preview and Development targets. Optional reminders require their own verified sender and admin-only settings; they are not configured by this provisioning step.
 
-## Intermediate security review
+## Security review
 
-The Supabase advisor was run against the incomplete schema on 2026-11-07. It reported `pg_net` in the public schema and executable SECURITY DEFINER helpers (`can_access_site`, `is_platform_admin`, and authenticated-only `can_upload_media`). Review their intended caller grants and function bodies after completing migrations, then rerun the advisor. RLS-without-policy informational findings on server-only tables are not a reason to add public policies. This review is incomplete and is not a production security sign-off.
+The Supabase advisor was run after applying all migrations on 2026-11-07. It reported `pg_net` in the public schema and executable SECURITY DEFINER helpers (`can_access_site`, `is_platform_admin`, and authenticated-only `can_upload_media`). Review their intended caller grants and function bodies before launch. RLS-without-policy informational findings on server-only tables are not a reason to add public policies. This review is incomplete and is not a production security sign-off.
