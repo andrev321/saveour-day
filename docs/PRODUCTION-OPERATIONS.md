@@ -27,7 +27,7 @@ Do not import/connect the production projects to GitHub or promote a staging bui
 
 After completing the setup below, release manually from a clean checkout of an explicitly selected, tested commit. With an authenticated Vercel CLI, link the checkout to the existing production project using `vercel link --project <production-project-name> --scope example-team`; preserve the existing monorepo settings. Deploy from the repository root using `vercel deploy --prod --skip-domain --scope example-team`. Verify the staged production deployment, then use `vercel promote <deployment-url> --scope example-team`. Repeat for the other application at the **same commit**, relinking the checkout to its project first.
 
-These commands are an operator procedure, not an installed GitHub Actions workflow. The first production release and this procedure have not yet been exercised. Review pending database migrations before each release; reconcile remote migration names/content, since MCP-generated migration timestamps differ from repository filenames. Never blindly push the full migration chain to an existing database.
+These commands are an operator procedure, not an installed GitHub Actions workflow. The first production release was triggered manually with the Vercel Deployment API, using the same exact Git commit for both projects and keeping Git integration disconnected. The CLI procedure has not been exercised. Review pending database migrations before each release; reconcile remote migration names/content, since MCP-generated migration timestamps differ from repository filenames. Never blindly push the full migration chain to an existing database.
 
 ## Setup status — 2026-11-07
 
@@ -43,11 +43,11 @@ Provisioned and verified:
 
 - The `purge-sites` Edge Function and its active monthly schedule match staging. The schedule runs at 03:00 UTC on the first day of each month. The worker requires a single-use database token. Schedule registration was verified without triggering a purge. See [media lifecycle](USUWANIE-REALIZACJI.md).
 
-**Not live / incomplete:**
+**First production release:** Both deployments of `edfcda1c512efdb9bbcbed11253b81a23a7332f5` reached `READY` on 2026-11-07. Admin deployment: `[redacted-id]`. Guest deployment: `[redacted-id]`. Both production homepages returned HTTP 200. Both projects have `SUPABASE_SERVICE_ROLE_KEY` scoped to Production. The operator reported configuring SMTP and the three Auth templates. Actual email delivery, sign-in, and publishing flows remain to be verified.
 
-- The production server key still needs to be saved as `SUPABASE_SERVICE_ROLE_KEY` in both Vercel projects, restricted to Production. Never copy the staging key or put the key in Git, documentation, chat, or a public variable.
-- Configure confirmation, recovery, and numeric OTP templates and custom SMTP using the [deployment checklist](CHECKLISTA-WDROZENIA.md). Real email delivery remains unverified. The connected Resend account has no configured domains; Supabase currently requires custom SMTP before editing these templates. A verified sender domain or another production SMTP provider is still required.
-- No application deployment has been created in either production project. Domain assignment does not mean an application is running.
+**Remaining acceptance checks:**
+
+- Test account confirmation, password recovery, and numeric guest OTP with the staging-style test SMTP configuration. Guest delivery requires a verified production sender.
 - No production end-to-end acceptance, email delivery, runtime error scan, backup/restore test, or monitoring configuration has been completed.
 
 Do not launch or accept real customer data until migrations, secrets, Auth/email, and [acceptance checks](WDROZENIE-PLATFORMY.md) are complete. Update this status with the deployed commit and verification evidence after the first successful release.
