@@ -1,3 +1,5 @@
-# Podglądy motywów
+# Historical theme previews
 
-Otwórz index.html. Pięć plansz PNG prezentuje dwa układy każdego motywu. Dziesięć dodatkowych plików *-split.png i *-overlay.png zawiera pełne strony. Są to zrzuty aktualnego renderera aplikacji z przykładową treścią i lokalnym zdjęciem, wykonane 29.09.2026.
+Open [index.html](index.html). Five PNG boards show two layouts for each theme; ten additional `*-split.png` and `*-overlay.png` files show full pages.
+
+These are snapshots of the renderer with sample content and a local photograph, captured on **2026-09-29**. They are historical references, not a guarantee of the current design. For current themes and renderer screenshots, see [Themes and palettes](../../docs/MOTYWY-I-PALETY.md).

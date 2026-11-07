@@ -1,38 +1,40 @@
-# Decyzje techniczne
+# Technical decisions
 
-Stan: 2026-09-23. Poniższe decyzje opisują aktualną implementację, a nie plan funkcji. Szczegóły przepływów i danych znajdują się w [architekturze](ARCHITEKTURA.md).
+These decisions describe the current design. Details are in [Architecture](ARCHITEKTURA.md); operational steps are in [Deployment](WDROZENIE-PLATFORMY.md).
 
-| Decyzja | Uzasadnienie | Konsekwencja |
+| Decision | Reason | Consequence |
 | --- | --- | --- |
-| Dwie aplikacje Next.js: panel i wspólna aplikacja gości | Oddzielne adresy i konfiguracja części administracyjnej oraz zaproszeń przy współdzieleniu kodu | Każde środowisko wymaga dwóch konfiguracji aplikacji; publikacja klienta nie tworzy nowego projektu Vercel |
-| Stałe adresy `/s/` i losowe linki `/i/` | Nie trzeba kupować domen ani wdrażać kodu dla każdej rodziny lub realizacji | Slug identyfikuje realizację, ale nie zastępuje autoryzacji; własne domeny wymagają osobnej implementacji |
-| Publikacja przez niezmienne wydania w Postgres | Atomowe przełączenie treści, niezależność szkicu i proste przywracanie publikacji | Powrót do wcześniejszych treści nie przywraca starego kodu, ustawień dostępu ani RSVP |
-| Supabase dla Postgres, Auth i prywatnego Storage | Wykorzystanie istniejącej infrastruktury i transakcyjnych kontroli danych | Backend z `service_role` musi sam sprawdzać uprawnienia; RLS i uprawnienia kolumnowe chronią odczyty klienta |
-| Wspólny schemat Zod i renderer React/Mantine | Podgląd i publikacja używają tego samego kontraktu i komponentów | Zmiana schematu lub renderera wymaga sprawdzenia istniejących konfiguracji; kod jest wspólny dla wszystkich klientów |
-| styled-components dla własnych stylów | Nazwane komponenty zastępują ręczne klasy i globalne arkusze; style są przypisane do modułów interfejsu | Oba layouty wymagają wspólnego rejestru SSR/streamingu i kompilatora styled-components; pozostają bazowe style Mantine oraz fontów |
-| Wariant przypisany po stronie serwera | Ukryte sekcje i wydarzenia nie powinny być pobierane przez niewłaściwego odbiorcę | Nie wystarczy ukrywanie elementów CSS-em; projekcja treści i kontrola mediów należą do backendu |
-| Trzy tryby dostępu na poziomie realizacji | Jasne zasady dla organizatora i wszystkich zaproszeń w realizacji | Nie ma osobnego trybu lub kodu dla każdej rodziny; indywidualizację zapewniają token, wariant i lista e-maili |
-| OTP e-mail dla gości, hasło dla organizatora | Gość nie musi zakładać i pamiętać hasła do zaproszenia | Wymagane są właściwe szablony Supabase Auth i działający SMTP; dopuszczony e-mail daje dostęp do całej przypisanej rodziny |
-| Odrębne, wersjonowane sesje gości | Możliwość odwołania dostępu bez przekazywania tokenów Supabase do przeglądarki gościa | Każde chronione żądanie sprawdza sesję i aktualne wersje dostępu; trwałość sesji wynosi 7 dni |
-| Prywatne media i brak cache treści gości | Spójna kontrola uprawnień również dla bezpośrednich adresów zdjęć | Ruch i koszty obsługi mediów obciążają runtime/Storage; przyszła optymalizacja cache musi zachować izolację uprawnień |
-| RSVP poza konfiguracją wydania | Odpowiedzi mają przetrwać publikację, rollback treści i edycję zaproszenia | Zapis wymaga własnej rewizji, kontroli gościa i wydarzenia oraz terminu odpowiedzi |
-| Migracja przyrostowa i zachowanie historii | Istniejące realizacje, wydania i audyt muszą pozostać dostępne | Stare tabele i pola nie oznaczają aktywnego mechanizmu deploymentów; dawny publiczny hosting trzeba osobno wyłączyć |
-| Node.js 24 w lokalnej weryfikacji i CI | Spójność środowiska z zestawem testów, w tym mockowaniem modułów `node:test` | Dokumentacja uruchomienia przyjmuje Node.js 24; dokładne zależności instaluje `npm ci` |
+| Two Next.js applications | Separate organizer and guest origins while sharing code | Two application configurations per environment; no deployment per customer |
+| Stable `/s/` routes and random `/i/` tokens | Avoid domains/builds for each household | A slug identifies a site but does not authorize access |
+| Database content releases | Atomic publication and independent drafts | Content rollback does not restore old code, access settings, or RSVP |
+| Supabase Postgres, Auth, and private Storage | Shared infrastructure and transactional checks | Privileged server clients must explicitly enforce authorization |
+| Shared Zod schema and renderer | Preview and publication use the same contract | Schema/renderer changes affect every site and need compatibility checks |
+| Schema v3 only | Explicit typed sections, independent variants, and per-use crops | Older stored configurations require the coordinated migration, not a runtime adapter |
+| Server-side variant projection | Do not deliver hidden content to unauthorized recipients | CSS hiding is insufficient; media authorization must follow the projection |
+| Site-wide public/code/email access | Predictable rules for all invitations | Household differences come from token, variant, and allowed addresses |
+| Email OTP for guests; passwords for organizers | Guests need no invitation password account | Correct Auth templates and working SMTP are operational requirements |
+| Separate versioned guest sessions | Revoke access without exposing Supabase tokens | Protected requests check session/access versions; lifetime is seven days |
+| Authorized media API and no private-content cache | Enforce access on direct image requests | Runtime/Storage costs must be considered without weakening isolation |
+| Scoped Storage INSERT for uploads | Prevent privileged uploads from bypassing lifecycle checks | Uploads use the organizer's JWT; read/delete/finalize remain server-controlled |
+| RSVP stored outside releases | Preserve answers across publication and template changes | Separate revisions, guest/event checks, and deadlines are required |
+| Explicit reminder sending | Organizers review recipients and content | Optional Resend setup; no unattended campaign |
+| Node.js 24 and lockfile installs | Match local work and CI, including module mocks | Use `npm ci` and keep the lockfile authoritative |
 
-## Uniwersalne zaproszenia i szablony
+## Template and styling rules
 
-- Jeden schemat v2 i renderer obsługują dowolny typ wydarzenia; `identity.displayName` zastępuje obowiązkowe dwa imiona. Ślub jest danymi szablonu, a nie regułą produktu.
-- Szablony są wartościami początkowymi. Ich późniejsza aktualizacja nie zmienia istniejących realizacji. Wybór języka szablonu jest niezależny od języka panelu.
-- Reset jest operacją na szkicu, z potwierdzeniem, kopią serwerową i kontrolą rewizji. Nie publikuje automatycznie i nie usuwa RSVP. Nowe ID wydarzeń uniemożliwiają przypadkowe odziedziczenie odpowiedzi.
-- Aktywne powiązania z usuwanymi wariantami blokują reset. Organizator rozwiązuje zależności przed operacją; rodziny nie są automatycznie przepinane.
-- Zapis pustego szkicu jest dozwolony; gotowość do publikacji ma osobną walidację.
-- Odczyt i przywracanie v1 używają adaptera w TypeScript/SQL. Migracja konwertuje szkice, a historyczne wydania pozostawia niezmienne.
+Templates initialize ordinary configuration. Updating the catalog does not update existing sites. Template language and panel language are independent.
 
-## Decyzje zastąpione
+A template reset requires confirmation, a server-side backup, revision checks, and valid variant dependencies. It does not publish or erase RSVP history. New event IDs prevent answers from being accidentally reassigned. Blank drafts may be saved; publication has separate readiness validation.
 
-- Vite jako aplikacja publikowana dla klienta zastąpił wspólny Next.js runtime.
-- Osobne projekty Vercel, buildy i domeny realizacji zastąpiły wydania w bazie i wspólne adresowanie.
-- Publiczne paczki zawierające konfiguracje wariantów zastąpił autoryzowany odczyt projekcji konkretnego wariantu.
-- Webhook zakończenia builda i token manifestu nie uczestniczą w publikacji; aktywne wydanie zmienia transakcja SQL.
+The interface primarily uses styled-components and a shared SSR/streaming registry. Mantine styles, local font packages, and panel color CSS remain part of the implementation. UI tests prefer accessible roles and stable attributes rather than generated class hashes.
 
-Wszystkie trzy migracje bazy pozostają wymagane. Mechanizm `LEGACY_PUBLICATION_ACTIVE` blokuje włączenie ochrony, dopóki operator nie potwierdzi wyłączenia starych publicznych kopii i nie wyczyści pola `vercel_project_id`. Procedura jest opisana w [instrukcji wdrożenia](WDROZENIE-PLATFORMY.md).
+## Superseded approaches
+
+- A shared Next.js runtime replaced per-client Vite builds.
+- Database releases replaced separate Vercel projects/builds/domains for each site.
+- Authorized projections replaced public bundles containing every variant.
+- SQL publication replaced build-completion webhooks and manifest tokens.
+- Schema v3 replaced v1/v2 runtime adapters.
+- Authorized media routes replaced signed Storage links issued to clients.
+
+Apply the complete migration chain for a fresh environment. Existing environments must reconcile migration history first. The historical `LEGACY_PUBLICATION_ACTIVE` guard prevents enabling protection while `sites.vercel_project_id` still identifies an unchecked legacy publication. Disable old public copies before clearing that field for an individual site; see [Deployment](WDROZENIE-PLATFORMY.md).

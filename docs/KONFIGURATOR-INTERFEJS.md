@@ -1,56 +1,54 @@
-# Konfigurator: Focus × Paper
+# Editor interface
 
-Aktualna struktura panelu: Treść, Wygląd, Zdjęcia, Goście; osobno Ustawienia i Historia. Model danych i kontekstową edycję opisuje [Edytor treści](EDYTOR-TRESCI.md).
+The workspace separates Content, Appearance, Photos, and Guests, with Settings and History as tools. See [Content editor](EDYTOR-TRESCI.md) for the data model and [Editing and guest workflows](product-review-improvements.md) for autosave and recovery.
 
-Konfigurator używa układu Focus oraz ciepłej palety Paper: kremowe tło, jasny formularz, szałwiowe zaznaczenia i leśna zieleń. Ikony panelu i formularzy pochodzą z Phosphor (Duotone). Wygląd panelu nie zmienia palety samego zaproszenia.
+The original layout direction was called Focus × Paper. The current panel uses saveour.day branding, indigo accents, and light/dark panel tokens; it no longer uses the original sage/cream palette. Panel appearance is independent of invitation themes. Icons use Phosphor Duotone.
 
-## Układ adaptacyjny
+## Adaptive layout
 
-| Szerokość okna | Zachowanie |
+| Window width | Behavior |
 | --- | --- |
-| Od 1600 px | Nawigacja z opisami, formularz 440–560 px, pozostałe miejsce na podgląd. |
-| 1100–1599 px | Węższa nawigacja, formularz 380–460 px, elastyczny podgląd. |
-| 768–1099 px | Przełączanie Edycja / Podgląd, nawigacja w wysuwanym menu. |
-| Poniżej 768 px | Formularz w jednej kolumnie, dolne Menu / Edycja / Podgląd, zapis w nagłówku i pozostałe akcje w opcjach projektu. |
+| 1600 px and above | Labeled navigation, 440–560 px form, remaining space for preview |
+| 1100–1599 px | Narrower navigation, 380–460 px form, flexible preview |
+| 768–1099 px | Edit/Preview switch and drawer navigation |
+| Below 768 px | Single-column form, bottom Menu/Edit/Preview controls, save in the header, other actions in project options |
 
-Na desktopie formularz i podgląd przewijają się niezależnie. Nawigację można zwinąć do ikon z podpowiedziami. Granicę paneli można przeciągnąć; po ustawieniu na niej fokusu działają strzałki oraz Home / End. Preferowana szerokość jest ograniczana do zakresu bieżącego ekranu.
+Desktop form and preview scroll independently. Navigation can collapse to icons with tooltips. Drag the divider or focus it and use arrows/Home/End; the preferred width is clamped to the current screen.
 
-Podgląd ma przyciski z ikonami: Telefon (390 px), Tablet (768 px) i Komputer (1440 px). Zapisana wcześniej szerokość 320 px pozostaje obsługiwana. Wspólny, jednowierszowy pasek zawiera etykietę, urządzenia, wariant, przełącznik dopasowania i powiększenie/zamknięcie. Telefon i tablet mają obudowę, a ekran jest przycinany jedną maską zaokrągleń. Tryb „Dopasuj” skaluje całe urządzenie do szerokości i wysokości dostępnego miejsca, zachowując rzeczywistą szerokość iframe i breakpointy zaproszenia. Wyłączenie dopasowania daje skalę 100% i przewijanie w panelu. Podgląd powiększony zajmuje pełną szerokość i wysokość okna, także po zmianie jego rozmiaru.
+Preview presets are Phone (390 px), Tablet (768 px), and Desktop (1440 px); a previously saved 320 px width remains supported. The toolbar includes device, variant, fit, and expand/close controls. Phone/tablet previews use a device frame with a single rounded clipping mask.
 
-Edytor korzysta ze stałego, wygodnego układu. Przycisk pod boczną nawigacją pozwala przywrócić układ. Mobilne menu również pozwala przywrócić układ. Powiększanie przeglądarki pozostaje dostępne; obszar pracy reaguje na wysokość visualViewport przy otwartej klawiaturze ekranowej.
+Fit scales the whole device to the available width and height while keeping the iframe's actual width and invitation breakpoints. Turning fit off uses 100% scale and scrolling. Expanded preview fills the viewport and responds to resizing.
 
-## Stan i dostępność
+Layout reset is available below navigation and in the mobile menu. Browser zoom remains available; the workspace reacts to `visualViewport` when the on-screen keyboard opens.
 
-### Biblioteka zdjęć i kadry
+## Photos and crops
 
-Biblioteka służy do uploadu, podglądu i opisu zdjęć oraz zarządzania plikami. Kadrowanie jest częścią edycji początku zaproszenia albo galerii. To samo zdjęcie może mieć różne kadry w każdym użyciu, osobno na komputerze, tablecie i telefonie. Ramkę można przesuwać myszą lub strzałkami; Home i przycisk „Wyśrodkuj kadr” przywracają środek. Ostateczny kształt kadru zależy od motywu i urządzenia.
+The library handles uploads, descriptions, and files. Crop controls belong to the hero or gallery use. The same image can have different crops in each use and on each device. Drag the crop or use arrows; Home or Center crop restores the center. The theme and device determine the final crop shape.
 
-„Usuń z zaproszenia” usuwa odwołania w początku i galeriach, pozostawiając plik w bibliotece. Zmiany wymagają zapisania szkicu i publikacji. Limit zaproszenia wynosi 30 zdjęć; kolejne uploady mogą pozostać w bibliotece.
+Remove from invitation clears hero/gallery references while keeping the library file. Save and publish to update guests. A configuration can contain at most 30 images; further uploads may remain in the library.
 
-„Usuń plik z biblioteki” trwale usuwa upload i jego rozmiary po potwierdzeniu. Aby usunąć zdjęcie używane w bieżącej konfiguracji, najpierw wybierz „Usuń z zaproszenia” i zapisz szkic, a następnie otwórz je ponownie w bibliotece. Baza blokuje usuwanie plików obecnych w zapisanym szkicu, dowolnej publikacji lub kopii szkicu. Dzięki temu stare publikacje i przywracanie historii pozostają kompletne.
+Delete from library permanently removes the upload and its sizes after confirmation. First remove current draft references and save. The database also blocks deletion when any release or draft snapshot still references the asset.
 
-Operacja najpierw rezerwuje plik statusem `deleting`, blokując nowe odwołania w szkicach, publikacjach i kopiach szkicu. Dopiero po pomyślnym usunięciu obiektów przez Storage API usuwa metadane. Jeśli usługa nie odpowie, wpis pozostaje widoczny z możliwością ponowienia; nie należy przywracać mu ręcznie statusu `ready`, ponieważ część plików może już nie istnieć.
+Deletion reserves `deleting`, removes Storage objects, then deletes metadata. If Storage fails, retry the visible pending operation. Do not manually reset it to `ready`: some objects may already be gone.
 
-Po uploadzie edytor pobiera podpisane adresy Storage przed przekazaniem zdjęcia do podglądu. Renderer wiąże błąd pobrania z konkretnym zestawem adresów, dzięki czemu odświeżenie adresu lub wybór innego zdjęcia ponawia wyświetlanie zamiast pozostawiać pusty zamiennik. Testy `photo-recovery.spec.ts` i `photo-library.spec.ts` obejmują tę regresję oraz obsługę biblioteki na telefonie i komputerze.
+Images now load through authorized application APIs, not signed Storage links. The renderer associates fetch failures with the current source set so changing or refreshing a source can recover. Regression coverage includes `photo-recovery.spec.ts` and `photo-library.spec.ts`. Full lifecycle details: [Site deletion and media lifecycle](USUWANIE-REALIZACJI.md).
 
-### Preferencje edytora
+## Preferences and accessibility
 
-- Preferencje urządzenia zapisują się w localStorage pod kluczami `invitations-view-v1-*`: szerokość formularza, zwinięcie nawigacji, szerokość i dopasowanie podglądu.
-- Preferencje nie są częścią konfiguracji zaproszenia, szkicu ani publikacji.
-- Przełączanie Edycja / Podgląd nie demontuje formularza i zachowuje edytowane wartości, rozwinięte sekcje i pozycję przewijania.
-- Subtelne animacje paneli i nawigacji trwają 160–180 ms i są wyłączane przez `prefers-reduced-motion`.
-- Uchwyt przeciągania sekcji jest osobną kontrolką obok przycisku rozwijania sekcji.
-- Goście są osobnym obszarem; historia znajduje się w narzędziach nawigacji. Ikona zmiany szablonu obok wyboru wariantu otwiera wspólny popup tworzenia/resetowania z ostrzeżeniem i jawnym potwierdzeniem. Kopie szkicu pozostają w Ustawieniach.
+- Device-local layout preferences use localStorage keys beginning `invitations-view-v1-`: form width, collapsed navigation, preview width, and fit.
+- Preferences are not invitation configuration, draft, or publication data.
+- Switching Edit/Preview retains field values, expanded sections, and scroll position.
+- Reduced-motion preferences disable decorative transitions.
+- Section drag handles are separate from expand/collapse controls.
+- Template reset opens a shared create/reset dialog with an explicit warning and confirmation. Draft snapshots are in Settings.
+- Panel light/dark styling does not recolor the invitation iframe.
 
-## Implementacja i wdrożenie
+## Implementation
 
-`EditorWorkspace` zarządza rozmieszczeniem paneli, nawigacją i preferencjami; `PreviewCanvas` mierzy dostępne miejsce przez ResizeObserver; `PanelTheme` definiuje paletę Mantine oraz domyślny styl ikon. `Editor` zachowuje logikę edycji, zapisu, publikacji i komunikacji z podglądem.
+`EditorWorkspace` owns layout, navigation, and preferences. `PreviewCanvas` measures available space with ResizeObserver. `PanelTheme` supplies Mantine colors and icon defaults. `Editor` owns editing, saving, publishing, and preview communication.
 
-Własne style aplikacji są implementowane w styled-components, bez ręcznych `className` w JSX i osobnych arkuszy CSS. Panel dzieli je na `workspace.styles.ts`, `preview.styles.ts` oraz `fields.styles.ts`. Renderer zaproszeń i interfejs gości mają własne moduły `styles.ts`. Globalne style ograniczają się do bazowych ustawień dokumentu; podstawowe style Mantine i fonty nadal pochodzą z pakietów bibliotek. Selektory wewnętrznych elementów Mantine są ograniczone do odpowiednich styled-components.
+Most custom styles use styled-components, grouped in modules such as `workspace.styles.ts`, `preview.styles.ts`, and `fields.styles.ts`. The panel also has `apps/admin/app/panel-colors.css`; library styles and fonts remain external package imports. Both applications use `StyledRegistry` from `@invitations/ui/registry` and the Next.js styled-components compiler so server-rendered HTML includes styles before hydration.
 
-Obie aplikacje używają `StyledRegistry` z `@invitations/ui/registry`, zbierającego style osobno dla każdego renderowania serwerowego, oraz kompilatora Next.js `styledComponents`. Style trafiają do HTML przed hydratacją. Testy korzystają z ról i stabilnych atrybutów `data-ui`, niezależnych od wygenerowanych klas. Nie należy stylować po `data-ui` ani uzależniać testów od hashów klas.
+Tests prefer roles and stable `data-ui` attributes over generated class hashes. Workspace E2E cover 320–2560 px, editing, mobile navigation, preview scaling, keyboard resizing, preference persistence/reset, and reduced motion.
 
-Przebudowa wymaga wdrożenia obu aplikacji oraz jednorazowej migracji `contextual_editor_v3`. Nie wymaga nowych zmiennych środowiskowych.
-
-Testy przeglądarkowe znajdują się w `tests/e2e/workspace.spec.ts`; obejmują szerokości 320–2560 px, edycję i zapis, menu mobilne, skalowanie desktopowego iframe, obsługę separatora klawiaturą, zapamiętywanie/reset preferencji oraz ograniczenie animacji.
-
+The contextual editor requires the v3 migration and coordinated deployments of both applications; it introduced no new environment variables.

@@ -1,32 +1,40 @@
-# Usuwanie realizacji
+# Site deletion and media lifecycle
 
-Właściciel realizacji lub administrator platformy może usunąć ją z listy projektów. Współpracownik bez tych uprawnień nie widzi przycisku, a backend odrzuca jego żądanie. Operacja wymaga potwierdzenia w panelu.
+## Soft deletion
 
-`DELETE /api/sites/:id` sprawdza sesję, Origin i dostęp do projektu. Funkcja `soft_delete_site` atomowo zapisuje `deleted_at` i `deleted_by`, usuwa wskaźnik publikacji i zwiększa wersję dostępu. Wspólny warunek RLS oraz zapytania serwera ukrywają projekt, szkice, publikacje i media. Strona zaproszenia i API gości zwracają 404. Triggery odrzucają zapisy do usuniętych projektów, również z żądań będących w toku. Dane pozostają w bazie do czyszczenia; panel nie udostępnia przywracania.
+A site owner or platform administrator can delete a site from the project list after confirmation. Other collaborators cannot perform the operation.
 
-## Czyszczenie miesięczne
+`DELETE /api/sites/:id` checks session, origin, and project access. `soft_delete_site` atomically records `deleted_at`/`deleted_by`, clears publication, and increments the access version. RLS and server queries hide the site, drafts, releases, and media. Guest routes/APIs return 404. Triggers reject writes to deleted sites, including in-flight requests. Data remains until purge; the panel has no restore action.
 
-Zadanie Supabase Cron `purge-deleted-sites-monthly` działa pierwszego dnia miesiąca o 03:00 UTC. Wybiera tylko `deleted_at < now() - interval '1 month'`. To miesiąc kalendarzowy, nie 30 dni. Faktyczna retencja wynosi zwykle od miesiąca do niemal dwóch miesięcy, zależnie od daty usunięcia.
+## Monthly purge
 
-Dispatcher w bazie tworzy prywatne zadanie i przez pg_net uruchamia Edge Function `purge-sites`. Losowy token jest ograniczony do jednego projektu, ważny przez 6 godzin, a po rozpoczęciu nie można ponownie przejąć zadania. W tabeli przechowywany jest tylko SHA-256 tokenu; klucz service role nie jest zapisany w harmonogramie ani treści żądania.
+Supabase Cron `purge-deleted-sites-monthly` runs at **03:00 UTC on the first day of each month**. It selects only:
 
-Worker najpierw usuwa przez Storage API wszystkie obiekty z prefiksem identyfikatora projektu w `site-media`, w paczkach po 500 (także niedokończone uploady). Następnie usuwa odpowiedzi RSVP, sesje gości, zaproszenia, deploymenty, kopie szkicu, publikacje, metadane mediów, historię audytu, szkic, członkostwa i projekt. Funkcja kończąca ponownie sprawdza wiek projektu i brak plików. Nigdy nie usuwamy metadanych `storage.objects` bezpośrednio SQL-em.
+```sql
+deleted_at < now() - interval '1 month'
+```
 
-Niepowodzenie zachowuje rekord projektu i oznacza zadanie jako `failed`. Następny miesięczny przebieg ponawia je; zadania przerwane lub niewysłane również kwalifikują się po wygaśnięciu tokenu. Częściowo usunięte pliki nie są odtwarzane. Dane mogą pozostać dłużej niż dwa miesiące, jeśli usługa czyszcząca nie działa.
+This is a calendar month, not 30 days. Normal retention is roughly one to almost two months; failures may retain data longer.
 
-## Wdrożenie
+The database dispatcher creates a private job and invokes the `purge-sites` Edge Function through pg_net. A random token is scoped to one site, expires after six hours, and cannot reclaim a started job. Only its SHA-256 hash is stored; the service-role key is not placed in the schedule/request body.
 
-1. Zastosuj nowe migracje według historii środowiska (nie odtwarzaj wcześniejszych migracji na stagingu — patrz `STAGING-STATUS.md`).
-2. Wdróż `supabase/functions/purge-sites/index.ts` wraz z `handler.ts`. Ustaw `verify_jwt=false`: uwierzytelnianie jest realizowane przez jednorazowy token zadania, zweryfikowany w bazie przed dostępem do plików. Publiczny lub zalogowany klient nie ma EXECUTE do funkcji czyszczących. Worker używa standardowych zmiennych Supabase `SUPABASE_URL` i `SUPABASE_SERVICE_ROLE_KEY`.
-3. Jako właściciel bazy skonfiguruj publiczny URL projektu:
+The worker first removes every object under the site's `site-media` prefix through the Storage API, in batches of 500, including unfinished uploads. It then deletes RSVP answers, guest sessions, invitations, legacy deployment records, snapshots, releases, media metadata, audit history, drafts, memberships, and the site. Finalization rechecks retention eligibility and absence of files. Never delete `storage.objects` metadata directly with SQL.
+
+Failure preserves the site record and marks the job failed. A later monthly run retries; expired interrupted/undispatched jobs become eligible too. Partially deleted files are not restored.
+
+## Configure the worker
+
+1. Apply missing migrations according to actual environment history; see [Staging status](STAGING-STATUS.md).
+2. Deploy `supabase/functions/purge-sites/index.ts` with `handler.ts`. Its `verify_jwt=false` setting is paired with the one-time job token validated in the database before file access. Anonymous and authenticated application clients cannot execute purge functions. The worker uses standard `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables.
+3. As database owner, configure the project origin:
 
 ```sql
 select private.configure_site_purge('https://PROJECT_REF.supabase.co');
 ```
 
-Ponowne wywołanie aktualizuje ten sam harmonogram, bez tworzenia duplikatów. Samo skonfigurowanie nie uruchamia czyszczenia.
+Calling it again updates the same schedule rather than creating another. Configuration alone does not run a purge.
 
-## Kontrola działania
+## Inspect execution
 
 ```sql
 select jobname, schedule, active from cron.job
@@ -41,29 +49,42 @@ select site_id, status, attempts, requested_at, expires_at, last_error
 from private.site_purge_jobs order by requested_at desc;
 ```
 
-Sukces zadania Cron oznacza wysłanie zadań, nie potwierdza zakończenia workera. Sprawdź również logi Edge Function oraz zadania `failed` i przeterminowane `queued`/`running`. Pomyślnie zakończone zadanie znika razem z projektem. Nie loguj tokenów ani całych requestów workera.
+Cron success means dispatch succeeded, not that the worker finished. Inspect Edge Function logs and failed or expired queued/running jobs. A completed job disappears with its site. Never log job tokens or full worker requests.
 
-RLS bez polityk w `private.site_purge_jobs` jest celowe: tabela jest niedostępna dla klientów. [Opis komunikatu doradcy](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+RLS without client policies on `private.site_purge_jobs` is intentional: clients must not access it.
 
-Testy obejmują kontrolę właściciela, izolację RLS, blokowanie zapisów i API gości, granicę miesiąca, kolejność usuwania plików i rekordów, odrzucanie nieprawidłowych tokenów oraz błędy Storage. Testy przeglądarkowe sprawdzają stany sesji, ponawianie pobrania, potwierdzenie usuwania i układ mobilny.
+## Current media lifecycle
 
-Źródła: [Supabase Cron](https://supabase.com/docs/guides/cron/quickstart), [usuwanie plików Storage](https://supabase.com/docs/guides/storage/management/delete-objects), [pg_net](https://supabase.com/docs/guides/database/extensions/pg_net).
+`20260930165858_harden_media_lifecycle.sql` introduced the current flow. Apply it before applications that rely on it. It adds `processing`, removes client Storage read/signing access, and hides `original_path`. Legacy prepare/finalize-upload API actions are no longer used.
 
+1. The panel sends raw JPEG/PNG/WebP in one `POST /api/sites/:id/media` request.
+2. The server limits the stream to 8 MiB, reserves an asset under a site lock with a ten-minute lease, and creates processed WebP variants under an unpredictable private prefix.
+3. Storage upload uses the organizer's JWT. The INSERT policy checks the active site, secret prefix, and unexpired `processing` state. Clients have no SELECT/UPDATE/DELETE policy. Do not replace upload authentication with a privileged client.
+4. SQL finalization requires unexpired processing and existing manifest objects.
+5. Processing failure starts prefix cleanup. Storage failure retains metadata/deletion reservation for retry.
 
-## Cykl mediów po poprawkach z 30.09.2026
+`deleting` is terminal: do not reset it manually to ready. Before each upload, cleanup considers error/deleting and expired pending/processing records; reservation rechecks status so a late cleanup cannot delete an asset that became ready. The 100-record library limit includes unfinished records; the five-concurrent-upload limit is checked under the same lock.
 
-Zastosuj migrację `20260930165858_harden_media_lifecycle.sql` przed wdrożeniem nowych wersji panelu i aplikacji zaproszeń. Migracja rozszerza statusy o `processing`, blokuje bezpośredni odczyt i podpisywanie URL-i przez klientów Storage oraz ukrywa `original_path` przed klientami. Nie zmienia istniejących plików ani publikacji. Stare akcje `prepare-upload` i `finalize-upload` są usunięte z API.
+Admin reads use `GET /api/sites/:id/media/:asset/:file`, with site authorization, ready-state checks, and `private, no-store`. Site/asset activity is checked again after fetching from Storage. Guest reads also recheck site activity and permitted published content.
 
-Upload to jedno żądanie `POST /api/sites/:id/media` z surowym plikiem JPEG/PNG/WebP. Serwer ogranicza strumień do 8 MiB, rezerwuje asset pod blokadą realizacji i nadaje dziesięciominutową dzierżawę. Przechowuje wyłącznie przetworzone WebP, pod losowym prefiksem nieujawnianym klientowi. Wysyłka do Storage używa JWT zalogowanego użytkownika, a INSERT policy sprawdza aktywną realizację, tajny prefiks i niewygasły status `processing`. Nie ma polityki UPDATE, DELETE ani SELECT dla klientów. Nie używaj service role do uploadów — ominęłoby to tę kontrolę.
+Current APIs issue no signed Storage upload/read URLs. Bundled public sample images are separately allowlisted; they are not private library uploads.
 
-Finalizacja w SQL wymaga istniejącego, niewygasłego `processing` i obecności plików manifestu. `deleting` jest stanem terminalnym. Awaria przetwarzania uruchamia usuwanie całego prefiksu; awaria Storage pozostawia metadane i rezerwację usuwania do ponowienia. Przed każdym uploadem sprzątane są `error`, `deleting` i wygasłe `pending`/`processing`. Rezerwacja ponownie sprawdza status: asset, który zdążył przejść na `ready`, nie zostanie usunięty przez spóźnione sprzątanie. Limit 100 obejmuje wszystkie rekordy biblioteki, a limit pięciu uploadów jest sprawdzany pod tą samą blokadą.
+### Delete an individual image
 
-Panel pobiera zdjęcia przez `GET /api/sites/:id/media/:asset/:file`, z autoryzacją realizacji i kontrolą gotowości assetu. Odpowiedzi mają `private, no-store`; po pobraniu Storage sprawdzana jest ponownie aktywność realizacji i assetu. API gości również ponownie sprawdza aktywność realizacji po pobraniu pliku. Nowy kod nie wystawia podpisanych linków do odczytu ani uploadu.
+Remove its invitation references and save first. The database blocks deletion while a saved draft, release, or snapshot references the asset. Deletion reserves the asset, removes objects through Storage, then removes metadata. Retry failed deletions rather than altering status manually.
 
-### Jednorazowe przejście ze starych podpisanych linków
+### Transition from historical signed URLs
 
-Już wystawionych tokenów Storage nie można odwołać zmianą kodu lub RLS. Przed uznaniem odcięcia dostępu za natychmiastowe odczekaj od wyłączenia starego panelu co najmniej dwie godziny (stare tokeny uploadu) oraz wygaśnięcie wszystkich wcześniej wystawionych URL-i odczytu. Stary panel wystawiał URL-e godzinne, ale użytkownik z dawnym SELECT Storage mógł sam wystawić dłuższe. W takim przypadku potrzebne jest odwołanie tokenów przez Supabase lub przeniesienie plików i usunięcie ich starych ścieżek przez Storage API. Weryfikacja samej migracji nie potwierdza odwołania takich uprawnień.
+Previously issued Storage tokens are not revoked by a code or RLS change. After disabling the old panel, allow at least two hours for old upload tokens and wait for all old read URLs to expire. The old panel issued one-hour read URLs, but a client with historical SELECT access could issue longer ones.
 
-### Testy
+If immediate revocation is required, obtain provider-supported revocation or move files and remove old paths through Storage APIs. A successful migration alone does not prove these historical capabilities have expired.
 
-`npm test` obejmuje pozytywny INSERT Storage oraz odmowy dla obcego użytkownika, błędnego prefiksu, wygasłej dzierżawy i usuniętej realizacji; blokadę cofnięcia `deleting`; ochronę przed spóźnionym cleanup; błędy uploadu i usuwania oraz autoryzowane API zdjęć. Testy współbieżności w `media-concurrency.test.ts` wymagają pustej, odizolowanej bazy PostgreSQL wskazanej przez `TEST_DATABASE_URL` — tworzą role i schematy testowe. CI uruchamia je na osobnym PostgreSQL 17. Nigdy nie wskazuj w tej zmiennej stagingu ani produkcji.
+## Tests
+
+Tests cover owner permissions, RLS isolation, write/API blocking, calendar-month boundaries, file-before-record deletion, invalid tokens, and Storage failures. Browser tests cover sessions, retries, confirmation, and mobile layout.
+
+Media tests cover valid Storage INSERT and rejection of another user, wrong prefix, expired lease, or deleted site; terminal deletion; late cleanup; upload/deletion failures; and authorized reads.
+
+Concurrency tests require a **disposable** PostgreSQL database via `TEST_DATABASE_URL`; CI uses PostgreSQL 17. Never use staging or production.
+
+References: [Cron](https://supabase.com/docs/guides/cron/quickstart), [Storage deletion](https://supabase.com/docs/guides/storage/management/delete-objects), [pg_net](https://supabase.com/docs/guides/database/extensions/pg_net), [RLS without policies](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).

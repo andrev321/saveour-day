@@ -1,123 +1,112 @@
-# Samodzielne wdrożenie — checklista operatora
+# Deployment checklist
 
-Stan: 2026-09-23. Odznaczaj punkty po wykonaniu. Dokument nie potwierdza wdrożenia. Najpierw wykonaj kroki na stagingu, potem powtórz dla produkcji. Szczegóły migracji i pełne testy opisuje [instrukcja techniczna](WDROZENIE-PLATFORMY.md).
+Use this checklist for a new environment, first staging and then production. It is not evidence that the steps have been completed. [Deployment](WDROZENIE-PLATFORMY.md) contains migration and legacy-transition details; [Staging status](STAGING-STATUS.md) records historical checks and current addresses.
 
-Wykonane kroki i adresy bieżącego środowiska: [status stagingu](STAGING-STATUS.md). Poniższa lista pozostaje instrukcją dla nowych środowisk.
+## 1. Prepare accounts and access
 
-## 1. Co musisz zapewnić
+- [ ] Push the intended code, lockfile, and migrations to GitHub.
+- [ ] Confirm access to Vercel, Supabase, a transactional SMTP provider, and sender-domain DNS.
+- [ ] Prepare separate staging and production Supabase projects and credentials.
+- [ ] Prepare two organizer test accounts and an authorized guest mailbox.
+- [ ] Record non-secret environment details: Supabase project ID, Vercel project names, admin/site origins, sender address, and responsible operator.
+- [ ] Confirm hosting, database, Storage, and email budgets. Keep keys in service settings or a password manager, never Git.
 
-- [ ] Repozytorium Git z wypchniętym aktualnym kodem, lockfile i migracjami.
-- [ ] Konto Vercel z dostępem do repozytorium i możliwością tworzenia projektów.
-- [ ] Konto Supabase z możliwością tworzenia projektów i uruchamiania SQL.
-- [ ] Dostawcę poczty transakcyjnej z SMTP: host, port, użytkownik, hasło, adres i nazwa nadawcy.
-- [ ] Dostęp do DNS domeny nadawczej poczty; dla własnych adresów aplikacji także DNS ich domeny.
-- [ ] Dostęp do rozliczeń i budżet na hosting, bazę, zdjęcia oraz pocztę. Repozytorium nie wykupuje planów usług.
-- [ ] Dwie skrzynki testowych organizatorów oraz skrzynkę gościa do odbioru prawdziwych wiadomości.
+Stable `vercel.app` addresses are sufficient for the applications. The email sender domain is a separate requirement. Each household does not need its own domain or Vercel project.
 
-Na początek aplikacje mogą używać stałych adresów projektów `vercel.app`. Osobno zweryfikuj domenę nadawcy u dostawcy SMTP. Nie potrzebujesz domeny ani projektu Vercel dla każdej rodziny.
+## 2. Database and Storage
 
-Zapisz bez sekretów: środowisko, identyfikator projektu Supabase, nazwy dwóch projektów Vercel, adres panelu, adres zaproszeń i nadawcę poczty. Klucze i hasła przechowuj w menedżerze haseł oraz ustawieniach usług, nie w Git ani dokumentacji.
+- [ ] Back up an existing database and Storage before changes.
+- [ ] For a fresh database, apply **all** SQL files in `supabase/migrations` in filename order, not just the first three.
+- [ ] For an existing database, reconcile local and remote migration history and apply only missing changes. Staging has different historical version numbers; do not blindly run `db push`.
+- [ ] Confirm application tables, including `sites`, `drafts`, `releases`, `invitations`, `rsvp_answers`, `guest_sessions`, `access_attempts`, and `draft_snapshots`.
+- [ ] Confirm that `site-media` is private, with the intended image limits and current upload policy. Do not add anonymous read access.
+- [ ] Obtain the project URL, public/publishable key, and server-only privileged key. The code reads the privileged key from `SUPABASE_SERVICE_ROLE_KEY`.
+- [ ] Deploy and configure the retention worker using [Site deletion](USUWANIE-REALIZACJI.md).
 
-## 2. Supabase — baza i Storage
+Organizers register and receive membership when creating a project. Ordinary clients do not need manual entries in `platform_admins`.
 
-- [ ] Utwórz oddzielne projekty staging i produkcja. Wybierz region i zapisz hasło bazy.
-- [ ] W pustym projekcie otwórz **SQL Editor → New query**. Uruchom pełną zawartość [pierwszej migracji](../supabase/migrations/202609200001_platform.sql), potem [drugiej](../supabase/migrations/202609210001_guest_platform.sql) i [trzeciej](../supabase/migrations/202609230001_invitation_templates.sql). Zapisz datę i wynik. Nie uruchamiaj ponownie zastosowanych migracji — nie są wielokrotnego wykonania. Przy istniejącej bazie najpierw sprawdź historię i zrób backup.
-- [ ] W **Table Editor** sprawdź m.in. `sites`, `drafts`, `releases`, `invitations`, `rsvp_answers`, `guest_sessions` i `access_attempts` i `draft_snapshots`.
-- [ ] W **Storage** sprawdź bucket `site-media` utworzony migracją: **Public wyłączone**, limit 8 MB, JPEG/PNG/WebP. Nie dodawaj anonimowej polityki odczytu.
-- [ ] W **Connect** znajdź URL projektu. W **Settings → API Keys** skopiuj klucz publiczny `sb_publishable_...` i serwerowy `sb_secret_...`. Kod nadal odczytuje serwerowy klucz ze zmiennej `SUPABASE_SERVICE_ROLE_KEY` — nazwa nie wymaga starego formatu JWT. W istniejącym projekcie dawny klucz `service_role` jest odpowiednikiem uprzywilejowanego klucza serwera. [Klucze Supabase](https://supabase.com/docs/guides/getting-started/api-keys).
+## 3. Authentication and email
 
-Migracje tworzą tabele i uprawnienia. Organizator rejestruje się sam, a tworzenie realizacji nadaje członkostwo. Nie musisz ręcznie dodawać klientów do `platform_admins` ani tworzyć wpisów `site_members`.
+- [ ] Verify the sender domain with the SMTP provider using its supplied DNS records.
+- [ ] Configure custom SMTP in Supabase Auth. Enter the SMTP secret directly in Supabase.
+- [ ] Enable email authentication, registrations, and email confirmation. Do not enable CAPTCHA until the application supports it.
+- [ ] Set Auth **Site URL** to the admin origin and allow `<admin-origin>/auth/confirm` as a redirect.
+- [ ] Configure the Auth templates below, preserving the template expressions exactly.
+- [ ] Check Auth/provider rate limits, OTP expiry, and delivery to an authorized test recipient. The guest form accepts numeric codes of 6–10 digits.
+- [ ] Disable provider link tracking for authentication email.
 
-## 3. Poczta i Auth
-
-- [ ] U dostawcy SMTP zweryfikuj domenę nadawcy. Dodaj wskazane rekordy DNS, w tym SPF/DKIM i uzgodnioną politykę DMARC; poczekaj na poprawny status.
-- [ ] W **Supabase → Authentication → ustawienia e-mail/SMTP** włącz własny SMTP. Wpisz host, port, użytkownika, hasło, adres i nazwę nadawcy. Wyłącz śledzenie linków u dostawcy poczty. Domyślna poczta Supabase nie służy do produkcyjnej obsługi klientów. [Konfiguracja SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
-- [ ] W ustawieniach **Authentication** włącz dostawcę Email, rejestracje i potwierdzanie e-maila. Nowy gość OTP też wymaga możliwości utworzenia konta Auth. Nie włączaj CAPTCHA bez obsługi w formularzach aplikacji.
-- [ ] W **Authentication → URL Configuration** ustaw **Site URL** na adres panelu, np. `https://app.twojamarka.pl`; w **Redirect URLs** dodaj `https://app.twojamarka.pl/auth/confirm`. Staging ma własny adres panelu. To ustawienie nie jest adresem aplikacji gości. [Redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
-- [ ] W **Authentication → Email Templates** ustaw poniższe treści. Zachowaj dosłowne zmienne w podwójnych nawiasach. [Szablony Supabase](https://supabase.com/docs/guides/auth/auth-email-templates).
-
-| Szablon | Wymagana treść HTML |
+| Auth template | Required HTML example |
 | --- | --- |
-| Magic Link | `<p>Kod logowania: <strong>{{ .Token }}</strong></p>` |
-| Confirm signup | `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">Potwierdź konto</a>` |
-| Reset password | `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Ustaw hasło</a>` |
+| Magic Link / OTP | `<p>Your sign-in code: <strong>{{ .Token }}</strong></p>` |
+| Confirm signup | `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup">Confirm your account</a>` |
+| Reset password | `<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery">Set your password</a>` |
 
-- [ ] Sprawdź limity w Supabase Auth i u dostawcy SMTP, ustaw czas ważności OTP. Formularz przyjmuje kody numeryczne długości 6–10 cyfr. Przetestuj dostarczenie kodu także osobie bez wcześniejszego konta.
+Supabase sends authentication email through SMTP. Optional application reminders use a separate server API configuration. Organizers distribute initial household invitation links themselves.
 
-Hasło SMTP wpisujesz w Supabase, nie w Vercel. Wiadomości uwierzytelniające wysyła Supabase Auth. Rodzinne linki zaproszeń organizator kopiuje i przekazuje samodzielnie.
+For Resend, the previously used SMTP settings are `smtp.resend.com`, port `465`, username `resend`, and a sending API key as the password. The restricted `onboarding@resend.dev` sender is for the exact account-owner address, not general guest testing. Check the provider's [Supabase SMTP guide](https://resend.com/docs/send-with-supabase-smtp) when setting up a new account.
 
-## 4. Vercel — dwie aplikacje
+## 4. Vercel applications
 
-- [ ] Wybierz **Add New → Project**, zaimportuj repozytorium i utwórz projekt panelu. Zaimportuj to samo repozytorium drugi raz dla zaproszeń. [Monorepo Vercel](https://vercel.com/docs/monorepos).
-- [ ] Ustaw poniższe wartości. Zachowaj dostęp do współdzielonych `packages/` poza katalogiem aplikacji; jeśli panel pokazuje opcję uwzględniania plików spoza Root Directory, włącz ją.
+Import the same repository into two projects:
 
-| Ustawienie | Panel | Zaproszenia |
+| Setting | Admin | Guest site |
 | --- | --- | --- |
 | Root Directory | `apps/admin` | `apps/site` |
-| Framework Preset | Next.js | Next.js |
+| Framework | Next.js | Next.js |
 | Node.js | 24.x | 24.x |
-| Output Directory | Domyślne Next.js | Domyślne Next.js |
-| Build | Skrypt `build` aplikacji | Konfiguracja `apps/site/vercel.json` |
+| Output Directory | Next.js default | Next.js default |
+| Build | App's `build` script | `apps/site/vercel.json` |
+| Shared files | Include files outside Root Directory | Include files outside Root Directory |
 
-- [ ] Usuń stare nadpisania Vite: katalog `dist`, rewrite do `index.html`, stare komendy i `VITE_CONFIG_*`. Instalacja musi obejmować npm workspaces oraz główny lockfile.
-- [ ] Ustal stałe adresy obu aplikacji. Własne subdomeny dodaj w **Settings → Domains** odpowiedniego projektu; w DNS wpisz dokładnie rekordy wskazane przez Vercel. Poczekaj na poprawny status i HTTPS. [Domeny Vercel](https://vercel.com/docs/domains/working-with-domains/add-a-domain).
-- [ ] W **Settings → Environment Variables** każdego projektu ustaw poniższe zmienne dla **Production**. Staging najprościej skonfigurować jako dwa odrębne projekty Vercel z osobnym Supabase i stałymi adresami.
-
-| Zmienna | Panel | Zaproszenia | Wartość |
-| --- | --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL` | Tak | Tak | URL projektu Supabase danego środowiska |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Tak | Tak | Publiczny klucz tego projektu |
-| `SUPABASE_SERVICE_ROLE_KEY` | Tak, sekret | Tak, sekret | Serwerowy klucz tego projektu |
-| `APP_URL` | Tak | Nie | Kanoniczny adres panelu, np. `https://app.twojamarka.pl` |
-| `SITE_URL` | Tak | Tak | Kanoniczny adres zaproszeń, np. `https://zaproszenia.twojamarka.pl` |
-| `RESEND_API_KEY` | Opcjonalnie, sekret | Nie | Klucz wysyłkowy Resend dla przypomnień RSVP |
-| `REMINDER_FROM` | Opcjonalnie | Nie | Nadawca przypomnień ze zweryfikowanej domeny Resend |
-
-Adresy wpisuj bez ścieżek i parametrów. Oba projekty mają ten sam `SITE_URL` i ten sam Supabase w danym środowisku. Nie przekazuj produkcyjnych sekretów niezaufanym preview. Formularze wymagają originów zgodnych z konfiguracją; losowy URL preview nie zastępuje stagingu.
-
-- [ ] Wdróż oba projekty. Po zmianie zmiennych wykonaj **Redeploy** — wartości publiczne są używane podczas budowania. [Zmienne Vercel](https://vercel.com/docs/environment-variables/managing-environment-variables).
-- [ ] Sprawdź ochronę deploymentów: produkcyjna aplikacja gości musi być dostępna dla odbiorcy bez konta Vercel. Właściwe uprawnienia do treści sprawdza aplikacja. Staging może pozostać chroniony.
-
-Nie potrzebujesz tokena Vercel w aplikacji, webhooka builda, projektu dla każdego klienta ani builda po zmianie zaproszenia.
-
-## 5. Odbiór i utrzymanie
-
-- [ ] W istniejącym środowisku zastosuj procedurę „Wdrożenie schematu v2” z instrukcji technicznej — skoordynuj migrację i wdrożenie obu aplikacji.
-- [ ] Sprawdź wybór szablonu, pusty szkic, anulowanie i zatwierdzenie resetu oraz przywrócenie kopii.
-- [ ] Zarejestruj organizatora, potwierdź e-mail, utwórz realizację, wgraj zdjęcie i opublikuj.
-- [ ] W prywatnym oknie sprawdź stronę i zdjęcia w trzech trybach dostępu. Dla OTP najpierw przypisz adres skrzynki do rodzinnego zaproszenia.
-- [ ] Utwórz rodzinę z dwiema osobami, skopiuj link, odpowiedz za obie i sprawdź wynik w panelu.
-- [ ] Sprawdź zmianę kodu, cofnięcie zaproszenia i wycofanie publikacji przy istniejącej sesji.
-- [ ] Sprawdź autosave, odzyskanie zmian po odświeżeniu, undo/redo i konflikt szkicu między dwiema kartami. Publikacja pozostaje osobnym krokiem.
-- [ ] Sprawdź import i eksport CSV, archiwizację oraz przywrócenie osoby bez utraty RSVP, pytania o dietę/nocleg/transport i kalendarz ICS.
-- [ ] Uruchom workflow **Staging smoke** na dedykowanym koncie: ustaw `STAGING_ADMIN_URL`, `STAGING_SITE_URL` i sekret `STAGING_PANEL_STORAGE_STATE` w środowisku GitHub `staging`. Test tworzy własną realizację, sprawdza zdjęcie, szkic, publikację, kod dostępu, RSVP i kalendarz, a następnie usuwa swoją realizację. Nie używaj sesji produkcyjnej; test nie wysyła e-maili. Chroniony staging wymaga również dostępu testowego do ochrony Vercel.
-- [ ] Jeśli włączasz przypomnienia, ustaw `RESEND_API_KEY` i `REMINDER_FROM` wyłącznie w panelu, wykonaj Redeploy i sprawdź podgląd odbiorców oraz treści. Odbiór wysyłki wykonaj wyłącznie na uzgodnionej skrzynce testowej.
-- [ ] Drugim kontem organizatora sprawdź brak dostępu do pierwszej realizacji.
-- [ ] Wykonaj pełny odbiór z [instrukcji technicznej](WDROZENIE-PLATFORMY.md). Zapisz datę, commit i wyniki.
-- [ ] Jeśli istniały stare publiczne strony, wykonaj opisaną tam migrację dawnych realizacji. Zmiana DNS nie usuwa publicznych kopii. Pustego projektu ten krok nie dotyczy.
-- [ ] Zapewnij backup bazy **i plików Storage**, sprawdź odtwarzanie, ustaw odbiorcę alarmów błędów i kontroluj koszty oraz dostarczalność poczty. Potwierdź dostępność funkcji w wybranych planach usług.
-
-## Szybka diagnostyka
-
-| Objaw | Sprawdź |
-| --- | --- |
-| Demo działa, strona klienta zwraca 503 | Zmienne obu aplikacji, migracje, logi serwerowe |
-| Błąd źródła żądania | Bieżący adres względem `APP_URL`/`SITE_URL` |
-| OTP nie dochodzi | SMTP, DNS nadawcy, limity, adres w zaproszeniu, spam, logi Auth |
-| Potwierdzenie konta nie działa | Site URL, `token_hash`, `type=signup`, ważność tokena |
-| 404 zaproszenia | Publikację, poprawność linku, cofnięcie dostępu |
-| `LEGACY_PUBLICATION_ACTIVE` | Wyłączenie dawnych kopii przed wyczyszczeniem `vercel_project_id` |
-
-## Resend SMTP i instalacja monorepo — uzupełnienie 2026-09-25
-
-Resend: host `smtp.resend.com`, port `465`, użytkownik `resend`, hasło: klucz API Resend z uprawnieniem wysyłki. Do wysyłki do różnych odbiorców adres nadawcy musi być w zweryfikowanej domenie. Do testu bez własnej domeny użyj `onboarding@resend.dev`, wyłącznie do dokładnego adresu właściciela konta Resend. Hasło wpisz bezpośrednio w Supabase Authentication → Emails → SMTP Settings. Do logowania OTP i potwierdzania konta zmienna `RESEND_API_KEY` na Vercelu nie jest potrzebna: te wiadomości wysyła Supabase Auth przez SMTP. Opcjonalne przypomnienia RSVP wysyła natomiast API panelu; wymagają serwerowych zmiennych `RESEND_API_KEY` oraz `REMINDER_FROM` w projekcie panelu Vercel. Użyj klucza z uprawnieniem wysyłki, najlepiej ograniczonego do domeny nadawcy. Szczegóły: [ulepszenia po review](product-review-improvements.md).
-
-Obecny panel Supabase wymaga custom SMTP do edycji szablonów. Skonfiguruj je dopiero po poprawnym ustawieniu SMTP. Bez własnej domeny `onboarding@resend.dev` umożliwia testy tylko do adresu właściciela konta Resend; nie wystarcza do testowania maili do organizatorów i gości. [Instrukcja Resend](https://resend.com/docs/send-with-supabase-smtp).
-
-Dla Root Directory `apps/admin` i `apps/site` ustaw w obu projektach Vercela **Install Command**:
+Use this Install Command in both projects:
 
 ```sh
 cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
 ```
 
-Ta konfiguracja przeszła oba buildy stagingu. Domyślna instalacja pomijała zależności głównego pakietu i powodowała błędy brakujących modułów.
+- [ ] Remove obsolete Vite overrides: `dist`, rewrites to `index.html`, old build commands, and `VITE_CONFIG_*`.
+- [ ] Assign stable admin/site domains and verify HTTPS.
+- [ ] Set environment variables for the intended deployment target. The dedicated staging projects use Vercel's Production target but staging Supabase credentials.
+- [ ] Deploy both applications after the required migrations.
+- [ ] Verify that guest access has the intended Vercel protection. Staging may remain protected; real guests must not need a Vercel account in production.
+
+| Variable | Admin | Guest site |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Required | Required |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Required | Required |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server secret | Server secret |
+| `APP_URL` | Canonical admin origin | Not used |
+| `SITE_URL` | Canonical guest origin | Same guest origin |
+| `RESEND_API_KEY` | Optional server secret for reminders | Not used |
+| `REMINDER_FROM` | Optional verified reminder sender | Not used |
+
+Use HTTPS origins without paths or query strings. Both applications must use the same Supabase environment and `SITE_URL`. Do not expose production secrets to untrusted previews. Redeploy after changing environment variables.
+
+Changing a domain also requires reviewing `APP_URL`, `SITE_URL`, Auth Site URL/redirects, and staging test URLs. A working homepage alone does not verify login or mutation origins. See [Staging operations](STAGING-OPERATIONS.md).
+
+## 5. Acceptance and maintenance
+
+- [ ] Register and confirm an organizer, create a site, upload an image, save, and publish.
+- [ ] Check template selection, blank drafts, reset cancellation/confirmation, and snapshot restoration.
+- [ ] Check autosave, recovery after refresh, undo/redo, and two-tab revision conflicts.
+- [ ] Test public/code/email access, images, and RSVP with fresh sessions.
+- [ ] Test two household members, CSV import/export, archiving/restoring members, optional questions, and calendar downloads.
+- [ ] Check code changes, link rotation/revocation, unpublishing, and stale sessions.
+- [ ] Verify that a second organizer cannot access the first organizer's site or media.
+- [ ] Run the dedicated-account Staging smoke workflow and record commit/date/results; see [Testing](TESTING.md).
+- [ ] If using reminders, configure the admin-only variables, redeploy, review recipients/content, and verify delivery to an authorized test mailbox.
+- [ ] Complete the deeper acceptance scenarios in [Deployment](WDROZENIE-PLATFORMY.md).
+- [ ] Disable old public copies before enabling protection on migrated legacy sites.
+- [ ] Configure monitoring, error ownership, cost/delivery checks, database **and Storage** backups, and a tested restore procedure.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Demo works but a client route returns 503 | Environment variables, migrations, server logs |
+| Request-origin error | Current host versus `APP_URL`/`SITE_URL` |
+| OTP is not delivered | SMTP, sender DNS, limits, invitation email, spam, Auth logs |
+| Account confirmation fails | Auth Site URL, `token_hash`, `type=signup`, expiry |
+| Invitation returns 404 | Publication, correct link, revocation, soft deletion |
+| `LEGACY_PUBLICATION_ACTIVE` | Legacy copies must be disabled before clearing `vercel_project_id` |
+| Missing workspace modules during build | Root lockfile and workspace Install Command |

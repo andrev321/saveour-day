@@ -1,30 +1,34 @@
-# Edytor treści i schemat 3
+# Content editor and schema v3
 
-Panel ma cztery obszary: Treść, Wygląd, Zdjęcia i Goście. Ustawienia projektu i historia są osobnymi narzędziami. Jeden wybór wariantu steruje edycją oraz podglądem.
+The panel has four areas: **Content, Appearance, Photos, and Guests**. Project settings and history are separate tools. One variant selection controls both editing and preview.
 
-## Edycja w kontekście
+## Editing in context
 
-Treść pokazuje kolejność sekcji wybranego wariantu, ich widoczność, początek zaproszenia i stopkę. Kliknięcie nagłówka rozwija formularz w tej samej liście; ponowne kliknięcie go zwija. Edycja nie otwiera osobnego widoku. Wybór sekcji z podglądu rozwija jej formularz i przewija do niego. Sekcje można przesuwać wyłącznie uchwytem drag and drop: myszą, dotykiem lub klawiaturą (Spacja, strzałki, Spacja). Uchwyt ma 44 px i blokuje natywne przewijanie podczas dotykowego przeciągania; poza uchwytem lista przewija się normalnie. Wydarzenia programu, kontakty i zdjęcia galerii mają takie same uchwyty zamiast przycisków góra/dół; przeciąganie elementu zmienia kolejność tylko w jego sekcji. Program umożliwia dodawanie, wybieranie i edycję wydarzeń oraz ich miejsc. Kontakt analogicznie zarządza kontaktami. Galeria zarządza zdjęciami i kadrami każdego użycia. Biblioteka zdjęć służy do uploadu, opisu oraz usuwania plików.
+Content lists the selected variant's section order and visibility, invitation opening, and footer. Clicking a heading expands its form in place; clicking again collapses it. Selecting a section in the preview opens and scrolls to its form.
 
-Treści i encje są współdzielone. Edytor pokazuje liczbę użyć i umożliwia utworzenie niezależnej kopii. Usunięcie z sekcji odłącza element; zarządzanie wspólnymi danymi usuwa go z całego szkicu i sprząta odwołania. Wydania i historyczne RSVP pozostają zachowane.
+Sections, timeline events, contacts, and gallery images are reordered using a dedicated drag handle, not up/down buttons. Use a mouse, touch, or keyboard (Space, arrows, Space). The 44 px handle prevents native scrolling during touch dragging; the rest of the list scrolls normally. Reordering an item affects only its section.
 
-## Dane
+The timeline manages events and venues; contact sections manage contacts; galleries manage images and per-use crops. The photo library manages uploads, descriptions, and file deletion.
 
-- `schemaVersion: 3` jest jedyną wersją akceptowaną przez aplikację.
-- Sekcje są unią typów: `timeline.eventIds`, `contact.contactIds`, `venue.venueId`, `gallery.mediaIds` i `gallery.crops`, oraz `text`.
-- `variant.sections` to uporządkowana lista `{sectionId, visible}`. Każdy wariant, także domyślny, ma własną kolejność i widoczność.
-- `variant.eventIds` określa dostęp do wydarzeń i RSVP. Ukrywanie sekcji nie zmienia uprawnień. Program pokazuje przecięcie swoich wydarzeń z uprawnieniami wariantu.
-- `hero.crops` i `gallery.crops[mediaId]` zawierają niezależne ustawienia `desktop/tablet/mobile`, każde `{x,y}` w zakresie 0–100. Bez kadru urządzenia używany jest kadr desktop, następnie środek.
-- Projekcja gościa zwraca wyłącznie widoczne sekcje i powiązane kontakty/zdjęcia/miejsca. Dostępne wydarzenia mogą istnieć w RSVP bez widocznej sekcji programu.
+Entities are shared. The editor shows usage counts and can create independent copies. Removing an item from a section disconnects that reference; deleting shared data removes it from the draft and cleans its references. Published releases and historical RSVP remain separate.
 
-## Jednorazowa migracja
+## Data contract
 
-Migracja `contextual_editor_v3` konwertuje szkice, wydania i kopie szkiców, zachowując identyfikatory oraz ścieżki mediów. Dawne globalne kadry przenosi do użyć. Przenosi reguły domyślnego wariantu i starych ukrytych odwołań do jawnych list, po czym usuwa adapter starszej wersji. Rewizja szkicu wzrasta, aby otwarty stary edytor nie nadpisał nowych danych. Historyczny motyw `ivory` staje się `classic`; zapisane kolory pozostają zachowane. Uzupełnia ustawienia wyglądu, aby przywracanie kopii porównywało identyczne konfiguracje.
+- `schemaVersion: 3` is the only accepted runtime version.
+- Sections are typed: `timeline.eventIds`, `contact.contactIds`, `venue.venueId`, `gallery.mediaIds`/`gallery.crops`, or `text`.
+- `variant.sections` is an ordered list of `{sectionId, visible}`. Every variant, including the default, has independent placement and visibility.
+- `variant.eventIds` controls event access and RSVP. Hiding a section does not change permissions. A timeline renders the intersection of its events and the variant's allowed events.
+- `hero.crops` and `gallery.crops[mediaId]` contain independent desktop/tablet/mobile `{x,y}` positions from 0 to 100. Missing device crops fall back to desktop, then center.
+- Guest projection includes only visible sections and related contacts, images, and venues. Allowed RSVP events can exist without a visible timeline.
 
-Wdrożenie wymaga skoordynowanej publikacji obu aplikacji i migracji bazy. Nie uruchamiaj dawnych klientów po migracji. Staging ma własne numery historycznych migracji — nową migrację stosuj osobno, nie wykonuj bezpośrednio `db push` całej lokalnej historii.
+## One-time migration
 
-## Weryfikacja
+`20260930204955_contextual_editor_v3.sql` converts drafts, releases, and draft snapshots while preserving IDs and media paths. It moves global crops to their uses, converts old default-variant/hidden-reference rules to explicit lists, removes the older adapter, and increments draft revisions to reject stale editors. Historical `ivory` becomes `classic`; saved colors are preserved. Appearance defaults are filled consistently for snapshot comparisons.
 
-Testy domeny i PGlite sprawdzają migrację, odwołania, niezależność wariantów, uprawnienia RSVP, izolację kontaktów oraz zachowanie historii. E2E sprawdzają edycję w kontekście, wybór z podglądu, kadry per urządzenie, warianty i ekrany 320–2560 px. Test współbieżności wymaga `TEST_DATABASE_URL`; CI udostępnia PostgreSQL 17.
+Conversion includes archived, soft-deleted sites. Exclusive table locks last until transaction end. Required triggers are restored before commit; a failure rolls the transaction back.
 
-Migracja obejmuje również archiwalne realizacje oznaczone do usunięcia. Wyłączne blokady tabel obowiązują do końca transakcji; wymagane triggery są przywracane przed zatwierdzeniem. Błąd wycofuje całość. Historia zdalnych wersji migracji znajduje się w `STAGING-STATUS.md`; nie uruchamiaj wszystkich historycznych migracji ponownie na stagingu.
+Coordinate the database migration and both application deployments. Do not run old clients against the migrated schema. Existing staging has different remote migration version numbers: reconcile history before applying missing migrations. Do not replay the entire local history. See [Staging status](STAGING-STATUS.md).
+
+## Verification
+
+Domain and PGlite tests cover migration, references, independent variants, RSVP authorization, contact isolation, and history. E2E cover contextual editing, preview selection, device crops, variants, and viewports from 320 to 2560 px. PostgreSQL concurrency checks require a disposable `TEST_DATABASE_URL`; CI supplies PostgreSQL 17. See [Testing](TESTING.md).

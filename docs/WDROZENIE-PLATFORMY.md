@@ -1,103 +1,100 @@
-# Wdrożenie wspólnej platformy zaproszeń
+# Deploying the invitation platform
 
-Aktualny stan środowiska i pozostałe kroki: [status stagingu](STAGING-STATUS.md). Obie aplikacje są wdrożone; konfiguracja Resend SMTP czeka na domenę nadawczą.
+Start with the [deployment checklist](CHECKLISTA-WDROZENIA.md) for accounts, settings, variables, and initial setup. Use [Staging status](STAGING-STATUS.md) for recorded environment evidence; do not interpret this guide as a production sign-off.
 
-## Architektura
+## Deployment model
 
-**Wdrażasz samodzielnie? Zacznij od [checklisty kont, ustawień i kliknięć](CHECKLISTA-WDROZENIA.md).** Zawiera kolejność konfiguracji Supabase/SMTP/Vercel/DNS, tabelę zmiennych i zadania operatora.
+Each environment has two Next.js applications (`apps/admin`, `apps/site`) and one Supabase project for Postgres, Auth, and private Storage. Staging and production require separate databases and keys. Use Node.js 24.
 
-Instrukcja dla implementacji z 2026-09-23; jej obecność nie potwierdza wykonania kroków na produkcji. Szczegółowy model opisują [architektura](ARCHITEKTURA.md) i [decyzje techniczne](DECYZJE-TECHNICZNE.md).
+Publishing content is a database transaction, not a deployment. It validates the draft/media, creates a release, and updates `sites.published_release_id`. Content rollback does not roll back RSVP or permissions. Code deployments update the shared runtime.
 
-Skonfiguruj dwa projekty Next.js na Vercel: panel (`apps/admin`) i wspólną aplikację zaproszeń (`apps/site`). Jeden projekt Supabase na środowisko zapewnia bazę, Auth i prywatny Storage. Dla stagingu i produkcji użyj oddzielnych baz i kluczy. Używaj Node.js 24, zgodnie z CI.
+The current application accepts schema v3 only. Earlier v1/v2 adapters are historical. Apply the coordinated v3 migration before running this version against older data.
 
-Publikacja jest transakcją: waliduje szkic i media, tworzy niezmienne wydanie oraz ustawia `sites.published_release_id`. Nie uruchamia Vercel API ani builda. Cofnięcie wersji nie cofa RSVP ani uprawnień. Wdrożenie kodu aktualizuje renderer wszystkich stron; nowe konfiguracje mają schemat v2, a odczyt starszych v1 obsługuje adapter.
+| Example route | Purpose |
+| --- | --- |
+| `https://app.example.com` | Organizer panel |
+| `https://invitations.example.com/s/<public_slug>` | General invitation |
+| `/i/<token>` | Individual/household link |
+| `/v/<invitation_id>` | Invitation selection after OTP; session required |
 
-- Panel: `https://app.twojamarka.pl`.
-- Strona wydarzenia: `https://zaproszenia.twojamarka.pl/s/<public_slug>`.
-- Osoba/rodzina: `/i/<token>`.
-- Wybór po OTP na stronie ogólnej: `/v/<invitation_id>` — zawsze wymaga sesji.
+Per-site custom domains, payments, and automatic initial invitation distribution are not part of the implementation. Guest content and private images are authorized by the application, use `private, no-store`, and are not passed through a public image optimizer.
 
-Własne domeny, płatności i wysyłka zaproszeń są poza tym etapem. Strony mają `noindex`. Konfiguracja nie trafia do HTML ekranu logowania. Po autoryzacji API zwraca tylko wariant odbiorcy. Treść i zdjęcia używają `private, no-store`; zdjęcia nie przechodzą przez publiczny optymalizator.
+## Database migration procedure
 
-## Konfiguracja usług
+**New environment:** apply every SQL file in `supabase/migrations` in filename order. The chain includes the initial platform and guest tables, templates, deletion/retention, Storage fixes, media lifecycle, contextual editor v3, product improvements, and sample media.
 
-1. Uruchom migracje kolejno: `202609200001_platform.sql`, `202609210001_guest_platform.sql`, `202609230001_invitation_templates.sql`. Każda rozszerza poprzedni stan. Trzecia dodaje kopie szkiców, konwertuje szkice do v2 i aktualizuje publikację/rollback.
-2. Pozostaw bucket `site-media` prywatny. Klucz `service_role` jest wyłącznie serwerowy.
-3. W Supabase Auth włącz potwierdzanie e-maila, logowanie e-mail/hasło i e-mail OTP. Site URL: adres panelu; dozwolony redirect: `https://app.twojamarka.pl/auth/confirm`.
-4. Skonfiguruj własny SMTP z uwierzytelnioną domeną nadawcy i limitami dostosowanymi do ruchu. Domyślny SMTP Supabase nie jest produkcyjny. Wyłącz śledzenie linków w wiadomościach uwierzytelniających.
-5. Szablon **Magic Link** powinien pokazywać `{{ .Token }}`. Gość wpisuje kod w aplikacji; nie wysyłamy go do panelu.
-6. Szablon **Confirm signup**: link `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup`. W szablonie **Reset password** użyj `type=recovery`. Sam redirect bez tokena nie wystarcza.
-7. Utwórz projekty Vercel z Root Directory odpowiednio `apps/admin` i `apps/site`, framework Next.js i domyślny katalog wyjściowy. Nie używaj rewrite do `index.html`.
-8. W obu projektach ustaw `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `SITE_URL`. W panelu dodatkowo `APP_URL`. Adresy są kanonicznymi originami HTTPS bez ścieżki.
-9. Usuń nieużywane sekrety publikacji: `VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GITHUB_REPO_ID`, `ENGINE_GIT_SHA`, `VERCEL_WEBHOOK_SECRET`; wyłącz dawny webhook.
-10. Limity rejestracji ustaw w Supabase Auth. Próby kodu i OTP są dodatkowo ograniczane w bazie. Na Vercel używamy nagłówka IP nadpisywanego przez platformę; inne hostingi wymagają wdrożenia zaufanego ustalania IP.
+**Existing environment:**
 
-Organizator rejestruje konto, potwierdza e-mail, loguje się i sam zakłada realizację. Nie potrzebuje roli administratora. Goście i organizatorzy korzystają ze wspólnego Auth, ale uprawnienia i ciasteczka są oddzielone. Wcześniejszy gość OTP może ustawić hasło panelu przez odzyskiwanie hasła. Nie włączaj CAPTCHA bez podłączenia odpowiedniego widgetu do formularza.
+1. Back up the database and Storage and identify the deployed application commit.
+2. Compare local migrations with the actual remote migration history by version, name, and content. Do not assume local timestamps match staging timestamps.
+3. Test the missing migrations and intended application version on an isolated environment.
+4. For incompatible schema changes, prevent old application writes during the coordinated migration/deployment window.
+5. Apply only missing migrations in dependency order, then deploy both compatible applications.
+6. Validate stored configurations, permissions, publication, snapshots, media, and RSVP before restoring normal use.
 
-## Publikacja i zapraszanie
+The v3 migration converts drafts, releases, and snapshots, including archived sites; it preserves IDs and media paths and increments draft revisions. Do not roll back only the application to a v1/v2-only client afterward. See [Content editor](EDYTOR-TRESCI.md).
 
-1. Utwórz zaproszenie, wybierz szablon lub pusty start i język treści, uzupełnij szkic oraz zdjęcia i zapisz. W edytorze można zmienić szablon po potwierdzeniu resetu; szczegóły opisuje [instrukcja szablonów](SZABLONY-STARTOWE.md).
-2. Ustaw wariant strony ogólnej, tryb dostępu i opcjonalny termin RSVP (Europe/Warsaw). Kod ma minimum 8 znaków; puste pole przy edycji zachowuje poprzedni.
-3. Publikuj. Po pierwszej publikacji nowe warianty trzeba opublikować przed przypisaniem ich zaproszeniom.
-4. Dodaj rodzinę/osobę, listę gości, wariant i dopuszczone e-maile. Każdy dopuszczony adres odpowiada za całą rodzinę. Adresy i wariant można edytować bez usuwania RSVP.
-5. Skopiuj link. Przechowujemy tylko hash, więc link pokazujemy przy utworzeniu/rotacji. Nowy link unieważnia stary oraz sesje zaproszenia.
-6. Publiczny link rodzinny pozwala także zapisywać RSVP. W trybie kodowym dodatkowo potrzebny jest kod; w e-mailowym potwierdzenie adresu. Ogólna strona e-mailowa pokazuje po OTP zaproszenia przypisane do adresu.
-7. Odpowiedzi i uwagi są widoczne w panelu. Goście poprawiają je do terminu; organizator również po terminie. Brak odpowiedzi różni się od „nie”. Odpowiedzi na usunięte wydarzenia pozostają w historii.
+The media lifecycle migration must precede code that uses the new upload/read flow. Sample-media migrations must precede applications using those manifests. Historical staging version mappings are recorded in [Staging status](STAGING-STATUS.md); missing entries are not proof a migration was or was not applied.
 
-Zmiana ustawień unieważnia sesje realizacji. Edycja adresów/wariantu unieważnia sesje zaproszenia. Sesje wygasają po 7 dniach. Cofnięcie dostępu blokuje następne żądania; nie usuwa już pobranych lub skopiowanych treści.
+## Service configuration
 
-## Wdrożenie schematu v2
+Use the checklist as the single source for the environment-variable table and Auth email templates.
 
-Przed trzecią migracją zrób backup. Przetestuj migrację oraz tę wersję obu aplikacji na stagingu. W istniejącym środowisku wstrzymaj zapisy na czas skoordynowanej migracji i wdrożenia obu aplikacji: stary kod obsługujący wyłącznie v1 nie może pracować na przekonwertowanych szkicach. Wersja po wdrożeniu musi obsługiwać v1 i v2. Nie cofaj samego kodu do wersji obsługującej wyłącznie v1. Po wdrożeniu sprawdź wybór szablonu, pusty szkic, reset, kopię szkicu, odczyt starej publikacji i jej przywrócenie. Migracja nie zmienia już opublikowanych wydań ani odpowiedzi gości.
+- Keep `site-media` private. Privileged keys stay server-only.
+- Set Auth Site URL to the panel, with `/auth/confirm` allowed. Guest OTP is entered in the guest app.
+- Configure custom SMTP and delivery limits; disable authentication-link tracking.
+- Use Next.js presets, root directories for each app, the root workspace install, and no Vite SPA rewrites.
+- Set canonical HTTPS `APP_URL`/`SITE_URL` origins and redeploy after changes.
+- Retire obsolete publication secrets (`VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GITHUB_REPO_ID`, `ENGINE_GIT_SHA`, `VERCEL_WEBHOOK_SECRET`) and the old build webhook if still configured.
+- Configure retention using [Site deletion](USUWANIE-REALIZACJI.md).
+- Keep the platform's trusted IP handling intact; a different hosting platform needs its own trusted IP extraction.
 
-## Migracja dawnych realizacji
+Organizers confirm their email and create their own sites; no platform-admin role is required. Organizers and guests share Auth infrastructure but use separate permissions and session cookies. A prior OTP user can set an organizer password through recovery. CAPTCHA needs corresponding application support before it is enabled.
 
-Migracja nie publikuje automatycznie starych wydań i nie usuwa deploymentów.
+## Publish and invite
 
-1. Zrób backup bazy, zinwentaryzuj stare projekty, deploymenty i domeny. Najpierw sprawdź nową aplikację na stagingu.
-2. Dla każdej realizacji wybierz szkic lub wydanie i opublikuj w nowym runtime. Ostatnie dawne wydanie mogło mieć nieudany build.
-3. Przekaż nowy adres. Jeśli zachowujesz stare domeny, przekieruj je do nowej strony bez serwowania dawnych plików.
-4. Przed włączeniem kodu/OTP usuń lub zabezpiecz WSZYSTKIE stare publiczne deploymenty, pliki i aliasy. Sprawdź anonimowo stare domeny, adresy `vercel.app` i bezpośrednie URL-e zdjęć. Zmiana DNS nie usuwa dawnych kopii.
-5. Dopiero po kontroli operator zeruje `sites.vercel_project_id` dla konkretnej realizacji. Niepuste pole blokuje chroniony tryb (`LEGACY_PUBLICATION_ACTIVE`). Nie zeruj go zbiorczo przed kontrolą.
-6. Usuń nieużywane projekty/webhooki. Zachowaj historię wydań i audytu. Nie usuwaj mediów przypisanych do wydań.
+1. Create a site, choose a template or blank start and content language, then edit and save.
+2. Set the general variant, access mode, and optional RSVP deadline (Europe/Warsaw). Access codes require at least eight characters; an empty code field during editing keeps the previous code.
+3. Publish. After the first publication, publish new variants before assigning invitations to them.
+4. Add a household, its guests, variant, and allowed email addresses. Each address represents that entire household.
+5. Copy the generated link securely. Only the hash is stored; rotating generates a new link and invalidates the old link and relevant sessions.
+6. Public household links allow RSVP; code mode also requires the site code, and email mode requires OTP. The general email entry lists invitations associated with the verified address.
+7. Review answers and notes in the panel. Guests may edit until the deadline; organizers may correct them afterward while an active publication exists.
 
-Rollback kodu musi wracać do zgodnego wspólnego runtime. Nie przywracaj statycznego procesu dla chronionych stron. Odtwarzanie bazy i rollback aplikacji są odrębne.
+No response differs from declining. Historical answers remain after events are removed. Access changes invalidate the relevant sessions; revocation does not erase content already downloaded.
 
-## Testy i odbiór stagingu
+## Transition from legacy public sites
 
-```powershell
-npm.cmd ci
-Copy-Item apps/admin/.env.example apps/admin/.env.local
-Copy-Item apps/site/.env.example apps/site/.env.local
-npm.cmd run typecheck
-npm.cmd run lint
-npm.cmd test
-npm.cmd run build:admin
-npm.cmd run build
-npm.cmd run test:e2e
-```
+Database migration neither publishes old releases nor removes old deployments.
 
-`npm run dev` uruchamia zaproszenia na 5173, `npm run dev:admin` panel na 3000. Jawne demonstracje zaproszeń: `/demo/glowna`, `/demo/pelna`, `/demo/ograniczona`; demonstracja panelu: `/demo` na porcie 3000. Błąd konfiguracji nie zastępuje strony klienta przykładem. Testy obsługują `E2E_SITE_URL` i `E2E_ADMIN_URL`. Skrypt `build:demo` używany w CI buduje pełną aplikację `apps/site`.
+1. Inventory and back up old projects, deployments, domains, database records, and media.
+2. Select the intended draft/release and publish through the shared runtime. Do not assume the latest legacy release had a successful build.
+3. Distribute the new address. If retaining an old domain, redirect it without serving legacy static files.
+4. Before enabling code/OTP protection, remove or secure **all** old public deployments, aliases, files, and direct image URLs. Changing DNS alone does not remove copies.
+5. After checking an individual site, clear its `sites.vercel_project_id`. The `LEGACY_PUBLICATION_ACTIVE` guard otherwise blocks protected access. Do not bulk-clear unchecked sites.
+6. Retire unused projects/webhooks while keeping release/audit history and referenced media.
 
-Testy automatyczne sprawdzają funkcje SQL i RLS w PGlite, projekcję treści, hashe kodów oraz interfejsy. Test `guest-api.test.ts` wykonuje rzeczywiste handlery Next.js i klienta Supabase przy kontrolowanym HTTP usług zewnętrznych oraz magazynie ciasteczek. Sprawdza m.in. autoryzację treści i zdjęć, unieważnianie sesji, RSVP i rozdzielenie limitów OTP. Testy gości/panelu w przeglądarce używają kontrolowanych odpowiedzi HTTP — nie potwierdzają SMTP ani produkcyjnego Storage.
+Rollback must return to a compatible shared runtime, not the old static publication process. Database recovery and application rollback are separate operations. Previously issued signed Storage URLs require the transition procedure in [Media lifecycle](USUWANIE-REALIZACJI.md).
 
-Konfigurację produkcyjną sprawdź osobno dla obu aplikacji (skrypt nie wypisuje wartości sekretów):
+## Acceptance on real services
 
-```powershell
-npm.cmd run check:production-env -- apps/admin/.env.production.local
-npm.cmd run check:production-env -- --site apps/site/.env.production.local
-```
+Run the local/CI checks in [Testing](TESTING.md), then separately verify on actual staging:
 
-Przed produkcją wykonaj na rzeczywistym stagingu Supabase:
+- Two organizer accounts, confirmation, and cross-account access denial.
+- Upload/read, publishing, independent draft edits, republishing, and content restoration.
+- All three access modes with fresh sessions.
+- Real OTP delivery, invalid/expired codes, disallowed addresses, and resending.
+- No private content in unauthenticated HTML, metadata, APIs, or direct media responses.
+- Rejection of another household's, guest's, event's, and image's IDs.
+- Revocation, code changes, and unpublishing with existing sessions.
+- RSVP for two guests, changed answers, two-tab conflicts, deadline behavior, and organizer correction.
+- No Vercel build triggered by content publication and no cross-site data mixing.
+- Template reset/snapshots, CSV, optional questions, calendar, and authorized reminder delivery when enabled.
 
-- rejestrację dwóch organizatorów, potwierdzenie e-maili i próbę dostępu do cudzej realizacji;
-- upload, publikację, niezależną edycję szkicu, ponowną publikację i cofnięcie wersji;
-- wejście we wszystkich trzech trybach na świeżych sesjach;
-- dostarczenie OTP, zły/wygasły kod, niedopuszczony e-mail i ponowną wysyłkę;
-- kontrolę HTML, metadanych, API i bezpośrednich zdjęć przed autoryzacją;
-- podmianę identyfikatorów rodziny, gościa, wydarzenia i zdjęcia na cudze;
-- cofnięcie dostępu, zmianę kodu oraz wycofanie publikacji przy istniejących sesjach;
-- RSVP za dwie osoby, zmianę odpowiedzi, konflikt dwóch kart, termin i poprawkę organizatora;
-- brak nowego deploymentu przy publikacji i brak mieszania danych dwóch realizacji.
+Record date, commit, environment, results, and untested paths. Automated HTTP mocks do not prove SMTP, Auth, or Storage delivery.
 
-Monitoruj 5xx, odrzucenia 429, dostarczalność SMTP i audyt publikacji/RSVP. Logi aplikacyjne zapisują kategorię oraz status błędu bez payloadu. Nie dodawaj kodów, tokenów, e-maili ani pełnych ścieżek `/i/...` do analityki. Ogranicz dostęp i retencję logów hostingu zawierających adresy. Skonfiguruj alarmy, backupy i test odtwarzania w usługach przed produkcją.
+## Operations
+
+Monitor 5xx errors, 429 responses, email delivery, and publication/RSVP audit records. Use request IDs for correlation. Do not log guest names, email addresses, codes, tokens, or full `/i/...` paths. Restrict retention/access to hosting logs that may contain URLs.
+
+Configure alerts, database and Storage backups, and recovery tests before production. For repository/domain changes, use [Staging operations](STAGING-OPERATIONS.md).

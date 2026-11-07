@@ -1,54 +1,63 @@
-# Redesign motywów — 10 koncepcji
+# Theme redesign — ten historical concepts
 
-Otwórz **index.html**: galeria zawiera po dwie propozycje dla każdego motywu, podgląd komputer/telefon, porównanie z obecnym wyglądem, uzasadnienie zmian oraz lokalną listę wyborów. Żywe makiety mają program, miejsce i sekcję RSVP. Formularz RSVP jest demonstracją wyglądu i nie zapisuje danych.
+Open [index.html](index.html) for two proposals per theme, desktop/mobile previews, comparisons, rationale, and a local selection list. Interactive mockups include schedule, venue, and a visual RSVP demonstration that does not save answers.
 
-**To propozycje, nie wdrożone motywy aplikacji.** Przykładowe dane i fotografie AI służą wyłącznie prezentacji. Zdjęcia, teksty i fonty są dostępne lokalnie; katalog działa bez usług zewnętrznych.
+**This directory is a design exploration, not the production application.** Some directions were subsequently selected; see [Current themes](../../docs/MOTYWY-I-PALETY.md). Example text and AI photographs are illustrative. Images, text, and fonts are local, so the gallery needs no external services.
 
-## Rekomendowane kierunki
+## Original recommendations
 
-| Obecny motyw | A | B | Moja rekomendacja |
-|---|---|---|---|
-| Klasyczna elegancja | Maison — ciepły, fotograficzny minimalizm | The Modern Vow — typografia bez zdjęcia | A jako motyw bazowy; B dla par bez fotografii |
-| Botaniczny ogród | Olive Atelier — jasna oliwka, asymetria | The Garden Society — leśna zieleń, symetria | A dla pleneru; B jako odważniejsza alternatywa |
-| Nowoczesny editorial | The Wedding Issue — magazyn i szeryf | Gallery 12 — galeria, sans i kobalt | B najlepiej odróżnia ten motyw od klasyki |
-| Wieczorowy blask | Midnight Cinema — fotografia i światło | Champagne Club — ciepłe art déco | A dla wieczornego klimatu; B bez zdjęcia |
-| Radosne świętowanie | Aperitivo — maślana żółć i burgund | Modern Muse — róż i śliwka | A daje radość przy zachowaniu elegancji |
+| Original theme | Concept A | Concept B | Recommendation at the time |
+| --- | --- | --- | --- |
+| Classic elegance | Maison — warm photographic minimalism | The Modern Vow — typography without a photo | A as a base; B for couples without a photo |
+| Botanical garden | Olive Atelier — light olive, asymmetry | The Garden Society — forest green, symmetry | A for outdoor events; B as a bolder alternative |
+| Modern editorial | The Wedding Issue — magazine serif | Gallery 12 — gallery, sans serif, cobalt | B best differentiates it from classic |
+| Evening glow | Midnight Cinema — photography/light | Champagne Club — warm art deco | A for evening mood; B without a photo |
+| Joyful celebration | Aperitivo — butter yellow/burgundy | Modern Muse — pink/plum | A balances joy and elegance |
 
-## Ocena obecnych widoków
+These recommendations are historical; they are not the final selection list.
 
-- **Klasyczny:** dobry punkt wyjścia w kolorze i kroju; ograniczyć konkurujące nagłówki, podwójne ramki i pustą przestrzeń bez wyraźnej funkcji.
-- **Botaniczny:** zieleń pasuje do charakteru, ale łuk zdjęcia i kafelki dominują nad subtelnym detalem roślinnym. Zbudować wyraźniejszą, indywidualną kompozycję.
-- **Editorial:** czytelny i uporządkowany, lecz za bliski ogólnej stronie firmowej. Wzmocnić skalę, siatkę i charakter redakcyjny.
-- **Wieczorowy:** dobry kontrast, ale panel zasłania fotografię, a liczne obramowania obciążają widok. Oprzeć klimat na zdjęciu i świetle lub pojedynczej geometrii.
-- **Radosny:** przyjazny, lecz przechylone zdjęcie i wiele miękkich pól osłabiają elegancję. Zostawić ekspresję kolorowi i literom.
+## Review of the earlier designs
 
-## Badanie i interpretacja
+- Classic: retain the color/type foundation; reduce competing headings, double frames, and purposeless empty space.
+- Botanical: greenery fits, but the photo arch and cards overwhelmed subtle plant detail; develop a more distinctive composition.
+- Editorial: readable but too close to a generic business site; strengthen scale, grid, and editorial character.
+- Evening: good contrast, but panels obscured photography and excessive borders added weight; focus on light/photo or one geometric element.
+- Celebration: friendly, but tilted images and many soft boxes weakened elegance; let color and type supply expression.
 
-Stan badania: **29.09.2026**. Materiały branżowe i aktualne kolekcje pokazują współistnienie kilku kierunków, nie jedną dominującą estetykę. To przegląd jakościowy; nie badano sprzedaży ani udziałów rynkowych.
+## Research record — 2026-09-29
 
-1. [Shutterfly — Top 7 Modern Wedding Invitation Trends for 2026](https://www.shutterfly.com/ideas/modern-wedding-invitation-trends/), aktualizacja 20.01.2026. Punkt odniesienia dla czytelnej hierarchii, oszczędnych układów, pojedynczej fotografii oraz cieplejszych palet.
-2. [Paperlust — 2026 Wedding Invitation Trends](https://paperlust.co/blog/2026-wedding-invitation-trends/). Inspiracja nowoczesnym szeryfem i typografią o skali magazynowej.
-3. [Every Little Something — 2026 Wedding Stationery Trends: What Is Actually Changing](https://everylittlesomething.com/2026-wedding-stationery-trends/). Perspektywa pracowni: materiał, powściągliwa kompozycja, świadoma przestrzeń i porządkowanie treści.
-4. [Papier — New In Wedding Invitations](https://www.papier.com/wedding/new-in/wedding-invitation). Przegląd oferty: botanika, ilustracja, typografia i kolorowe warianty.
+This was a qualitative review, not sales or market-share research. Sources showed several coexisting directions rather than one dominant style:
 
-Autorskie decyzje projektowe: konkretne palety, nazwy kierunków, siatki, podział sekcji, wybór fontów i fotograficzny klimat. Nie są to odtworzenia cudzych szablonów. Efekty papieru i druku przełożono na proporcje, linie i kontrast, zamiast symulować je ciężkimi teksturami.
+1. [Shutterfly — Top 7 Modern Wedding Invitation Trends for 2026](https://www.shutterfly.com/ideas/modern-wedding-invitation-trends/), recorded update 2026-01-20: hierarchy, restrained layouts, a single photo, warmer palettes.
+2. [Paperlust — 2026 Wedding Invitation Trends](https://paperlust.co/blog/2026-wedding-invitation-trends/): modern serif and magazine-scale typography.
+3. [Every Little Something — 2026 Wedding Stationery Trends](https://everylittlesomething.com/2026-wedding-stationery-trends/): material, restraint, intentional space, and content organization.
+4. [Papier — New In Wedding Invitations](https://www.papier.com/wedding/new-in/wedding-invitation): botanical, illustration, typography, and color directions.
 
-## Wspólne zasady przyszłego wdrożenia
+Palettes, names, grids, section layouts, fonts, and photographic direction are original design choices, not reproductions of those templates. Paper/print qualities were translated into proportion, lines, and contrast rather than heavy textures. The links are retained as historical references, not newly verified research.
 
-- Jedna główna akcja RSVP; data i miejsce blisko imion.
-- Nazwy sekcji i szczegóły czytelne w prostym kroju, co najmniej 16 px dla podstawowej treści.
-- Responsywne kompozycje z osobnym ustawieniem kadru zdjęcia na telefonie.
-- Wariant bez zdjęcia zaprojektowany świadomie, a nie jako puste pole.
-- Typografia elastyczna dla dłuższych imion; wdrożenie powinno uwzględnić również PL/EN/DE, inne wydarzenia i niestandardowe treści.
-- W wersji produkcyjnej sprawdzić kontrast wszystkich edytowalnych palet, nawigację klawiaturą, treści dynamiczne i autentyczny przepływ RSVP.
+## Implementation principles
 
-## Pliki i odtwarzanie
+- One primary RSVP action; date and venue near the main heading.
+- Readable section labels and body type, at least 16 px for core content.
+- Responsive compositions and separate mobile photo framing.
+- Deliberate no-photo layouts, not empty placeholders.
+- Flexible typography for long names, PL/EN/DE, other events, and custom content.
+- Production checks for editable-palette contrast, keyboard navigation, dynamic content, and real RSVP.
 
-- `overview.png` — wszystkie 10 propozycji na jednej planszy.
-- `previews/*-comparison.png` — 5 plansz A/B.
-- `previews/*-desktop.png` i `*-mobile.png` — indywidualne zrzuty.
-- `concepts/*.html`, `style.css` — responsywne makiety, zawierające dalsze sekcje.
-- `media/PROMPTS.md` — pełne prompty dwóch fotografii, wygenerowanych narzędziem wbudowanym image_gen.
-- `verification.json` — kontrola szerokości desktop/mobile, działania demonstracyjnego okna RSVP i błędów wykonania.
+## Files and regeneration
 
-W katalogu głównym repozytorium: `node assets/theme-redesign/build.mjs` odtwarza makiety i zrzuty za pomocą zainstalowanego Playwright. `node assets/theme-redesign/serve.mjs` udostępnia galerię lokalnie na porcie 4788. Makiety można też otworzyć bez serwera, bezpośrednio z pliku.
+- `overview.png`: all ten concepts.
+- `previews/*-comparison.png`: five A/B boards.
+- `previews/*-desktop.png` and `*-mobile.png`: individual screenshots.
+- `concepts/*.html`, `style.css`: responsive mockups.
+- [Media prompts](media/PROMPTS.md): full generation prompts.
+- `verification.json`: recorded desktop/mobile widths, demonstration RSVP dialog checks, and runtime errors.
+
+From the repository root:
+
+```sh
+node assets/theme-redesign/build.mjs
+node assets/theme-redesign/serve.mjs
+```
+
+The build uses installed Playwright to recreate mockups/screenshots. The server uses port 4788. Mockups can also be opened directly as files.

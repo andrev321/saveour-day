@@ -1,6 +1,6 @@
-# Fotografie koncepcyjne
+# Concept photographs
 
-Wygenerowane 29.09.2026 narzędziem wbudowanym image_gen, bez referencji do prawdziwych osób. Są materiałem ilustracyjnym propozycji, nie zdjęciami klientów. Oryginały zachowano w katalogu generated_images; kopie są częścią tego zestawu.
+Generated on 2026-09-29 with the built-in image_gen tool, without references to real people. These illustrate design proposals; they are not client photographs. The original record states that originals were retained in a generated_images directory; this set contains copies.
 
 ## garden.png
 
@@ -12,6 +12,6 @@ Use case: photorealistic-natural. Asset type: refined wedding website editorial 
 
 ## gathering.png
 
-Zdjęcie ilustracyjne do uniwersalnych zaproszeń, wygenerowane wbudowanym narzędziem image_gen. Nie przedstawia realizacji klienta.
+Illustrative photograph for general-purpose invitations, generated with the built-in image_gen tool. It does not depict a client's event.
 
 Use case: photorealistic-natural. Create an elegant editorial photograph for universal online invitations for birthdays, creative workshops, anniversaries and company gatherings. A beautifully understated table for a small creative social gathering on a Mediterranean garden terrace in soft late afternoon daylight. Linen tablecloth, sculptural ceramic dishes, clear glasses, a small arrangement of olive branches and seasonal muted apricot flowers, fresh fruit, simple neutral place cards with no writing. Thoughtful organic styling, sophisticated modern hospitality magazine aesthetic. No people, no wedding symbols, no bridal decor, no readable text, no logos, no balloons. Natural ivory, olive, stone and soft peach palette. Landscape 3:2 framing with main table on center-right; usable as a portrait crop in a website split hero. Realistic material texture, gentle grain, no exaggerated bokeh.

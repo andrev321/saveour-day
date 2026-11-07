@@ -1,83 +1,71 @@
-# Szablony startowe zaproszeń
+# Starter templates
 
-Implementacja: 2026-09-23. Plan uniwersalnych zaproszeń został zastąpiony tym opisem działania. Konfiguracja usług i zastosowanie trzeciej migracji pozostają osobnymi czynnościami operatora.
+Templates provide initial values for the shared editor, not separate application types. The application uses schema v3; see [Content editor](EDYTOR-TRESCI.md).
 
-## Wybór szablonu
+## Create an invitation
 
-Przycisk **Utwórz zaproszenie** otwiera popup wyboru szablonu, także w lokalnej demonstracji `/demo`. Żaden szablon nie jest wybrany automatycznie. Wpisz nazwę projektu, wybierz **Szablon startowy** i **Język treści szablonu**, a następnie utwórz zaproszenie. Nazwa projektu w panelu jest niezależna od głównego napisu widocznego dla gości.
+Choose Create invitation, enter a project name, select a starter template and its content language, then confirm. No template is selected automatically. The internal project name is separate from the heading guests see.
 
-Dostępne są: ślub, wesele, ślub i wesele, urodziny, impreza firmowa, rocznica/jubileusz, chrzciny/komunia, baby shower, parapetówka, spotkanie/warsztaty oraz **puste zaproszenie**. Każdy szablon ma treści PL/EN/DE. Przykładowe informacje należy dopasować przed publikacją. Pusty start nie zawiera osób, dat, wydarzeń, sekcji, kontaktów ani zdjęć.
+There are ten populated templates plus a blank option, each available in Polish, English, and German. Replace sample information before publishing. A blank invitation has no sample people, dates, events, sections, contacts, or photos. Changing the panel language does not translate existing content.
 
-Szablon dostarcza wartości początkowe wspólnego konfiguratora. Po wyborze można dowolnie edytować pola, układ i kolory. Nie powstaje osobny typ aplikacji. Zmiana języka panelu nie zmienia wpisanych treści.
+| Template | Default theme |
+| --- | --- |
+| Wedding ceremony | `classic` |
+| Wedding reception | `evening` |
+| Wedding and reception | `botanical` |
+| Birthday | `celebration` |
+| Company event | `editorial` |
+| Anniversary | `classic` |
+| Baptism / communion | `botanical` |
+| Baby shower | `celebration` |
+| Housewarming | `celebration` |
+| Meeting / workshop | `editorial` |
+| Blank invitation | `editorial` |
 
-## Zmiana w edytorze
+`packages/domain/src/templates.ts` is the source of template/theme assignments and initial styling. Avoid copying detailed palette defaults into multiple documents; see [Themes and palettes](MOTYWY-I-PALETY.md) for the current designs.
 
-W górnym pasku edytora kliknij ikonę **Zmień szablon startowy**. Otworzy się ten sam popup wyboru co przy tworzeniu projektu, tym razem z ostrzeżeniem o resecie konfiguracji. Wybierz szablon i język, przeczytaj zakres resetu i potwierdź **Zastąp konfigurację**. Wybór nie jest dokonywany automatycznie. Anulowanie ani samo otwarcie popupu nie zmienia szkicu.
+Any template can use any theme. Selecting another theme preserves content and section order while applying theme defaults. Replacing the entire template is the separate reset operation below.
 
-Reset zastępuje teksty, wydarzenia, sekcje, warianty, wygląd i przypisania zdjęć. Niezapisane zmiany są odrzucane. Serwer zachowuje kopię ostatniego **zapisanego** szkicu; jeśli chcesz zachować bieżące zmiany, najpierw je zapisz lub wyeksportuj.
+## Replace a template
 
-Pozostają: ID i adres strony, nazwa projektu, właściciel, ustawienia dostępu, termin RSVP, rodziny, linki, odpowiedzi i pliki biblioteki mediów. Publiczna strona zmieni się dopiero po publikacji nowego szkicu.
+Use the Change starter template control in the editor toolbar. It opens the same selector with a reset warning. Select a template and language and explicitly confirm replacement. Opening or canceling the dialog does not change the draft.
 
-Nowe wydarzenia dostają nowe ID. Stare odpowiedzi pozostają w historii, ale nie są odpowiedziami na nowe wydarzenia. Jeśli reset usuwa wariant używany przez aktywną rodzinę lub stronę ogólną, operacja jest blokowana i wskazuje zależności. Najpierw przypisz zachowany wariant główny lub cofnij odpowiednie zaproszenia.
+Reset replaces text, events, sections, variants, appearance, and photo assignments. Unsaved changes are discarded. The server saves a copy of the last **persisted** draft, so save or export current work first.
 
-## Kopie i pusty szkic
+Reset preserves the site ID/URL, internal name, owner, access settings, RSVP deadline, households, links, answers, and library files. Guests see the new content only after publication.
 
-W zakładce **Ustawienia**, w rozwijanej sekcji **Kopie szkicu**, z listy **Kopia zapisanego szkicu** wybierz jedną z 20 najnowszych kopii i kliknij **Przywróć kopię szkicu**. Przywrócenie również wymaga potwierdzenia, kontroli rewizji i zależności wariantów. Przed nadpisaniem zachowuje kolejną kopię. Nie jest rollbackiem publikacji.
+New events receive new IDs. Old RSVP answers remain historical rather than being assigned to new events. A reset that removes a variant used by an active invitation or the general page is blocked. Resolve those dependencies by assigning a retained variant or revoking the affected invitation first.
 
-Pusty szkic można zapisać bez wydarzeń i sekcji. Przed publikacją uzupełnij **Główny napis**. Brak daty czy zdjęcia nie blokuje publikacji. Gość zaproszenia bez wydarzeń zobaczy informację o braku wydarzeń do potwierdzenia.
+## Draft snapshots and blank drafts
 
-## Zgodność i testowanie
+In Settings → Draft snapshots, select one of the 20 latest copies and choose Restore draft snapshot. Restoration checks confirmation, revision, and variant dependencies and saves another snapshot before overwriting. It does not roll back the publication.
 
-### Domyślne motywy nowych szablonów
+A blank draft can be saved without events or sections. Publication requires the main heading; a date or photo is not mandatory. An invitation without events tells guests there are no events to confirm.
 
-Implementacja z 2026-09-28: pięć motywów `classic`, `botanical`, `editorial`, `evening` i `celebration` zastępuje dawne palety. Katalog `packages/domain/src/themes.ts` określa kolory, fonty, zaokrąglenia, domyślny układ hero, ikony i dekoracje. Przypisania i warianty palet szablonów znajdują się w `templateStyle` w `packages/domain/src/templates.ts`.
+## Sample photos
 
-Decyzja użytkownika: na tym etapie nie ma klientów i nie wymagamy kompatybilności wstecznej. Nowy system może zastąpić dotychczasowy format konfiguracji i stare motywy bez adapterów, migracji zachowujących wygląd ani obsługi wcześniej utworzonych stron. Przykłady, dane demonstracyjne i testy należy dostosować do nowego formatu. Opis istniejącej zgodności v1/v2 poniżej dokumentuje aktualną implementację, a nie wymaganie dla nowego systemu.
+The ten populated templates include an occasion-specific, AI-generated scene without people. The blank template has no photo. Birthday images contain no numbers or age. The photo area offers three scenes per occasion; baby shower includes neutral (default), girl, and boy variants. Sources are `templatePhotos` and `sample-photo-options.ts`.
 
-| Szablon startowy | Docelowy motyw | Ustawienia początkowe |
-| --- | --- | --- |
-| Ślub | Klasyczna elegancja | Krem i złoto, symetryczna kompozycja, cienkie ramki, subtelne ornamenty, bez ikon dekoracyjnych. |
-| Wesele | Wieczorowy blask | Granat i szampański akcent, geometryczne obramowania, wyeksponowane godziny programu, subtelne ikony. |
-| Ślub i wesele | Botaniczny ogród | Szałwia i kość słoniowa, łukowe zdjęcie, miękkie moduły, botaniczne separatory i cienkie ikony. |
-| Urodziny | Radosne świętowanie | Brzoskwinia i kobalt, kolorowe bloki, plakietka daty, pełniejsze ikony i dekoracje. |
-| Impreza firmowa | Nowoczesny editorial | Grafit i jasne tło, mocna typografia, otwarte sekcje z liniami, bez ornamentów. |
-| Rocznica / jubileusz | Klasyczna elegancja | Krem i srebrzystoszary akcent pasujący do przykładowych srebrnych godów, wyeksponowany jubileusz, delikatne ramki. |
-| Chrzciny / komunia | Botaniczny ogród | Jasna szałwia i krem, subtelne dekoracje roślinne, bez domyślnych symboli konkretnej ceremonii. |
-| Baby shower | Radosne świętowanie | Pastelowa brzoskwinia i jasny błękit, miękkie kształty, subtelne dekoracje, przyjazne ikony. |
-| Parapetówka | Radosne świętowanie | Ciepły krem i terakota, swobodne bloki, ikony modułów miejsca i kontaktu, subtelne dekoracje. |
-| Spotkanie / warsztaty | Nowoczesny editorial | Jasne tło i kobalt, czytelna agenda, oszczędne ikony informacyjne, bez ornamentów. |
-| Puste zaproszenie | Nowoczesny editorial | Neutralna paleta, bez dekoracji i ikon; nadal bez przykładowej treści i zdjęć. |
+Selecting a scene updates the main image while preserving existing project images and separate phone/tablet assignments. It can be undone; guests see it after saving and publishing.
 
-Zasady działania:
+Sample images are labeled as AI-generated. They may remain in published invitations, receive descriptions/crops, be replaced by uploads, or be removed from the invitation. Removal clears references across the draft but does not delete the shared sample file from other projects.
 
-- Szablon ustawia motyw, jego paletę, domyślną kompozycję i poziom dekoracji. Warianty kolorów nie są dodatkowymi motywami.
-- Każdy motyw jest dostępny dla każdego typu wydarzenia. Późniejsza zmiana samego motywu zachowuje treści, kolejność modułów i ustawienia widoczności; zastąpienie całego szablonu zachowuje opisane wyżej zasady resetu.
-- Przypisania są wspólne dla PL/EN/DE i mają jedno źródło w katalogu szablonów, używane przez tworzenie zaproszenia, reset i miniatury wyboru.
-- Miniatury pokazują przypisany wygląd oraz nazwę motywu. Podgląd musi dobrze wyglądać również po usunięciu przykładowego zdjęcia.
-- Przypisania obowiązują przy tworzeniu i zastępowaniu szablonu. Nie wymagamy zachowania działania ani wyglądu starych szkiców i publikacji; mogą wymagać ponownego utworzenia w nowym formacie.
-- Testy mają potwierdzać przypisania wszystkich szablonów w trzech językach, zgodność podglądu z wynikiem tworzenia oraz zachowanie treści przy zmianie samego motywu.
+Both applications ship identical, public, versioned WebP files under `/media/examples/` at 640, 1280, and 1536 px. `packages/domain/src/sample-media.ts` allows only exact bundled manifests. Private uploads retain their separate ownership/access checks. Do not overwrite or delete v1 sample files/manifests: published invitations may still use them.
 
-Obecny format to v3: `identity.displayName`, typowane sekcje oraz jawne listy uprawnień i rozmieszczenia sekcji dla każdego wariantu. Jednorazowa migracja `contextual_editor_v3` konwertuje szkice, kopie i wydania. Aplikacja nie zawiera adapterów v1/v2. Szczegóły: [Edytor treści](EDYTOR-TRESCI.md).
+Apply both `20261005123525_template_sample_media.sql` and `20261005200000_contextual_sample_media.sql` before deploying code that uses these manifests. They allow sample media in saves, creation, snapshots, and publication; they do not insert photos into existing sites. Samples appear on creation or confirmed template replacement.
 
-Demonstracja pod `/demo` panelu udostępnia przycisk „Utwórz zaproszenie”, otwierający popup. Dopiero zatwierdzenie nazwy i szablonu w popupie otwiera konfigurator. Opcjonalny przycisk „Otwórz gotowy przykład” otwiera wypełniony przykład do szybkiego przeglądu. Reset i kopie również można sprawdzić bez Supabase. Dane demonstracji znikają po odświeżeniu strony. Trwały zapis wymaga konfiguracji usług i wszystkich migracji.
+Prompts are in [Starter media](../assets/starter-media/PROMPTS.md); historical image sources are in [Concept media](../assets/theme-redesign/media/PROMPTS.md).
 
-Testy obejmują katalog we wszystkich językach, walidację pustego szkicu, tworzenie przez API, migrację v1, SQL resetu i kopii, izolację użytkowników, konflikty rewizji, zależności wariantów, zachowanie RSVP i publikacji oraz potwierdzenie/anulowanie resetu w przeglądarce.
+## Appearance and previews
 
-## Personalizacja motywu
+Themes use local font packages: Playfair Display/Inter, Cormorant Garamond/Inter, DM Sans, Bodoni Moda/Inter, and Fraunces/Nunito Sans. Browsers do not need a third-party font service. Without a hero image, the layout is typographic. Photo frames and galleries vary by theme.
 
-### Przykładowe zdjęcia
+Module icons and decoration levels (none/subtle/full) are independently configurable. Colors remain editable. Theme selection does not change template content or audience permissions.
 
-Od 2026-10-05 każdy z dziesięciu wypełnionych szablonów ma przykładowe zdjęcie główne. Pusty szablon nadal nie zawiera zdjęć. Zdjęcia przedstawiają scenerie dopasowane do okazji, bez ludzi. Urodziny nie zawierają liczb ani wieku. Przypisania znajdują się w `templatePhotos`. Sekcja Zdjęcia udostępnia po trzy gotowe scenerie dla każdej okazji oraz wybór kategorii. Baby shower ma wariant neutralny (domyślny), dziewczynka i chłopiec. Kliknięcie ustawia zdjęcie główne, zachowuje dotychczasowe zdjęcia w projekcie i niezależne przypisania na telefon/tablet. Zmianę można cofnąć; goście zobaczą ją po zapisie i publikacji. Katalog wyboru znajduje się w `sample-photo-options.ts`.
+The guest demo supports queries such as `/demo/glowna?theme=classic`. The local admin `/demo` supports creation, reset, and snapshots without Supabase; changes are temporary and disappear on refresh. Do not assume the admin demo is enabled on deployed environments.
 
-W zakładce **Zdjęcia** grafiki mają oznaczenie **Przykładowe zdjęcie** i informację, że powstały przy użyciu AI. Można pozostawić je w opublikowanym zaproszeniu, zmienić opis lub kadr, zastąpić własnym zdjęciem albo wybrać **Usuń z zaproszenia**. Usunięcie czyści przypisania tej grafiki w całym projekcie i można je cofnąć w edytorze. Nie usuwa pliku z innych projektów. Własne zdjęcia dodaje się standardowym przyciskiem przesyłania plików i wybiera jako zdjęcie główne.
+## Verification
 
-Nowe grafiki wygenerowano narzędziem imagegen; prompty opisuje `assets/starter-media/PROMPTS.md`. Historyczne grafiki pochodzą z `assets/theme-redesign/media`. Obie aplikacje dostarczają identyczne pliki WebP w rozmiarach 640, 1280 i 1536 px, pod publicznymi, wersjonowanymi adresami `/media/examples/`. Katalog `packages/domain/src/sample-media.ts` dopuszcza wyłącznie konkretne manifesty tych grafik. Prywatne zdjęcia użytkowników nadal podlegają dotychczasowej kontroli własności i dostępu. Plików i manifestów v1 nie należy nadpisywać ani usuwać, ponieważ mogą być używane przez opublikowane zaproszenia.
+Tests cover template/language combinations, blank-draft validation, API creation, reset/snapshot SQL, user isolation, revision conflicts, variant dependencies, RSVP/publication preservation, and browser confirmation/cancellation.
 
-Przed wdrożeniem aplikacji należy zastosować migracje `20261005123525_template_sample_media.sql` i `20261005200000_contextual_sample_media.sql`, która dopuszcza te manifesty przy zapisie, tworzeniu projektu, kopiach szkicu i publikacji. Migracja została sprawdzona lokalnie na pełnym łańcuchu migracji. Nie dodaje zdjęć do istniejących projektów; pojawiają się przy tworzeniu projektu lub potwierdzonym zastąpieniu szablonu.
-
-W Ustawieniach pięć przycisków z miniaturami zmienia motyw, paletę, domyślny układ hero i oprawę. Treści i kolejność sekcji pozostają zachowane. Ikony modułów można wyłączyć niezależnie od dekoracji (brak / subtelne / pełne). Kolory nadal można edytować osobno. Wybór szablonu startowego pokazuje jego domyślną paletę i nazwę motywu.
-
-Motywy korzystają z lokalnie dostarczanych fontów: Playfair Display + Inter, Cormorant Garamond + Inter, DM Sans, Bodoni Moda + Inter oraz Fraunces + Nunito Sans. Nie pobierają fontów z zewnętrznej usługi w przeglądarce. Bez zdjęcia hero jest kompozycją typograficzną. Ramki zdjęć i galeria mają warianty zależne od motywu.
-
-Demonstracja `/demo/glowna?theme=classic` obsługuje każdy z pięciu identyfikatorów motywu. Testy obejmują przypisania w PL/EN/DE, widok mobilny i desktop, brak poziomego przepełnienia, renderowanie bez JavaScript, zmianę motywu i wyłączenie dekoracji, a także zdjęcia i galerie w obu układach hero.
-
+Theme tests cover mobile/desktop layouts, no horizontal overflow, server-rendered output, optional photos, hero layouts, galleries, and decoration changes. Historical format conversions belong to migration tests; there are no v1/v2 runtime adapters.

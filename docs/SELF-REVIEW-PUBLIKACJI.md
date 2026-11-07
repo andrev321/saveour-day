@@ -1,30 +1,34 @@
-# Self-review publikacji — 2026-09-22
+# Publication self-review — 2026-09-22
 
-## Poprawione problemy
+**Historical report.** Results below describe checks recorded on that date, not the current commit or production readiness. Current workflows are in [Architecture](ARCHITEKTURA.md), [Testing](TESTING.md), and [Deployment](WDROZENIE-PLATFORMY.md).
 
-- Rotacja linku mogła reaktywować cofnięte zaproszenie do wariantu usuniętego z publikacji. Funkcja SQL sprawdza teraz wariant w aktualnej konfiguracji; test potwierdza również zachowanie cofnięcia po odrzuconej rotacji.
-- Historyczne odpowiedzi RSVP mogły zająć limit wyników Supabase przed aktualnymi odpowiedziami. Zapytanie filtruje wydarzenia przed pobraniem danych (maksymalnie 20 gości × 50 wydarzeń).
-- Wysyłka i weryfikacja OTP współdzieliły licznik prób. Mają oddzielne liczniki przy zachowaniu globalnego limitu IP.
-- Panel proponował warianty ze szkicu, które nie były jeszcze opublikowane. Pobiera teraz listę z publikacji, a przed pierwszą publikacją ze szkicu.
-- Utrata sesji podczas zapisu RSVP pozostawiała stary formularz. Interfejs ponownie sprawdza dostęp i wraca do odpowiedniej bramki. Adres `/v/` bez sesji w trybie publicznym/kodowym instruuje o użyciu oryginalnego linku.
-- Nieprawidłowy adres aplikacji mógł powodować błąd po utworzeniu zaproszenia. Adres jest weryfikowany przed mutacją.
-- Operacje na zaproszeniach resetowały niezapisane ustawienia dostępu. Odświeżają teraz dane bez nadpisywania formularza ustawień.
+## Fixes recorded
 
-## Cleanup
+- Link rotation could reactivate a revoked invitation whose variant was absent from the publication. SQL now checks the published variant; the test also verifies revocation survives rejected rotation.
+- Historical RSVP rows could exhaust the Supabase result limit before current answers. Queries filter events before fetching, within the 20 guests × 50 events bound.
+- OTP sending and verification shared an attempt counter. They now have separate counters plus the global IP limit.
+- The panel offered unpublished draft variants. After publication it uses published variants; before first publication it uses the draft.
+- Session loss during RSVP left a stale form. The interface rechecks access and returns to the appropriate gateway. A sessionless `/v/` route in public/code mode instructs guests to use the original link.
+- An invalid application URL could fail after invitation creation. URL validation now precedes mutation.
+- Invitation operations overwrote unsaved access settings. Refresh now preserves that form state.
 
-- Usunięto sztuczne rekordy deploymentów z API i edytora; historia korzysta bezpośrednio z wydań.
-- Usunięto nieużywany helper wymagający administratora platformy.
-- Ujednolicono schemat walidacji RSVP panelu i aplikacji gości.
-- Uzupełniono deklaracje zależności `server-only`, przykłady konfiguracji i walidację osobnego środowiska aplikacji gości.
-- Stare tabele i migrację zachowano dla historii oraz bezpiecznego przejścia istniejących realizacji.
+## Cleanup recorded
 
-## Weryfikacja
+- Removed synthetic deployment records from API/editor history; history uses releases directly.
+- Removed an unused platform-admin helper.
+- Unified RSVP validation between panel and guest application.
+- Added `server-only` dependency declarations, environment examples, and separate guest-environment validation.
+- Kept old tables/migrations for history and safe transitions.
 
-- TypeScript, ESLint, build produkcyjny panelu i aplikacji gości: poprawne.
-- 20 testów automatycznych: poprawne; obejmują SQL/RLS, projekcję, kryptografię, renderer i rzeczywiste handlery API.
-- 24 testy Playwright: poprawne. Po końcowych poprawkach powtórzono 4 testy gości/panelu, w tym nowy scenariusz utraty sesji: poprawne.
-- Testy API kontrolują zewnętrzne odpowiedzi Supabase i ciasteczka; nie zastępują odbioru na rzeczywistych usługach.
+## Verification recorded on 2026-09-22
 
-## Pozostałe czynności operacyjne
+- TypeScript, ESLint, and both production builds passed.
+- 20 automated tests passed, covering SQL/RLS, projection, cryptography, rendering, and actual API handlers.
+- 24 Playwright tests passed. Four guest/panel tests were repeated after final fixes, including session loss.
+- API tests controlled Supabase HTTP responses and cookies; they did not replace real-service acceptance.
 
-W środowisku roboczym nie ma poświadczeń Supabase ani skonfigurowanego SMTP. Nie zastosowano zdalnych migracji i nie wykonano produkcyjnego wdrożenia. Pozostają: konfiguracja usług i domen, migracje, odbiór rzeczywistego OTP/Storage na stagingu oraz wyłączenie dawnych publicznych deploymentów przed włączeniem ochrony. Kolejność i scenariusze odbioru opisano w [instrukcji wdrożenia](WDROZENIE-PLATFORMY.md).
+## Operational state at the time
+
+The working environment had no Supabase credentials or configured SMTP. No remote migrations or production deployment were performed in that review. Service/domain setup, migrations, real OTP/Storage acceptance, and disabling legacy public copies remained.
+
+Later staging work is recorded separately in [Staging status](STAGING-STATUS.md). Do not carry these historical blockers or passing counts forward as current facts.

@@ -1,70 +1,69 @@
-# Staging — stan 2026-09-30
+# Staging status and deployment history
 
-Obie aplikacje są wdrożone (READY), ale pełny odbiór OTP, zdjęć i RSVP nie jest zakończony. Wybrano testową wysyłkę Resend bez własnej domeny; SMTP jest aktywne, trzy szablony Auth zapisane, a rejestracja i potwierdzenie e-maila zostały sprawdzone.
+**Current addresses were verified on 2026-11-07.** The service/migration evidence below is a historical record from September–October 2026, not a fresh audit of Supabase, SMTP, or complete user flows.
 
-## Adresy i wdrożenia
+## Current addresses
 
-| Aplikacja | Adres |
+| Application | URL |
 | --- | --- |
-| Panel | https://example-admin-staging.example.com |
-| Zaproszenia | https://example-site-staging.example.com |
+| Admin | https://example-admin-staging.example.com |
+| Guest site | https://example-site-staging.example.com |
 
-Branch `main`, repozytorium GitHub `andrev321/slub-strona`. Zespół Vercel: `example-team`. Stary projekt `slub-strona` pozostał bez zmian. Bieżący commit i identyfikatory wdrożeń sprawdzaj w historii Git oraz panelu Vercel.
+Repository: `andrev321/saveour-day`; branch: `main`; Vercel team: `example-team`. Projects were renamed to `example-admin-staging` and `example-site-staging`. The separate legacy `slub-strona` project was left unchanged.
 
-Oba projekty: Next.js, Node 24.x, Root Directory odpowiednio `apps/admin` i `apps/site`, włączony dostęp do plików poza Root Directory. Install Command:
+Both new origins returned application HTML through authenticated Vercel fetches. The README commit `8855fc6990b6040dacfc76aa1c15b10e1d6d0219` triggered automatic Git deployments. See [Staging operations](STAGING-OPERATIONS.md) for the URL-change follow-up: canonical environment variables, Auth redirects, and test variables were not verified during that change.
+
+Both projects were configured as Next.js, Node 24.x, with roots `apps/admin`/`apps/site` and access to files outside those roots. The working Install Command was:
 
 ```sh
 cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
 ```
 
-Pierwsze buildy nie instalowały wspólnych zależności z głównego package.json. Powyższa komenda naprawiła problem; oba ponowne wdrożenia zakończyły się sukcesem. Zmienne zapisano w zakresie Production osobnych projektów stagingowych. To nadal staging, a nie środowisko klientów. Klucz serwerowy wprowadził właściciel bezpośrednio w Vercelu.
+Initial builds omitted root workspace dependencies; this command resolved that issue. Variables were placed in the Production target of the separate **staging** projects. The owner entered privileged keys directly into service settings.
 
-## Supabase i weryfikacja
+## Recorded Supabase/Auth setup
 
-- Projekt stagingu: `example-staging-project`, Frankfurt; API: https://example-staging-project.example.com.
-- Zastosowane trzy migracje; 13 tabel z RLS; prywatny bucket `site-media`, limit 8 MiB, JPEG/PNG/WebP.
-- Site URL zapisany: `https://example-admin-staging.example.com`.
-- Redirect URL zapisany: `https://example-admin-staging.example.com/auth/confirm`.
-- Potwierdzono: Email Enabled, rejestracje włączone, Confirm email włączone, anonymous sign-ins wyłączone.
-- Lokalne typecheck, lint, 24 testy i oba buildy przeszły.
-- W przeglądarce działa ekran logowania panelu i demonstracja `/demo/glowna` zaproszeń; brak błędów konsoli podczas tych kontroli.
-- Rejestracja i potwierdzenie konta przez Resend działają. Nie wykonano jeszcze pełnego testu resetu hasła, OTP, uploadu, publikacji ani RSVP na prawdziwych usługach.
+Staging project: `example-staging-project`, Frankfurt; API: https://example-staging-project.example.com.
 
-## Resend — testy bez własnej domeny
+The initial setup recorded three migrations, 13 RLS-enabled tables, and a private `site-media` bucket (8 MiB, JPEG/PNG/WebP). Later migrations below supersede that initial snapshot.
 
-Właściciel wybrał wariant testowy `onboarding@resend.dev`. Resend nie ma dodanej własnej domeny. Ten nadawca pozwala wysyłać tylko do dokładnego adresu właściciela konta Resend, potwierdzonego w rozmowie. Inne adresy, w tym aliasy z plusem, nie są objęte tym testem.
+Auth settings recorded: email enabled, registrations and confirmation enabled, anonymous sign-ins disabled. At the time, Site URL was `https://example-admin-staging.example.com` and the redirect ended in `/auth/confirm`. **These are historical configured values, not the new desired origins.** Their update after renaming has not been confirmed here.
 
-W formularzu Supabase → Authentication → Emails → SMTP Settings przygotowano poniższe parametry. **Właściciel zapisał klucz API, custom SMTP jest aktywne.** Potwierdzono odblokowanie edycji szablonów oraz zapis szablonów Confirm sign up, Magic link or OTP i Reset password.
+Registration and email confirmation through Resend were verified. Full real-service password recovery, guest OTP, upload/publication, and RSVP acceptance was not completed in the original setup. Initial local typecheck/lint, 24 tests, and both builds passed; login and guest demo checks had no console errors.
 
-| Pole | Wartość |
+## Recorded Resend test setup
+
+The owner selected `onboarding@resend.dev` without a custom sender domain. This restricted sender was intended only for the exact Resend account-owner address; other recipients and plus aliases were outside that test.
+
+| Setting | Recorded value |
 | --- | --- |
-| Host | `smtp.resend.com` |
+| SMTP host | `smtp.resend.com` |
 | Port | `465` |
 | Username | `resend` |
-| Password | klucz API Resend, wpisany bezpośrednio w Supabase |
-| Sender email | `onboarding@resend.dev` |
-| Sender name | `Pracownia zaproszeń — staging` |
-| Minimum interval per user | `60` sekund |
+| Password | Sending API key entered directly in Supabase |
+| Sender | `onboarding@resend.dev` |
+| Sender name | `Pracownia zaproszeń — staging` (historical configured label) |
+| Minimum interval per user | 60 seconds |
 
-Klucz `example-staging-sender` z uprawnieniem `Sending access` został zapisany bezpośrednio w Supabase. Hasło SMTP nie trafia do Vercela; SDK Resend w aplikacji nie jest potrzebne. Wszystkie trzy szablony zostały zapisane zgodnie z checklistą (polskie tematy i treści).
+The `example-staging-sender` sending key was saved by the owner; custom SMTP became active. Confirm signup, Magic Link/OTP, and Reset password templates were saved with Polish subjects/content. Registration and confirmation were tested; reset and guest OTP remained to be tested with the authorized mailbox, assigned to a household for OTP.
 
-Pozostaje przetestować reset hasła i OTP na skrzynce właściciela Resend. Dla OTP przypisz ten sam adres do rodzinnego zaproszenia.
+Authentication email uses Supabase SMTP, not a Vercel Resend key. The later optional reminder feature separately requires admin `RESEND_API_KEY` and `REMINDER_FROM`.
 
-## Panel i kody QR
+Before testing other recipients, verify a sender domain, apply provider-supplied DNS records, update the sender/key scope as appropriate, and check delivery limits/link tracking. Application domains can remain on `vercel.app`.
 
-Po potwierdzeniu adresu e-mail panel pokazuje komunikat o aktywacji konta. Nowe szablony wydarzeń osobistych zawierają spójne, fikcyjne imiona i przykładowe treści w języku polskim, angielskim i niemieckim.
+Historical references: [Supabase with Resend SMTP](https://resend.com/docs/send-with-supabase-smtp), [resend.dev restrictions](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain).
 
-Sekcja „Publikacja, goście i odpowiedzi” zawiera generator kodu QR publicznego adresu zaproszenia. Generator działa lokalnie w przeglądarce, pozwala wybrać kolor kodu i tła, styl elementów oraz serduszko pośrodku. Po publikacji kod można skopiować do schowka jako PNG. Należy sprawdzić odczyt gotowego kodu co najmniej dwoma telefonami, szczególnie po zmianie kolorów.
+## Panel and QR checks recorded
 
-Do testów z innymi organizatorami i gośćmi potrzebna będzie własna domena nadawcza: dodaj ją w Resend, ustaw dokładne rekordy DNS wskazane przez usługę, poczekaj na weryfikację i zmień Sender email oraz ewentualne ograniczenie klucza. Aplikacje mogą pozostać na adresach vercel.app. Wyłącz śledzenie linków dla maili Auth i sprawdź limity wysyłki.
+After email confirmation, the panel showed an account-activation message. Personal-event templates used consistent fictional examples in PL/EN/DE.
 
-Źródła: [Supabase + Resend SMTP](https://resend.com/docs/send-with-supabase-smtp), [ograniczenia resend.dev](https://resend.com/docs/knowledge-base/403-error-resend-dev-domain).
+The general invitation QR generator ran locally in the browser, with code/background colors, element style, and a center heart. Published codes could be copied as PNG. Scanning with at least two phones, particularly after color changes, remained an acceptance step. Later guest management also added household QR codes.
 
-## Historia migracji
+## Recorded migration mappings
 
-Integracja nadała własne wersje historii. Nie uruchamiaj ponownie migracji ani `supabase db push` bez uzgodnienia historii lokalnej i zdalnej:
+The integration assigned remote versions different from local filenames. Do not replay migrations or run `supabase db push` without reconciling actual history.
 
-| Plik lokalny | Zdalna wersja | Nazwa |
+| Local file | Recorded remote version | Name |
 | --- | --- | --- |
 | 202609200001_platform.sql | 20260924210635 | platform |
 | 202609210001_guest_platform.sql | 20260924210649 | guest_platform |
@@ -75,83 +74,79 @@ Integracja nadała własne wersje historii. Nie uruchamiaj ponownie migracji ani
 | 20260929112149_fix_storage_media_read_policy.sql | 20260929112326 | fix_storage_media_read_policy |
 | 20260929112334_delete_unused_media.sql | 20260929113018 | delete_unused_media |
 | 20260930165858_harden_media_lifecycle.sql | 20260930173525 | harden_media_lifecycle |
+| 20260930204955_contextual_editor_v3.sql | 20261001054945 | contextual_editor_v3 |
+| 20261005123525_template_sample_media.sql | 20261005193143 | template_sample_media |
 
-## Odczyt i usuwanie zdjęć — 29.09.2026
+This is recorded evidence, not a complete live migration listing. The repository also includes product-review and contextual-sample-media migrations whose remote versions were not recorded in the source report. Verify them against actual history before a release.
 
-Naprawiono politykę `storage.objects.read_own_media`: niekwalifikowane `name` w podzapytaniu odnosiło się do `sites.name`, więc właściciel nie mógł generować podpisanych adresów zdjęć. Reguła używa teraz `storage.objects.name`. Na rzeczywistym koncie właściciela, przez transakcyjne ustawienie roli do testu RLS, potwierdzono widoczność sześciu plików obu zdjęć. Test lokalny odtwarzał brak dostępu przed poprawką i sprawdza odczyt właściciela, członka oraz izolację pozostałych realizacji po poprawce.
+## 2026-09-29: Storage read and deletion fixes
 
-Wdrożono funkcje rezerwacji i finalizacji usuwania nieużywanego zdjęcia. Dostęp do nich ma wyłącznie serwer (`service_role`), a aktor jest sprawdzany w bazie. Nie usuwano zdjęć użytkownika w ramach weryfikacji. Testy usuwania korzystają z odizolowanej bazy i atrap Storage. Doradca bezpieczeństwa nie zgłosił nowych ostrzeżeń związanych z tymi funkcjami.
+The `storage.objects.read_own_media` policy incorrectly resolved an unqualified `name` to `sites.name`. Qualifying `storage.objects.name` restored owner signed-URL access at that time. A transactional owner/RLS check confirmed six files for two images; local tests covered owner/member access and isolation. **The later September 30 lifecycle change removed client signed-URL reads, superseding this flow.**
 
-## Usuwanie realizacji — 29.09.2026
+Unused-image reservation/finalization functions were deployed, restricted to the service role with actor validation in SQL. No user images were deleted during verification. Isolated database tests and Storage fakes exercised deletion; no new function-related advisor warnings were recorded.
 
-Wdrożono migracje soft delete oraz Edge Function `purge-sites` (wersja 1). Aktywny Cron `purge-deleted-sites-monthly` ma harmonogram `0 3 1 * *` (03:00 UTC, pierwszy dzień miesiąca). Funkcja odrzuciła próbę z nieprawidłowym tokenem kodem 403. Sprawdzono uprawnienia: funkcje czyszczące nie są wykonywalne przez `anon` ani klienta panelu. Nie usuwano istniejących realizacji podczas weryfikacji; mechanizm trwałego usuwania sprawdzono na odizolowanej bazie PGlite i atrapach Storage.
+Soft-delete migrations and `purge-sites` Edge Function version 1 were deployed. Cron `purge-deleted-sites-monthly` was active at `0 3 1 * *` (03:00 UTC on the first day). Invalid job tokens returned 403, and purge functions were unavailable to anon/authenticated clients. No existing sites were purged; positive deletion used isolated PGlite/Storage fakes.
 
-Szczegóły retencji, konfiguracji oraz kontroli nieudanych zadań: [Usuwanie realizacji](USUWANIE-REALIZACJI.md).
+## 2026-09-30: Media lifecycle hardening
 
-Doradca zgłasza `extension_in_public` dla nowo włączonego `pg_net`. Automatyczna kontrola odrzuciła jego odtworzenie w schemacie `extensions` ze względu na ryzyko przerwania dispatchera. Rozszerzenie pozostaje w dotychczasowej lokalizacji. Migracja `isolate_purge_extension` zawiera tylko REVOKE USAGE, ale ponowna kontrola wykazała, że uprawnienia nadane przez właściciela `supabase_admin` nadal obowiązują na zarządzanym środowisku. Schemat `net` nie jest standardowo udostępniony przez Data API; nie należy go tam dodawać. Nie traktuj samego sukcesu tej migracji jako potwierdzenia cofnięcia uprawnień. [Opis ostrzeżenia](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [uprawnienia pg_net](https://supabase.com/docs/guides/database/extensions/pg_net#permissions).
+PR #1 merged as `9905cac55f2a9db50a8d4f5434d638bdc5fe7b8f`. Git integration deployed the applications before the migration; the database was updated at 17:35 UTC (19:35 Poland). Future incompatible changes must use the coordinated sequence in [Deployment](WDROZENIE-PLATFORMY.md).
 
-## Wynik doradcy bezpieczeństwa
-
-Doradca zwrócił ostrzeżenia o wykonywaniu funkcji SECURITY DEFINER: `can_access_site`, `is_platform_admin` oraz zastanej funkcji `rls_auto_enable`. Dwie pierwsze mają w kodzie kontrolę tożsamości i obsługują RLS; samo ostrzeżenie nie dowodzi obejścia uprawnień. Przed produkcją przejrzyj uprawnienia tych funkcji, w szczególności anonimowy EXECUTE oraz funkcję zastaną. Nie zmieniano ich poza migracjami repozytorium.
-
-Wskazówki: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable i https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable.
-
-Informacje o braku polityk dla `access_attempts` i `guest_sessions` są zgodne z projektem: dostęp tylko przez serwer, RLS włączone, brak uprawnień anon/authenticated. Nie dodawaj publicznych polityk dla tych tabel.
-
-
-
-
-
-## Poprawki cyklu mediów — wdrożone 30.09.2026
-
-PR #1 został scalony do `main` jako `9905cac55f2a9db50a8d4f5434d638bdc5fe7b8f`. Integracja GitHub–Vercel automatycznie wdrożyła obie aplikacje przed zastosowaniem migracji; baza została następnie zaktualizowana o 17:35 UTC (19:35 w Polsce). Dla kolejnych zmian wymagających migracji stosuj kolejność opisaną w instrukcji wdrożenia.
-
-| Komponent | Potwierdzony stan |
+| Component | State recorded after migration |
 | --- | --- |
-| Panel | READY, `[redacted-id]`, alias `example-admin-staging.example.com` |
-| Zaproszenia | READY, `[redacted-id]`, alias `example-site-staging.example.com` |
-| Supabase | `harden_media_lifecycle`, wersja historii `20260930173525` |
-| Worker purge | ACTIVE, wersja 1; kod zgodny z repozytorium, bez potrzeby ponownego wdrożenia |
-| Cron purge | Aktywny, `0 3 1 * *`, poprawny adres workera |
+| Admin | READY, `[redacted-id]`, former `example-admin-staging.example.com` alias |
+| Guest site | READY, `[redacted-id]`, former `example-site-staging.example.com` alias |
+| Supabase | `harden_media_lifecycle`, remote version `20260930173525` |
+| Purge worker | ACTIVE version 1; repository code matched, no redeployment needed |
+| Purge Cron | Active `0 3 1 * *`, correct worker URL |
 
-Weryfikacja na stagingu po migracji:
-- Prywatny bucket `site-media`; jedyna polityka klienta Storage to INSERT przez `can_upload_media`. Kolumna `original_path` jest ukryta przed klientem.
-- Funkcje rezerwacji, finalizacji i usuwania są dostępne wyłącznie dla `service_role`.
-- Test w transakcji z ROLLBACK potwierdził rezerwację uploadu, zgodę tylko na właściwą ścieżkę wariantu, odmowę odczytu Storage przez właściciela, stan terminalny `deleting`, odrzucenie spóźnionej finalizacji oraz zakończenie usuwania metadanych.
-- Panel główny i demo zaproszeń zwracają 200. Niezalogowane wywołania listy realizacji, uploadu i odczytu zdjęcia zwracają 401 z `no-store`; nieistniejące zaproszenie zwraca 404.
-- Worker odrzuca nieprawidłowy token zadania kodem 403; uprawnienia klienta do funkcji purge pozostają zablokowane.
-- Zachowano 2 istniejące rekordy zdjęć i 6 obiektów Storage. Nie uruchamiano purge istniejących realizacji ani nie usuwano zdjęć użytkownika.
-- Brak logów error/fatal obu wdrożeń w sprawdzonym okresie po zastosowaniu migracji.
+Recorded verification:
 
-CI PR #1 zakończyło się sukcesem: 36 testów (w tym współbieżność na PostgreSQL), 54 E2E, lint, TypeScript i buildy demo/panelu; build zaproszeń przeszedł również lokalnie. W tej kontroli stagingu nie wykonano pełnego uploadu/odczytu z sesją użytkownika ani pozytywnego trwałego purge na rzeczywistym Storage.
+- Private bucket; only client Storage INSERT through `can_upload_media`; `original_path` hidden.
+- Reservation/finalization/deletion functions restricted to service role.
+- A transaction rolled back after testing upload reservation, exact variant path authorization, denied owner Storage reads, terminal deleting, late-finalization rejection, and metadata removal.
+- Panel root/demo returned 200. Unauthenticated list/upload/media APIs returned 401 with no-store; nonexistent invitation returned 404.
+- Invalid purge token returned 403; client purge execution remained denied.
+- Two media records and six Storage objects were preserved; no user image deletion or existing-site purge.
+- No error/fatal deployment logs in the inspected post-migration window.
 
-Doradca bezpieczeństwa nadal zgłasza wcześniejsze ostrzeżenia dla `pg_net`, funkcji pomocniczych SECURITY DEFINER i wyłączonej ochrony przed wyciekłymi hasłami. Nowe ostrzeżenie dla `can_upload_media` wynika z celowego EXECUTE dla authenticated: funkcja kontroluje tożsamość, realizację, stan uploadu, jego wygaśnięcie i tajną ścieżkę, a dostęp anon jest cofnięty. Nie zmieniano niezwiązanej konfiguracji Auth ani zarządzanego rozszerzenia.
+PR CI passed 36 tests (including PostgreSQL concurrency), 54 E2E, lint, TypeScript, and demo/admin builds; guest build also passed locally. Full authenticated real upload/read and positive irreversible purge against live Storage were not tested.
 
-Ograniczenie wdrożenia: wcześniej wystawione signed URLs nie zostały odwołane. Stare tokeny uploadu mogą działać do dwóch godzin, a tokeny odczytu do swojego terminu wygaśnięcia; klient z dawnym SELECT mógł wystawić dłuższe. Nowe API ich nie wystawia. Szczegóły i procedura natychmiastowego odcięcia dawnych uprawnień: [Usuwanie realizacji](USUWANIE-REALIZACJI.md), sekcja „Cykl mediów po poprawkach z 30.09.2026”.
+Previously issued signed URLs were not revoked. Old upload tokens could remain valid for two hours; read tokens until expiry, possibly longer if issued by clients with historical SELECT access. See [Media lifecycle](USUWANIE-REALIZACJI.md) for the transition procedure.
 
-Źródła ostrzeżeń doradcy: [SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [ochrona haseł](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+## 2026-10-01: Contextual editor v3
 
+Change `0a38e3b` reorganized the editor around sections, in-place event/venue/contact editing, per-use crops, and independent variant order/visibility/event permissions. Runtime accepts only v3.
 
-## Edytor kontekstowy v3 — wdrożony 01.10.2026
+The first migration attempt rolled back because archived-site protection blocked conversion. Fix `21b6c9c` included archives, locked four tables during conversion, temporarily suspended required triggers, and restored them before commit. Deletion state, IDs, and media paths were preserved.
 
-Zmiana `0a38e3b` przebudowuje panel wokół sekcji zaproszenia. Program zawiera edycję wydarzeń i miejsc, kontakt zawiera edycję osób, a kadry zdjęć należą do konkretnego użycia. Warianty mają własną kolejność, widoczność sekcji i uprawnienia do wydarzeń. Kod przyjmuje wyłącznie konfiguracje v3.
+Recorded after migration:
 
-Migracja `20260930204955_contextual_editor_v3.sql` została zastosowana jako zdalna wersja `20261001054945`. Pierwsza próba wycofała się z powodu ochrony archiwalnej, usuniętej realizacji. Poprawka `21b6c9c` konwertuje także archiwa: w transakcji blokuje cztery tabele, zawiesza potrzebne triggery tylko na czas konwersji i przywraca je przed zatwierdzeniem. Nie zmienia stanu usunięcia, identyfikatorów ani ścieżek zdjęć.
+- All seven stored draft/release/history configurations passed strict v3 validation without normalization.
+- A site created during rollout brought the count to three sites/drafts, two releases, two snapshots, and two media records.
+- No old `upgrade_config_v2` or helper adapters remained; protection triggers were active.
+- Snapshot restore, publish, and stale-revision rejection were tested in a rolled-back transaction.
+- No new advisor warnings compared with the previous state.
+- Both Vercel apps were READY; guest demo worked. Admin required login and its development `/demo` route was disabled on Vercel. Full editor checks were local/CI.
 
-Potwierdzono po migracji:
+CI for `0a38e3b` passed typecheck, lint, 42 tests with PostgreSQL, builds, and 59 E2E. Older database fixtures were then updated to include prerequisite migrations/triggers; consult GitHub Actions for that final commit's result.
 
-- Wszystkie 7 istniejących konfiguracji szkiców, publikacji i historii przechodzi ścisłą walidację v3 bez dodatkowego normalizowania w aplikacji. Podczas wdrożenia powstała kolejna realizacja; obecny stan to 3 realizacje i szkice, 2 publikacje, 2 migawki i 2 rekordy mediów.
-- Nie pozostały adaptery `upgrade_config_v2` ani pomocnicze funkcje konwersji. Wszystkie triggery ochronne są aktywne.
-- Test procedur przywrócił migawkę, opublikował szkic i odrzucił nieaktualną rewizję. Cała kontrola zakończyła się ROLLBACK, bez trwałych zmian treści użytkownika.
-- Doradca bezpieczeństwa nie zgłosił nowych ostrzeżeń względem stanu przed zmianą. Wcześniejsze uwagi opisano powyżej.
-- Oba projekty Vercel są READY; publiczne demo zaproszeń działa w przeglądarce. Panel wymaga logowania, a deweloperska ścieżka `/demo` pozostaje wyłączona na Vercelu. Pełny edytor zweryfikowano lokalnymi E2E i w CI.
+## 2026-10-05: Sample media
 
-Pełne CI zmiany interfejsu (`0a38e3b`) przeszło: TypeScript, lint, 42 testy z PostgreSQL, buildy oraz 59 E2E. Po poprawce migracji uzupełniono starsze fixture'y testów bazowych o wszystkie poprzedzające migracje; ich skrócony schemat nie zawierał wymaganych triggerów. Bieżący wynik końcowego CI jest dostępny w GitHub Actions.
+`template_sample_media` was applied as remote `20261005193143` to `example-staging-project`; local file `20261005123525_template_sample_media.sql`. Earlier migrations were compared by name because timestamps differed.
 
-## Przykładowe zdjęcia — 2026-10-05
+SQL accepted exact sample manifests, rejected substituted paths, and confirmed no direct anon/authenticated EXECUTE on the new private function. Local checks: 55 tests passed, one external-PostgreSQL test skipped; nine E2E, lint, TypeScript, and both builds passed. No new migration-function advisor warnings were reported.
 
-Zastosowano migrację `template_sample_media` na stagingu `example-staging-project`; wersja historii zdalnej: `20261005193143`, plik lokalny: `20261005123525_template_sample_media.sql`. Wcześniejsze migracje zweryfikowano po nazwach (historia zdalna ma inne znaczniki czasu).
+## Historical advisor findings and remaining acceptance
 
-Kontrola SQL potwierdziła akceptację kompletnego manifestu przykładu, odrzucenie podmienionej ścieżki i brak bezpośredniego EXECUTE dla anon/authenticated na nowej funkcji prywatnej. Lokalnie: 55 testów poprawnych, 1 test zewnętrznego PostgreSQL pominięty; 9 E2E, lint, TypeScript i oba buildy poprawne.
+These findings were recorded then, not re-queried for this documentation update:
 
-Advisors nie wskazał nowych funkcji tej migracji. Zgłosił istniejące ustawienia poza jej zakresem: pg_net w public, dostępność wcześniejszych funkcji SECURITY DEFINER, wyłączoną ochronę wyciekłych haseł oraz informacyjne RLS bez polityk na tabelach obsługiwanych przez serwer. Odnośniki do analizy: [rozszerzenia](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [funkcje dostępne anonimowo](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [funkcje użytkowników](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [ochrona haseł](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+- `extension_in_public` for pg_net. Automatic approval rejected recreating it in `extensions` because that could disrupt the dispatcher. It remained in place.
+- `isolate_purge_extension` contained REVOKE USAGE, but managed grants from `supabase_admin` still applied. Do not treat migration success as proof of revocation. Do not expose `net` through the Data API.
+- SECURITY DEFINER warnings for `can_access_site`, `is_platform_admin`, and pre-existing `rls_auto_enable`; the first two check identity for RLS, but permissions still require production review.
+- `can_upload_media` intentionally grants authenticated EXECUTE and checks identity/site/state/expiry/secret path; anon access was revoked.
+- Leaked-password protection was disabled.
+- RLS without client policies on `access_attempts` and `guest_sessions` was intentional: server-only access.
+
+References: [pg_net permissions](https://supabase.com/docs/guides/database/extensions/pg_net#permissions), [extension warning](https://supabase.com/docs/guides/database/database-linter?lint=0014_extension_in_public), [anonymous SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable), [authenticated SECURITY DEFINER](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable), [password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Use [Testing](TESTING.md) and the [acceptance checklist](WDROZENIE-PLATFORMY.md) to close real SMTP/OTP, authenticated media, RSVP, and production-readiness gaps. Do not convert historical observations into a claim that all current flows have passed.

@@ -1,12 +1,12 @@
-# Scenerie startowe — 2026-10-05
+# Starter scenes — 2026-10-05
 
-Wygenerowano wbudowanym narzędziem imagegen. Docelowe pliki w obu aplikacjach: `public/media/examples/*-v1-{640,1280,1536}.webp`.
+Generated with the built-in imagegen tool. Target files in both applications: `public/media/examples/*-v1-{640,1280,1536}.webp`.
 
-Wspólne ograniczenia: realistyczna fotografia edytorialowa, 1536 × 1024, przyjemne naturalne światło, brak ludzi, twarzy, dłoni, portretów, tekstu, liczb, wieku, logotypów i znaków wodnych. Urodziny: wyłącznie zwykłe świeczki, bez cyfr. Baby shower: neutralny (szałwia/krem/beż), dziewczynka (róż/krem), chłopiec (błękit/krem).
+Shared constraints: realistic editorial photography, 1536 × 1024, pleasant natural light; no people, faces, hands, portraits, text, numbers, ages, logos, or watermarks. Birthday scenes use ordinary candles, never digits. Baby shower palettes: neutral (sage/cream/beige), girl (pink/cream), boy (blue/cream).
 
-Podstawowe sceny: ślub — obrączki i kwiaty przy ogrodowym łuku; wesele — stół z kwiatami i świecami; urodziny — tort i pastelowe balony; firma — pusta sala z poczęstunkiem; rocznica — kwiaty, kieliszki i świece; chrzciny — ubranko i świeca; baby shower — miś, buciki, prezenty i balony; parapetówka — przytulny salon z przekąskami; warsztaty — materiały artystyczne w jasnej pracowni.
+Base scenes: wedding ceremony — rings and flowers near a garden arch; reception — table with flowers and candles; birthday — cake and pastel balloons; company event — empty venue with refreshments; anniversary — flowers, glasses, and candles; baptism — outfit and candle; baby shower — teddy bear, booties, gifts, and balloons; housewarming — cozy living room with snacks; workshop — art supplies in a bright studio.
 
-Prompty dodatkowych wariantów (z powyższymi ograniczeniami):
+Additional variant prompts (subject to the shared constraints):
 
 - **birthday-garden**: A beautiful outdoor birthday party picnic table with colourful bunting, cake with ordinary slim candles, flowers and pastel balloons in a garden. Universal any age birthday.
 - **birthday-evening**: An elegant birthday party dessert table at evening with chocolate cake, ordinary slender candles, warm fairy lights, gold and dark teal balloons. Universal birthday for any age.

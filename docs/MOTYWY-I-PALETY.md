@@ -1,27 +1,27 @@
-# Wybrane designy i palety
+# Themes and palettes
 
-W edytorze otwórz **Wygląd → Wersja kolorystyczna**. Każdy motyw ma cztery palety. Zmiana palety zachowuje treść, zdjęcia, kadrowanie, układ, dekoracje i warianty odbiorców. Ręczne kolory pozostają dostępne poniżej; etykieta zmienia się na „Własne kolory”. Ponowne kliknięcie aktywnego motywu nie kasuje własnych ustawień.
+Open **Appearance → Color palette**. Each theme has four palettes. Switching a palette preserves content, photos, crops, layout, decorations, and audience variants. Manual colors remain available and are labeled Custom colors. Clicking the active theme again does not discard custom settings.
 
-| Motyw       | Wybrany projekt | Palety                                      |
-| ----------- | --------------- | ------------------------------------------- |
-| classic     | The Modern Vow  | Porcelana i wino, Szampan, Grafit, Atrament |
-| botanical   | Olive Atelier   | Oliwka, Szałwia, Terakota, Leśna zieleń     |
-| editorial   | Gallery 12      | Kobalt, Monochrom, Mech, Nocny błękit       |
-| evening     | Midnight Cinema | Północ, Espresso i szampan, Szmaragd, Perła |
-| celebration | Modern Muse     | Róż i śliwka, Morela, Lawenda, Morski       |
+| Theme ID | Design | Palettes |
+| --- | --- | --- |
+| `classic` | The Modern Vow | Porcelain and wine, Champagne, Graphite, Ink |
+| `botanical` | Olive Atelier | Olive, Sage, Terracotta, Forest green |
+| `editorial` | Gallery 12 | Cobalt, Monochrome, Moss, Night blue |
+| `evening` | Midnight Cinema | Midnight, Espresso and champagne, Emerald, Pearl |
+| `celebration` | Modern Muse | Pink and plum, Apricot, Lavender, Teal |
 
-Motyw jest niezależny od rodzaju wydarzenia. Wszystkie 11 szablonów startowych może korzystać z każdego designu. Renderer nie dodaje inicjałów, ślubnych sformułowań ani znaku „&”, którego nie ma w treści. Zdjęcie jest opcjonalne. Zachowano kadry na telefon, tablet i komputer oraz edycję sekcji z podglądu z aktualnej gałęzi main.
+All ten populated templates and the blank template can use any theme. Themes do not inject initials, wedding wording, or an ampersand absent from the content. Photos are optional. Device-specific crops and selecting sections from the preview remain available.
 
-Formularz RSVP korzysta z kolorów i typografii motywu. Zachowano tłumaczenia, dodatkowe pytania, podsumowanie odpowiedzi i pobieranie wydarzeń do kalendarza.
+RSVP controls follow the theme's typography and colors, while retaining translations, extra questions, answer summaries, and calendar downloads.
 
-## Dane i kompatybilność
+## Data and accessibility
 
-Stabilne identyfikatory pięciu motywów pozostają bez zmian. Konfiguracja nadal zapisuje cztery kolory w `design`; rozpoznawanie palety porównuje kolory, bez nowego pola wymagającego migracji. Zapisane własne kolory nie są nadpisywane podczas wczytywania. Schemat v3 i migracje przyjęto z main. Wybór innego motywu ustawia jego domyślną paletę, dekoracje i układ nagłówka, zachowując treść.
+The five theme IDs are stable. Configuration stores four colors in `design`; palette recognition compares colors and needs no separate schema field. Loading does not overwrite custom colors. Selecting a different theme applies its default palette, decoration settings, and hero layout while keeping content.
 
-Jasny lub ciemny tryb zależy od koloru tła, a nie nazwy motywu. Palety mają kontrast minimum 4,5:1 dla tekstu i akcentu na obu tłach. Tekst pasa daty jest dobierany do koloru akcentu. Nie dotyczy to dowolnych własnych kolorów ani każdego możliwego zdjęcia; nad zdjęciem stosowany jest ciemny gradient.
+Light/dark presentation follows the background color, not the theme name. Built-in palettes are tested for at least 4.5:1 text/accent contrast on both backgrounds. Custom configuration validation checks text at 4.5:1 and accent at 3:1 against the page background; arbitrary custom colors and photographs still need visual review. Date-strip text is selected against the accent color; photo overlays use a dark gradient.
 
-## Podglądy i weryfikacja
+## Previews and tests
 
-`tests/themes.test.ts` sprawdza kontrast, wszystkie kombinacje szablonów, języków i palet oraz zapis/odczyt konfiguracji. Testy przeglądarkowe sprawdzają wybór palet, zachowanie treści, zdjęcia, układy na telefonie i komputerze oraz brak poziomego przewijania.
+`tests/themes.test.ts` covers contrast, template/language/palette combinations, and configuration round trips. Browser tests cover palette selection, content preservation, images, mobile/desktop layouts, and horizontal overflow.
 
-Po teście `tests/e2e/design-examples.spec.ts` uruchom `npx tsx scripts/build-theme-designs.ts`, aby odświeżyć galerię w `assets/theme-designs/index.html`. To zrzuty działającej aplikacji. Pliki w `assets/theme-redesign` zawierają wcześniejsze propozycje projektowe i źródła zdjęć; nie stanowią opublikowanej strony produkcyjnej.
+After running `tests/e2e/design-examples.spec.ts`, run `npx tsx scripts/build-theme-designs.ts` to refresh `assets/theme-designs/index.html`. Those images show the application renderer. `assets/theme-redesign` contains earlier design proposals and image sources, not a production deployment.

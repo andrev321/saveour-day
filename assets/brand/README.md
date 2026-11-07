@@ -1,37 +1,29 @@
-# saveour.day — zestaw marki
+# saveour.day brand kit
 
-Wektorowe opracowanie wybranego konceptu 04: składane zaproszenie w kolorach
-indygo i ciemnego turkusu. Znak składa się z przedniej klapy oraz tylnego,
-złożonego arkusza (dwie powierzchnie). Są to dwa niezależnie animowane elementy.
+A vector implementation of selected concept 04: a folded invitation in indigo and dark teal. The front flap and folded back sheet are independently animated elements.
 
-## Warianty
+## Variants
 
-- `full`: znak + **saveour.day**.
-- `short`: znak + **saveour**; do miejsc, w których pełna nazwa jest już znana.
-- `mark`: sam znak, do małych powierzchni i ikon.
-- `on-light`: ciemne logo na jasnym tle.
-- `on-dark`: jasne logo na ciemnym tle, np. `#171C36`.
-- `*-animated.svg`: jednorazowe połączenie elementów, 900 ms. Przy
-  `prefers-reduced-motion: reduce` od razu wyświetla się nieruchomy znak.
+| Variant | Use |
+| --- | --- |
+| `full` | Symbol and **saveour.day** |
+| `short` | Symbol and **saveour**, where the full name is already known |
+| `mark` | Symbol only, for small surfaces/icons |
+| `on-light` | Dark logo on a light background |
+| `on-dark` | Light logo on a dark background, such as `#171C36` |
+| `*-animated.svg` | One-shot assembly animation, 900 ms; static with reduced motion |
 
-Każdy z sześciu wariantów jest dostępny jako statyczny SVG, transparentny PNG
-i animowany SVG. SVG zawierają napis zamieniony na krzywe: nie wymagają
-zainstalowania fontu ani połączenia z siecią. PNG: wysokość 384 px dla napisów,
-1024 px dla samego znaku. SVG można skalować bez utraty jakości.
+Each of the six variant/tone combinations has a static SVG, transparent PNG, and animated SVG. SVG lettering is outlined, requiring no installed font or network connection. Wordmark PNGs are 384 px high; symbol PNGs are 1024 px high. SVGs scale without quality loss.
 
-`saveour-day-icon.svg` ma własne jasne tło, zapewniające kontrast w karcie
-przeglądarki. W obu aplikacjach dostępne są również ikony Apple 180×180 px.
+`saveour-day-icon.svg` has its own light background for browser-tab contrast. Both applications also include 180×180 px Apple icons.
 
-## Podgląd
+## Preview and spacing
 
-Otwórz `index.html` w przeglądarce: pokazuje jasne i ciemne wersje oraz animację
-z przyciskiem ponownego odtworzenia. Brak zależności zewnętrznych.
+Open [index.html](index.html) for light/dark versions and replayable animations; it has no external dependencies.
 
-Zostaw wokół logo wolne miejsce co najmniej równe 1/4 wysokości znaku.
-Zalecana minimalna szerokość: pełny napis 160 px, skrócony 116 px, sam znak 24 px.
-Nie rozciągaj proporcji, nie zmieniaj kolejności elementów ani kolorów.
+Keep clear space of at least one quarter of the symbol height. Recommended minimum widths: full 160 px, short 116 px, symbol 24 px. Do not distort proportions, rearrange elements, or substitute arbitrary colors.
 
-## Integracja
+## Component
 
 ```tsx
 import { BrandLogo } from "@invitations/ui/brand";
@@ -42,31 +34,22 @@ import { BrandLogo } from "@invitations/ui/brand";
 <BrandLogo animated height={56} />
 ```
 
-`tone` oznacza kolor **tła**, nie logo. Komponent domyślnie ma dostępną nazwę
-`saveour.day`. W opisanym linku użyj `decorative`, aby nie dublować odczytu.
-Animacja jest dekoracyjna, nie sygnalizuje postępu ani zakończenia zapisu.
+`tone` describes the **background**, not the logo. The default accessible name is `saveour.day`. Use `decorative` inside an already labeled link to avoid duplicate announcements. Animation is decorative, not a saving/progress indicator.
 
-Logo znajduje się w panelu/logowaniu, demonstracji, ustawianiu hasła, nagłówku
-edytora (skrócony napis / znak po zwinięciu) oraz na stronie głównej aplikacji
-gości i ekranie dostępu do zaproszenia. Własna kompozycja opublikowanego
-zaproszenia pozostaje projektem organizatora.
+The brand appears in panel/login, demos, password setup, editor navigation, and guest landing/access screens. Published invitation composition remains the organizer's design.
 
-## Paleta panelu
+## Panel colors
 
-Przyciski i fokus używają indygo `#3D518B`, tekst granatu `#242B59`,
-a aktywna nawigacja turkusu `#24485C` na tle `#DFF0F4`.
-Główne tło to `#F4F6FB`, formularze są białe, a obramowania mają kolor
-`#DCE2EE`. Skala `brand` w `PanelTheme.tsx` obsługuje komponenty Mantine.
-Kolory komunikatów błędu i sukcesu zachowują swoje znaczenie.
+The light palette uses indigo `#3D518B` for actions/focus, navy `#242B59` for text, and teal `#24485C` on `#DFF0F4` for selected navigation. Background is `#F4F6FB`, surfaces white, and borders `#DCE2EE`. Error/success colors keep their semantic meaning.
 
-## Źródła i regeneracja
+`PanelTheme.tsx` defines the Mantine brand scale; `apps/admin/app/panel-colors.css` defines light/dark panel tokens and scoped dark-brand colors. Panel changes do not recolor invitation previews.
 
-- Geometria, kolory i ruch: `packages/ui/src/brand-art.ts`.
-- Krzywe napisu: `packages/ui/src/brand-wordmarks.json`.
-- Typografia: Inter SemiBold 600 z zainstalowanej paczki `@fontsource/inter`;
-  licencja SIL OFL w `FONT-LICENSE.txt`.
-- `npm run build:brand` odtwarza SVG, PNG, podgląd HTML i ikony aplikacji.
-- Opcjonalne odtworzenie krzywych: Python z `fonttools` i `brotli`, następnie
-  `python scripts/outline-brand.py` i `npm run build:brand`.
+## Sources and regeneration
 
-Dodanie identyfikacji do kodu nie oznacza zakupu domeny ani rejestracji znaku.
+- Geometry, colors, motion: `packages/ui/src/brand-art.ts`.
+- Outlined lettering: `packages/ui/src/brand-wordmarks.json`.
+- Typeface: Inter SemiBold 600 from `@fontsource/inter`; SIL OFL license in [FONT-LICENSE.txt](FONT-LICENSE.txt).
+- Run `npm run build:brand` from the repository root to rebuild SVGs, PNGs, HTML preview, and app icons.
+- To regenerate lettering outlines, install Python `fonttools` and `brotli`, then run `python scripts/outline-brand.py` followed by `npm run build:brand`.
+
+Adding branding to the repository does not register a trademark or purchase a domain.
