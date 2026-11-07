@@ -41,11 +41,12 @@ Provisioned and verified:
 - A separate Supabase project was created after a quote of USD 0/month. This is the creation quote, not a guarantee about future usage or plan changes.
 - All 13 repository migrations were applied in dependency order. A database query confirmed 13 migration records, a private `site-media` bucket, the reminder delivery table, and zero sites.
 
+- The `purge-sites` Edge Function and its active monthly schedule match staging. The schedule runs at 03:00 UTC on the first day of each month. The worker requires a single-use database token. Schedule registration was verified without triggering a purge. See [media lifecycle](USUWANIE-REALIZACJI.md).
+
 **Not live / incomplete:**
 
 - The production server key still needs to be saved as `SUPABASE_SERVICE_ROLE_KEY` in both Vercel projects, restricted to Production. Never copy the staging key or put the key in Git, documentation, chat, or a public variable.
 - Configure confirmation, recovery, and numeric OTP templates and custom SMTP using the [deployment checklist](CHECKLISTA-WDROZENIA.md). Real email delivery remains unverified. The connected Resend account has no configured domains; Supabase currently requires custom SMTP before editing these templates. A verified sender domain or another production SMTP provider is still required.
-- Deploy the retention worker and configure its schedule after the complete migration chain; see [media lifecycle](USUWANIE-REALIZACJI.md).
 - No application deployment has been created in either production project. Domain assignment does not mean an application is running.
 - No production end-to-end acceptance, email delivery, runtime error scan, backup/restore test, or monitoring configuration has been completed.
 
