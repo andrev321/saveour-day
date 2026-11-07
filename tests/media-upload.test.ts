@@ -181,7 +181,7 @@ test("image request reader bounds chunked bodies and rejects empty or unsupporte
           duplex: "half",
         } as RequestInit),
       ),
-      /8 MB/,
+      /4 MB/,
     );
     assert.ok(cancelled);
     assert.deepEqual(

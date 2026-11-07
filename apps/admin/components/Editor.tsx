@@ -1,4 +1,5 @@
 "use client";
+import { maxImageBytes } from "../lib/media-limits";
 import { ActionButton } from "./ActionButton";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
@@ -491,14 +492,19 @@ export function Editor({
     await task("upload", async () => {
       setUploadName(file.name);
       if (demo) throw new Error(t("uploadNeedsSupabase"));
-      if (file.size > 8388608) throw new Error(t("maxPhotoSize"));
+      if (file.size > maxImageBytes) throw new Error(t("maxPhotoSize"));
       const response = await fetch(`${endpoint}/media`, {
         method: "POST",
         headers: { "Content-Type": file.type },
         body: file,
       });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || t("uploadFailed"));
+      if (response.status === 413) throw new Error(t("maxPhotoSize"));
+      const result = response.headers.get("content-type")?.includes("application/json")
+        ? await response.json().catch(() => null)
+        : null;
+      if (!response.ok || !result) {
+        throw new Error(result?.error || t("uploadFailed"));
+      }
       const media = result as MediaAsset;
       await reload();
       setConfig((current) =>
@@ -1082,10 +1088,10 @@ export function Editor({
           </FileButton>
           <Text size="sm" c="dimmed">
             {language === "pl"
-              ? "JPEG, PNG lub WebP; do 8 MB i 20 megapikseli."
+              ? "JPEG, PNG lub WebP; do 4 MB i 20 megapikseli."
               : language === "en"
-                ? "JPEG, PNG or WebP; up to 8 MB and 20 megapixels."
-                : "JPEG, PNG oder WebP; bis zu 8 MB und 20 Megapixel."}
+                ? "JPEG, PNG or WebP; up to 4 MB and 20 megapixels."
+                : "JPEG, PNG oder WebP; bis zu 4 MB und 20 Megapixel."}
           </Text>
           {operation === "upload" && (
             <Card withBorder aria-busy="true">

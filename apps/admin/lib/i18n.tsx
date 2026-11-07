@@ -223,7 +223,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     publicationStarted: "Publikacja uruchomiona. Odśwież status za chwilę.",
     uploadNeedsSupabase:
       "Upload wymaga połączenia z Supabase. Demonstracja nie wysyła plików.",
-    maxPhotoSize: "Maksymalny rozmiar zdjęcia: 8 MB",
+    maxPhotoSize: "Maksymalny rozmiar zdjęcia: 4 MB",
     uploadFailed: "Upload nie powiódł się",
     focalDesktopX: "Kadr desktop: poziomo",
     focalDesktopY: "Kadr desktop: pionowo",
@@ -256,7 +256,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     publicationStarted: "Publishing started. Refresh the status shortly.",
     uploadNeedsSupabase:
       "Uploading requires a Supabase connection. The demo does not upload files.",
-    maxPhotoSize: "Maximum photo size: 8 MB",
+    maxPhotoSize: "Maximum photo size: 4 MB",
     uploadFailed: "Upload failed",
     focalDesktopX: "Desktop crop: horizontal",
     focalDesktopY: "Desktop crop: vertical",
@@ -292,7 +292,7 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
       "Veröffentlichung gestartet. Aktualisieren Sie den Status in Kürze.",
     uploadNeedsSupabase:
       "Der Upload erfordert eine Supabase-Verbindung. Die Demo lädt keine Dateien hoch.",
-    maxPhotoSize: "Maximale Fotogröße: 8 MB",
+    maxPhotoSize: "Maximale Fotogröße: 4 MB",
     uploadFailed: "Upload fehlgeschlagen",
     focalDesktopX: "Desktop-Ausschnitt: horizontal",
     focalDesktopY: "Desktop-Ausschnitt: vertikal",

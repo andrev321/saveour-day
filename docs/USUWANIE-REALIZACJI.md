@@ -58,7 +58,7 @@ RLS without client policies on `private.site_purge_jobs` is intentional: clients
 `20260930165858_harden_media_lifecycle.sql` introduced the current flow. Apply it before applications that rely on it. It adds `processing`, removes client Storage read/signing access, and hides `original_path`. Legacy prepare/finalize-upload API actions are no longer used.
 
 1. The panel sends raw JPEG/PNG/WebP in one `POST /api/sites/:id/media` request.
-2. The server limits the stream to 8 MiB, reserves an asset under a site lock with a ten-minute lease, and creates processed WebP variants under an unpredictable private prefix.
+2. The server limits the stream to 4 MiB, reserves an asset under a site lock with a ten-minute lease, and creates processed WebP variants under an unpredictable private prefix.
 3. Storage upload uses the organizer's JWT. The INSERT policy checks the active site, secret prefix, and unexpired `processing` state. Clients have no SELECT/UPDATE/DELETE policy. Do not replace upload authentication with a privileged client.
 4. SQL finalization requires unexpired processing and existing manifest objects.
 5. Processing failure starts prefix cleanup. Storage failure retains metadata/deletion reservation for retry.
