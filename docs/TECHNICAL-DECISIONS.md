@@ -1,6 +1,6 @@
 # Technical decisions
 
-These decisions describe the current design. Details are in [Architecture](ARCHITEKTURA.md); operational steps are in [Deployment](WDROZENIE-PLATFORMY.md).
+These decisions describe the current design. Details are in [Architecture](ARCHITECTURE.md); operational steps are in [Deployment](PLATFORM-DEPLOYMENT.md).
 
 | Decision | Reason | Consequence |
 | --- | --- | --- |
@@ -37,4 +37,4 @@ The interface primarily uses styled-components and a shared SSR/streaming regist
 - Schema v3 replaced v1/v2 runtime adapters.
 - Authorized media routes replaced signed Storage links issued to clients.
 
-Apply the complete migration chain for a fresh environment. Existing environments must reconcile migration history first. The historical `LEGACY_PUBLICATION_ACTIVE` guard prevents enabling protection while `sites.vercel_project_id` still identifies an unchecked legacy publication. Disable old public copies before clearing that field for an individual site; see [Deployment](WDROZENIE-PLATFORMY.md).
+Apply the complete migration chain for a fresh environment. Existing environments must reconcile migration history first. The historical `LEGACY_PUBLICATION_ACTIVE` guard prevents enabling protection while `sites.vercel_project_id` still identifies an unchecked legacy publication. Disable old public copies before clearing that field for an individual site; see [Deployment](PLATFORM-DEPLOYMENT.md).

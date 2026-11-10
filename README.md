@@ -12,7 +12,7 @@ Use **Node.js 24 and npm 11**. Install from the repository root:
 npm ci
 ```
 
-Copy `apps/admin/.env.example` to `apps/admin/.env.local` and `apps/site/.env.example` to `apps/site/.env.local`. Configure services using the [deployment checklist](docs/CHECKLISTA-WDROZENIA.md). Start each app in its own terminal:
+Copy `apps/admin/.env.example` to `apps/admin/.env.local` and `apps/site/.env.example` to `apps/site/.env.local`. Configure services using the [deployment checklist](docs/DEPLOYMENT-CHECKLIST.md). Start each app in its own terminal:
 
 ```sh
 npm run dev
@@ -24,7 +24,7 @@ npm run dev:admin
 
 In Windows PowerShell, use `npm.cmd` if execution policy blocks `npm`; use `Copy-Item` to copy the example files.
 
-Without Supabase, try the local admin at `http://127.0.0.1:3000/demo` and guest demos at `http://127.0.0.1:5173/demo/glowna`, `/demo/pelna`, and `/demo/ograniczona`. Admin demo data is temporary; simulated publication does not write to the database. Missing service settings never replace a real client's route with demo data.
+Without Supabase, try the local admin at `http://127.0.0.1:3000/demo` and guest demos at `http://127.0.0.1:5173/demo/main`, `/demo/full`, and `/demo/limited` (with `/demo/glowna`, `/demo/pelna`, and `/demo/ograniczona` supported as aliases). Admin demo data is temporary; simulated publication does not write to the database. Missing service settings never replace a real client's route with demo data.
 
 ## Repository map
 
@@ -55,12 +55,10 @@ See [Testing](docs/TESTING.md) for browser installation, isolated PostgreSQL che
 
 Start with the [documentation index](docs/README.md), or go directly to:
 
-- [Architecture](docs/ARCHITEKTURA.md) and [technical decisions](docs/DECYZJE-TECHNICZNE.md)
-- [Content editor](docs/EDYTOR-TRESCI.md), [interface](docs/KONFIGURATOR-INTERFEJS.md), and [editing/guest workflows](docs/product-review-improvements.md)
-- [Starter templates](docs/SZABLONY-STARTOWE.md) and [themes/palettes](docs/MOTYWY-I-PALETY.md)
-- [Deployment checklist](docs/CHECKLISTA-WDROZENIA.md), [migration/acceptance guide](docs/WDROZENIE-PLATFORMY.md), and [retention/media lifecycle](docs/USUWANIE-REALIZACJI.md)
-
-Existing document filenames are retained so older links keep working; their content is in English.
+- [Architecture](docs/ARCHITECTURE.md) and [technical decisions](docs/TECHNICAL-DECISIONS.md)
+- [Content editor](docs/CONTENT-EDITOR.md), [interface](docs/CONFIGURATOR-INTERFACE.md), and [editing/guest workflows](docs/product-review-improvements.md)
+- [Starter templates](docs/STARTER-TEMPLATES.md) and [themes/palettes](docs/THEMES-AND-PALETTES.md)
+- [Deployment checklist](docs/DEPLOYMENT-CHECKLIST.md), [migration/acceptance guide](docs/PLATFORM-DEPLOYMENT.md), and [retention/media lifecycle](docs/SITE-DELETION.md)
 
 ## Brand assets
 

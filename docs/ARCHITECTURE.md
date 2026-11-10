@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the repository implementation, not proof of a production rollout. For setup, see [Deployment](WDROZENIE-PLATFORMY.md); for recorded environment checks, see [Staging status](STAGING-STATUS.md).
+This document describes the repository implementation, not proof of a production rollout. For setup, see [Deployment](PLATFORM-DEPLOYMENT.md); for recorded environment checks, see [Staging status](STAGING-STATUS.md).
 
 ## Applications and shared packages
 
@@ -37,9 +37,9 @@ A site's slug combines its name with a UUID. Invitation tokens are random; only 
 
 The application accepts **schema v3 only**. Typed sections reference events, venues, contacts, or media. Every variant, including the default, has independent section order and visibility. Event permissions are separate from section visibility: hiding a timeline does not remove RSVP eligibility.
 
-Hero and gallery crops belong to each use of an image, with desktop/tablet/mobile positions. Guest projection removes hidden sections and unrelated contacts, venues, and media before sending content to the browser. See [Content editor](EDYTOR-TRESCI.md).
+Hero and gallery crops belong to each use of an image, with desktop/tablet/mobile positions. Guest projection removes hidden sections and unrelated contacts, venues, and media before sending content to the browser. See [Content editor](CONTENT-EDITOR.md).
 
-There are ten populated starter templates plus a blank template, in Polish, English, and German. Templates provide initial data, not separate application types. Visual themes and audience variants are independent. Resetting a template checks revisions and variant dependencies, saves the previous persisted draft, and assigns new event IDs. Existing invitations, RSVP history, access settings, and library files remain. See [Starter templates](SZABLONY-STARTOWE.md).
+There are ten populated starter templates plus a blank template, in Polish, English, and German. Templates provide initial data, not separate application types. Visual themes and audience variants are independent. Resetting a template checks revisions and variant dependencies, saves the previous persisted draft, and assigns new event IDs. Existing invitations, RSVP history, access settings, and library files remain. See [Starter templates](STARTER-TEMPLATES.md).
 
 The editor autosaves valid changes, provides undo/redo and recovery, and handles revision conflicts. Publishing is always separate. See [Editing and guest workflows](product-review-improvements.md).
 
@@ -77,7 +77,7 @@ The upload uses the organizer's Storage client and a narrowly checked INSERT pol
 
 Admin and guest image reads go through authorized API routes. The current application does not issue signed Storage read/upload URLs. Guest reads also check the selected variant and published manifest. Bundled sample images are public, versioned assets accepted only through exact allowlisted manifests; they are distinct from private uploads.
 
-Deletion reserves a terminal `deleting` state, removes Storage objects, and only then removes metadata. References from saved drafts, releases, or snapshots block deletion. See [Site deletion and media lifecycle](USUWANIE-REALIZACJI.md).
+Deletion reserves a terminal `deleting` state, removes Storage objects, and only then removes metadata. References from saved drafts, releases, or snapshots block deletion. See [Site deletion and media lifecycle](SITE-DELETION.md).
 
 ## RSVP and integrity
 
@@ -93,4 +93,4 @@ Guest management supports CSV import/export, archiving members, optional RSVP qu
 
 Per-site custom domains, payments, and automatic initial invitation distribution are not implemented. JSON export exists, but no JSON import form. The legacy import script only converts local data.
 
-Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. They do not prove live SMTP delivery or operational readiness. See [Testing](TESTING.md) and the dated [publication review](SELF-REVIEW-PUBLIKACJI.md).
+Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. They do not prove live SMTP delivery or operational readiness. See [Testing](TESTING.md) and the dated [publication review](PUBLICATION-SELF-REVIEW.md).

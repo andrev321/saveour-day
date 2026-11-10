@@ -2,7 +2,7 @@
 
 Open [index.html](index.html) for two proposals per theme, desktop/mobile previews, comparisons, rationale, and a local selection list. Interactive mockups include schedule, venue, and a visual RSVP demonstration that does not save answers.
 
-**This directory is a design exploration, not the production application.** Some directions were subsequently selected; see [Current themes](../../docs/MOTYWY-I-PALETY.md). Example text and AI photographs are illustrative. Images, text, and fonts are local, so the gallery needs no external services.
+**This directory is a design exploration, not the production application.** Some directions were subsequently selected; see [Current themes](../../docs/THEMES-AND-PALETTES.md). Example text and AI photographs are illustrative. Images, text, and fonts are local, so the gallery needs no external services.
 
 ## Original recommendations
 

@@ -5,7 +5,7 @@
 - Keep production Supabase, credentials, and storage separate from staging.
 - Create separate Vercel projects for `apps/admin` and `apps/site`. Use Node.js 24 and allow access to files outside each project root.
 - Keep both production projects disconnected from GitHub for manual releases. Staging can retain automatic deploys.
-- Set the install command below for both applications. Configure secrets, migrations, SMTP, and the retention worker using the [deployment checklist](CHECKLISTA-WDROZENIA.md).
+- Set the install command below for both applications. Configure secrets, migrations, SMTP, and the retention worker using the [deployment checklist](DEPLOYMENT-CHECKLIST.md).
 
 ```sh
 cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
@@ -23,7 +23,7 @@ vercel deploy --prod --skip-domain --scope "<team>"
 vercel promote "<deployment-url>" --scope "<team>"
 ```
 
-Inspect the candidate deployment before promotion. Reconcile migration history before applying changes to an existing database. After promotion, follow the [deployment acceptance checks](WDROZENIE-PLATFORMY.md) for both applications. Verify account confirmation, password recovery, guest OTP, media, publication, and RSVP with authorized test accounts.
+Inspect the candidate deployment before promotion. Reconcile migration history before applying changes to an existing database. After promotion, follow the [deployment acceptance checks](PLATFORM-DEPLOYMENT.md) for both applications. Verify account confirmation, password recovery, guest OTP, media, publication, and RSVP with authorized test accounts.
 
 ## Roll back
 

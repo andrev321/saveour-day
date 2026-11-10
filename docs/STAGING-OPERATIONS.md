@@ -12,4 +12,4 @@ Use dedicated Vercel and Supabase projects and separate credentials for staging.
 
 Run the [staging smoke test](TESTING.md#manual-staging-smoke-workflow) and record the commit, environment, and observed results. If Vercel Authentication is enabled, arrange authorized access for the test account.
 
-For wrong links or origin errors, compare the actual browser origin with `APP_URL` and `SITE_URL`. For SMTP failures, check provider restrictions, recipient eligibility, Auth logs, and rate limits. Follow the [deployment guide](WDROZENIE-PLATFORMY.md) for migration and full acceptance checks.
+For wrong links or origin errors, compare the actual browser origin with `APP_URL` and `SITE_URL`. For SMTP failures, check provider restrictions, recipient eligibility, Auth logs, and rate limits. Follow the [deployment guide](PLATFORM-DEPLOYMENT.md) for migration and full acceptance checks.

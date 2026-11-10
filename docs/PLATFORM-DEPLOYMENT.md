@@ -1,6 +1,6 @@
 # Deploying the invitation platform
 
-Start with the [deployment checklist](CHECKLISTA-WDROZENIA.md) for accounts, settings, variables, and initial setup. Use [Staging status](STAGING-STATUS.md) for recorded environment evidence; do not interpret this guide as a production sign-off.
+Start with the [deployment checklist](DEPLOYMENT-CHECKLIST.md) for accounts, settings, variables, and initial setup. Use [Staging status](STAGING-STATUS.md) for recorded environment evidence; do not interpret this guide as a production sign-off.
 
 ## Deployment model
 
@@ -32,7 +32,7 @@ Per-site custom domains, payments, and automatic initial invitation distribution
 5. Apply only missing migrations in dependency order, then deploy both compatible applications.
 6. Validate stored configurations, permissions, publication, snapshots, media, and RSVP before restoring normal use.
 
-The v3 migration converts drafts, releases, and snapshots, including archived sites; it preserves IDs and media paths and increments draft revisions. Do not roll back only the application to a v1/v2-only client afterward. See [Content editor](EDYTOR-TRESCI.md).
+The v3 migration converts drafts, releases, and snapshots, including archived sites; it preserves IDs and media paths and increments draft revisions. Do not roll back only the application to a v1/v2-only client afterward. See [Content editor](CONTENT-EDITOR.md).
 
 The media lifecycle migration must precede code that uses the new upload/read flow. Sample-media migrations must precede applications using those manifests. Historical staging version mappings are recorded in [Staging status](STAGING-STATUS.md); missing entries are not proof a migration was or was not applied.
 
@@ -46,7 +46,7 @@ Use the checklist as the single source for the environment-variable table and Au
 - Use Next.js presets, root directories for each app, the root workspace install, and no Vite SPA rewrites.
 - Set canonical HTTPS `APP_URL`/`SITE_URL` origins and redeploy after changes.
 - Retire obsolete publication secrets (`VERCEL_TOKEN`, `VERCEL_TEAM_ID`, `VERCEL_GITHUB_REPO_ID`, `ENGINE_GIT_SHA`, `VERCEL_WEBHOOK_SECRET`) and the old build webhook if still configured.
-- Configure retention using [Site deletion](USUWANIE-REALIZACJI.md).
+- Configure retention using [Site deletion](SITE-DELETION.md).
 - Keep the platform's trusted IP handling intact; a different hosting platform needs its own trusted IP extraction.
 
 Organizers confirm their email and create their own sites; no platform-admin role is required. Organizers and guests share Auth infrastructure but use separate permissions and session cookies. A prior OTP user can set an organizer password through recovery. CAPTCHA needs corresponding application support before it is enabled.
@@ -74,7 +74,7 @@ Database migration neither publishes old releases nor removes old deployments.
 5. After checking an individual site, clear its `sites.vercel_project_id`. The `LEGACY_PUBLICATION_ACTIVE` guard otherwise blocks protected access. Do not bulk-clear unchecked sites.
 6. Retire unused projects/webhooks while keeping release/audit history and referenced media.
 
-Rollback must return to a compatible shared runtime, not the old static publication process. Database recovery and application rollback are separate operations. Previously issued signed Storage URLs require the transition procedure in [Media lifecycle](USUWANIE-REALIZACJI.md).
+Rollback must return to a compatible shared runtime, not the old static publication process. Database recovery and application rollback are separate operations. Previously issued signed Storage URLs require the transition procedure in [Media lifecycle](SITE-DELETION.md).
 
 ## Acceptance on real services
 

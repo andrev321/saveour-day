@@ -1,6 +1,6 @@
 # Publication self-review — 2026-09-22
 
-**Historical report.** Results below describe checks recorded on that date, not the current commit or production readiness. Current workflows are in [Architecture](ARCHITEKTURA.md), [Testing](TESTING.md), and [Deployment](WDROZENIE-PLATFORMY.md).
+**Historical report.** Results below describe checks recorded on that date, not the current commit or production readiness. Current workflows are in [Architecture](ARCHITECTURE.md), [Testing](TESTING.md), and [Deployment](PLATFORM-DEPLOYMENT.md).
 
 ## Fixes recorded
 

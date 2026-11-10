@@ -4,7 +4,7 @@ This repository uses a **single-context** domain model layout:
 
 - **Canonical Glossary**: [`GLOSSARY.md`](../../GLOSSARY.md) at the repository root.
 - **Architecture Decision Records (ADRs)**: [`docs/adr/`](../adr/) (`0001` through `0006`).
-- **Architecture Overview**: [`docs/ARCHITEKTURA.md`](../ARCHITEKTURA.md) and [`docs/DECYZJE-TECHNICZNE.md`](../DECYZJE-TECHNICZNE.md).
+- **Architecture Overview**: [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) and [`docs/TECHNICAL-DECISIONS.md`](../TECHNICAL-DECISIONS.md).
 
 ## Consumer Rules for Agents
 1. Read `GLOSSARY.md` before designing modules, writing specs, or naming symbols.

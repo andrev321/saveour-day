@@ -2,7 +2,7 @@
 
 ## Navigation Pointers
 - **Domain Glossary**: Read [`GLOSSARY.md`](./GLOSSARY.md) first for canonical terminology (**Site**, **Draft**, **Release**, **Variant**, **Variant Projection**, **Invitation**, **Guest**, **Media Asset**, **Crop**).
-- **Architecture & Decisions**: See [`docs/ARCHITEKTURA.md`](./docs/ARCHITEKTURA.md), [`docs/DECYZJE-TECHNICZNE.md`](./docs/DECYZJE-TECHNICZNE.md), and structured ADRs in [`docs/adr/`](./docs/adr/).
+- **Architecture & Decisions**: See [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md), [`docs/TECHNICAL-DECISIONS.md`](./docs/TECHNICAL-DECISIONS.md), and structured ADRs in [`docs/adr/`](./docs/adr/).
 - **Coding Standards**: See [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) during review and refactoring.
 - **Package Boundaries**: Packages are deep modules—see [`packages/README.md`](./packages/README.md) before adding or importing across packages.
 

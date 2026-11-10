@@ -1,6 +1,6 @@
 # Editor interface
 
-The workspace separates Content, Appearance, Photos, and Guests, with Settings and History as tools. See [Content editor](EDYTOR-TRESCI.md) for the data model and [Editing and guest workflows](product-review-improvements.md) for autosave and recovery.
+The workspace separates Content, Appearance, Photos, and Guests, with Settings and History as tools. See [Content editor](CONTENT-EDITOR.md) for the data model and [Editing and guest workflows](product-review-improvements.md) for autosave and recovery.
 
 The original layout direction was called Focus × Paper. The current panel uses saveour.day branding, indigo accents, and light/dark panel tokens; it no longer uses the original sage/cream palette. Panel appearance is independent of invitation themes. Icons use Phosphor Duotone.
 
@@ -31,7 +31,7 @@ Delete from library permanently removes the upload and its sizes after confirmat
 
 Deletion reserves `deleting`, removes Storage objects, then deletes metadata. If Storage fails, retry the visible pending operation. Do not manually reset it to `ready`: some objects may already be gone.
 
-Images now load through authorized application APIs, not signed Storage links. The renderer associates fetch failures with the current source set so changing or refreshing a source can recover. Regression coverage includes `photo-recovery.spec.ts` and `photo-library.spec.ts`. Full lifecycle details: [Site deletion and media lifecycle](USUWANIE-REALIZACJI.md).
+Images now load through authorized application APIs, not signed Storage links. The renderer associates fetch failures with the current source set so changing or refreshing a source can recover. Regression coverage includes `photo-recovery.spec.ts` and `photo-library.spec.ts`. Full lifecycle details: [Site deletion and media lifecycle](SITE-DELETION.md).
 
 ## Preferences and accessibility
 

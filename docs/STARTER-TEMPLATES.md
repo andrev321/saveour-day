@@ -1,6 +1,6 @@
 # Starter templates
 
-Templates provide initial values for the shared editor, not separate application types. The application uses schema v3; see [Content editor](EDYTOR-TRESCI.md).
+Templates provide initial values for the shared editor, not separate application types. The application uses schema v3; see [Content editor](CONTENT-EDITOR.md).
 
 ## Create an invitation
 
@@ -22,7 +22,7 @@ There are ten populated templates plus a blank option, each available in Polish,
 | Meeting / workshop | `editorial` |
 | Blank invitation | `editorial` |
 
-`packages/domain/src/templates.ts` is the source of template/theme assignments and initial styling. Avoid copying detailed palette defaults into multiple documents; see [Themes and palettes](MOTYWY-I-PALETY.md) for the current designs.
+`packages/domain/src/templates.ts` is the source of template/theme assignments and initial styling. Avoid copying detailed palette defaults into multiple documents; see [Themes and palettes](THEMES-AND-PALETTES.md) for the current designs.
 
 Any template can use any theme. Selecting another theme preserves content and section order while applying theme defaults. Replacing the entire template is the separate reset operation below.
 

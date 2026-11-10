@@ -1,6 +1,6 @@
 # Deployment checklist
 
-Use this checklist for a new environment, first staging and then production. It is not evidence that the steps have been completed. [Deployment](WDROZENIE-PLATFORMY.md) contains migration and legacy-transition details; [Staging status](STAGING-STATUS.md) records historical checks and current addresses.
+Use this checklist for a new environment, first staging and then production. It is not evidence that the steps have been completed. [Deployment](PLATFORM-DEPLOYMENT.md) contains migration and legacy-transition details; [Staging status](STAGING-STATUS.md) records historical checks and current addresses.
 
 ## 1. Prepare accounts and access
 
@@ -21,7 +21,7 @@ Stable `vercel.app` addresses are sufficient for the applications. The email sen
 - [ ] Confirm application tables, including `sites`, `drafts`, `releases`, `invitations`, `rsvp_answers`, `guest_sessions`, `access_attempts`, and `draft_snapshots`.
 - [ ] Confirm that `site-media` is private, with the intended image limits and current upload policy. Do not add anonymous read access.
 - [ ] Obtain the project URL, public/publishable key, and server-only privileged key. The code reads the privileged key from `SUPABASE_SERVICE_ROLE_KEY`.
-- [ ] Deploy and configure the retention worker using [Site deletion](USUWANIE-REALIZACJI.md).
+- [ ] Deploy and configure the retention worker using [Site deletion](SITE-DELETION.md).
 
 Organizers register and receive membership when creating a project. Ordinary clients do not need manual entries in `platform_admins`.
 
@@ -95,7 +95,7 @@ Changing a domain also requires reviewing `APP_URL`, `SITE_URL`, Auth Site URL/r
 - [ ] Verify that a second organizer cannot access the first organizer's site or media.
 - [ ] Run the dedicated-account Staging smoke workflow and record commit/date/results; see [Testing](TESTING.md).
 - [ ] If using reminders, configure the admin-only variables, redeploy, review recipients/content, and verify delivery to an authorized test mailbox.
-- [ ] Complete the deeper acceptance scenarios in [Deployment](WDROZENIE-PLATFORMY.md).
+- [ ] Complete the deeper acceptance scenarios in [Deployment](PLATFORM-DEPLOYMENT.md).
 - [ ] Disable old public copies before enabling protection on migrated legacy sites.
 - [ ] Configure monitoring, error ownership, cost/delivery checks, database **and Storage** backups, and a tested restore procedure.
 

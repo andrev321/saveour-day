@@ -42,7 +42,7 @@ Storage state contains authentication material: keep it in the environment secre
 
 ## What still needs manual verification
 
-Controlled HTTP/API tests do not prove real email delivery. Test account confirmation, password recovery, guest OTP, and optional reminders separately with authorized mailboxes. Use the acceptance list in [Deployment](WDROZENIE-PLATFORMY.md).
+Controlled HTTP/API tests do not prove real email delivery. Test account confirmation, password recovery, guest OTP, and optional reminders separately with authorized mailboxes. Use the acceptance list in [Deployment](PLATFORM-DEPLOYMENT.md).
 
 A successful build or HTTP 200 does not prove the complete authenticated workflow. Report what was tested and what remains unknown rather than carrying forward old passing counts.
 
