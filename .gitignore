@@ -18,6 +18,7 @@ dist-ssr
 .vercel/
 supabase/.temp/
 .local/
+.scratch/
 .next/
 test-results/
 playwright-report/
