@@ -22,6 +22,8 @@ supabase/.temp/
 test-results/
 playwright-report/
 *.tsbuildinfo
+.scratch/*
+!.scratch/tickets/
 
 # Editor directories and files
 .vscode/*
