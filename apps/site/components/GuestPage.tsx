@@ -354,7 +354,7 @@ export function GuestPage({
         <S.GuestActions aria-label={copy.invitation}>
           {data.invitation && <a href="#rsvp">{copy.rsvp}</a>}
           {data.config?.events.some((e) => e.date) && (
-            <a href={`${endpoint}/calendar`} download="zaproszenie.ics">
+            <a href={`${endpoint}/calendar`} download="invitation.ics">
               {copy.calendar}
             </a>
           )}

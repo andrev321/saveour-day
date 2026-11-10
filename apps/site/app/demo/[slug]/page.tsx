@@ -28,7 +28,17 @@ export default async function Demo({
     eventIds: ["ceremony"],
     sections: config.variants[0].sections.map(p=>({...p,visible:p.sectionId!=="party"})),
   });
-  const variant = config.variants.find((v) => v.slug === slug);
+  const normalizedSlug =
+    slug === "main"
+      ? "glowna"
+      : slug === "full"
+        ? "pelna"
+        : slug === "limited"
+          ? "ograniczona"
+          : slug;
+  const variant = config.variants.find(
+    (v) => v.slug === normalizedSlug || v.slug === slug || v.id === slug,
+  );
   if (!variant) notFound();
   return <Invitation config={guestContent(config, variant.id)} />;
 }

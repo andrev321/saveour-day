@@ -146,7 +146,7 @@ export const POST = api(async (request) => {
       await validateMedia(site.id, config);
     } else {
       if (!p.templateId || !p.locale)
-        throw new HttpError(400, "Wybierz szablon i język");
+        throw new HttpError(400, "Select template and language");
       const { data, error } = await db
         .from("drafts")
         .select("config")
