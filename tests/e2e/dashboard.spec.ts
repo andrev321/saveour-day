@@ -57,6 +57,10 @@ test("401 reveals login only after the session check finishes", async ({
   await page.goto(`${admin}/demo/projects`);
   await expect(page.getByLabel("Hasło", { exact: true })).toBeVisible();
   await expect(
+    page.getByRole("button", { name: "Kontynuuj przez Google", exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("lub za pomocą e-maila")).toBeVisible();
+  await expect(
     page.getByRole("button", { name: "Utwórz zaproszenie", exact: true }),
   ).toHaveCount(0);
 });

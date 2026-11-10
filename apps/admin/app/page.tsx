@@ -2,9 +2,9 @@ import { Dashboard } from "../components/Dashboard";
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ emailConfirmed?: string }>;
+  searchParams: Promise<{ emailConfirmed?: string; error?: string }>;
 }) {
-  const { emailConfirmed } = await searchParams;
+  const { emailConfirmed, error } = await searchParams;
   const configured = !!(
     process.env.NEXT_PUBLIC_SUPABASE_URL &&
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
@@ -13,6 +13,7 @@ export default async function Page({
     <Dashboard
       configured={configured}
       emailConfirmed={emailConfirmed === "1"}
+      authError={error}
     />
   );
 }

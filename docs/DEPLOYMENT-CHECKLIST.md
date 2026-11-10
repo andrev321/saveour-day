@@ -30,6 +30,8 @@ Organizers register and receive membership when creating a project. Ordinary cli
 - [ ] Verify the sender domain with the SMTP provider using its supplied DNS records.
 - [ ] Configure custom SMTP in Supabase Auth. Enter the SMTP secret directly in Supabase.
 - [ ] Enable email authentication, registrations, and email confirmation. Do not enable CAPTCHA until the application supports it.
+- [ ] For Google OAuth, configure Web Client ID in Google Cloud Console with Supabase OAuth callback (`https://<project-ref>.supabase.co/auth/v1/callback`).
+- [ ] Enable Google Provider in Supabase Auth, supply Client ID & Secret, and enable "Link accounts with same email".
 - [ ] Set Auth **Site URL** to the admin origin and allow `<admin-origin>/auth/confirm` as a redirect.
 - [ ] Configure the Auth templates below, preserving the template expressions exactly.
 - [ ] Check Auth/provider rate limits, OTP expiry, and delivery to an authorized test recipient. The guest form accepts numeric codes of 6–10 digits.

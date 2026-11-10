@@ -55,7 +55,7 @@ A code deployment changes the shared renderer for every site; content releases d
 
 ## Authentication and access
 
-Organizers use Supabase email/password authentication and must confirm their email before creating a site. `site_members` and `platform_admins` control access; a signed-in account is not automatically authorized for another site's data.
+Organizers use Supabase email/password or Google OAuth authentication and must have a confirmed email before creating a site. `site_members` and `platform_admins` control access; a signed-in account is not automatically authorized for another site's data.
 
 | Site access mode | General entry | Household link |
 | --- | --- | --- |
