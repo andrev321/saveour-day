@@ -1,4 +1,4 @@
-﻿import { test, mock } from "node:test";
+import { test, mock } from "node:test";
 import assert from "node:assert/strict";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import { hashCode } from "../packages/domain/src/access-code.ts";
@@ -240,3 +240,160 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     mock.restoreAll();
   }
 });
+
+test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest context resolves both UUID and legacy public_slug", async () => {
+  class HttpError extends Error {
+    constructor(
+      public status: number,
+      message: string,
+    ) {
+      super(message);
+    }
+  }
+  const siteId = "20000000-0000-4000-8000-000000000099";
+  const legacySlug = `anna-i-jan-${siteId}`;
+  const config = createDemo();
+  config.id = siteId;
+
+  mock.module("server-only", { namedExports: {} });
+  mock.module("../apps/admin/lib/media.ts", {
+    namedExports: {
+      validateMedia: async () => ({}),
+    },
+  });
+  mock.module("../apps/admin/lib/server.ts", {
+    namedExports: {
+      HttpError,
+      required: (name: string) => {
+        assert.equal(name, "SITE_URL");
+        return "https://invite.example.test";
+      },
+      checkDb: (err: { message: string } | null) => {
+        if (err) throw new HttpError(409, err.message);
+      },
+      serviceDb: () => ({
+        from: () => ({
+          select: () => ({
+            eq: () => ({
+              eq: () => ({
+                single: async () => ({
+                  data: { config },
+                  error: null,
+                }),
+                order: () => ({
+                  order: () => ({
+                    order: () => ({
+                      range: async () => ({ data: [], error: null }),
+                    }),
+                  }),
+                  range: async () => ({
+                    data: [
+                      {
+                        id: "30000000-0000-4000-8000-000000000001",
+                        label: "Nowakowie",
+                        version: 1,
+                        rsvp_revision: 0,
+                        variant_id: config.defaultVariant,
+                        guests: [{ id: "g1", name: "Jan" }],
+                        emails: ["jan@example.com"],
+                      },
+                    ],
+                    error: null,
+                  }),
+                }),
+              }),
+              order: () => ({
+                order: () => ({
+                  order: () => ({
+                    range: async () => ({ data: [], error: null }),
+                  }),
+                }),
+              }),
+            }),
+          }),
+        }),
+        rpc: async (fn: string, args: Record<string, unknown>) => {
+          assert.equal(fn, "publish_content");
+          assert.equal(args.sid, siteId);
+          return { data: "release-1", error: null };
+        },
+      }),
+    },
+  });
+
+  try {
+    const { publish } = await import("../apps/admin/lib/publishing.ts");
+    const published = await publish({ id: siteId }, "owner-1", 3);
+    assert.deepEqual(published, {
+      id: "release-1",
+      url: `https://invite.example.test/s/${siteId}`,
+    });
+
+    const { reminderPreview } = await import("../apps/admin/lib/reminders.ts");
+    const preview = await reminderPreview({
+      id: siteId,
+      access_mode: "email",
+      published_release_id: "release-1",
+      rsvp_deadline: null,
+    });
+    assert.equal(preview.recipients.length, 1);
+    assert.ok(
+      preview.recipients[0]!.text.includes(
+        `https://invite.example.test/s/${siteId}`,
+      ),
+    );
+
+    // Also verify apps/site/lib/server.ts context("s", key) resolves UUID first, then falls back to public_slug
+    const queriedFields: string[] = [];
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supabase.example.test";
+    process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
+    mock.method(globalThis, "fetch", async (input: string | URL | Request) => {
+      const url = new URL(
+        typeof input === "string" || input instanceof URL ? input : input.url,
+      );
+      if (url.searchParams.has("id")) {
+        queriedFields.push(`id:${url.searchParams.get("id")}`);
+        if (url.searchParams.get("id") === `eq.${siteId}`) {
+          return Response.json({
+            id: siteId,
+            published_release_id: "release-1",
+            access_mode: "public",
+            access_code_hash: null,
+            access_version: 1,
+            public_variant_id: config.defaultVariant,
+            rsvp_deadline: null,
+          });
+        }
+        return Response.json(null);
+      }
+      if (url.searchParams.has("public_slug")) {
+        queriedFields.push(
+          `public_slug:${url.searchParams.get("public_slug")}`,
+        );
+        return Response.json({
+          id: siteId,
+          published_release_id: "release-1",
+          access_mode: "public",
+          access_code_hash: null,
+          access_version: 1,
+          public_variant_id: config.defaultVariant,
+          rsvp_deadline: null,
+        });
+      }
+      return Response.json(null);
+    });
+
+    const { context } = await import("../apps/site/lib/server.ts");
+    const byUuid = await context("s", siteId);
+    assert.equal(byUuid.site.id, siteId);
+    assert.deepEqual(queriedFields, [`id:eq.${siteId}`]);
+
+    queriedFields.length = 0;
+    const byLegacySlug = await context("s", legacySlug);
+    assert.equal(byLegacySlug.site.id, siteId);
+    assert.deepEqual(queriedFields, [`public_slug:eq.${legacySlug}`]);
+  } finally {
+    mock.restoreAll();
+  }
+});
+

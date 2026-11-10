@@ -1,6 +1,10 @@
 import { randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
-import { siteConfigSchema } from "@invitations/domain";
+import {
+  invitationTokenUrl,
+  publicSiteUrl,
+  siteConfigSchema,
+} from "@invitations/domain";
 import { guestContent, rsvpSchema } from "@invitations/domain/guest";
 import {
   api,
@@ -73,7 +77,7 @@ export const GET = api(async (request) => {
   return {
     site,
     variants: config?.variants.map(({ id, label }) => ({ id, label })) || [],
-    url: new URL(`/s/${site.id}`, required("SITE_URL")).href,
+    url: publicSiteUrl(site.id, required("SITE_URL")),
     invitations: invitations.map((i) => ({
       ...i,
       events:
@@ -137,7 +141,7 @@ export const POST = api(async (request) => {
       return {
         id,
         label: entry.label,
-        url: new URL(`/i/${token}`, required("SITE_URL")).href,
+        url: invitationTokenUrl(token, required("SITE_URL")),
         payload: {
           ...entry,
           guests: entry.names.map((name) => ({ id: randomUUID(), name })),
@@ -212,7 +216,7 @@ export const POST = api(async (request) => {
   const token = randomBytes(32).toString("base64url");
   // Validate the destination before committing a newly generated invitation.
   const url = ["create", "rotate"].includes(body.action)
-    ? new URL(`/i/${token}`, required("SITE_URL")).href
+    ? invitationTokenUrl(token, required("SITE_URL"))
     : null;
   let id: string, payload: unknown;
   if (body.action === "update") {

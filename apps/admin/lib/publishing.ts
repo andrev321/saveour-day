@@ -1,5 +1,5 @@
 import "server-only";
-import { publishedConfigSchema } from "@invitations/domain";
+import { publicSiteUrl, publishedConfigSchema } from "@invitations/domain";
 import { validateMedia } from "./media";
 import { checkDb, HttpError, required, serviceDb } from "./server";
 export async function publish(
@@ -8,7 +8,7 @@ export async function publish(
   revision: number,
   restoreId?: string,
 ) {
-  const url = new URL("/s/" + site.id, required("SITE_URL")).href;
+  const url = publicSiteUrl(site.id, required("SITE_URL"));
   const db = serviceDb();
   const { data, error } = await db
     .from(restoreId ? "releases" : "drafts")

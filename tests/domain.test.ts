@@ -239,3 +239,26 @@ test("unknown fields cannot smuggle executable configuration", () => {
     false,
   );
 });
+test("public site and invitation URL helpers format routes and classify UUID vs legacy slug keys", async () => {
+  const {
+    publicSitePath,
+    publicSiteUrl,
+    invitationTokenPath,
+    invitationTokenUrl,
+    isSiteUuidKey,
+  } = await import("../packages/domain/src/index.ts");
+  const siteId = "20000000-0000-4000-8000-000000000001";
+  assert.equal(publicSitePath(siteId), `/s/${siteId}`);
+  assert.equal(
+    publicSiteUrl(siteId, "https://invite.example.com"),
+    `https://invite.example.com/s/${siteId}`,
+  );
+  assert.equal(invitationTokenPath("tok-123"), "/i/tok-123");
+  assert.equal(
+    invitationTokenUrl("tok-123", "https://invite.example.com/"),
+    "https://invite.example.com/i/tok-123",
+  );
+  assert.equal(isSiteUuidKey(siteId), true);
+  assert.equal(isSiteUuidKey(`anna-i-jan-${siteId}`), false);
+});
+

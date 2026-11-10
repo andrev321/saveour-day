@@ -398,3 +398,31 @@ export function visibleSections(
     .map((p) => config.sections.find((s) => s.id === p.sectionId)!)
     .filter(Boolean);
 }
+
+const siteUuidSchema = z.uuid();
+
+/** Returns the relative guest entry path (`/s/<siteIdOrSlug>`) for a Site. */
+export function publicSitePath(siteIdOrSlug: string): string {
+  return `/s/${siteIdOrSlug}`;
+}
+
+/** Resolves the absolute public Site URL against `baseUrl` (`SITE_URL`). */
+export function publicSiteUrl(siteIdOrSlug: string, baseUrl: string): string {
+  return new URL(publicSitePath(siteIdOrSlug), baseUrl).href;
+}
+
+/** Returns the relative household Invitation link path (`/i/<token>`). */
+export function invitationTokenPath(token: string): string {
+  return `/i/${token}`;
+}
+
+/** Resolves the absolute household Invitation URL against `baseUrl` (`SITE_URL`). */
+export function invitationTokenUrl(token: string, baseUrl: string): string {
+  return new URL(invitationTokenPath(token), baseUrl).href;
+}
+
+/** Checks whether a `/s/<key>` route key is a canonical Site UUID (`sites.id`) rather than a legacy `public_slug`. */
+export function isSiteUuidKey(key: string): boolean {
+  return siteUuidSchema.safeParse(key).success;
+}
+

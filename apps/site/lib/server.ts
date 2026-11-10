@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { randomBytes } from "node:crypto";
 import { z } from "zod";
-import { siteConfigSchema } from "@invitations/domain";
+import { isSiteUuidKey, siteConfigSchema } from "@invitations/domain";
 import { guestContent } from "@invitations/domain/guest";
 import { digest, verifyCode } from "@invitations/domain/access-code";
 
@@ -82,7 +82,7 @@ export async function context(kind: string, key: string) {
   if (
     !["s", "i", "v"].includes(kind) ||
     key.length > 200 ||
-    (kind === "v" && !z.uuid().safeParse(key).success)
+    (kind === "v" && !isSiteUuidKey(key))
   )
     throw new GuestError(404, "Nie znaleziono zaproszenia");
   const client = db();
@@ -113,8 +113,8 @@ export async function context(kind: string, key: string) {
   // Existing public links still resolve through their stored slug.
   const site = invitation
     ? await findSite("id", invitation.site_id)
-    : (z.uuid().safeParse(key).success ? await findSite("id", key) : null) ??
-      await findSite("public_slug", key);
+    : (isSiteUuidKey(key) ? await findSite("id", key) : null) ??
+      (await findSite("public_slug", key));
   if (!site?.published_release_id)
     throw new GuestError(404, "Strona jest niedostępna");
   return { site, invitation, requiresSession: kind === "v" };

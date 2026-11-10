@@ -1,6 +1,6 @@
 import "server-only";
 import { guestContent } from "@invitations/domain/guest";
-import { siteConfigSchema } from "@invitations/domain";
+import { publicSiteUrl, siteConfigSchema } from "@invitations/domain";
 import { checkDb, required, serviceDb, HttpError } from "./server";
 export async function reminderPreview(site: {
   id: string;
@@ -68,7 +68,7 @@ export async function reminderPreview(site: {
     answers.map((a) => `${a.invitation_id}:${a.guest_id}:${a.event_id}`),
   );
   const locale = config.locale;
-  const url = new URL(`/s/${site.id}`, required("SITE_URL")).href;
+  const url = publicSiteUrl(site.id, required("SITE_URL"));
   const date = site.rsvp_deadline
     ? new Intl.DateTimeFormat(locale, {
         dateStyle: "long",
