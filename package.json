@@ -13,6 +13,8 @@
     "check:production-env": "tsx scripts/check-production-env.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p apps/admin/tsconfig.json && tsc --noEmit -p apps/site/tsconfig.json",
     "lint": "eslint apps packages scripts tests",
+    "lint:boundaries": "depcruise packages apps tests",
+    "check": "npm run typecheck && npm run lint && npm run lint:boundaries && npm test",
     "test": "node --import tsx --experimental-test-module-mocks --test tests/*.test.ts",
     "test:e2e": "playwright test",
     "import:legacy": "tsx scripts/import-legacy.ts"
@@ -50,6 +52,7 @@
     "@types/pg": "8.15.6",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "dependency-cruiser": "^18.7.2",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.5.0",
