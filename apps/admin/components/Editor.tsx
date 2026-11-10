@@ -47,9 +47,12 @@ import { templateUi } from "../lib/template-i18n";
 import { workspaceUi } from "../lib/workspace-i18n";
 import { Fields } from "./ConfigFields";
 import { MediaUrlsContext } from "./PhotoReference";
-import { useDraft } from "../lib/use-draft";
-import { recoverDraft } from "../lib/draft-recovery";
-import { mergeDraft } from "../lib/draft-merge";
+import {
+  createDraftTabSnapshot,
+  mergeDraft,
+  parseDraftTabSnapshot,
+  useDraft,
+} from "../lib/use-draft";
 import { publicationWarnings } from "@invitations/domain/readiness";
 import { ApiError, apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
@@ -144,15 +147,12 @@ export function Editor({
       try {
         const raw = sessionStorage.getItem(localKey);
         if (raw) {
-          const cache = JSON.parse(raw);
-          const recovered = recoverDraft(cache.config);
-          if (
-            recovered &&
-            recovered.id === initial.site.id &&
-            cache.expires > Date.now() &&
-            JSON.stringify(recovered) !== JSON.stringify(initial.draft.config)
-          )
-            setRecovery(recovered);
+          const recovered = parseDraftTabSnapshot(
+            raw,
+            initial.site.id,
+            initial.draft.config,
+          );
+          if (recovered) setRecovery(recovered);
           else sessionStorage.removeItem(localKey);
         }
       } catch {
@@ -190,11 +190,7 @@ export function Editor({
   useEffect(() => {
     if (!recoveryReady || recovery) return;
     try {
-      if (dirty)
-        sessionStorage.setItem(
-          localKey,
-          JSON.stringify({ config, expires: Date.now() + 7 * 86400_000 }),
-        );
+      if (dirty) sessionStorage.setItem(localKey, createDraftTabSnapshot(config));
       else sessionStorage.removeItem(localKey);
     } catch {
       /* Restricted browsers may disable tab storage. */
