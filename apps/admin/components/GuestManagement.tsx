@@ -31,46 +31,16 @@ import {
   defaultQuestions,
   type ImportedInvitation,
   type QuestionSettings,
-  type GuestDetails,
 } from "@invitations/domain/operations";
+import {
+  formatRsvpCsv,
+  type InvitationRow,
+  type Management,
+} from "../lib/guest-management";
 import { usePanelI18n } from "../lib/i18n";
 import { Reminders } from "./Reminders";
 import { QrCodeCard } from "./QrCodeCard";
 import { FilterGrid, FormRow } from "./form-layout.styles";
-type Guest = { id: string; name: string };
-type InvitationRow = {
-  id: string;
-  label: string;
-  variant_id: string;
-  emails: string[];
-  guests: Guest[];
-  revoked: boolean;
-  version: number;
-  rsvp_revision: number;
-  note: string;
-  archived_guests?: Guest[];
-  guest_details?: GuestDetails;
-  events: { id: string; title: string }[];
-};
-type Management = {
-  variants: { id: string; label: string }[];
-  site: {
-    access_mode: string;
-    public_variant_id: string | null;
-    access_version: number;
-    rsvp_deadline: string | null;
-    published_release_id: string | null;
-    rsvp_questions?: QuestionSettings;
-  };
-  url: string;
-  invitations: InvitationRow[];
-  answers: {
-    invitation_id: string;
-    guest_id: string;
-    event_id: string;
-    attending: boolean;
-  }[];
-};
 function localDeadline(iso: string | null) {
   if (!iso) return "";
   const p = Object.fromEntries(
@@ -289,69 +259,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     (Math.min(page, totalPages) - 1) * 20,
     Math.min(page, totalPages) * 20,
   );
-  function exportAnswers() {
-    const rows: unknown[][] = [
-      [
-        "Rodzina",
-        "Gość",
-        "Wydarzenie",
-        "Odpowiedź",
-        "Dieta",
-        "Nocleg",
-        "Transport",
-        labelText("Uwagi", "Notes", "Anmerkungen"),
-        "Status osoby",
-      ],
-    ];
-    for (const i of data?.invitations || []) {
-      for (const g of [...i.guests, ...(i.archived_guests || [])]) {
-        const archived = !i.guests.some((current) => current.id === g.id);
-        const detail = i.guest_details?.[g.id] || {};
-        const relevant = archived
-          ? data!.answers
-              .filter((a) => a.invitation_id === i.id && a.guest_id === g.id)
-              .map((a) => ({
-                id: a.event_id,
-                title:
-                  events.find((e) => e.id === a.event_id)?.title || a.event_id,
-              }))
-          : i.events;
-        for (const event of relevant.length
-          ? relevant
-          : [{ id: "", title: "" }]) {
-          const answer = answerMap.get(`${i.id}:${g.id}:${event.id}`);
-          rows.push([
-            i.label,
-            g.name,
-            event.title,
-            answer === undefined
-              ? labelText("Brak odpowiedzi", "No response", "Keine Antwort")
-              : answer
-                ? labelText("Tak", "Yes", "Ja")
-                : labelText("Nie", "No", "Nein"),
-            detail.diet,
-            detail.lodging === undefined
-              ? ""
-              : detail.lodging
-                ? labelText("Tak", "Yes", "Ja")
-                : labelText("Nie", "No", "Nein"),
-            detail.transport === undefined
-              ? ""
-              : detail.transport
-                ? labelText("Tak", "Yes", "Ja")
-                : labelText("Nie", "No", "Nein"),
-            i.note,
-            archived
-              ? "Archiwalna"
-              : i.revoked
-                ? "Cofnięte zaproszenie"
-                : "Aktywna",
-          ]);
-        }
-      }
-    }
-    download("odpowiedzi-rsvp.csv", csvFile(rows));
-  }
   return (
     <Card withBorder aria-busy={loading}>
       <Stack>
@@ -765,7 +672,15 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               onMessage={setMessage}
             />
             <Group>
-              <Button variant="light" onClick={exportAnswers}>
+              <Button
+                variant="light"
+                onClick={() =>
+                  download(
+                    "odpowiedzi-rsvp.csv",
+                    formatRsvpCsv(data, events, answerMap, labelText),
+                  )
+                }
+              >
                 {labelText(
                   "Eksport RSVP do CSV",
                   "Export RSVP to CSV",

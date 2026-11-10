@@ -6,7 +6,6 @@ import {
   useEffect,
   useRef,
   type ReactNode,
-  useContext,
   type Dispatch,
   type SetStateAction,
 } from "react";
@@ -48,12 +47,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type {
-  SiteConfig,
-  Section,
-  DeviceCrops,
-  MediaAsset,
-} from "@invitations/domain";
+import type { SiteConfig, Section, MediaAsset } from "@invitations/domain";
 import {
   detachSection,
   moveSection,
@@ -61,14 +55,9 @@ import {
   removeEntity,
 } from "@invitations/domain/editor";
 import { usePanelI18n } from "../lib/i18n";
-import { PhotoCropEditor } from "./PhotoCropEditor";
-import { DeviceSelector, type PhotoDevice } from "./DeviceSelector";
-import {
-  MediaUrlsContext,
-  PhotoReference,
-  PhotoThumbnail,
-  photoName,
-} from "./PhotoReference";
+import { ContentPhotoField } from "./ContentPhotoField";
+import type { PhotoDevice } from "./DeviceSelector";
+import { PhotoReference, photoName } from "./PhotoReference";
 type Change = Dispatch<SetStateAction<SiteConfig>>;
 function useText() {
   const { language } = usePanelI18n();
@@ -113,64 +102,6 @@ function Shared({
       </Button>
     </Alert>
   ) : null;
-}
-function PhotoUse({
-  config,
-  id,
-  crops,
-  onId,
-  onCrops,
-  device,
-  onDevice,
-}: {
-  config: SiteConfig;
-  id?: string;
-  crops: DeviceCrops;
-  onId: (id: string | null) => void;
-  onCrops: (c: DeviceCrops) => void;
-  device: PhotoDevice;
-  onDevice: (d: PhotoDevice) => void;
-}) {
-  const t = useText(),
-    urls = useContext(MediaUrlsContext);
-  const photo = config.media.find((p) => p.id === id);
-  return (
-    <Stack>
-      {!photo && <DeviceSelector device={device} onChange={onDevice} />}
-      <Select
-        label={t(
-          "Zdjęcie dla wybranego urządzenia",
-          "Photo for selected device",
-          "Foto für ausgewähltes Gerät",
-        )}
-        searchable
-        allowDeselect={false}
-        clearable
-        value={id || null}
-        data={config.media.map((p) => ({ value: p.id, label: photoName(p) }))}
-        leftSection={photo ? <PhotoThumbnail photo={photo} /> : undefined}
-        leftSectionWidth={48}
-        styles={{ input: { minHeight: 48 } }}
-        renderOption={({ option }) => (
-          <PhotoReference
-            photo={config.media.find((p) => p.id === option.value)!}
-          />
-        )}
-        onChange={onId}
-      />
-      {photo && (
-        <PhotoCropEditor
-          photo={photo}
-          crops={crops}
-          urls={urls}
-          device={device}
-          onDevice={onDevice}
-          disabled={false}
-          onChange={onCrops}
-        />
-      )}
-    </Stack>
-  );
 }
 function VenueEditor({
   config,
@@ -759,7 +690,7 @@ function SectionDetails({
             ]}
             onChange={(v) => hero({ layout: v as "split" | "overlay" })}
           />
-          <PhotoUse
+          <ContentPhotoField
             config={config}
             id={photoId}
             crops={config.hero.crops}
@@ -1144,7 +1075,7 @@ function SectionDetails({
               ) : (
                 entity &&
                 section.mediaIds.includes(entity) && (
-                  <PhotoUse
+                  <ContentPhotoField
                     config={config}
                     id={entity}
                     crops={section.crops[entity] || {}}

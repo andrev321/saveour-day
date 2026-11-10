@@ -23,21 +23,21 @@
 - [Site deletion, retention, and media lifecycle](USUWANIE-REALIZACJI.md)
 - [Brand kit](../assets/brand/README.md)
 
-## Historical evidence
+## Verification records and design history
 
-- [Staging status and migration history](STAGING-STATUS.md)
+- [Where to keep staging verification records](STAGING-STATUS.md)
 - [Publication self-review — 2026-09-22](SELF-REVIEW-PUBLIKACJI.md)
 - [Earlier theme previews](../assets/theme-previews/README.md)
 - [Theme design exploration](../assets/theme-redesign/README.md)
 - [Starter-image prompts](../assets/starter-media/PROMPTS.md)
 - [Concept-image prompts](../assets/theme-redesign/media/PROMPTS.md)
 
-Historical reports preserve dates, IDs, and verification limits. They are not current deployment certification. The current runtime uses v3 and authorized media APIs; older v1/v2 and signed-URL descriptions are historical only.
+Historical reports record dates and verification limits. Keep real environment inventories and deployment identifiers in private operator records. The current runtime uses v3 and authorized media APIs.
 
 ## Maintenance rules
 
 Keep setup variables in the deployment checklist, test commands/details in Testing, and actual environment evidence in Staging status. Link to those sources instead of copying long checklists.
 
-Preserve exact commands, schema/API identifiers, template placeholders, CSV headers, and migration filenames when editing prose. Existing Polish filenames remain stable for old links; documentation text is English. Localized product strings and historical configured values may remain in their original language.
+Preserve exact commands, schema/API identifiers, template placeholders, CSV headers, and migration filenames when editing prose. Existing Polish filenames remain stable for old links. Write documentation in English and preserve localized product strings.
 
 Document verified behavior separately from planned work or untested operational steps. Record the date, commit, environment, and scope of any new acceptance result. Never include credentials or authenticated browser storage state.

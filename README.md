@@ -4,15 +4,6 @@ Create and manage event invitations with customizable templates, guest managemen
 
 Organizers start with an event template or a blank draft, customize content and appearance, and publish invitations for individuals or households. Access can be public, protected by a shared code, or verified by email OTP. Content publication updates the database without rebuilding the application.
 
-## Staging
-
-| Application | URL |
-| --- | --- |
-| Admin panel | https://example-admin-staging.example.com |
-| Guest invitations | https://example-site-staging.example.com |
-
-Staging may require Vercel authentication. See [staging operations](docs/STAGING-OPERATIONS.md) for deployment checks and URL configuration, and [staging history](docs/STAGING-STATUS.md) for recorded acceptance limits.
-
 ## Run locally
 
 Use **Node.js 24 and npm 11**. Install from the repository root:
@@ -80,7 +71,9 @@ Regenerate with `npm run build:brand`.
 ## Legacy data conversion
 
 ```sh
-npm run import:legacy -- "Name 1" "Name 2"
+npm run import:legacy -- "Name 1" "Name 2" ".local/legacy-source/hero.jpg"
 ```
 
-This reads legacy `VITE_CONFIG_*` values from the root `.env.local` and creates local JSON in Git-ignored `.local/legacy`. It does not write to Supabase. The panel exports JSON but has no JSON import form; use the output as a migration source. Add photos through the media library and assign them in the configuration. The current runtime does not use `SITE_CONFIG`; legacy importer messages mentioning it are not startup instructions.
+Put the source photo in the Git-ignored `.local/legacy-source` directory. The importer reads legacy `VITE_CONFIG_*` values from the root `.env.local` and writes JSON and a converted image to `.local/legacy`. Move any existing output directory aside before running again.
+
+Use the JSON as a reference when recreating content in the panel. Upload the converted image through the media library and assign it to the hero. The importer writes only local files.

@@ -1,63 +1,30 @@
 # Production operations
 
-## Environment inventory
+## Provision
 
-Production is provisioned separately from staging. Both applications share the production Supabase project; no staging users, invitation data, or files have been copied.
-
-| Resource | Production |
-| --- | --- |
-| Vercel team | `example-team` (`[redacted-id]`) |
-| Admin project | `example-admin-production` (`[redacted-id]`) |
-| Guest project | `example-site-production` (`[redacted-id]`) |
-| Admin domain | https://example-admin-production.example.com |
-| Guest domain | https://example-site-production.example.com |
-| Supabase | `example-production-project` (`example-production-project`), example-organization, Frankfurt (`eu-central-1`) |
-
-Both Vercel projects use Next.js, Node.js 24, their respective `apps/admin` and `apps/site` root directories, and shared files outside those directories. Install command:
+- Keep production Supabase, credentials, and storage separate from staging.
+- Create separate Vercel projects for `apps/admin` and `apps/site`. Use Node.js 24 and allow access to files outside each project root.
+- Keep both production projects disconnected from GitHub for manual releases. Staging can retain automatic deploys.
+- Set the install command below for both applications. Configure secrets, migrations, SMTP, and the retention worker using the [deployment checklist](CHECKLISTA-WDROZENIA.md).
 
 ```sh
 cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
 ```
 
-## Manual releases only
+Keep the project inventory, deployed commit, deployment IDs, and acceptance evidence in a private operator record.
 
-Production projects were created **without a Git repository connection**, with `skipGitConnectDuringLink` enabled. A push to GitHub must not create production deployments. Staging retains its existing automatic Git deployments. Both staging and production use Vercel's Production target in different projects; the project and credentials determine the actual environment.
+## Release manually
 
-Do not import/connect the production projects to GitHub or promote a staging build into production: staging builds contain staging configuration.
+Start with a clean checkout of the tested release commit. Run the following from the repository root for each application at the same commit. Substitute the actual team, project, and deployment values.
 
-After completing the setup below, release manually from a clean checkout of an explicitly selected, tested commit. With an authenticated Vercel CLI, link the checkout to the existing production project using `vercel link --project <production-project-name> --scope example-team`; preserve the existing monorepo settings. Deploy from the repository root using `vercel deploy --prod --skip-domain --scope example-team`. Verify the staged production deployment, then use `vercel promote <deployment-url> --scope example-team`. Repeat for the other application at the **same commit**, relinking the checkout to its project first.
+```sh
+vercel link --project "<production-project>" --scope "<team>"
+vercel deploy --prod --skip-domain --scope "<team>"
+vercel promote "<deployment-url>" --scope "<team>"
+```
 
-These commands are an operator procedure, not an installed GitHub Actions workflow. The first production release was triggered manually with the Vercel Deployment API, using the same exact Git commit for both projects and keeping Git integration disconnected. The CLI procedure has not been exercised. Review pending database migrations before each release; reconcile remote migration names/content, since MCP-generated migration timestamps differ from repository filenames. Never blindly push the full migration chain to an existing database.
+Inspect the candidate deployment before promotion. Reconcile migration history before applying changes to an existing database. After promotion, follow the [deployment acceptance checks](WDROZENIE-PLATFORMY.md) for both applications. Verify account confirmation, password recovery, guest OTP, media, publication, and RSVP with authorized test accounts.
 
-## Setup status — 2026-11-07
+## Roll back
 
-Provisioned and verified:
-
-- Both Vercel project domains belong to the intended project.
-- Production projects are absent from the repository's Git-linked project inventory.
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `SITE_URL` are set for the Production target only in both projects; `APP_URL` is set in the admin project.
-- Supabase Auth Site URL is the production admin origin. The allowlist includes exactly `https://example-admin-production.example.com/auth/confirm`.
-- Vercel Authentication is configured for preview deployments; production guests should not require a Vercel account.
-- A separate Supabase project was created after a quote of USD 0/month. This is the creation quote, not a guarantee about future usage or plan changes.
-- All 13 repository migrations were applied in dependency order. A database query confirmed 13 migration records, a private `site-media` bucket, the reminder delivery table, and zero sites.
-
-- The `purge-sites` Edge Function and its active monthly schedule match staging. The schedule runs at 03:00 UTC on the first day of each month. The worker requires a single-use database token. Schedule registration was verified without triggering a purge. See [media lifecycle](USUWANIE-REALIZACJI.md).
-
-**First production release:** Both deployments of `edfcda1c512efdb9bbcbed11253b81a23a7332f5` reached `READY` on 2026-11-07. Admin deployment: `[redacted-id]`. Guest deployment: `[redacted-id]`. Both production homepages returned HTTP 200. Both projects have `SUPABASE_SERVICE_ROLE_KEY` scoped to Production. The operator reported configuring SMTP and the three Auth templates. Actual email delivery, sign-in, and publishing flows remain to be verified.
-
-**Remaining acceptance checks:**
-
-- Test account confirmation, password recovery, and numeric guest OTP with the staging-style test SMTP configuration. Guest delivery requires a verified production sender.
-- No production end-to-end acceptance, email delivery, runtime error scan, backup/restore test, or monitoring configuration has been completed.
-
-Do not launch or accept real customer data until migrations, secrets, Auth/email, and [acceptance checks](WDROZENIE-PLATFORMY.md) are complete. Update this status with the deployed commit and verification evidence after the first successful release.
-
-## Rollback and isolation
-
-Roll back each application only to a build compatible with the production schema. Application rollback does not undo database migrations, RSVP, or other stored data. Keep database and Storage recovery procedures separate.
-
-Never run staging smoke tests against production using staging credentials. Keep production server secrets out of Preview and Development targets. Optional reminders require their own verified sender and admin-only settings; they are not configured by this provisioning step.
-
-## Security review
-
-The Supabase advisor was run after applying all migrations on 2026-11-07. It reported `pg_net` in the public schema and executable SECURITY DEFINER helpers (`can_access_site`, `is_platform_admin`, and authenticated-only `can_upload_media`). Review their intended caller grants and function bodies before launch. RLS-without-policy informational findings on server-only tables are not a reason to add public policies. This review is incomplete and is not a production security sign-off.
+Promote a previous deployment compatible with the current database schema. Keep database and Storage recovery procedures separate. Use staging credentials only with staging projects.
