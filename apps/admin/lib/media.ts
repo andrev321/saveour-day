@@ -6,6 +6,11 @@ import {
   isSampleMedia,
   type SiteConfig,
 } from "@invitations/domain";
+import {
+  MEDIA_POLICY,
+  formatByteLimitError,
+  isSupportedMediaFormat,
+} from "./media-limits";
 import { checkDb, HttpError, serviceDb, sessionDb } from "./server";
 
 export async function deleteMedia(
@@ -62,8 +67,8 @@ export async function uploadMedia(
   buffer: Buffer,
   uploadDb: Awaited<ReturnType<typeof sessionDb>>,
 ) {
-  if (!buffer.length || buffer.length > 8388608)
-    throw new HttpError(413, "Limit pliku: 8 MB");
+  if (!buffer.length || buffer.length > MEDIA_POLICY.maxServerBytes)
+    throw new HttpError(413, formatByteLimitError(MEDIA_POLICY.maxServerBytes));
   await cleanupMedia(siteId, actor);
   const db = serviceDb();
   const assetId = randomUUID();
@@ -76,12 +81,9 @@ export async function uploadMedia(
   checkDb(reserveError);
   try {
     const metadata = await sharp(buffer, {
-      limitInputPixels: 20000000,
+      limitInputPixels: MEDIA_POLICY.maxInputPixels,
     }).metadata();
-    if (
-      !["jpeg", "png", "webp"].includes(metadata.format || "") ||
-      (metadata.pages || 1) !== 1
-    )
+    if (!isSupportedMediaFormat(metadata.format, metadata.pages || 1))
       throw new HttpError(
         400,
         "Wymagane nieanimowane zdjęcie JPEG, PNG lub WebP",
@@ -89,11 +91,13 @@ export async function uploadMedia(
     const variants: { src: string; width: number }[] = [];
     let width = 0,
       height = 0;
-    for (const target of [640, 1280, 1920]) {
-      const output = await sharp(buffer, { limitInputPixels: 20000000 })
+    for (const target of MEDIA_POLICY.responsiveWidths) {
+      const output = await sharp(buffer, {
+        limitInputPixels: MEDIA_POLICY.maxInputPixels,
+      })
         .rotate()
         .resize({ width: target, withoutEnlargement: true })
-        .webp({ quality: 82 })
+        .webp({ quality: MEDIA_POLICY.webpQuality })
         .toBuffer({ resolveWithObject: true });
       if (variants.some((v) => v.width === output.info.width)) continue;
       const name = `${output.info.width}.webp`;

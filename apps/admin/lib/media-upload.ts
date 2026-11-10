@@ -1,14 +1,17 @@
 import { HttpError } from "./server";
-
-import { maxImageBytes } from "./media-limits";
+import {
+  formatByteLimitError,
+  isSupportedMediaMime,
+  maxImageBytes,
+} from "./media-limits";
 
 export { maxImageBytes } from "./media-limits";
+
 export async function readImage(request: Request) {
-  const type = request.headers.get("content-type")?.split(";")[0];
-  if (!["image/jpeg", "image/png", "image/webp"].includes(type || ""))
+  if (!isSupportedMediaMime(request.headers.get("content-type")))
     throw new HttpError(400, "Wymagane zdjęcie JPEG, PNG lub WebP");
   if (Number(request.headers.get("content-length")) > maxImageBytes)
-    throw new HttpError(413, "Limit pliku: 4 MB");
+    throw new HttpError(413, formatByteLimitError(maxImageBytes));
   const reader = request.body?.getReader();
   if (!reader) throw new HttpError(400, "Brak zdjęcia");
   const chunks: Uint8Array[] = [];
@@ -20,7 +23,7 @@ export async function readImage(request: Request) {
       size += value.byteLength;
       if (size > maxImageBytes) {
         await reader.cancel();
-        throw new HttpError(413, "Limit pliku: 4 MB");
+        throw new HttpError(413, formatByteLimitError(maxImageBytes));
       }
       chunks.push(value);
     }

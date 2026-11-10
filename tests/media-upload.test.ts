@@ -198,3 +198,132 @@ test("image request reader bounds chunked bodies and rejects empty or unsupporte
     mock.restoreAll();
   }
 });
+
+test("consolidated media policy enforces MIME, format, byte and pixel budgets across client and server", async () => {
+  const {
+    MEDIA_POLICY,
+    maxImageBytes,
+    maxPhotoFileBytes,
+    isSupportedMediaMime,
+    isSupportedMediaFormat,
+    computeInitialDownscale,
+  } = await import("../apps/admin/lib/media-limits.ts");
+
+  assert.equal(MEDIA_POLICY.maxTransportBytes, 4 * 1024 * 1024);
+  assert.equal(MEDIA_POLICY.maxServerBytes, 8 * 1024 * 1024);
+  assert.equal(MEDIA_POLICY.maxClientFileBytes, 10 * 1024 * 1024);
+  assert.equal(MEDIA_POLICY.maxInputPixels, 20_000_000);
+  assert.equal(maxImageBytes, MEDIA_POLICY.maxTransportBytes);
+  assert.equal(maxPhotoFileBytes, MEDIA_POLICY.maxClientFileBytes);
+
+  assert.equal(isSupportedMediaMime("image/jpeg"), true);
+  assert.equal(isSupportedMediaMime("image/png; charset=utf-8"), true);
+  assert.equal(isSupportedMediaMime("image/webp"), true);
+  assert.equal(isSupportedMediaMime("image/gif"), false);
+  assert.equal(isSupportedMediaMime(null), false);
+
+  assert.equal(isSupportedMediaFormat("jpeg", 1), true);
+  assert.equal(isSupportedMediaFormat("webp", 2), false);
+  assert.equal(isSupportedMediaFormat("gif", 1), false);
+
+  assert.equal(computeInitialDownscale(4000, 3000), 1);
+  const scale = computeInitialDownscale(6000, 4000);
+  assert.ok(scale < 1 && scale > 0.9);
+  assert.ok(Math.round(6000 * scale) * Math.round(4000 * scale) <= MEDIA_POLICY.maxInputPixels);
+});
+
+test("preparePhotoUpload rejects unsupported MIME, returns within-budget files unchanged, and downscales oversized photos", async () => {
+  const { preparePhotoUpload, maxPhotoFileBytes } =
+    await import("../apps/admin/lib/prepare-photo-upload.ts");
+  const { maxImageBytes } = await import("../apps/admin/lib/media-limits.ts");
+
+  assert.equal(maxPhotoFileBytes, 10 * 1024 * 1024);
+
+  // 1. Unsupported MIME returns null without touching createImageBitmap
+  const gifFile = new File([new Uint8Array([1, 2, 3])], "anim.gif", {
+    type: "image/gif",
+  });
+  assert.equal(await preparePhotoUpload(gifFile), null);
+
+  // 2. Stub browser globals for createImageBitmap and canvas
+  let closed = false;
+  let currentBitmap = {
+    width: 2000,
+    height: 1500,
+    close() {
+      closed = true;
+    },
+  };
+  const drawnSizes: { w: number; h: number; quality: number }[] = [];
+  const origCreateImageBitmap = globalThis.createImageBitmap;
+  const origDocument = globalThis.document;
+
+  (globalThis as Record<string, unknown>).createImageBitmap = async () =>
+    currentBitmap;
+  (globalThis as Record<string, unknown>).document = {
+    createElement(tag: string) {
+      assert.equal(tag, "canvas");
+      const canvas = {
+        width: 0,
+        height: 0,
+        getContext(kind: string) {
+          assert.equal(kind, "2d");
+          return {
+            drawImage(_bmp: unknown, _x: number, _y: number, w: number, h: number) {
+              assert.equal(w, canvas.width);
+              assert.equal(h, canvas.height);
+            },
+          };
+        },
+        toBlob(
+          cb: (blob: Blob | null) => void,
+          mime: string,
+          quality: number,
+        ) {
+          assert.equal(mime, "image/webp");
+          drawnSizes.push({ w: canvas.width, h: canvas.height, quality });
+          // Succeed when quality <= 0.8
+          const size = quality <= 0.8 ? 500_000 : maxImageBytes + 100;
+          cb(new Blob([new Uint8Array(size)], { type: "image/webp" }));
+        },
+      };
+      return canvas;
+    },
+  };
+
+  try {
+    // Within pixel & byte budget -> returns original File directly
+    const smallFile = new File([new Uint8Array(1024)], "photo.jpg", {
+      type: "image/jpeg",
+    });
+    const unchanged = await preparePhotoUpload(smallFile);
+    assert.equal(unchanged, smallFile);
+    assert.equal(closed, true);
+    assert.equal(drawnSizes.length, 0);
+
+    // Oversized pixel count (6000x4000 = 24 MP > 20 MP) -> downscales via canvas and compresses to WebP
+    closed = false;
+    currentBitmap = {
+      width: 6000,
+      height: 4000,
+      close() {
+        closed = true;
+      },
+    };
+    const hiResFile = new File([new Uint8Array(1024)], "hires.png", {
+      type: "image/png",
+    });
+    const compressed = await preparePhotoUpload(hiResFile);
+    assert.ok(compressed instanceof Blob);
+    assert.ok(compressed.size <= maxImageBytes);
+    assert.equal(closed, true);
+    assert.equal(drawnSizes.length, 2); // tried 0.9 (too large), succeeded at 0.8
+    assert.ok(drawnSizes[0]!.w * drawnSizes[0]!.h <= 20_000_000);
+  } finally {
+    (globalThis as Record<string, unknown>).createImageBitmap =
+      origCreateImageBitmap;
+    (globalThis as Record<string, unknown>).document = origDocument;
+  }
+});
+
+
