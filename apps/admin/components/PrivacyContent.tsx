@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Anchor,
   Button,
@@ -40,7 +39,7 @@ export function PrivacyContent({
               ]}
             />
             <Button
-              component={Link}
+              component="a"
               href="/"
               variant="subtle"
               leftSection={<ArrowLeftIcon size={18} />}
@@ -412,10 +411,10 @@ export function PrivacyContent({
             © {new Date().getFullYear()} saveour.day. All rights reserved.
           </Text>
           <Group gap="md">
-            <Anchor component={Link} href="/terms" size="xs">
+            <Anchor href="/terms" size="xs">
               {lang === "pl" ? "Warunki korzystania" : "Terms of Service"}
             </Anchor>
-            <Anchor component={Link} href="/" size="xs">
+            <Anchor href="/" size="xs">
               {lang === "pl" ? "Strona główna" : "Home"}
             </Anchor>
           </Group>

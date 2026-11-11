@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import {
   Anchor,
   Button,
@@ -40,7 +39,7 @@ export function TermsContent({
               ]}
             />
             <Button
-              component={Link}
+              component="a"
               href="/"
               variant="subtle"
               leftSection={<ArrowLeftIcon size={18} />}
@@ -346,10 +345,10 @@ export function TermsContent({
             © {new Date().getFullYear()} saveour.day. All rights reserved.
           </Text>
           <Group gap="md">
-            <Anchor component={Link} href="/privacy" size="xs">
+            <Anchor href="/privacy" size="xs">
               {lang === "pl" ? "Polityka prywatności" : "Privacy Policy"}
             </Anchor>
-            <Anchor component={Link} href="/" size="xs">
+            <Anchor href="/" size="xs">
               {lang === "pl" ? "Strona główna" : "Home"}
             </Anchor>
           </Group>
