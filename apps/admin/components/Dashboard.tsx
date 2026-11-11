@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   ActionIcon,
   Alert,
+  Anchor,
   Badge,
   Button,
   Card,
@@ -671,6 +672,17 @@ export function Dashboard({
             </>
           )}
         </main>
+        <Group justify="center" gap="lg" mt={48} pb="md" component="footer">
+          <Text size="xs" c="dimmed">
+            © {new Date().getFullYear()} saveour.day
+          </Text>
+          <Anchor href="/privacy" size="xs" c="dimmed">
+            {copy.privacyPolicy}
+          </Anchor>
+          <Anchor href="/terms" size="xs" c="dimmed">
+            {copy.termsOfService}
+          </Anchor>
+        </Group>
       </S.Content>
     </S.Page>
   );

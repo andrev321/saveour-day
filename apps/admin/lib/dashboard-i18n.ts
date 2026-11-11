@@ -44,6 +44,8 @@ export const dashboardUi = {
     oauthError: "Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
     oauthCancelled: "Logowanie przez Google zostało przerwane.",
     linkExpired: "Link wygasł lub został już wykorzystany. Zaloguj się lub wyślij nowy link.",
+    privacyPolicy: "Polityka prywatności",
+    termsOfService: "Warunki korzystania",
   },
   en: {
     eyebrow: "YOUR INVITATION STUDIO",
@@ -90,6 +92,8 @@ export const dashboardUi = {
     oauthError: "Google sign-in could not be completed. Please try again.",
     oauthCancelled: "Google sign-in was cancelled.",
     linkExpired: "The link has expired or has already been used. Please sign in or request a new link.",
+    privacyPolicy: "Privacy Policy",
+    termsOfService: "Terms of Service",
   },
   de: {
     eyebrow: "DEIN EINLADUNGSSTUDIO",
@@ -140,5 +144,7 @@ export const dashboardUi = {
     oauthError: "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
     oauthCancelled: "Google-Anmeldung wurde abgebrochen.",
     linkExpired: "Der Link ist abgelaufen oder wurde bereits verwendet. Bitte melde dich an oder fordere einen neuen Link an.",
+    privacyPolicy: "Datenschutzerklärung",
+    termsOfService: "Nutzungsbedingungen",
   },
 };
