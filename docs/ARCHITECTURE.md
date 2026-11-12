@@ -87,10 +87,10 @@ Revision checks reject stale submissions. Guest deadlines use Europe/Warsaw in t
 
 Composite foreign keys include `site_id` to prevent cross-site relationships. Secret columns are unavailable to browser clients; sensitive writes use backend-only SQL functions and audit events.
 
-Guest management supports CSV import/export, archiving members, optional RSVP questions, and invitation-scoped calendar downloads. Optional reminders require explicit recipient selection and sending; there is no automatic campaign.
+Guest management supports CSV import/export, archiving members, optional RSVP questions, per-invitation plus-one (`+1`) authorization, and invitation-scoped calendar downloads. In `email` access mode, organizers can send initial invitations and RSVP reminders in batches of up to 50 via Resend (`MAIL_FROM` / `RESEND_API_KEY`, subject to a per-site daily quota); there is no unattended background campaign.
 
 ## Boundaries and verification
 
-Per-site custom domains, payments, and automatic initial invitation distribution are not implemented.
+Per-site custom domains and payments are not implemented.
 
 Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. They do not prove live SMTP delivery or operational readiness. See [Testing](TESTING.md) and the dated [publication review](PUBLICATION-SELF-REVIEW.md).

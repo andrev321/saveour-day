@@ -24,6 +24,7 @@ test("CSV handles quoted records, Polish letters and rejects invalid or oversize
       names: ["Żaneta", "Jan"],
       emails: ["jan@example.com"],
       variantId: "all",
+      allowPlusOne: false,
     },
   ]);
   assert.throws(() => parseGuestCsv("rodzina;goscie;email\nA;Jan;bad", "all"));

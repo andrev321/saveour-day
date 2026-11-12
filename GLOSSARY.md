@@ -34,11 +34,17 @@ A record assigning an individual or household to a specific **Variant** within a
 ### Guest
 An individual person belonging to an **Invitation**. **RSVP Answers** are recorded per **Guest** and per **Event** pair (`(guest_id, event_id)`), whereas an **Invitation** represents the household unit.
 
+### Plus-One
+An optional unnamed companion slot enabled by an **Organizer** on an **Invitation**. When permitted, the household may name one additional person during RSVP submission and record **RSVP Answers** and optional details for that companion.
+
 ### Event
 A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** a household can RSVP to, independently of whether the timeline **Section** is visible.
 
 ### RSVP Answer
 A guest's attendance response (`attending`, `declined`, or no response) for a specific `(guest_id, event_id)` pair within an **Invitation**, along with optional dietary/custom notes and revision tracking. Stored outside **Releases** so answers survive new publications and **Template** resets.
+
+### Email Delivery
+A tracked outbound email sent on behalf of an **Organizer** to an **Invitation**'s allowlisted email address—either an initial invitation link or an RSVP reminder—subject to per-site daily sending limits and per-recipient daily deduplication.
 
 ---
 
@@ -49,6 +55,9 @@ The site-wide guest authentication rule configured by the **Organizer**:
 - `public`: Open access to `/s/<public_slug>` (renders default **Variant**) and `/i/<token>` (renders household **Variant** + RSVP).
 - `code`: Requires a shared, scrypt-hashed **Site Code** for both general and household links.
 - `email`: Requires an email One-Time Password (**OTP**) sent to an address allowlisted on an **Invitation**.
+
+### Guest OTP
+A time-limited numeric one-time password issued to an email address allowlisted on an **Invitation** when **Access Mode** is `email`, verified with bounded attempts to establish a **Guest Session**.
 
 ### Guest Session
 A versioned, 7-day `HttpOnly` cookie session issued after successful **Site Code** or **OTP** verification. Validated against `sites.access_version` and `invitations.access_version` so rotating a code, revoking an **Invitation**, or changing **Access Mode** immediately invalidates affected sessions.

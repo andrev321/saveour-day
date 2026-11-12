@@ -10,7 +10,7 @@ Guests receive localized Polish, English or German forms, themed controls, a sti
 
 Apply `supabase/migrations/20261004111003_product_review_improvements.sql` before deploying the new apps. It is additive, preserves existing RSVP rows, and keeps operations restricted to the service role behind authenticated API routes.
 
-Optional reminders require server-only `RESEND_API_KEY` and `REMINDER_FROM`, with a sender domain verified in Resend. The panel offers recipient and message preview, then explicit selection and sending in batches of ten. Only active invitations with missing responses and email access qualify. Each invitation/address is limited to one delivery per UTC day; retries use a stable provider idempotency key and a stored payload. No background campaign starts automatically. Provider errors show individual outcomes. Verify delivery with an authorized test recipient before enabling live sending.
+Invitation and reminder emails require server-only `RESEND_API_KEY` and `MAIL_FROM`, with a sender domain verified in Resend (updated in `202611120001_invitations_rsvp_v2.sql`). The panel offers recipient and message preview, then explicit selection and sending in batches of up to 50 via Resend Batch API, subject to a per-site daily quota. Each invitation/kind/address is limited to one delivery per UTC day; retries use a stable provider idempotency key and a stored payload. No background campaign starts automatically. Provider errors show individual outcomes. Verify delivery with an authorized test recipient before enabling live sending.
 
 ## Verification
 

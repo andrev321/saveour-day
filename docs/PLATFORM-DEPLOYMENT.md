@@ -17,7 +17,7 @@ The current application accepts schema v3 only.
 | `/i/<token>` | Individual/household link |
 | `/v/<invitation_id>` | Invitation selection after OTP; session required |
 
-Per-site custom domains, payments, and automatic initial invitation distribution are not part of the implementation. Guest content and private images are authorized by the application, use `private, no-store`, and are not passed through a public image optimizer.
+Per-site custom domains and payments are not part of the implementation. Organizers can distribute individual `/i/<token>` links manually or send initial invitations and reminders from the panel when using `email` access mode. Guest content and private images are authorized by the application, use `private, no-store`, and are not passed through a public image optimizer.
 
 ## Database migration procedure
 

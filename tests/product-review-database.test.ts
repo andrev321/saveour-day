@@ -159,25 +159,40 @@ test("member edits preserve RSVP, question history, transactional imports and re
       [sid, owner, config.defaultVariant],
     );
     const claim = (actor = owner) =>
-      db.query<{ result: { id: string; payload: unknown } | null }>(
-        "select public.claim_reminder($1,$2,$3,1,0,'family@example.com','{\"text\":\"first\"}') result",
-        [sid, actor, imported],
+      db.query<{
+        result: Array<{ id: string; email: string; payload: unknown }>;
+      }>(
+        "select public.claim_email_batch($1,$2,'reminder',$3,50) result",
+        [
+          sid,
+          actor,
+          JSON.stringify([
+            {
+              invitationId: imported,
+              expectedVersion: 1,
+              expectedRsvp: 0,
+              email: "family@example.com",
+              payload: { text: "first" },
+            },
+          ]),
+        ],
       );
     await assert.rejects(claim(other), /FORBIDDEN/);
-    const first = (await claim()).rows[0].result!;
+    const first = (await claim()).rows[0].result[0]!;
     assert.ok(first.id);
-    assert.equal((await claim()).rows[0].result, null);
+    assert.equal((await claim()).rows[0].result.length, 0);
     await db.query(
-      "update public.reminder_deliveries set lease_until=now()-interval '1 second'",
+      "update public.email_deliveries set lease_until=now()-interval '1 second'",
     );
-    assert.equal((await claim()).rows[0].result!.id, first.id);
+    assert.equal((await claim()).rows[0].result[0]!.id, first.id);
     await db.query(
-      "update public.reminder_deliveries set status='sent',lease_until=null",
+      "select public.finalize_email_batch($1)",
+      [JSON.stringify([{ id: first.id, status: "sent", provider_id: "re_1" }])],
     );
-    assert.equal((await claim()).rows[0].result, null);
+    assert.equal((await claim()).rows[0].result.length, 0);
     await db.exec("set role authenticated");
     await assert.rejects(
-      db.query("select * from public.reminder_deliveries"),
+      db.query("select * from public.email_deliveries"),
       /permission denied/,
     );
   } finally {

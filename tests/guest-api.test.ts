@@ -23,6 +23,8 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test-service-key";
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-public-key";
   process.env.SITE_URL = "https://invite.example.test";
+  process.env.RESEND_API_KEY = "test-resend-key";
+  process.env.MAIL_FROM = "noreply@example.test";
   const config = createDemo();
   config.media = [
     mediaSchema.parse({
@@ -53,8 +55,11 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     rsvp_revision: 0,
     note: "",
     label: "Family",
+    allow_plus_one: false,
+    plus_one: null,
   };
   let storedSession: unknown = null;
+  let storedOtpHash: string | null = null;
   let releaseReads = 0;
   let siteDeleted = false;
   const buckets: string[] = [];
@@ -65,6 +70,9 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       const url = new URL(
         typeof input === "string" || input instanceof URL ? input : input.url,
       );
+      if (url.origin === "https://api.resend.com" && url.pathname === "/emails") {
+        return Response.json({ id: "re_otp_1" });
+      }
       const table = url.pathname.split("/").at(-1);
       let data: unknown;
       if (table === "sites") {
@@ -102,8 +110,14 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       } else if (table === "consume_access_attempt") {
         buckets.push(JSON.parse(String(init?.body)).attempt_key);
         data = true;
+      } else if (table === "create_guest_otp") {
+        storedOtpHash = JSON.parse(String(init?.body)).code_hash;
+        data = null;
+      } else if (table === "verify_guest_otp") {
+        const payload = JSON.parse(String(init?.body));
+        data = storedOtpHash !== null && payload.code_hash === storedOtpHash;
       } else if (table === "otp") data = {};
-      else if (table === "save_rsvp") {
+      else if (table === "save_guest_rsvp") {
         const payload = JSON.parse(String(init?.body));
         assert.equal(payload.iid, invitation.id);
         assert.equal(payload.sid, site.id);
@@ -191,12 +205,30 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       (await post("otp-verify", { email: "family@example.com" })).status,
       401,
     );
+    assert.equal(
+      (await post("otp-verify", { email: "family@example.com", token: "000000" })).status,
+      401,
+    );
     assert.notEqual(buckets[0], buckets[2]);
     site.access_mode = "public";
     jar.clear();
-    const reply = await post("rsvp", { revision: 0, note: "", answers: [] });
+    const forbiddenPlusOne = await post("rsvp", {
+      revision: 0,
+      note: "",
+      answers: [],
+      plusOne: { id: "50000000-0000-4000-8000-000000000001", name: "Gość +1" },
+    });
+    assert.equal(forbiddenPlusOne.status, 409);
+    invitation.allow_plus_one = true;
+    const reply = await post("rsvp", {
+      revision: 0,
+      note: "",
+      answers: [],
+      plusOne: { id: "50000000-0000-4000-8000-000000000001", name: "Gość +1" },
+    });
     assert.equal(reply.status, 200);
     assert.deepEqual(await reply.json(), { revision: 1 });
+    invitation.allow_plus_one = false;
     assert.equal(
       (
         await (
@@ -241,7 +273,7 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
   }
 });
 
-test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest context resolves both UUID and legacy public_slug", async () => {
+test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and guest context resolves both UUID and legacy public_slug", async () => {
   class HttpError extends Error {
     constructor(
       public status: number,
@@ -254,6 +286,41 @@ test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest
   const legacySlug = `anna-i-jan-${siteId}`;
   const config = createDemo();
   config.id = siteId;
+
+  const queryFor = (table: string) => {
+    const invitationRows = [
+      {
+        id: "30000000-0000-4000-8000-000000000001",
+        label: "Nowakowie",
+        version: 1,
+        rsvp_revision: 0,
+        variant_id: config.defaultVariant,
+        guests: [{ id: "g1", name: "Jan" }],
+        emails: ["jan@example.com"],
+        allow_plus_one: false,
+        plus_one: null,
+      },
+    ];
+    const chain: Record<string, unknown> = {
+      select: () => chain,
+      eq: () => chain,
+      in: () => chain,
+      order: () => chain,
+      single: async () => ({
+        data: table === "releases" || table === "drafts" ? { config } : null,
+        error: null,
+      }),
+      maybeSingle: async () => ({
+        data: table === "releases" || table === "drafts" ? { config } : null,
+        error: null,
+      }),
+      range: async (from: number) => ({
+        data: table === "invitations" && from === 0 ? invitationRows : [],
+        error: null,
+      }),
+    };
+    return chain;
+  };
 
   mock.module("server-only", { namedExports: {} });
   mock.module("../apps/admin/lib/media.ts", {
@@ -272,46 +339,7 @@ test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest
         if (err) throw new HttpError(409, err.message);
       },
       serviceDb: () => ({
-        from: () => ({
-          select: () => ({
-            eq: () => ({
-              eq: () => ({
-                single: async () => ({
-                  data: { config },
-                  error: null,
-                }),
-                order: () => ({
-                  order: () => ({
-                    order: () => ({
-                      range: async () => ({ data: [], error: null }),
-                    }),
-                  }),
-                  range: async () => ({
-                    data: [
-                      {
-                        id: "30000000-0000-4000-8000-000000000001",
-                        label: "Nowakowie",
-                        version: 1,
-                        rsvp_revision: 0,
-                        variant_id: config.defaultVariant,
-                        guests: [{ id: "g1", name: "Jan" }],
-                        emails: ["jan@example.com"],
-                      },
-                    ],
-                    error: null,
-                  }),
-                }),
-              }),
-              order: () => ({
-                order: () => ({
-                  order: () => ({
-                    range: async () => ({ data: [], error: null }),
-                  }),
-                }),
-              }),
-            }),
-          }),
-        }),
+        from: (table: string) => queryFor(table),
         rpc: async (fn: string, args: Record<string, unknown>) => {
           assert.equal(fn, "publish_content");
           assert.equal(args.sid, siteId);
@@ -329,16 +357,16 @@ test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest
       url: `https://invite.example.test/s/${siteId}`,
     });
 
-    const { reminderPreview } = await import("../apps/admin/lib/reminders.ts");
-    const preview = await reminderPreview({
+    const { previewEmailCampaign } = await import("../apps/admin/lib/emails.ts");
+    const preview = await previewEmailCampaign({
       id: siteId,
       access_mode: "email",
       published_release_id: "release-1",
       rsvp_deadline: null,
     });
-    assert.equal(preview.recipients.length, 1);
+    assert.equal(preview.reminderRecipients.length, 1);
     assert.ok(
-      preview.recipients[0]!.text.includes(
+      preview.reminderRecipients[0]!.text.includes(
         `https://invite.example.test/s/${siteId}`,
       ),
     );
@@ -396,4 +424,49 @@ test("publish and reminderPreview generate canonical /s/<site.id> URLs and guest
     mock.restoreAll();
   }
 });
+
+test("rsvpSchema accepts optional and nullable plusOne and rejects invalid plusOne payloads", async () => {
+  const { rsvpSchema } = await import("../packages/domain/src/guest.ts");
+  const plusOneId = "40000000-0000-4000-8000-000000000002";
+
+  const withPlusOne = rsvpSchema.parse({
+    revision: 0,
+    note: "",
+    answers: [
+      {
+        guestId: plusOneId,
+        eventId: "ceremony",
+        attending: true,
+      },
+    ],
+    plusOne: { id: plusOneId, name: "  Anna Nowak  " },
+  });
+  assert.deepEqual(withPlusOne.plusOne, { id: plusOneId, name: "Anna Nowak" });
+
+  const clearedPlusOne = rsvpSchema.parse({
+    revision: 1,
+    note: "",
+    answers: [],
+    plusOne: null,
+  });
+  assert.equal(clearedPlusOne.plusOne, null);
+
+  assert.throws(() =>
+    rsvpSchema.parse({
+      revision: 0,
+      note: "",
+      answers: [],
+      plusOne: { id: "not-a-uuid", name: "Anna" },
+    }),
+  );
+  assert.throws(() =>
+    rsvpSchema.parse({
+      revision: 0,
+      note: "",
+      answers: [],
+      plusOne: { id: plusOneId, name: "   " },
+    }),
+  );
+});
+
 

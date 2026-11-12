@@ -12,12 +12,12 @@ These decisions describe the current design. Details are in [Architecture](ARCHI
 | Schema v3 only | Explicit typed sections, independent variants, and per-use crops | No runtime v1/v2 adapters |
 | Server-side variant projection | Do not deliver hidden content to unauthorized recipients | CSS hiding is insufficient; media authorization must follow the projection |
 | Site-wide public/code/email access | Predictable rules for all invitations | Household differences come from token, variant, and allowed addresses |
-| Email OTP for guests; passwords for organizers | Guests need no invitation password account | Correct Auth templates and working SMTP are operational requirements |
+| Custom guest OTP via Resend; Supabase Auth for organizers | Guests need no `auth.users` account and receive event-branded OTP emails | `RESEND_API_KEY` and `MAIL_FROM` required on `apps/site`; see ADR 0007 |
 | Separate versioned guest sessions | Revoke access without exposing Supabase tokens | Protected requests check session/access versions; lifetime is seven days |
 | Authorized media API and no private-content cache | Enforce access on direct image requests | Runtime/Storage costs must be considered without weakening isolation |
 | Scoped Storage INSERT for uploads | Prevent privileged uploads from bypassing lifecycle checks | Uploads use the organizer's JWT; read/delete/finalize remain server-controlled |
-| RSVP stored outside releases | Preserve answers across publication and template changes | Separate revisions, guest/event checks, and deadlines are required |
-| Explicit reminder sending | Organizers review recipients and content | Optional Resend setup; no unattended campaign |
+| RSVP stored outside releases | Preserve answers across publication and template changes | Separate revisions, guest/event checks, per-invitation `+1`, and deadlines are required |
+| Explicit invitation and reminder sending | Organizers review recipients and content | Resend Batch API (`<= 50`), per-site daily quota; no unattended campaign |
 | Node.js 24 and lockfile installs | Match local work and CI, including module mocks | Use `npm ci` and keep the lockfile authoritative |
 
 ## Template and styling rules
