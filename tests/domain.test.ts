@@ -9,7 +9,6 @@ import {
   createDemo,
   isUnmodifiedTemplate,
 } from "../packages/domain/src/demo.ts";
-import { importLegacy } from "../packages/domain/src/legacy.ts";
 
 test("two independent configurations use the same schema", () => {
   const first = createDemo(),
@@ -193,44 +192,6 @@ test("optional maps and descriptions do not disable sections", () => {
   assert.equal(
     parsed.variants[0].sections.find((p) => p.sectionId === "party")!.visible,
     true,
-  );
-});
-test("legacy import rejects null and numeric text fields without logging values", () => {
-  for (const value of ["null", '{"venueName":123}', "{broken"])
-    assert.throws(
-      () =>
-        importLegacy(
-          { VITE_CONFIG_COMMON: value },
-          { firstName: "Test", secondName: "Test" },
-        ),
-      /VITE_CONFIG_COMMON/,
-    );
-});
-test("legacy import preserves descriptions and all variants without hardcoded identity", () => {
-  const config = importLegacy(
-    {
-      VITE_CONFIG_COMMON: JSON.stringify({
-        description: "Opis ceremonii",
-        weddingDate: "Test",
-        phone: "+48000000000",
-      }),
-      VITE_CONFIG_SLUB: JSON.stringify({ description: "Opis przyjęcia" }),
-      VITE_CONFIG_PARKING: JSON.stringify({ description: "Opis parkingu" }),
-    },
-    { firstName: "Nowa", secondName: "Para" },
-  );
-  assert.equal(config.identity.displayName, "Nowa & Para");
-  assert.deepEqual(
-    config.variants.map((v) => v.slug),
-    ["slub", "obiad", "grill"],
-  );
-  assert.equal(
-    config.venues.find((v) => v.id === "reception")!.description,
-    "Opis przyjęcia",
-  );
-  assert.equal(
-    config.venues.find((v) => v.id === "parking")!.description,
-    "Opis parkingu",
   );
 });
 test("unknown fields cannot smuggle executable configuration", () => {

@@ -9,7 +9,7 @@ These decisions describe the current design. Details are in [Architecture](ARCHI
 | Database content releases | Atomic publication and independent drafts | Content rollback does not restore old code, access settings, or RSVP |
 | Supabase Postgres, Auth, and private Storage | Shared infrastructure and transactional checks | Privileged server clients must explicitly enforce authorization |
 | Shared Zod schema and renderer | Preview and publication use the same contract | Schema/renderer changes affect every site and need compatibility checks |
-| Schema v3 only | Explicit typed sections, independent variants, and per-use crops | Older stored configurations require the coordinated migration, not a runtime adapter |
+| Schema v3 only | Explicit typed sections, independent variants, and per-use crops | No runtime v1/v2 adapters |
 | Server-side variant projection | Do not deliver hidden content to unauthorized recipients | CSS hiding is insufficient; media authorization must follow the projection |
 | Site-wide public/code/email access | Predictable rules for all invitations | Household differences come from token, variant, and allowed addresses |
 | Email OTP for guests; passwords for organizers | Guests need no invitation password account | Correct Auth templates and working SMTP are operational requirements |
@@ -37,4 +37,4 @@ The interface primarily uses styled-components and a shared SSR/streaming regist
 - Schema v3 replaced v1/v2 runtime adapters.
 - Authorized media routes replaced signed Storage links issued to clients.
 
-Apply the complete migration chain for a fresh environment. Existing environments must reconcile migration history first. The historical `LEGACY_PUBLICATION_ACTIVE` guard prevents enabling protection while `sites.vercel_project_id` still identifies an unchecked legacy publication. Disable old public copies before clearing that field for an individual site; see [Deployment](PLATFORM-DEPLOYMENT.md).
+Apply the complete migration chain for a fresh environment. Existing environments must reconcile migration history first.

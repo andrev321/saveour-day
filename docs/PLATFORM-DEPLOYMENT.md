@@ -8,7 +8,7 @@ Each environment has two Next.js applications (`apps/admin`, `apps/site`) and on
 
 Publishing content is a database transaction, not a deployment. It validates the draft/media, creates a release, and updates `sites.published_release_id`. Content rollback does not roll back RSVP or permissions. Code deployments update the shared runtime.
 
-The current application accepts schema v3 only. Earlier v1/v2 adapters are historical. Apply the coordinated v3 migration before running this version against older data.
+The current application accepts schema v3 only.
 
 | Example route | Purpose |
 | --- | --- |
@@ -31,8 +31,6 @@ Per-site custom domains, payments, and automatic initial invitation distribution
 4. For incompatible schema changes, prevent old application writes during the coordinated migration/deployment window.
 5. Apply only missing migrations in dependency order, then deploy both compatible applications.
 6. Validate stored configurations, permissions, publication, snapshots, media, and RSVP before restoring normal use.
-
-The v3 migration converts drafts, releases, and snapshots, including archived sites; it preserves IDs and media paths and increments draft revisions. Do not roll back only the application to a v1/v2-only client afterward. See [Content editor](CONTENT-EDITOR.md).
 
 The media lifecycle migration must precede code that uses the new upload/read flow. Sample-media migrations must precede applications using those manifests. Historical staging version mappings are recorded in [Staging status](STAGING-STATUS.md); missing entries are not proof a migration was or was not applied.
 
@@ -62,19 +60,6 @@ Organizers confirm their email and create their own sites; no platform-admin rol
 7. Review answers and notes in the panel. Guests may edit until the deadline; organizers may correct them afterward while an active publication exists.
 
 No response differs from declining. Historical answers remain after events are removed. Access changes invalidate the relevant sessions; revocation does not erase content already downloaded.
-
-## Transition from legacy public sites
-
-Database migration neither publishes old releases nor removes old deployments.
-
-1. Inventory and back up old projects, deployments, domains, database records, and media.
-2. Select the intended draft/release and publish through the shared runtime. Do not assume the latest legacy release had a successful build.
-3. Distribute the new address. If retaining an old domain, redirect it without serving legacy static files.
-4. Before enabling code/OTP protection, remove or secure **all** old public deployments, aliases, files, and direct image URLs. Changing DNS alone does not remove copies.
-5. After checking an individual site, clear its `sites.vercel_project_id`. The `LEGACY_PUBLICATION_ACTIVE` guard otherwise blocks protected access. Do not bulk-clear unchecked sites.
-6. Retire unused projects/webhooks while keeping release/audit history and referenced media.
-
-Rollback must return to a compatible shared runtime, not the old static publication process. Database recovery and application rollback are separate operations. Previously issued signed Storage URLs require the transition procedure in [Media lifecycle](SITE-DELETION.md).
 
 ## Acceptance on real services
 

@@ -66,7 +66,6 @@ Use this Install Command in both projects:
 cd ../.. && npm ci --include=dev --workspaces --include-workspace-root
 ```
 
-- [ ] Remove obsolete Vite overrides: `dist`, rewrites to `index.html`, old build commands, and `VITE_CONFIG_*`.
 - [ ] Assign stable admin/site domains and verify HTTPS.
 - [ ] Set environment variables for the intended deployment target. The dedicated staging projects use Vercel's Production target but staging Supabase credentials.
 - [ ] Deploy both applications after the required migrations.
@@ -98,7 +97,6 @@ Changing a domain also requires reviewing `APP_URL`, `SITE_URL`, Auth Site URL/r
 - [ ] Run the dedicated-account Staging smoke workflow and record commit/date/results; see [Testing](TESTING.md).
 - [ ] If using reminders, configure the admin-only variables, redeploy, review recipients/content, and verify delivery to an authorized test mailbox.
 - [ ] Complete the deeper acceptance scenarios in [Deployment](PLATFORM-DEPLOYMENT.md).
-- [ ] Disable old public copies before enabling protection on migrated legacy sites.
 - [ ] Configure monitoring, error ownership, cost/delivery checks, database **and Storage** backups, and a tested restore procedure.
 
 ## Troubleshooting
@@ -110,5 +108,4 @@ Changing a domain also requires reviewing `APP_URL`, `SITE_URL`, Auth Site URL/r
 | OTP is not delivered | SMTP, sender DNS, limits, invitation email, spam, Auth logs |
 | Account confirmation fails | Auth Site URL, `token_hash`, `type=signup`, expiry |
 | Invitation returns 404 | Publication, correct link, revocation, soft deletion |
-| `LEGACY_PUBLICATION_ACTIVE` | Legacy copies must be disabled before clearing `vercel_project_id` |
 | Missing workspace modules during build | Root lockfile and workspace Install Command |

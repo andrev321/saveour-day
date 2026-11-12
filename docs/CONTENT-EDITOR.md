@@ -21,14 +21,6 @@ Entities are shared. The editor shows usage counts and can create independent co
 - `hero.crops` and `gallery.crops[mediaId]` contain independent desktop/tablet/mobile `{x,y}` positions from 0 to 100. Missing device crops fall back to desktop, then center.
 - Guest projection includes only visible sections and related contacts, images, and venues. Allowed RSVP events can exist without a visible timeline.
 
-## One-time migration
-
-`20260930204955_contextual_editor_v3.sql` converts drafts, releases, and draft snapshots while preserving IDs and media paths. It moves global crops to their uses, converts old default-variant/hidden-reference rules to explicit lists, removes the older adapter, and increments draft revisions to reject stale editors. Historical `ivory` becomes `classic`; saved colors are preserved. Appearance defaults are filled consistently for snapshot comparisons.
-
-Conversion includes archived, soft-deleted sites. Exclusive table locks last until transaction end. Required triggers are restored before commit; a failure rolls the transaction back.
-
-Coordinate the database migration and both application deployments. Do not run old clients against the migrated schema. Existing staging has different remote migration version numbers: reconcile history before applying missing migrations. Do not replay the entire local history. See [Staging status](STAGING-STATUS.md).
-
 ## Verification
 
 Domain and PGlite tests cover migration, references, independent variants, RSVP authorization, contact isolation, and history. E2E cover contextual editing, preview selection, device crops, variants, and viewports from 320 to 2560 px. PostgreSQL concurrency checks require a disposable `TEST_DATABASE_URL`; CI supplies PostgreSQL 17. See [Testing](TESTING.md).

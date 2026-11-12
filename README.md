@@ -67,20 +67,10 @@ Start with the [documentation index](docs/README.md), or go directly to:
 - [Architecture](docs/ARCHITECTURE.md) and [technical decisions](docs/TECHNICAL-DECISIONS.md)
 - [Content editor](docs/CONTENT-EDITOR.md), [interface](docs/CONFIGURATOR-INTERFACE.md), and [editing/guest workflows](docs/product-review-improvements.md)
 - [Starter templates](docs/STARTER-TEMPLATES.md) and [themes/palettes](docs/THEMES-AND-PALETTES.md)
-- [Deployment checklist](docs/DEPLOYMENT-CHECKLIST.md), [migration/acceptance guide](docs/PLATFORM-DEPLOYMENT.md), and [retention/media lifecycle](docs/SITE-DELETION.md)
+- [Deployment checklist](docs/DEPLOYMENT-CHECKLIST.md), [deployment/acceptance guide](docs/PLATFORM-DEPLOYMENT.md), and [retention/media lifecycle](docs/SITE-DELETION.md)
 
 ## Brand assets
 
 [Brand kit and usage](assets/brand/README.md) · [light/dark/animation preview](assets/brand/index.html)
 
 Regenerate with `npm run build:brand`.
-
-## Legacy data conversion
-
-```sh
-npm run import:legacy -- "Name 1" "Name 2" ".local/legacy-source/hero.jpg"
-```
-
-Put the source photo in the Git-ignored `.local/legacy-source` directory. The importer reads legacy `VITE_CONFIG_*` values from the root `.env.local` and writes JSON and a converted image to `.local/legacy`. Move any existing output directory aside before running again.
-
-Use the JSON as a reference when recreating content in the panel. Upload the converted image through the media library and assign it to the hero. The importer writes only local files.

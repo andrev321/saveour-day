@@ -91,6 +91,6 @@ Guest management supports CSV import/export, archiving members, optional RSVP qu
 
 ## Boundaries and verification
 
-Per-site custom domains, payments, and automatic initial invitation distribution are not implemented. JSON export exists, but no JSON import form. The legacy import script only converts local data.
+Per-site custom domains, payments, and automatic initial invitation distribution are not implemented. JSON export exists, but no JSON import form.
 
 Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. They do not prove live SMTP delivery or operational readiness. See [Testing](TESTING.md) and the dated [publication review](PUBLICATION-SELF-REVIEW.md).
