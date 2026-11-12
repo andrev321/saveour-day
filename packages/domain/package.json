@@ -11,7 +11,8 @@
     "./templates": "./src/templates.ts",
     "./readiness": "./src/readiness.ts",
     "./operations": "./src/operations.ts",
-    "./editor": "./src/editor.ts"
+    "./editor": "./src/editor.ts",
+    "./email": "./src/email.ts"
   },
   "dependencies": {
     "zod": "^4.6.7"

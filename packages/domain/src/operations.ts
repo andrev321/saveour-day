@@ -10,6 +10,14 @@ export const defaultQuestions: QuestionSettings = {
   lodging: false,
   transport: false,
 };
+export const plusOneSchema = z
+  .object({
+    id: z.uuid(),
+    name: z.string().trim().min(1).max(200),
+  })
+  .nullable();
+export type PlusOneGuest = z.infer<typeof plusOneSchema>;
+
 export const guestDetailsSchema = z
   .record(
     z.uuid(),
@@ -21,13 +29,14 @@ export const guestDetailsSchema = z
       })
       .strict(),
   )
-  .refine((value) => Object.keys(value).length <= 20);
+  .refine((value) => Object.keys(value).length <= 21);
 export type GuestDetails = z.infer<typeof guestDetailsSchema>;
 export const invitationInputSchema = z.object({
   label: z.string().trim().min(1).max(200),
   variantId: z.string().min(1).max(64),
   emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10),
   names: z.array(z.string().trim().min(1).max(200)).min(1).max(20),
+  allowPlusOne: z.boolean().default(false),
 });
 export type ImportedInvitation = z.infer<typeof invitationInputSchema>;
 

@@ -1,4 +1,5 @@
 import { visibleSections, type SiteConfig } from "./index";
+import { plusOneSchema } from "./operations";
 import { z } from "zod";
 
 export const rsvpSchema = z.object({
@@ -13,6 +14,7 @@ export const rsvpSchema = z.object({
       }),
     )
     .max(1000),
+  plusOne: plusOneSchema.optional(),
 });
 
 /** Only this projection may cross the guest boundary. Never send the editor config. */
