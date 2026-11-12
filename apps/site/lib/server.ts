@@ -61,6 +61,8 @@ export type GuestRecord = {
   variant_id: string;
   emails: string[];
   guests: { id: string; name: string }[];
+  allow_plus_one: boolean;
+  plus_one: { id: string; name: string } | null;
   revoked: boolean;
   version: number;
   rsvp_revision: number;

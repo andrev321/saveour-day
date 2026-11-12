@@ -53,6 +53,10 @@ const pl = {
   noAccess: "Brak dostępu do odpowiedzi",
   invalid: "Nieprawidłowe dane",
   noService: "Usługa jest chwilowo niedostępna",
+  plusOne: "Osoba towarzysząca (+1)",
+  plusOneName: "Imię i nazwisko osoby towarzyszącej",
+  addPlusOne: "Dodaj osobę towarzyszącą (+1)",
+  removePlusOne: "Usuń osobę towarzyszącą",
 };
 type Copy = typeof pl;
 const en: Copy = {
@@ -109,6 +113,10 @@ const en: Copy = {
   noAccess: "No access to responses",
   invalid: "Invalid data",
   noService: "The service is temporarily unavailable",
+  plusOne: "Plus-one (+1)",
+  plusOneName: "Plus-one full name",
+  addPlusOne: "Add plus-one (+1)",
+  removePlusOne: "Remove plus-one",
 };
 const de: Copy = {
   invitation: "Ihre Einladung",
@@ -166,6 +174,10 @@ const de: Copy = {
   noAccess: "Kein Zugang zu Antworten",
   invalid: "Ungültige Daten",
   noService: "Dienst vorübergehend nicht verfügbar",
+  plusOne: "Begleitperson (+1)",
+  plusOneName: "Name der Begleitperson",
+  addPlusOne: "Begleitperson hinzufügen (+1)",
+  removePlusOne: "Begleitperson entfernen",
 };
 export const guestCopy = { "pl-PL": pl, "en-GB": en, "de-DE": de };
 export function guestError(message: string, copy: Copy) {

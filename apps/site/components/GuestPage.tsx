@@ -26,6 +26,8 @@ type Reply = {
   invitation?: {
     label: string;
     guests: { id: string; name: string }[];
+    allowPlusOne?: boolean;
+    plusOne?: { id: string; name: string } | null;
     revision: number;
     note: string;
     details?: GuestDetails;
@@ -54,6 +56,7 @@ export function GuestPage({
     [cooldown, setCooldown] = useState(0);
   const [links, setLinks] = useState<{ href: string; label: string }[]>([]);
   const [note, setNote] = useState(""),
+    [plusOne, setPlusOne] = useState<{ id: string; name: string } | null>(null),
     [answers, setAnswers] = useState<Record<string, string>>({}),
     [details, setDetails] = useState<GuestDetails>({}),
     [refreshConfirm, setRefreshConfirm] = useState(false);
@@ -74,6 +77,7 @@ export function GuestPage({
   function accept(next: Reply) {
     setData(next);
     setNote(next.invitation?.note || "");
+    setPlusOne(next.invitation?.plusOne ?? null);
     setDetails(next.invitation?.details || {});
     setAnswers(
       Object.fromEntries(
@@ -173,6 +177,8 @@ export function GuestPage({
   );
   const dirty =
     note !== (data?.invitation?.note || "") ||
+    JSON.stringify(plusOne) !==
+      JSON.stringify(data?.invitation?.plusOne ?? null) ||
     JSON.stringify(answers) !== JSON.stringify(savedAnswers) ||
     JSON.stringify(details) !== JSON.stringify(data?.invitation?.details || {});
   useEffect(() => {
@@ -326,8 +332,12 @@ export function GuestPage({
     "--guest-ink": theme?.ink,
     "--guest-accent": theme?.accent,
   } as CSSProperties;
+  const formGuests = [
+    ...(data.invitation?.guests || []),
+    ...(plusOne ? [plusOne] : []),
+  ];
   const missing =
-    data.invitation?.guests.reduce(
+    formGuests.reduce(
       (sum, g) =>
         sum +
         (data.config?.events.filter((e) => !answers[`${g.id}:${e.id}`])
@@ -339,15 +349,79 @@ export function GuestPage({
     return value === undefined ? "" : String(value);
   }
   const selectedDetails = Object.fromEntries(
-    data.invitation?.guests.map((g) => [
+    formGuests.map((g) => [
       g.id,
       Object.fromEntries(
         Object.entries(details[g.id] || {}).filter(
           ([key]) => questions[key as keyof QuestionSettings],
         ),
       ),
-    ]) || [],
+    ]),
   );
+  function removePlusOne() {
+    if (!plusOne) return;
+    const removedId = plusOne.id;
+    setPlusOne(null);
+    setAnswers((old) =>
+      Object.fromEntries(
+        Object.entries(old).filter(([key]) => !key.startsWith(`${removedId}:`)),
+      ),
+    );
+    setDetails((old) => {
+      const next = { ...old };
+      delete next[removedId];
+      return next;
+    });
+    setSuccess(false);
+  }
+  function renderGuestDetails(guestId: string) {
+    return (
+      <>
+        {questions.diet && (
+          <label>
+            {copy.diet}
+            <input
+              maxLength={300}
+              value={details[guestId]?.diet || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setDetails((old) => ({
+                  ...old,
+                  [guestId]: { ...old[guestId], diet: value },
+                }));
+              }}
+            />
+          </label>
+        )}
+        {(["lodging", "transport"] as const)
+          .filter((key) => questions[key])
+          .map((key) => (
+            <label key={key}>
+              {copy[key]}
+              <select
+                value={detailValue(guestId, key)}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setDetails((old) => ({
+                    ...old,
+                    [guestId]: {
+                      ...old[guestId],
+                      [key]: value === "true",
+                    },
+                  }));
+                }}
+              >
+                <option value="" disabled>
+                  {copy.choose}
+                </option>
+                <option value="true">{copy.yesShort}</option>
+                <option value="false">{copy.noShort}</option>
+              </select>
+            </label>
+          ))}
+      </>
+    );
+  }
   return (
     <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
       {(data.invitation || data.config?.events.some((e) => e.date)) && (
@@ -383,10 +457,13 @@ export function GuestPage({
             )}
             {data.closed && <p role="status">{copy.closed}</p>}
             {success && (
-              <S.ResponseSummary role="status">
+              <S.ResponseSummary role="status" data-testid="saved-summary">
                 <h3>{copy.saved}</h3>
                 <p>{copy.summary}</p>
-                {data.invitation.guests.map((g) => (
+                {[
+                  ...data.invitation.guests,
+                  ...(data.invitation.plusOne ? [data.invitation.plusOne] : []),
+                ].map((g) => (
                   <div key={g.id}>
                     <strong>{g.name}</strong>
                     <ul>
@@ -416,7 +493,7 @@ export function GuestPage({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const values = data.invitation!.guests.flatMap((g) =>
+                const values = formGuests.flatMap((g) =>
                   data.config!.events.flatMap((event) => {
                     const value = answers[`${g.id}:${event.id}`];
                     return value === "true" || value === "false"
@@ -434,6 +511,9 @@ export function GuestPage({
                   revision: data.invitation!.revision,
                   note,
                   answers: values,
+                  plusOne: plusOne
+                    ? { id: plusOne.id, name: plusOne.name.trim() }
+                    : null,
                   ...(Object.values(questions).some(Boolean)
                     ? { details: selectedDetails }
                     : {}),
@@ -472,49 +552,70 @@ export function GuestPage({
                         </select>
                       </label>
                     ))}
-                    {questions.diet && (
-                      <label>
-                        {copy.diet}
-                        <input
-                          maxLength={300}
-                          value={details[g.id]?.diet || ""}
+                    {renderGuestDetails(g.id)}
+                  </fieldset>
+                ))}
+              {!!data.config!.events.length &&
+                data.invitation.allowPlusOne &&
+                (plusOne ? (
+                  <fieldset key={plusOne.id} disabled={busy || data.closed}>
+                    <legend>{plusOne.name.trim() || copy.plusOne}</legend>
+                    <label>
+                      {copy.plusOneName}
+                      <input
+                        type="text"
+                        required
+                        maxLength={200}
+                        value={plusOne.name}
+                        onChange={(e) => {
+                          const name = e.target.value;
+                          setPlusOne((old) => (old ? { ...old, name } : null));
+                          setSuccess(false);
+                        }}
+                      />
+                    </label>
+                    {data.config!.events.map((event) => (
+                      <label key={event.id}>
+                        {event.title}
+                        <select
+                          value={answers[`${plusOne.id}:${event.id}`] || ""}
                           onChange={(e) => {
                             const value = e.target.value;
-                            setDetails((old) => ({
+                            setAnswers((old) => ({
                               ...old,
-                              [g.id]: { ...old[g.id], diet: value },
+                              [`${plusOne.id}:${event.id}`]: value,
                             }));
+                            setSuccess(false);
                           }}
-                        />
+                        >
+                          <option value="" disabled>
+                            {copy.missing}
+                          </option>
+                          <option value="true">{copy.yes}</option>
+                          <option value="false">{copy.no}</option>
+                        </select>
                       </label>
-                    )}
-                    {(["lodging", "transport"] as const)
-                      .filter((key) => questions[key])
-                      .map((key) => (
-                        <label key={key}>
-                          {copy[key]}
-                          <select
-                            value={detailValue(g.id, key)}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setDetails((old) => ({
-                                ...old,
-                                [g.id]: {
-                                  ...old[g.id],
-                                  [key]: value === "true",
-                                },
-                              }));
-                            }}
-                          >
-                            <option value="" disabled>
-                              {copy.choose}
-                            </option>
-                            <option value="true">{copy.yesShort}</option>
-                            <option value="false">{copy.noShort}</option>
-                          </select>
-                        </label>
-                      ))}
+                    ))}
+                    {renderGuestDetails(plusOne.id)}
+                    <button
+                      type="button"
+                      disabled={busy || data.closed}
+                      onClick={removePlusOne}
+                    >
+                      {copy.removePlusOne}
+                    </button>
                   </fieldset>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={busy || data.closed}
+                    onClick={() => {
+                      setPlusOne({ id: crypto.randomUUID(), name: "" });
+                      setSuccess(false);
+                    }}
+                  >
+                    {copy.addPlusOne}
+                  </button>
                 ))}
               {Object.values(questions).some(Boolean) && (
                 <p>{copy.privateInfo}</p>
