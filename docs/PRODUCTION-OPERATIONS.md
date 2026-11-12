@@ -1,5 +1,7 @@
 # Production operations
 
+Production admin panel: https://saveour-day-admin-production.vercel.app. Set admin `APP_URL` and the Supabase Auth Site URL to this origin.
+
 ## Provision
 
 - Keep production Supabase, credentials, and storage separate from staging.

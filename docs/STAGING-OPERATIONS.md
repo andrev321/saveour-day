@@ -2,6 +2,15 @@
 
 Use dedicated Vercel and Supabase projects and separate credentials for staging. Record the real project names and origins in a private operator record. The staging Git integration can deploy changes automatically. Confirm that both deployed applications use the intended branch and commit.
 
+## Tester access
+
+Staging is not public. Keep Vercel Authentication enabled for both staging applications.
+
+1. A tester asks the repository owner for access and provides an email address.
+2. The owner adds that email in the Vercel staging project access settings. Only the owner grants or revokes access.
+3. The owner shares the staging origin privately. Never commit staging origins to this repository.
+4. Revoke access when testing ends.
+
 ## Configure or change origins
 
 1. Set admin `APP_URL` to the admin origin and `SITE_URL` in both applications to the guest origin.

@@ -4,6 +4,15 @@ Create and manage event invitations with customizable templates, guest managemen
 
 Organizers start with an event template or a blank draft, customize content and appearance, and publish invitations for individuals or households. Access can be public, protected by a shared code, or verified by email OTP. Content publication updates the database without rebuilding the application.
 
+## Environments
+
+| Environment | Admin panel | Access |
+| --- | --- | --- |
+| Production | https://saveour-day-admin-production.vercel.app | Public |
+| Staging | Shared privately | On request only |
+
+Staging is protected by Vercel Authentication. To test there, ask the repository owner for access and provide your email address. The owner grants access per email in Vercel and shares the staging address after approval. See [Staging operations](docs/STAGING-OPERATIONS.md#tester-access).
+
 ## Run locally
 
 Use **Node.js 24 and npm 11**. Install from the repository root:
