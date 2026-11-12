@@ -20,46 +20,49 @@ import {
   questionSettingsSchema,
   guestDetailsSchema,
 } from "@invitations/domain/operations";
+import { readAllPages } from "@invitations/email";
 import { digest, hashCode } from "@invitations/domain/access-code";
 
 const idFrom = (r: Request) => new URL(r.url).pathname.split("/")[3]!;
-async function allRows<T>(
-  read: (
-    from: number,
-    to: number,
-  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
-) {
-  const rows: T[] = [];
-  for (let from = 0; ; from += 500) {
-    const page = await read(from, from + 499);
-    checkDb(page.error);
-    rows.push(...(page.data || []));
-    if ((page.data?.length || 0) < 500) return rows;
-  }
-}
 export const GET = api(async (request) => {
   const { site } = await requireSite(idFrom(request));
   const db = serviceDb();
-  const [invitations, answers, release] = await Promise.all([
-    allRows((from, to) =>
-      db
-        .from("invitations")
-        .select(
-          "id,label,variant_id,emails,guests,revoked,version,rsvp_revision,note,archived_guests,guest_details",
-        )
-        .eq("site_id", site.id)
-        .order("id")
-        .range(from, to),
+  const [invitations, answers, deliveries, release] = await Promise.all([
+    readAllPages(
+      (from, to) =>
+        db
+          .from("invitations")
+          .select(
+            "id,label,variant_id,emails,guests,revoked,version,rsvp_revision,note,archived_guests,guest_details,allow_plus_one,plus_one",
+          )
+          .eq("site_id", site.id)
+          .order("id")
+          .range(from, to),
+      checkDb,
     ),
-    allRows((from, to) =>
-      db
-        .from("rsvp_answers")
-        .select("invitation_id,guest_id,event_id,attending")
-        .eq("site_id", site.id)
-        .order("invitation_id")
-        .order("guest_id")
-        .order("event_id")
-        .range(from, to),
+    readAllPages(
+      (from, to) =>
+        db
+          .from("rsvp_answers")
+          .select("invitation_id,guest_id,event_id,attending")
+          .eq("site_id", site.id)
+          .order("invitation_id")
+          .order("guest_id")
+          .order("event_id")
+          .range(from, to),
+      checkDb,
+    ),
+    readAllPages<{ invitation_id: string; created_at: string }>(
+      (from, to) =>
+        db
+          .from("email_deliveries")
+          .select("invitation_id,created_at")
+          .eq("site_id", site.id)
+          .eq("kind", "invitation")
+          .eq("status", "sent")
+          .order("created_at", { ascending: false })
+          .range(from, to),
+      checkDb,
     ),
     site.published_release_id
       ? db
@@ -74,12 +77,19 @@ export const GET = api(async (request) => {
   const config = release.data
     ? siteConfigSchema.parse(release.data.config)
     : null;
+  const sentAtByInvitation = new Map<string, string>();
+  for (const delivery of deliveries) {
+    if (!sentAtByInvitation.has(delivery.invitation_id)) {
+      sentAtByInvitation.set(delivery.invitation_id, delivery.created_at);
+    }
+  }
   return {
     site,
     variants: config?.variants.map(({ id, label }) => ({ id, label })) || [],
     url: publicSiteUrl(site.id, required("SITE_URL")),
     invitations: invitations.map((i) => ({
       ...i,
+      invitation_sent_at: sentAtByInvitation.get(i.id) ?? null,
       events:
         site.published_release_id &&
         config &&
@@ -198,18 +208,16 @@ export const POST = api(async (request) => {
     const p = rsvpSchema
       .extend({ id: z.uuid(), details: guestDetailsSchema.optional() })
       .parse(body.payload);
-    const { data, error } = await db.rpc(
-      p.details ? "save_rsvp_with_details" : "save_rsvp",
-      {
-        sid: site.id,
-        iid: p.id,
-        actor: user.id,
-        expected_revision: p.revision,
-        answers: p.answers,
-        message: p.note,
-        ...(p.details ? { details: p.details } : {}),
-      },
-    );
+    const { data, error } = await db.rpc("save_guest_rsvp", {
+      sid: site.id,
+      iid: p.id,
+      actor: user.id,
+      expected_revision: p.revision,
+      answers: p.answers,
+      message: p.note,
+      details: p.details ?? null,
+      plus_one_input: p.plusOne ?? null,
+    });
     checkDb(error);
     return { revision: data };
   }
@@ -227,6 +235,7 @@ export const POST = api(async (request) => {
         label: z.string().trim().min(1).max(200),
         variantId: z.string().min(1).max(64),
         emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10),
+        allowPlusOne: z.boolean().optional(),
         guests: z
           .array(
             z.object({
@@ -274,6 +283,7 @@ export const POST = api(async (request) => {
         variantId: z.string().min(1).max(64),
         emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10),
         names: z.array(z.string().trim().min(1).max(200)).min(1).max(20),
+        allowPlusOne: z.boolean().default(false),
       })
       .parse(body.payload);
     id = randomUUID();

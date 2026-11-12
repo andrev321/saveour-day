@@ -1,6 +1,7 @@
 import {
   csvFile,
   type GuestDetails,
+  type PlusOneGuest,
   type QuestionSettings,
 } from "@invitations/domain/operations";
 
@@ -17,6 +18,9 @@ export type InvitationRow = {
   note: string;
   archived_guests?: Guest[];
   guest_details?: GuestDetails;
+  allow_plus_one: boolean;
+  plus_one: PlusOneGuest;
+  invitation_sent_at: string | null;
   events: { id: string; title: string }[];
 };
 export type Management = {
@@ -49,6 +53,7 @@ export function formatRsvpCsv(
     [
       "Rodzina",
       "Gość",
+      "+1",
       "Wydarzenie",
       "Odpowiedź",
       "Dieta",
@@ -59,8 +64,15 @@ export function formatRsvpCsv(
     ],
   ];
   for (const i of data?.invitations || []) {
-    for (const g of [...i.guests, ...(i.archived_guests || [])]) {
-      const archived = !i.guests.some((current) => current.id === g.id);
+    const allGuests = [
+      ...i.guests,
+      ...(i.plus_one ? [i.plus_one] : []),
+      ...(i.archived_guests || []),
+    ];
+    for (const g of allGuests) {
+      const isPlusOne = i.plus_one?.id === g.id;
+      const archived =
+        !isPlusOne && !i.guests.some((current) => current.id === g.id);
       const detail = i.guest_details?.[g.id] || {};
       const relevant = archived
         ? (data?.answers || [])
@@ -78,6 +90,9 @@ export function formatRsvpCsv(
         rows.push([
           i.label,
           g.name,
+          isPlusOne
+            ? labelText("Osoba towarzysząca", "Plus-one", "Begleitperson")
+            : "",
           event.title,
           answer === undefined
             ? labelText("Brak odpowiedzi", "No response", "Keine Antwort")

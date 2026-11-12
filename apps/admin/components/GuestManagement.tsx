@@ -38,9 +38,13 @@ import {
   type Management,
 } from "../lib/guest-management";
 import { usePanelI18n } from "../lib/i18n";
-import { Reminders } from "./Reminders";
+import { EmailDeliveryPanel } from "./EmailDeliveryPanel";
+import {
+  InvitationEditorModal,
+  type InvitationEditorSubmit,
+} from "./InvitationEditorModal";
 import { QrCodeCard } from "./QrCodeCard";
-import { FilterGrid, FormRow } from "./form-layout.styles";
+import { FilterGrid } from "./form-layout.styles";
 function localDeadline(iso: string | null) {
   if (!iso) return "";
   const p = Object.fromEntries(
@@ -78,7 +82,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
-  const [members, setMembers] = useState<{ id?: string; name: string }[]>([]);
   const [confirmation, setConfirmation] = useState<{
     action: string;
     payload: unknown;
@@ -126,14 +129,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     [code, setCode] = useState(""),
     [variant, setVariant] = useState(""),
     [deadline, setDeadline] = useState("");
-  const [label, setLabel] = useState(""),
-    [names, setNames] = useState(""),
-    [emails, setEmails] = useState(""),
-    [inviteVariant, setInviteVariant] = useState(""),
-    [link, setLink] = useState("");
+  const [link, setLink] = useState("");
   const [editing, setEditing] = useState<string | null>(null),
     [note, setNote] = useState(""),
     [replies, setReplies] = useState<Record<string, string>>({});
+  const [editorOpen, setEditorOpen] = useState(false);
   const [editingInvite, setEditingInvite] = useState<InvitationRow | null>(
     null,
   );
@@ -153,9 +153,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           setQuestions(result.site.rsvp_questions || defaultQuestions);
           setMode(result.site.access_mode);
           setVariant(
-            result.site.public_variant_id || result.variants[0]?.id || "",
-          );
-          setInviteVariant(
             result.site.public_variant_id || result.variants[0]?.id || "",
           );
           setDeadline(localDeadline(result.site.rsvp_deadline));
@@ -189,11 +186,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         setImportOpen(false);
         setImportLinks(result.links || []);
       }
-      if (action === "create") {
-        setLabel("");
-        setNames("");
-        setEmails("");
-      }
       if (action === "questions") setQuestions(questions);
       if (action === "revoke") setLink("");
       const refreshed = await apiFetch<Management>(endpoint);
@@ -203,6 +195,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       } else setData(refreshed);
       setConfirmation(null);
       setEditing(null);
+      setEditorOpen(false);
       setEditingInvite(null);
       setMessage(
         result.alreadyImported
@@ -218,6 +211,22 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     } finally {
       end();
     }
+  }
+  function handleEditorSubmit(submission: InvitationEditorSubmit) {
+    if (submission.action === "update" && submission.removedGuests) {
+      setEditorOpen(false);
+      setConfirmation({
+        action: "update",
+        payload: submission.payload,
+        description: labelText(
+          "Usunięte osoby nie będą mogły odpowiadać i znikną z aktywnych zestawień. Ich dotychczasowe RSVP pozostanie w historii.",
+          "Removed people will disappear from active totals and cannot respond. Their existing RSVP remains in history.",
+          "Entfernte Personen erscheinen nicht mehr in aktiven Auswertungen. Frühere Antworten bleiben archiviert.",
+        ),
+      });
+      return;
+    }
+    void action(submission.action, submission.payload);
   }
   const options = (data?.variants || []).map((v) => ({
     value: v.id,
@@ -665,13 +674,27 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Accordion.Panel>
               </Accordion.Item>
             </Accordion>
-            <Reminders
+            <EmailDeliveryPanel
               siteId={siteId}
               mode={data.site.access_mode}
               published={!!data.site.published_release_id}
               onMessage={setMessage}
+              onSent={() => setLoadAttempt((attempt) => attempt + 1)}
             />
             <Group>
+              <Button
+                disabled={busy}
+                onClick={() => {
+                  setEditingInvite(null);
+                  setEditorOpen(true);
+                }}
+              >
+                {labelText(
+                  "Nowe zaproszenie",
+                  "New invitation",
+                  "Neue Einladung",
+                )}
+              </Button>
               <Button
                 variant="light"
                 onClick={() =>
@@ -707,7 +730,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                       setImported(
                         parseGuestCsv(
                           source,
-                          inviteVariant || options[0]?.value || "",
+                          variant || options[0]?.value || "",
                         ),
                       );
                       setImportId(crypto.randomUUID());
@@ -779,223 +802,20 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Button>
               </Alert>
             )}
-            <Title order={3}>
-              {editingInvite
-                ? labelText(
-                    "Edycja zaproszenia",
-                    "Edit invitation",
-                    "Einladung bearbeiten",
-                  )
-                : labelText(
-                    "Nowe zaproszenie",
-                    "New invitation",
-                    "Neue Einladung",
-                  )}
-            </Title>
-            <Text size="sm">
-              {labelText(
-                "Link rodzinny pozwala odpowiadać za zaproszone osoby. Przekazuj go tylko odbiorcom. Wyświetlamy go po utworzeniu lub wygenerowaniu nowego; nowy link unieważnia poprzedni.",
-                "The family link allows responses for invited people. Share it only with recipients. It is shown after creation or regeneration; a new link invalidates the old one.",
-                "Der Familienlink erlaubt Antworten für eingeladene Personen. Nur an Empfänger weitergeben. Nach Erstellung oder Erneuerung sichtbar; ein neuer Link ersetzt den bisherigen.",
-              )}
-            </Text>
-            <form
-              id="invitation-form"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const payload = {
-                  id: editingInvite?.id,
-                  version: editingInvite?.version,
-                  label,
-                  variantId: inviteVariant,
-                  ...(editingInvite ? { guests: members } : {}),
-                  names: names
-                    .split("\n")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                  emails: emails
-                    .split(/[\n,;]/)
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-                };
-                if (
-                  editingInvite &&
-                  editingInvite.guests.some(
-                    (g) => !members.some((m) => m.id === g.id),
-                  )
-                )
-                  setConfirmation({
-                    action: "update",
-                    payload,
-                    description: labelText(
-                      "Usunięte osoby nie będą mogły odpowiadać i znikną z aktywnych zestawień. Ich dotychczasowe RSVP pozostanie w historii.",
-                      "Removed people will disappear from active totals and cannot respond. Their existing RSVP remains in history.",
-                      "Entfernte Personen erscheinen nicht mehr in aktiven Auswertungen. Frühere Antworten bleiben archiviert.",
-                    ),
-                  });
-                else void action(editingInvite ? "update" : "create", payload);
+            <InvitationEditorModal
+              opened={editorOpen}
+              invitation={editingInvite}
+              variants={options}
+              defaultVariantId={variant || options[0]?.value || ""}
+              accessMode={data.site.access_mode}
+              busy={busy}
+              saving={operation === "create" || operation === "update"}
+              onClose={() => {
+                setEditorOpen(false);
+                setEditingInvite(null);
               }}
-            >
-              <Stack>
-                <TextInput
-                  label={labelText(
-                    "Nazwa osoby lub rodziny",
-                    "Person or family name",
-                    "Name der Person oder Familie",
-                  )}
-                  value={label}
-                  onChange={(e) => setLabel(e.currentTarget.value)}
-                  required
-                  maxLength={200}
-                />
-                {editingInvite ? (
-                  <Stack>
-                    {members.map((member, index) => (
-                      <FormRow key={member.id || `new-${index}`}>
-                        <TextInput
-                          label={`${labelText("Gość", "Guest", "Gast")} ${index + 1}`}
-                          value={member.name}
-                          required
-                          maxLength={200}
-                          onChange={(e) => {
-                            const name = e.currentTarget.value;
-                            setMembers((old) =>
-                              old.map((m, n) =>
-                                n === index ? { ...m, name } : m,
-                              ),
-                            );
-                          }}
-                        />
-                        <Button
-                          variant="subtle"
-                          color="red"
-                          disabled={members.length <= 1}
-                          onClick={() =>
-                            setMembers((old) =>
-                              old.filter((_, n) => n !== index),
-                            )
-                          }
-                        >
-                          {labelText(
-                            "Usuń osobę",
-                            "Remove person",
-                            "Person entfernen",
-                          )}
-                        </Button>
-                      </FormRow>
-                    ))}
-                    <Button
-                      variant="light"
-                      disabled={members.length >= 20}
-                      onClick={() =>
-                        setMembers((old) => [...old, { name: "" }])
-                      }
-                    >
-                      {labelText(
-                        "Dodaj osobę",
-                        "Add person",
-                        "Person hinzufügen",
-                      )}
-                    </Button>
-                    {editingInvite.archived_guests?.map((g) => (
-                      <Button
-                        key={g.id}
-                        variant="subtle"
-                        disabled={
-                          members.some((m) => m.id === g.id) ||
-                          members.length >= 20
-                        }
-                        onClick={() => setMembers((old) => [...old, g])}
-                      >
-                        {labelText(
-                          "Przywróć osobę",
-                          "Restore person",
-                          "Person wiederherstellen",
-                        )}
-                        : {g.name}
-                      </Button>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Textarea
-                    label={labelText(
-                      "Goście — każda osoba w osobnym wierszu",
-                      "Guests — one person per line",
-                      "Gäste — eine Person pro Zeile",
-                    )}
-                    value={names}
-                    onChange={(e) => setNames(e.currentTarget.value)}
-                    required
-                    autosize
-                    minRows={2}
-                  />
-                )}
-                <Textarea
-                  label={labelText(
-                    "Uprawnione adresy e-mail",
-                    "Allowed email addresses",
-                    "Berechtigte E-Mail-Adressen",
-                  )}
-                  description={labelText(
-                    "Oddziel przecinkami lub nowymi wierszami. Wymagane w trybie e-mail.",
-                    "Separate with commas or new lines. Required for email access.",
-                    "Mit Kommas oder Zeilenumbrüchen trennen. Für E-Mail-Zugang erforderlich.",
-                  )}
-                  value={emails}
-                  onChange={(e) => setEmails(e.currentTarget.value)}
-                  required={data.site.access_mode === "email"}
-                />
-                <Select
-                  label={labelText(
-                    "Wariant zaproszenia",
-                    "Invitation variant",
-                    "Einladungsvariante",
-                  )}
-                  data={options}
-                  value={inviteVariant}
-                  onChange={(v) => setInviteVariant(v || "")}
-                  required
-                />
-                <ActionButton
-                  disabled={busy}
-                  type="submit"
-                  loading={operation === "create" || operation === "update"}
-                  pendingLabel={loadingText(
-                    language,
-                    operation === "create" ? "create" : "save",
-                  )}
-                >
-                  {editingInvite
-                    ? labelText(
-                        "Zapisz zaproszenie",
-                        "Save invitation",
-                        "Einladung speichern",
-                      )
-                    : labelText(
-                        "Utwórz zaproszenie i link",
-                        "Create invitation and link",
-                        "Einladung und Link erstellen",
-                      )}
-                </ActionButton>
-                {editingInvite && (
-                  <Button
-                    variant="subtle"
-                    onClick={() => {
-                      setEditingInvite(null);
-                      setLabel("");
-                      setNames("");
-                      setEmails("");
-                    }}
-                  >
-                    {labelText(
-                      "Anuluj edycję",
-                      "Cancel editing",
-                      "Bearbeitung abbrechen",
-                    )}
-                  </Button>
-                )}
-              </Stack>
-            </form>
+              onSubmit={handleEditorSubmit}
+            />
             {link && (
               <Alert
                 title={labelText(
@@ -1134,258 +954,291 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 )}
               </Text>
             )}
-            {visible.map((i) => (
-              <Card withBorder key={i.id}>
-                <Stack gap="sm">
-                  <Group justify="space-between">
-                    <Title order={4}>{i.label}</Title>
-                    <Badge>
-                      {i.revoked
-                        ? labelText("Cofnięte", "Revoked", "Widerrufen")
-                        : labelText("Aktywne", "Active", "Aktiv")}
-                    </Badge>
-                  </Group>
-                  <Text size="sm">
-                    {i.emails.join(", ") ||
-                      labelText(
-                        "Bez adresu e-mail",
-                        "No email address",
-                        "Keine E-Mail-Adresse",
-                      )}
-                  </Text>
-                  {i.guests.map((g) => (
-                    <div key={g.id}>
-                      <Text fw={600}>{g.name}</Text>
-                      {i.events.map((event) => {
-                        const value = answerMap.get(
-                          `${i.id}:${g.id}:${event.id}`,
-                        );
-                        const a =
-                          value === undefined
-                            ? undefined
-                            : { attending: value };
-                        return (
-                          <Text size="sm" key={event.id}>
-                            {event.title}:{" "}
-                            {a
-                              ? a.attending
-                                ? labelText("Tak", "Yes", "Ja")
-                                : labelText("Nie", "No", "Nein")
-                              : labelText(
+            {visible.map((i) => {
+              const allActiveGuests = [
+                ...i.guests,
+                ...(i.plus_one ? [i.plus_one] : []),
+              ];
+              return (
+                <Card withBorder key={i.id}>
+                  <Stack gap="sm">
+                    <Group justify="space-between" wrap="wrap">
+                      <Title order={4}>{i.label}</Title>
+                      <Group gap="xs">
+                        {i.allow_plus_one && (
+                          <Badge variant="light" color="blue">
+                            +1
+                          </Badge>
+                        )}
+                        <Badge
+                          variant="light"
+                          color={i.invitation_sent_at ? "green" : "gray"}
+                        >
+                          {i.invitation_sent_at
+                            ? labelText(
+                                "Wysłano zaproszenie",
+                                "Invitation sent",
+                                "Einladung gesendet",
+                              )
+                            : labelText(
+                                "Niewysłane",
+                                "Not sent",
+                                "Nicht gesendet",
+                              )}
+                        </Badge>
+                        <Badge>
+                          {i.revoked
+                            ? labelText("Cofnięte", "Revoked", "Widerrufen")
+                            : labelText("Aktywne", "Active", "Aktiv")}
+                        </Badge>
+                      </Group>
+                    </Group>
+                    <Text size="sm">
+                      {i.emails.join(", ") ||
+                        labelText(
+                          "Bez adresu e-mail",
+                          "No email address",
+                          "Keine E-Mail-Adresse",
+                        )}
+                    </Text>
+                    {allActiveGuests.map((g) => {
+                      const isPlusOne = i.plus_one?.id === g.id;
+                      return (
+                        <div key={g.id}>
+                          <Group gap="xs">
+                            <Text fw={600}>{g.name}</Text>
+                            {isPlusOne && (
+                              <Badge size="xs" variant="outline">
+                                +1
+                              </Badge>
+                            )}
+                          </Group>
+                          {i.events.map((event) => {
+                            const value = answerMap.get(
+                              `${i.id}:${g.id}:${event.id}`,
+                            );
+                            const a =
+                              value === undefined
+                                ? undefined
+                                : { attending: value };
+                            return (
+                              <Text size="sm" key={event.id}>
+                                {event.title}:{" "}
+                                {a
+                                  ? a.attending
+                                    ? labelText("Tak", "Yes", "Ja")
+                                    : labelText("Nie", "No", "Nein")
+                                  : labelText(
+                                      "Brak odpowiedzi",
+                                      "No response",
+                                      "Keine Antwort",
+                                    )}
+                              </Text>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                    {!!i.archived_guests?.length && (
+                      <Text size="sm">
+                        {labelText(
+                          "Osoby archiwalne",
+                          "Archived people",
+                          "Archivierte Personen",
+                        )}
+                        : {i.archived_guests.map((g) => g.name).join(", ")}
+                      </Text>
+                    )}
+                    {allActiveGuests.map((g) => {
+                      const detail = i.guest_details?.[g.id];
+                      return detail && Object.keys(detail).length ? (
+                        <Text key={`details-${g.id}`} size="sm">
+                          {g.name}
+                          {i.plus_one?.id === g.id ? " (+1)" : ""}:{" "}
+                          {detail.diet
+                            ? `${labelText("dieta", "diet", "Ernährung")}: ${detail.diet} · `
+                            : ""}
+                          {detail.lodging === undefined
+                            ? ""
+                            : `${labelText("nocleg", "accommodation", "Übernachtung")}: ${detail.lodging ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")} · `}
+                          {detail.transport === undefined
+                            ? ""
+                            : `${labelText("transport", "transport", "Transport")}: ${detail.transport ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")}`}
+                        </Text>
+                      ) : null;
+                    })}
+                    {i.note && <Text size="sm">Uwagi: {i.note}</Text>}
+                    {data.answers.some(
+                      (a) =>
+                        a.invitation_id === i.id &&
+                        !i.events.some((e) => e.id === a.event_id),
+                    ) && (
+                      <Text size="sm">
+                        {labelText(
+                          "Historia wycofanych wydarzeń",
+                          "Withdrawn event history",
+                          "Historie zurückgezogener Ereignisse",
+                        )}
+                        :{" "}
+                        {data.answers
+                          .filter(
+                            (a) =>
+                              a.invitation_id === i.id &&
+                              !i.events.some((e) => e.id === a.event_id),
+                          )
+                          .map(
+                            (a) =>
+                              `${allActiveGuests.find((g) => g.id === a.guest_id)?.name || "Gość"} / ${a.event_id}: ${a.attending ? "tak" : "nie"}`,
+                          )
+                          .join("; ")}
+                      </Text>
+                    )}
+                    <Group>
+                      <Button
+                        variant="light"
+                        disabled={busy}
+                        onClick={() =>
+                          setConfirmation({
+                            action: "rotate",
+                            payload: { id: i.id },
+                            description: labelText(
+                              "Poprzedni link przestanie działać. Nowy link trzeba przekazać rodzinie ponownie.",
+                              "The previous link will stop working. Share the new link with the family.",
+                              "Der bisherige Link wird ungültig. Den neuen Link erneut weitergeben.",
+                            ),
+                          })
+                        }
+                      >
+                        {labelText(
+                          "Wygeneruj nowy link",
+                          "Generate new link",
+                          "Neuen Link erstellen",
+                        )}
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        color="red"
+                        disabled={busy || i.revoked}
+                        onClick={() =>
+                          setConfirmation({
+                            action: "revoke",
+                            payload: { id: i.id },
+                            description: labelText(
+                              "Ta rodzina utraci dostęp do zaproszenia. Jej odpowiedzi zostaną zachowane.",
+                              "This family will lose access. Their answers will be kept.",
+                              "Diese Familie verliert den Zugang. Antworten bleiben erhalten.",
+                            ),
+                          })
+                        }
+                      >
+                        {labelText(
+                          "Cofnij dostęp",
+                          "Revoke access",
+                          "Zugang widerrufen",
+                        )}
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        disabled={busy}
+                        onClick={() => {
+                          setEditingInvite(i);
+                          setEditorOpen(true);
+                        }}
+                      >
+                        {labelText(
+                          "Edytuj zaproszenie",
+                          "Edit invitation",
+                          "Einladung bearbeiten",
+                        )}
+                      </Button>
+                      <Button
+                        variant="subtle"
+                        disabled={
+                          busy ||
+                          !data.site.published_release_id ||
+                          !i.events.length
+                        }
+                        onClick={() => {
+                          setEditing(i.id);
+                          setNote(i.note);
+                          setReplies(
+                            Object.fromEntries(
+                              data.answers
+                                .filter((a) => a.invitation_id === i.id)
+                                .map((a) => [
+                                  `${a.guest_id}:${a.event_id}`,
+                                  String(a.attending),
+                                ]),
+                            ),
+                          );
+                        }}
+                      >
+                        {labelText("Popraw RSVP", "Edit RSVP", "RSVP bearbeiten")}
+                      </Button>
+                    </Group>
+                    {editing === i.id && (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          void action("rsvp", {
+                            id: i.id,
+                            revision: i.rsvp_revision,
+                            note,
+                            plusOne: i.plus_one ?? null,
+                            answers: allActiveGuests.flatMap((g) =>
+                              i.events.flatMap((event) => {
+                                const v = replies[`${g.id}:${event.id}`];
+                                return v === "true" || v === "false"
+                                  ? [
+                                      {
+                                        guestId: g.id,
+                                        eventId: event.id,
+                                        attending: v === "true",
+                                      },
+                                    ]
+                                  : [];
+                              }),
+                            ),
+                          });
+                        }}
+                      >
+                        <Stack>
+                          {allActiveGuests.flatMap((g) =>
+                            i.events.map((event) => (
+                              <Select
+                                key={`${g.id}:${event.id}`}
+                                label={`${g.name}${i.plus_one?.id === g.id ? " (+1)" : ""} — ${event.title}`}
+                                placeholder={labelText(
                                   "Brak odpowiedzi",
                                   "No response",
                                   "Keine Antwort",
                                 )}
-                          </Text>
-                        );
-                      })}
-                    </div>
-                  ))}
-                  {!!i.archived_guests?.length && (
-                    <Text size="sm">
-                      {labelText(
-                        "Osoby archiwalne",
-                        "Archived people",
-                        "Archivierte Personen",
-                      )}
-                      : {i.archived_guests.map((g) => g.name).join(", ")}
-                    </Text>
-                  )}
-                  {i.guests.map((g) => {
-                    const detail = i.guest_details?.[g.id];
-                    return detail && Object.keys(detail).length ? (
-                      <Text key={`details-${g.id}`} size="sm">
-                        {g.name}:{" "}
-                        {detail.diet
-                          ? `${labelText("dieta", "diet", "Ernährung")}: ${detail.diet} · `
-                          : ""}
-                        {detail.lodging === undefined
-                          ? ""
-                          : `${labelText("nocleg", "accommodation", "Übernachtung")}: ${detail.lodging ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")} · `}
-                        {detail.transport === undefined
-                          ? ""
-                          : `${labelText("transport", "transport", "Transport")}: ${detail.transport ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")}`}
-                      </Text>
-                    ) : null;
-                  })}
-                  {i.note && <Text size="sm">Uwagi: {i.note}</Text>}
-                  {data.answers.some(
-                    (a) =>
-                      a.invitation_id === i.id &&
-                      !i.events.some((e) => e.id === a.event_id),
-                  ) && (
-                    <Text size="sm">
-                      {labelText(
-                        "Historia wycofanych wydarzeń",
-                        "Withdrawn event history",
-                        "Historie zurückgezogener Ereignisse",
-                      )}
-                      :{" "}
-                      {data.answers
-                        .filter(
-                          (a) =>
-                            a.invitation_id === i.id &&
-                            !i.events.some((e) => e.id === a.event_id),
-                        )
-                        .map(
-                          (a) =>
-                            `${i.guests.find((g) => g.id === a.guest_id)?.name || "Gość"} / ${a.event_id}: ${a.attending ? "tak" : "nie"}`,
-                        )
-                        .join("; ")}
-                    </Text>
-                  )}
-                  <Group>
-                    <Button
-                      variant="light"
-                      disabled={busy}
-                      onClick={() =>
-                        setConfirmation({
-                          action: "rotate",
-                          payload: { id: i.id },
-                          description: labelText(
-                            "Poprzedni link przestanie działać. Nowy link trzeba przekazać rodzinie ponownie.",
-                            "The previous link will stop working. Share the new link with the family.",
-                            "Der bisherige Link wird ungültig. Den neuen Link erneut weitergeben.",
-                          ),
-                        })
-                      }
-                    >
-                      {labelText(
-                        "Wygeneruj nowy link",
-                        "Generate new link",
-                        "Neuen Link erstellen",
-                      )}
-                    </Button>
-                    <Button
-                      variant="subtle"
-                      color="red"
-                      disabled={busy || i.revoked}
-                      onClick={() =>
-                        setConfirmation({
-                          action: "revoke",
-                          payload: { id: i.id },
-                          description: labelText(
-                            "Ta rodzina utraci dostęp do zaproszenia. Jej odpowiedzi zostaną zachowane.",
-                            "This family will lose access. Their answers will be kept.",
-                            "Diese Familie verliert den Zugang. Antworten bleiben erhalten.",
-                          ),
-                        })
-                      }
-                    >
-                      {labelText(
-                        "Cofnij dostęp",
-                        "Revoke access",
-                        "Zugang widerrufen",
-                      )}
-                    </Button>
-                    <Button
-                      variant="subtle"
-                      disabled={busy}
-                      onClick={() => {
-                        setEditingInvite(i);
-                        setMembers(i.guests.map((g) => ({ ...g })));
-                        setLabel(i.label);
-                        setNames(i.guests.map((g) => g.name).join("\n"));
-                        setEmails(i.emails.join("\n"));
-                        setInviteVariant(i.variant_id);
-                        document
-                          .getElementById("invitation-form")
-                          ?.scrollIntoView({ behavior: "smooth" });
-                      }}
-                    >
-                      {labelText(
-                        "Edytuj zaproszenie",
-                        "Edit invitation",
-                        "Einladung bearbeiten",
-                      )}
-                    </Button>
-                    <Button
-                      variant="subtle"
-                      disabled={
-                        busy ||
-                        !data.site.published_release_id ||
-                        !i.events.length
-                      }
-                      onClick={() => {
-                        setEditing(i.id);
-                        setNote(i.note);
-                        setReplies(
-                          Object.fromEntries(
-                            data.answers
-                              .filter((a) => a.invitation_id === i.id)
-                              .map((a) => [
-                                `${a.guest_id}:${a.event_id}`,
-                                String(a.attending),
-                              ]),
-                          ),
-                        );
-                      }}
-                    >
-                      {labelText("Popraw RSVP", "Edit RSVP", "RSVP bearbeiten")}
-                    </Button>
-                  </Group>
-                  {editing === i.id && (
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void action("rsvp", {
-                          id: i.id,
-                          revision: i.rsvp_revision,
-                          note,
-                          answers: i.guests.flatMap((g) =>
-                            i.events.flatMap((event) => {
-                              const v = replies[`${g.id}:${event.id}`];
-                              return v === "true" || v === "false"
-                                ? [
-                                    {
-                                      guestId: g.id,
-                                      eventId: event.id,
-                                      attending: v === "true",
-                                    },
-                                  ]
-                                : [];
-                            }),
-                          ),
-                        });
-                      }}
-                    >
-                      <Stack>
-                        {i.guests.flatMap((g) =>
-                          i.events.map((event) => (
-                            <Select
-                              key={`${g.id}:${event.id}`}
-                              label={`${g.name} — ${event.title}`}
-                              placeholder={labelText(
-                                "Brak odpowiedzi",
-                                "No response",
-                                "Keine Antwort",
-                              )}
-                              data={[
-                                {
-                                  value: "true",
-                                  label: labelText("Tak", "Yes", "Ja"),
-                                },
-                                {
-                                  value: "false",
-                                  label: labelText("Nie", "No", "Nein"),
-                                },
-                              ]}
-                              value={replies[`${g.id}:${event.id}`] || null}
-                              onChange={(v) =>
-                                setReplies({
-                                  ...replies,
-                                  [`${g.id}:${event.id}`]: v || "",
-                                })
-                              }
-                            />
-                          )),
-                        )}
-                        <Textarea
-                          label={labelText("Uwagi", "Notes", "Anmerkungen")}
-                          value={note}
-                          onChange={(e) => setNote(e.currentTarget.value)}
-                          maxLength={2000}
-                        />
+                                data={[
+                                  {
+                                    value: "true",
+                                    label: labelText("Tak", "Yes", "Ja"),
+                                  },
+                                  {
+                                    value: "false",
+                                    label: labelText("Nie", "No", "Nein"),
+                                  },
+                                ]}
+                                value={replies[`${g.id}:${event.id}`] || null}
+                                onChange={(v) =>
+                                  setReplies({
+                                    ...replies,
+                                    [`${g.id}:${event.id}`]: v || "",
+                                  })
+                                }
+                              />
+                            )),
+                          )}
+                          <Textarea
+                            label={labelText("Uwagi", "Notes", "Anmerkungen")}
+                            value={note}
+                            onChange={(e) => setNote(e.currentTarget.value)}
+                            maxLength={2000}
+                          />
                         <ActionButton
                           disabled={busy}
                           type="submit"
@@ -1402,7 +1255,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   )}
                 </Stack>
               </Card>
-            ))}
+              );
+            })}
             {totalPages > 1 && (
               <Pagination
                 total={totalPages}

@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   compiler: { styledComponents: true },
   devIndicators: false,
-  transpilePackages: ["@invitations/domain", "@invitations/renderer", "@invitations/ui"],
+  transpilePackages: [
+    "@invitations/domain",
+    "@invitations/email",
+    "@invitations/renderer",
+    "@invitations/ui",
+  ],
   experimental: {
     optimizePackageImports: [
       "@mantine/core",
