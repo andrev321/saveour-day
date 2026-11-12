@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   createContext,
@@ -35,7 +35,6 @@ const messages: Record<PanelLanguage, Dictionary> = {
     save: "Zapisz szkic",
     publish: "Publikuj stronę",
     simulate: "Symuluj publikację",
-    export: "Eksport konfiguracji",
     page: "Strona",
     pages: "Strony",
     mainPage: "Strona główna",
@@ -100,7 +99,6 @@ const messages: Record<PanelLanguage, Dictionary> = {
     save: "Save draft",
     publish: "Publish site",
     simulate: "Simulate publishing",
-    export: "Export configuration",
     page: "Page",
     pages: "Pages",
     mainPage: "Main page",
@@ -168,7 +166,6 @@ const messages: Record<PanelLanguage, Dictionary> = {
     save: "Entwurf speichern",
     publish: "Seite veröffentlichen",
     simulate: "Veröffentlichung simulieren",
-    export: "Konfiguration exportieren",
     page: "Seite",
     pages: "Seiten",
     mainPage: "Hauptseite",

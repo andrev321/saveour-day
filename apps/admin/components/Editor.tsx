@@ -30,7 +30,6 @@ import {
 } from "@mantine/core";
 import {
   FloppyDiskIcon as IconDeviceFloppy,
-  DownloadSimpleIcon as IconDownload,
   PaperPlaneTiltIcon as IconRocket,
   UploadSimpleIcon as IconUpload,
   SquaresFourIcon,
@@ -426,17 +425,6 @@ export function Editor({
     demo,
     config,
   ]);
-  function exportDraft() {
-    const blob = new Blob([JSON.stringify(current.current, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${config.id}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
   async function publish() {
     if (dirty || saving.current) {
       setMessage(
@@ -597,23 +585,6 @@ export function Editor({
           >
             {demo ? t("simulate") : t("publish")}
           </ActionButton>
-          <Button
-            variant="subtle"
-            leftSection={<IconDownload size={16} />}
-            onClick={() => {
-              const blob = new Blob([JSON.stringify(config, null, 2)], {
-                type: "application/json",
-              });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `${config.id}.json`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}
-          >
-            {t("export")}
-          </Button>
           <Tooltip label={label("Cofnij", "Undo", "Rückgängig")}>
             <ActionIcon
               aria-label={label("Cofnij", "Undo", "Rückgängig")}
@@ -868,13 +839,6 @@ export function Editor({
                   }
                 />
               ))}
-              <Button variant="default" onClick={exportDraft}>
-                {label(
-                  "Pobierz kopię moich zmian",
-                  "Download my edits",
-                  "Eigene Änderungen herunterladen",
-                )}
-              </Button>
               <Button
                 onClick={() => {
                   if (!conflict) return;

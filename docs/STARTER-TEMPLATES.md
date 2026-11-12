@@ -30,7 +30,7 @@ Any template can use any theme. Selecting another theme preserves content and se
 
 Use the Change starter template control in the editor toolbar. It opens the same selector with a reset warning. Select a template and language and explicitly confirm replacement. Opening or canceling the dialog does not change the draft.
 
-Reset replaces text, events, sections, variants, appearance, and photo assignments. Unsaved changes are discarded. The server saves a copy of the last **persisted** draft, so save or export current work first.
+Reset replaces text, events, sections, variants, appearance, and photo assignments. Unsaved changes are discarded. The server saves a copy of the last **persisted** draft, so save current work first.
 
 Reset preserves the site ID/URL, internal name, owner, access settings, RSVP deadline, households, links, answers, and library files. Guests see the new content only after publication.
 
