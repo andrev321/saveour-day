@@ -28,7 +28,7 @@ The server-side filtering process that strips hidden **Sections** and unreferenc
 A typed content block inside a **Site** configuration (`hero`, `story`, `timeline`, `venues`, `accommodation`, `rsvp`, `faq`, `gifts`, `contacts`, `gallery`, `custom`). Sections reference domain entities (such as **Events**, **Venues**, **Contacts**, or **Media Assets**) by ID.
 
 ### Invitation
-A record assigning an individual or household to a specific **Variant** within a **Site**. Holds a hashed random **Invitation Token** (`/i/<token>`), a list of **Guests** (up to 20), allowed email addresses for OTP, revocation state, and an RSVP revision counter.
+A record assigning an individual or household to a specific **Variant** within a **Site**. Holds a hashed random **Invitation Token** (`/i/<token>`), an auto-generated 6-character **Short Code**, a list of **Guests** (up to 20), origin (`organizer` | `self_registered`), review status (`approved` | `pending_match`), revocation state, and an RSVP revision counter.
 - *Avoid*: "guest group", "household account", "ticket".
 
 ### Guest
@@ -43,8 +43,14 @@ A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) 
 ### RSVP Answer
 A guest's attendance response (`attending`, `declined`, or no response) for a specific `(guest_id, event_id)` pair within an **Invitation**, along with optional dietary/custom notes and revision tracking. Stored outside **Releases** so answers survive new publications and **Template** resets.
 
-### Email Delivery
-A tracked outbound email sent on behalf of an **Organizer** to an **Invitation**'s allowlisted email address—either an initial invitation link or an RSVP reminder—subject to per-site daily sending limits and per-recipient daily deduplication.
+### Short Code
+An auto-generated, 6-character unambiguous alphanumeric code (`23456789ABCDEFGHJKLMNPQRSTUVWXYZ`) assigned to every **Invitation** for **Guest Lookup** disambiguation, name-collision verification, and unlocking already-answered invitations on a new device.
+
+### Self-Registration
+An optional **Site** setting (`allow_self_registration`, default `false`) that lets an unlisted guest submit an RSVP on `/s/<public_slug>` into a `pending_match` queue for the **Organizer** to approve or merge into an existing **Invitation**.
+
+### Info-Only Mode
+A **Site** state (`rsvp_enabled = false`) in which `/s/<public_slug>` and `/i/<token>` display event details and `.ics` calendar downloads without any RSVP lookup, form, or API write access.
 
 ---
 
@@ -52,15 +58,11 @@ A tracked outbound email sent on behalf of an **Organizer** to an **Invitation**
 
 ### Access Mode
 The site-wide guest authentication rule configured by the **Organizer**:
-- `public`: Open access to `/s/<public_slug>` (renders default **Variant**) and `/i/<token>` (renders household **Variant** + RSVP).
+- `public`: Open access to `/s/<public_slug>` (renders default **Variant** with optional **Guest Lookup**) and `/i/<token>` (renders household **Variant** + RSVP).
 - `code`: Requires a shared, scrypt-hashed **Site Code** for both general and household links.
-- `email`: Requires an email One-Time Password (**OTP**) sent to an address allowlisted on an **Invitation**.
-
-### Guest OTP
-A time-limited numeric one-time password issued to an email address allowlisted on an **Invitation** when **Access Mode** is `email`, verified with bounded attempts to establish a **Guest Session**.
 
 ### Guest Session
-A versioned, 7-day `HttpOnly` cookie session issued after successful **Site Code** or **OTP** verification. Validated against `sites.access_version` and `invitations.access_version` so rotating a code, revoking an **Invitation**, or changing **Access Mode** immediately invalidates affected sessions.
+A versioned, 7-day `HttpOnly` cookie session issued after successful **Site Code**, `/i/<token>`, or **Guest Lookup** verification. Validated against `sites.access_version` and `invitations.access_version` so rotating a code, revoking an **Invitation**, or changing **Access Mode** immediately invalidates affected sessions.
 
 ---
 

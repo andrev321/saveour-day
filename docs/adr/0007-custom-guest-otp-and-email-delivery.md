@@ -1,6 +1,6 @@
 # ADR-0007: Custom Guest OTP and Unified Email Delivery
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR-0008](./0008-hybrid-rsvp-without-guest-email.md)
 - **Date:** 2026-11-12
 
 ## Context

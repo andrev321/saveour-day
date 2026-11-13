@@ -21,17 +21,16 @@ The repository uses Next.js 16, React 19, TypeScript, Zod 4, Mantine 9, styled-c
 
 - A **site** is an organizer's event project: draft, releases, access settings, and stable public address.
 - A **variant** defines its own ordered section placements, visibility, and permitted events.
-- An **invitation** assigns an individual or household to a variant, with guests, allowed email addresses, revocation state, and an RSVP revision.
+- An **invitation** assigns an individual or household to a variant, with guests, an auto-generated 6-character `short_code`, `origin`/`review_status`, revocation state, and an RSVP revision.
 - A **release** stores published configuration and media paths separately from the editable draft.
 
 | Guest route | Purpose |
 | --- | --- |
-| `/s/<public_slug>` | General site entry point |
-| `/i/<token>` | Individual or household link |
-| `/v/<invitation_id>` | Invitation selection after OTP; always requires the correct session |
+| `/s/<public_slug>` | General site entry point with optional guest self-lookup for RSVP |
+| `/i/<token>` | Individual or household link (pre-authorized RSVP) |
 | `/demo/glowna`, `/demo/pelna`, `/demo/ograniczona` | Explicit demos without client data |
 
-A site's slug combines its name with a UUID. Invitation tokens are random; only their hashes are stored. The original link is available when created or rotated, not recoverable later from the stored hash.
+A site's slug combines its name with a UUID. Invitation tokens are random; only their hashes are stored. The original link is available when created or rotated, not recoverable later from the stored hash, while each invitation's 6-character `short_code` remains visible in the admin panel for manual sharing and collision disambiguation.
 
 ## Configuration and editor
 
@@ -59,13 +58,12 @@ Organizers use Supabase email/password or Google OAuth authentication and must h
 
 | Site access mode | General entry | Household link |
 | --- | --- | --- |
-| `public` | General variant | Household variant and RSVP |
+| `public` | General variant + optional guest self-lookup | Household variant and RSVP |
 | `code` | Shared site code | Invitation token plus the same code |
-| `email` | OTP for an allowed address, then invitation selection | OTP for an address allowed on that invitation |
 
 Codes use scrypt with a random salt. Guest sessions use random tokens in HttpOnly, SameSite=Lax cookies, Secure in production, with a seven-day lifetime. The database stores hashes and access versions. Guest browsers do not receive Supabase Auth tokens.
 
-Changing site access, editing an invitation, rotating its link, or revoking it invalidates the relevant sessions. The `/v/` route remains session-protected even in public mode. Code attempts, OTP delivery, and OTP verification have database limits plus an IP limit. Mutations validate the request origin.
+Changing site access, editing an invitation, rotating its link, or revoking it invalidates the relevant sessions. Code attempts and guest lookup attempts have database and IP rate limits. Mutations validate the request origin.
 
 Guest APIs use a server-only privileged key, so handlers must enforce authorization themselves. SQL also checks site, household, guest, event, and session when saving RSVP. Guest content and private media use `private, no-store`; pages use `noindex`. Revocation blocks future requests but cannot erase copies already downloaded.
 
@@ -81,16 +79,20 @@ Deletion reserves a terminal `deleting` state, removes Storage objects, and only
 
 ## RSVP and integrity
 
-RSVP answers belong to a guest/event pair within an invitation. An allowed email address represents the entire household. Invitations support up to 20 guests, configuration up to 50 events, and notes up to 2,000 characters. No response is different from declining.
+RSVP answers belong to a guest/event pair within an invitation. Invitations support up to 20 guests, configuration up to 50 events, and notes up to 2,000 characters. No response is different from declining.
+
+On `/s/<public_slug>`, guests can look up their invitation by normalized full name (diacritic-insensitive) or 6-character `short_code` without exposing a public guest list. Name collisions require disambiguation (`short_code` or companion name), and already-answered invitations (`rsvp_revision > 0`) are locked against unauthenticated overwrites on other devices unless verified with `short_code` or `/i/<token>`.
+
+Sites can also toggle **Info-Only Mode** (`rsvp_enabled = false`) to hide RSVP UI and block RSVP writes, or enable `allow_self_registration` so unlisted guests submit into a `pending_match` queue for organizer approval or merge.
 
 Revision checks reject stale submissions. Guest deadlines use Europe/Warsaw in the interface and `timestamptz` in the database. Organizers may correct answers after the deadline, but an active publication is still required. Removed events retain historical answers.
 
 Composite foreign keys include `site_id` to prevent cross-site relationships. Secret columns are unavailable to browser clients; sensitive writes use backend-only SQL functions and audit events.
 
-Guest management supports CSV import/export, archiving members, optional RSVP questions, per-invitation plus-one (`+1`) authorization, and invitation-scoped calendar downloads. In `email` access mode, organizers can send initial invitations and RSVP reminders in batches of up to 50 via Resend (`MAIL_FROM` / `RESEND_API_KEY`, subject to a per-site daily quota); there is no unattended background campaign.
+Guest management supports CSV import/export, collision warnings with 1-click copy (`link + code` or personal `/i/<token>` link), archiving members, optional RSVP questions, per-invitation plus-one (`+1`) authorization, and invitation-scoped calendar downloads. The platform does not send invitation or reminder emails to guests; organizers share generated links and codes via their preferred channel.
 
 ## Boundaries and verification
 
-Per-site custom domains and payments are not implemented.
+Per-site custom domains, payments, and outbound guest email campaigns are not implemented.
 
-Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. They do not prove live SMTP delivery or operational readiness. See [Testing](TESTING.md) and the dated [publication review](PUBLICATION-SELF-REVIEW.md).
+Automated checks cover domain behavior, SQL/RLS in PGlite, PostgreSQL concurrency, real API handlers with controlled external responses, and Playwright UI flows. See [Testing](TESTING.md) and the dated [publication review](PUBLICATION-SELF-REVIEW.md).
