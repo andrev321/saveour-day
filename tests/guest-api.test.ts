@@ -43,13 +43,15 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     published_release_id: "release",
     public_variant_id: config.defaultVariant,
     rsvp_deadline: null,
+    rsvp_enabled: true,
+    allow_self_registration: false,
   };
   const invitation = {
     id: "30000000-0000-4000-8000-000000000001",
     site_id: site.id,
     variant_id: config.defaultVariant,
-    emails: ["family@example.com"],
-    guests: [],
+    emails: [],
+    guests: [{ id: "40000000-0000-4000-8000-000000000001", name: "Anna Kowalska" }],
     revoked: false,
     version: 1,
     rsvp_revision: 0,
@@ -57,9 +59,9 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     label: "Family",
     allow_plus_one: false,
     plus_one: null,
+    short_code: "KOW482",
   };
   let storedSession: unknown = null;
-  let storedOtpHash: string | null = null;
   let releaseReads = 0;
   let siteDeleted = false;
   const buckets: string[] = [];
@@ -70,18 +72,13 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       const url = new URL(
         typeof input === "string" || input instanceof URL ? input : input.url,
       );
-      if (url.origin === "https://api.resend.com" && url.pathname === "/emails") {
-        return Response.json({ id: "re_otp_1" });
-      }
       const table = url.pathname.split("/").at(-1);
       let data: unknown;
       if (table === "sites") {
         assert.equal(url.searchParams.get("deleted_at"), "is.null");
         data = siteDeleted ? null : site;
       } else if (table === "invitations")
-        data = url.searchParams.has("emails")
-          ? [{ id: invitation.id }]
-          : invitation;
+        data = invitation;
       else if (table === "guest_sessions") {
         if (init?.method === "POST")
           storedSession = JSON.parse(String(init.body));
@@ -110,14 +107,15 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       } else if (table === "consume_access_attempt") {
         buckets.push(JSON.parse(String(init?.body)).attempt_key);
         data = true;
-      } else if (table === "create_guest_otp") {
-        storedOtpHash = JSON.parse(String(init?.body)).code_hash;
-        data = null;
-      } else if (table === "verify_guest_otp") {
-        const payload = JSON.parse(String(init?.body));
-        data = storedOtpHash !== null && payload.code_hash === storedOtpHash;
-      } else if (table === "otp") data = {};
-      else if (table === "save_guest_rsvp") {
+      } else if (table === "lookup_guest_invitation") {
+        const body = JSON.parse(String(init?.body)) as { query_text: string };
+        data =
+          body.query_text === "Anna Kowalska"
+            ? { status: "matched", invitationId: invitation.id }
+            : body.query_text === "Kolizja"
+              ? { status: "ambiguous" }
+              : { status: "not_found" };
+      } else if (table === "save_guest_rsvp") {
         const payload = JSON.parse(String(init?.body));
         assert.equal(payload.iid, invitation.id);
         assert.equal(payload.sid, site.id);
@@ -195,22 +193,47 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       ).status,
       401,
     );
-    site.access_mode = "email";
-    buckets.length = 0;
+    site.access_mode = "public";
+    jar.clear();
     assert.equal(
       (await post("otp-send", { email: "family@example.com" })).status,
-      200,
+      400,
     );
+    const sharedUrl = `${process.env.SITE_URL}/api/guest/s/${site.id}`;
+    const postShared = (action: string, payload: unknown) =>
+      POST(
+        new Request(sharedUrl, {
+          method: "POST",
+          headers: {
+            origin: process.env.SITE_URL!,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({ action, payload }),
+        }),
+      );
+    const ambigRes = await postShared("lookup", { query: "Kolizja" });
+    assert.equal(ambigRes.status, 200);
+    assert.deepEqual(await ambigRes.json(), { status: "ambiguous" });
+
+    const matchRes = await postShared("lookup", { query: "Anna Kowalska" });
+    assert.equal(matchRes.status, 200);
+    assert.deepEqual(await matchRes.json(), { status: "matched" });
+
+    const sharedAfterLookup = await (await GET(new Request(sharedUrl))).json();
+    assert.equal(sharedAfterLookup.rsvpEnabled, true);
+    assert.equal(sharedAfterLookup.canResetLookup, true);
+    assert.equal(sharedAfterLookup.invitation.label, "Family");
+
+    site.rsvp_enabled = false;
+    const infoOnly = await (await GET(new Request(sharedUrl))).json();
+    assert.equal(infoOnly.rsvpEnabled, false);
+    assert.equal(infoOnly.invitation, null);
     assert.equal(
-      (await post("otp-verify", { email: "family@example.com" })).status,
-      401,
+      (await post("rsvp", { revision: 0, note: "", answers: [] })).status,
+      409,
     );
-    assert.equal(
-      (await post("otp-verify", { email: "family@example.com", token: "000000" })).status,
-      401,
-    );
-    assert.notEqual(buckets[0], buckets[2]);
-    site.access_mode = "public";
+    site.rsvp_enabled = true;
+    await postShared("lookup-reset", {});
     jar.clear();
     const forbiddenPlusOne = await post("rsvp", {
       revision: 0,

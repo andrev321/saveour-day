@@ -17,6 +17,9 @@ import { guestCopy, guestError } from "../lib/guest-copy";
 type Reply = {
   authorized: boolean;
   mode: string;
+  rsvpEnabled?: boolean;
+  allowSelfRegistration?: boolean;
+  canResetLookup?: boolean;
   locale?: InvitationLocale;
   requiresLink?: boolean;
   config?: GuestContent;
@@ -49,12 +52,17 @@ export function GuestPage({
     `${Boolean(data)}:${data?.authorized}:${success}`,
   );
   const { operation, busy, start, end } = useOperation();
-  const [email, setEmail] = useState(""),
-    [code, setCode] = useState(""),
-    [otp, setOtp] = useState(""),
-    [sent, setSent] = useState(false),
-    [cooldown, setCooldown] = useState(0);
-  const [links, setLinks] = useState<{ href: string; label: string }[]>([]);
+  const [code, setCode] = useState("");
+  const [lookupQuery, setLookupQuery] = useState(""),
+    [lookupDisambiguator, setLookupDisambiguator] = useState(""),
+    [lookupUnlockCode, setLookupUnlockCode] = useState(""),
+    [lookupState, setLookupState] = useState<
+      "idle" | "not_found" | "ambiguous" | "locked"
+    >("idle");
+  const [selfRegOpen, setSelfRegOpen] = useState(false),
+    [selfRegName, setSelfRegName] = useState(""),
+    [selfRegAnswers, setSelfRegAnswers] = useState<Record<string, string>>({}),
+    [selfRegNote, setSelfRegNote] = useState("");
   const [note, setNote] = useState(""),
     [plusOne, setPlusOne] = useState<{ id: string; name: string } | null>(null),
     [answers, setAnswers] = useState<Record<string, string>>({}),
@@ -104,14 +112,6 @@ export function GuestPage({
       });
     return () => controller.abort();
   }, [endpoint]);
-  useEffect(() => {
-    if (!cooldown) return;
-    const timer = window.setTimeout(
-      () => setCooldown((old) => Math.max(0, old - 1)),
-      1000,
-    );
-    return () => window.clearTimeout(timer);
-  }, [cooldown]);
   async function reload() {
     const r = await fetch(endpoint, { cache: "no-store" });
     const result = await r.json();
@@ -137,21 +137,33 @@ export function GuestPage({
       if (!r.ok) {
         if (action === "rsvp" && [401, 403, 404].includes(r.status)) {
           setData(null);
-          setLinks([]);
-          setSent(false);
           setCode("");
-          setOtp("");
           await reload();
         }
         throw new Error(result.error);
       }
-      if (action === "otp-send") {
-        setSent(true);
-        setCooldown(60);
-      } else if (result.links) setLinks(result.links);
-      else {
+      if (action === "lookup") {
+        if (result.status === "matched") {
+          setLookupState("idle");
+          setLookupDisambiguator("");
+          setLookupUnlockCode("");
+          setSelfRegOpen(false);
+          await reload();
+        } else {
+          setLookupState(result.status);
+        }
+      } else if (action === "lookup-reset") {
+        setLookupState("idle");
+        setLookupQuery("");
+        setLookupDisambiguator("");
+        setLookupUnlockCode("");
         await reload();
-        if (action === "rsvp") setSuccess(true);
+      } else {
+        await reload();
+        if (action === "rsvp" || action === "self-register") {
+          setSelfRegOpen(false);
+          setSuccess(true);
+        }
       }
     } catch (e) {
       setError((e as Error).message);
@@ -213,11 +225,6 @@ export function GuestPage({
             </BusyLabel>
           </button>
         )}
-        {links.map((l) => (
-          <S.GuestLink key={l.href} href={l.href}>
-            {l.label}
-          </S.GuestLink>
-        ))}
         {data?.requiresLink && <p>{copy.original}</p>}
         {data?.mode === "code" && !data.requiresLink && (
           <form
@@ -245,80 +252,6 @@ export function GuestPage({
                 {copy.open}
               </BusyLabel>
             </button>
-          </form>
-        )}
-        {data?.mode === "email" && !links.length && (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void action(sent ? "otp-verify" : "otp-send", {
-                email,
-                token: sent ? otp : undefined,
-              });
-            }}
-          >
-            <label>
-              {copy.email}
-              <input
-                type="email"
-                autoComplete="email"
-                value={email}
-                disabled={busy}
-                aria-busy={busy || undefined}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setSent(false);
-                  setOtp("");
-                }}
-                required
-              />
-            </label>
-            {sent && (
-              <>
-                <p role="status">{copy.sent}</p>
-                <label>
-                  {copy.otp}
-                  <input
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    required
-                    pattern="[0-9]{6,10}"
-                    maxLength={10}
-                  />
-                </label>
-              </>
-            )}
-            <button disabled={busy || (!sent && cooldown > 0)}>
-              <BusyLabel
-                busy={operation === "otp-send" || operation === "otp-verify"}
-                label={loadingText(
-                  language,
-                  operation === "otp-verify" ? "verify" : "send",
-                )}
-              >
-                {sent ? copy.verify : copy.send}
-              </BusyLabel>
-            </button>
-            {sent && (
-              <>
-                <button
-                  type="button"
-                  disabled={busy || cooldown > 0}
-                  onClick={() => void action("otp-send", { email })}
-                >
-                  <BusyLabel
-                    busy={operation === "otp-send"}
-                    label={loadingText(language, "send")}
-                  >
-                    {copy.resend}
-                  </BusyLabel>
-                  {cooldown ? ` (${cooldown}s)` : ""}
-                </button>
-                <p>{copy.resendHelp}</p>
-              </>
-            )}
           </form>
         )}
         {data?.mode === "public" && <p>{copy.original}</p>}
@@ -422,11 +355,14 @@ export function GuestPage({
       </>
     );
   }
+  const rsvpEnabled = data.rsvpEnabled !== false;
+  const showRsvpAction =
+    rsvpEnabled && (Boolean(data.invitation) || kind === "s");
   return (
     <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
-      {(data.invitation || data.config?.events.some((e) => e.date)) && (
+      {(showRsvpAction || data.config?.events.some((e) => e.date)) && (
         <S.GuestActions aria-label={copy.invitation}>
-          {data.invitation && <a href="#rsvp">{copy.rsvp}</a>}
+          {showRsvpAction && <a href="#rsvp">{copy.rsvp}</a>}
           {data.config?.events.some((e) => e.date) && (
             <a href={`${endpoint}/calendar`} download="invitation.ics">
               {copy.calendar}
@@ -440,10 +376,208 @@ export function GuestPage({
           `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
         }
       >
-        {data.invitation && (
+        {rsvpEnabled && !data.invitation && kind === "s" && (
+          <div id="rsvp">
+            <h2>{copy.findInvitation}</h2>
+            {!selfRegOpen && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const nextQuery =
+                    lookupState === "locked" && lookupUnlockCode.trim()
+                      ? lookupUnlockCode
+                      : lookupQuery;
+                  void action("lookup", {
+                    query: nextQuery,
+                    disambiguator:
+                      lookupState === "ambiguous" && lookupDisambiguator.trim()
+                        ? lookupDisambiguator
+                        : undefined,
+                  });
+                }}
+              >
+                <label>
+                  {copy.lookupLabel}
+                  <input
+                    value={lookupQuery}
+                    onChange={(e) => {
+                      setLookupQuery(e.target.value);
+                      setLookupState("idle");
+                      setLookupDisambiguator("");
+                    }}
+                    required
+                    maxLength={200}
+                  />
+                </label>
+
+                {lookupState === "ambiguous" && (
+                  <>
+                    <p role="status">{copy.lookupAmbiguous}</p>
+                    <label>
+                      {copy.lookupDisambiguator}
+                      <input
+                        value={lookupDisambiguator}
+                        onChange={(e) => setLookupDisambiguator(e.target.value)}
+                        required
+                        maxLength={200}
+                      />
+                    </label>
+                  </>
+                )}
+
+                {lookupState === "locked" && (
+                  <>
+                    <p role="status">{copy.lookupLocked}</p>
+                    <label>
+                      {copy.lookupUnlockCode}
+                      <input
+                        value={lookupUnlockCode}
+                        onChange={(e) => setLookupUnlockCode(e.target.value)}
+                        required
+                        maxLength={24}
+                      />
+                    </label>
+                  </>
+                )}
+
+                {lookupState === "not_found" && (
+                  <p role="status">{copy.lookupNotFound}</p>
+                )}
+
+                <button disabled={busy} aria-busy={busy || undefined}>
+                  <BusyLabel
+                    busy={operation === "lookup"}
+                    label={loadingText(language, "verify")}
+                  >
+                    {lookupState === "locked"
+                      ? copy.lookupUnlockAction
+                      : lookupState === "ambiguous"
+                        ? copy.lookupConfirm
+                        : copy.lookupAction}
+                  </BusyLabel>
+                </button>
+              </form>
+            )}
+
+            {data.allowSelfRegistration && !selfRegOpen && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setSelfRegOpen(true);
+                  setSelfRegName(lookupQuery);
+                }}
+              >
+                {copy.selfRegisterOpen}
+              </button>
+            )}
+
+            {data.allowSelfRegistration && selfRegOpen && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fakeGuestId = "00000000-0000-4000-8000-000000000000";
+                  void action("self-register", {
+                    name: selfRegName,
+                    rsvp: {
+                      revision: 0,
+                      note: selfRegNote,
+                      answers: (data.config?.events || [])
+                        .filter((ev) => selfRegAnswers[ev.id] !== undefined)
+                        .map((ev) => ({
+                          guestId: fakeGuestId,
+                          eventId: ev.id,
+                          attending: selfRegAnswers[ev.id] === "true",
+                        })),
+                    },
+                  });
+                }}
+              >
+                <label>
+                  {copy.selfRegisterName}
+                  <input
+                    value={selfRegName}
+                    onChange={(e) => setSelfRegName(e.target.value)}
+                    required
+                    maxLength={200}
+                  />
+                </label>
+                {data.config?.events.map((ev) => (
+                  <fieldset key={ev.id}>
+                    <legend>{ev.title}</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`self-${ev.id}`}
+                        checked={selfRegAnswers[ev.id] === "true"}
+                        onChange={() =>
+                          setSelfRegAnswers((old) => ({
+                            ...old,
+                            [ev.id]: "true",
+                          }))
+                        }
+                      />{" "}
+                      {copy.yes}
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name={`self-${ev.id}`}
+                        checked={selfRegAnswers[ev.id] === "false"}
+                        onChange={() =>
+                          setSelfRegAnswers((old) => ({
+                            ...old,
+                            [ev.id]: "false",
+                          }))
+                        }
+                      />{" "}
+                      {copy.no}
+                    </label>
+                  </fieldset>
+                ))}
+                <label>
+                  {copy.notes}
+                  <textarea
+                    maxLength={2000}
+                    value={selfRegNote}
+                    onChange={(e) => setSelfRegNote(e.target.value)}
+                  />
+                </label>
+                <button disabled={busy} aria-busy={busy || undefined}>
+                  <BusyLabel
+                    busy={operation === "self-register"}
+                    label={loadingText(language, "save")}
+                  >
+                    {copy.selfRegisterSubmit}
+                  </BusyLabel>
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setSelfRegOpen(false)}
+                >
+                  {copy.cancel}
+                </button>
+              </form>
+            )}
+            {error && <p role="alert">{guestError(error, copy)}</p>}
+          </div>
+        )}
+        {rsvpEnabled && data.invitation && (
           <div id="rsvp">
             <h2>{copy.rsvp}</h2>
-            <p>{data.invitation.label}</p>
+            <p>
+              {data.invitation.label}{" "}
+              {data.canResetLookup && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void action("lookup-reset", {})}
+                >
+                  {copy.lookupChange}
+                </button>
+              )}
+            </p>
             {data.deadline && (
               <p>
                 {copy.deadline}:{" "}

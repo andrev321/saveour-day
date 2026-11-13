@@ -20,43 +20,50 @@ export const GET = endpoint(async (request) => {
     return {
       mode: ctx.site.access_mode,
       authorized: false,
-      requiresLink: ctx.requiresSession && ctx.site.access_mode !== "email",
+      requiresLink: ctx.requiresSession,
     };
   }
   const result = await content(ctx);
+  const rsvpEnabled = ctx.site.rsvp_enabled ?? true;
+  const activeInvitation = rsvpEnabled ? ctx.invitation : null;
   const eventIds = result.config.events.map((e) => e.id);
   const { data: answers, error } =
-    ctx.invitation && eventIds.length
+    activeInvitation && eventIds.length
       ? await db()
           .from("rsvp_answers")
           .select("guest_id,event_id,attending")
           .eq("site_id", ctx.site.id)
-          .eq("invitation_id", ctx.invitation.id)
+          .eq("invitation_id", activeInvitation.id)
           .in("event_id", eventIds)
       : { data: [], error: null };
   check(error);
   const questions = ctx.site.rsvp_questions || defaultQuestions;
-  const allGuests = ctx.invitation
+  const allGuests = activeInvitation
     ? [
-        ...ctx.invitation.guests,
-        ...(ctx.invitation.plus_one ? [ctx.invitation.plus_one] : []),
+        ...activeInvitation.guests,
+        ...(activeInvitation.plus_one ? [activeInvitation.plus_one] : []),
       ]
     : [];
   return {
     authorized: true,
     mode: ctx.site.access_mode,
+    rsvpEnabled,
+    allowSelfRegistration: Boolean(ctx.site.allow_self_registration),
+    canResetLookup:
+      new URL(request.url).pathname.split("/")[3] === "s" &&
+      Boolean(activeInvitation),
     config: result.config,
-    invitation: ctx.invitation
+    invitation: activeInvitation
       ? {
-          label: ctx.invitation.label,
-          guests: ctx.invitation.guests,
-          allowPlusOne: ctx.invitation.allow_plus_one,
-          plusOne: ctx.invitation.plus_one,
-          revision: ctx.invitation.rsvp_revision,
-          note: ctx.invitation.note,
+          label: activeInvitation.label,
+          guests: activeInvitation.guests,
+          allowPlusOne: activeInvitation.allow_plus_one,
+          plusOne: activeInvitation.plus_one,
+          revision: activeInvitation.rsvp_revision,
+          note: activeInvitation.note,
           details: Object.fromEntries(
             allGuests.map((g) => {
-              const detail = ctx.invitation?.guest_details?.[g.id] || {};
+              const detail = activeInvitation.guest_details?.[g.id] || {};
               return [
                 g.id,
                 Object.fromEntries(
@@ -81,7 +88,7 @@ export const POST = endpoint(async (request) => {
   const ctx = await readContext(request);
   const body = z
     .object({
-      action: z.enum(["code", "otp-send", "otp-verify", "rsvp"]),
+      action: z.enum(["code", "lookup", "lookup-reset", "self-register", "rsvp"]),
       payload: z.unknown(),
     })
     .parse(await json(request));

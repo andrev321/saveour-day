@@ -57,6 +57,24 @@ const pl = {
   plusOneName: "Imię i nazwisko osoby towarzyszącej",
   addPlusOne: "Dodaj osobę towarzyszącą (+1)",
   removePlusOne: "Usuń osobę towarzyszącą",
+  findInvitation: "Znajdź swoje zaproszenie",
+  lookupLabel: "Wpisz imię i nazwisko lub kod zaproszenia",
+  lookupAction: "Szukaj zaproszenia",
+  lookupNotFound:
+    "Nie znaleźliśmy zaproszenia dla podanych danych. Sprawdź pisownię lub wpisz kod z zaproszenia.",
+  lookupAmbiguous:
+    "Znaleźliśmy więcej niż jedno zaproszenie o tym nazwisku. Podaj kod zaproszenia lub imię drugiej osoby z zaproszenia.",
+  lookupDisambiguator: "Kod zaproszenia lub imię drugiej osoby",
+  lookupConfirm: "Potwierdź",
+  lookupLocked:
+    "Odpowiedź dla tego zaproszenia została już zapisana z innego urządzenia. Podaj kod zaproszenia (short code), aby odblokować edycję, albo otwórz swój indywidualny link.",
+  lookupUnlockCode: "Kod zaproszenia",
+  lookupUnlockAction: "Odblokuj edycję",
+  lookupChange: "Zmień zaproszenie",
+  selfRegisterOpen: "Nie ma mnie na liście — wypełnij zgłoszenie",
+  selfRegisterName: "Twoje imię i nazwisko",
+  selfRegisterSubmit: "Wyślij zgłoszenie",
+  rsvpDisabled: "Potwierdzanie obecności jest wyłączone.",
 };
 type Copy = typeof pl;
 const en: Copy = {
@@ -117,6 +135,24 @@ const en: Copy = {
   plusOneName: "Plus-one full name",
   addPlusOne: "Add plus-one (+1)",
   removePlusOne: "Remove plus-one",
+  findInvitation: "Find your invitation",
+  lookupLabel: "Enter your full name or invitation code",
+  lookupAction: "Find invitation",
+  lookupNotFound:
+    "We couldn't find an invitation matching that name or code. Check the spelling or contact the organizer.",
+  lookupAmbiguous:
+    "We found more than one invitation with that name. Enter your invitation code or the name of another guest on your invitation.",
+  lookupDisambiguator: "Invitation code or second guest name",
+  lookupConfirm: "Confirm",
+  lookupLocked:
+    "Responses for this invitation were already saved from another device. Enter your invitation code to unlock editing, or open your personal link.",
+  lookupUnlockCode: "Invitation code",
+  lookupUnlockAction: "Unlock editing",
+  lookupChange: "Change invitation",
+  selfRegisterOpen: "I'm not on the list — send a response",
+  selfRegisterName: "Your full name",
+  selfRegisterSubmit: "Submit response",
+  rsvpDisabled: "RSVP is currently disabled for this invitation.",
 };
 const de: Copy = {
   invitation: "Ihre Einladung",
@@ -178,6 +214,24 @@ const de: Copy = {
   plusOneName: "Name der Begleitperson",
   addPlusOne: "Begleitperson hinzufügen (+1)",
   removePlusOne: "Begleitperson entfernen",
+  findInvitation: "Einladung finden",
+  lookupLabel: "Vor- und Nachname oder Einladungscode eingeben",
+  lookupAction: "Einladung suchen",
+  lookupNotFound:
+    "Keine passende Einladung gefunden. Bitte Schreibweise prüfen oder den Veranstalter kontaktieren.",
+  lookupAmbiguous:
+    "Es wurden mehrere Einladungen mit diesem Namen gefunden. Bitte Einladungscode oder den Namen einer zweiten Person eingeben.",
+  lookupDisambiguator: "Einladungscode oder Name der zweiten Person",
+  lookupConfirm: "Bestätigen",
+  lookupLocked:
+    "Die Antwort wurde bereits auf einem anderen Gerät gespeichert. Zum Bearbeiten bitte Einladungscode eingeben oder persönlichen Link öffnen.",
+  lookupUnlockCode: "Einladungscode",
+  lookupUnlockAction: "Bearbeitung freischalten",
+  lookupChange: "Einladung wechseln",
+  selfRegisterOpen: "Ich stehe nicht auf der Liste — Rückmeldung senden",
+  selfRegisterName: "Ihr Vor- und Nachname",
+  selfRegisterSubmit: "Rückmeldung senden",
+  rsvpDisabled: "Rückmeldungen sind für diese Einladung deaktiviert.",
 };
 export const guestCopy = { "pl-PL": pl, "en-GB": en, "de-DE": de };
 export function guestError(message: string, copy: Copy) {
@@ -195,6 +249,7 @@ export function guestError(message: string, copy: Copy) {
     "Otwórz zaproszenie, aby potwierdzić dostęp": "expired",
     "Odpowiedź zmieniła się w innej sesji. Odśwież stronę.": "conflict",
     "Termin odpowiedzi minął.": "closed",
+    "Potwierdzanie obecności jest wyłączone.": "rsvpDisabled",
     "Nie udało się wysłać kodu. Spróbuj ponownie później.": "sendFailed",
     "Brak dostępu do odpowiedzi": "noAccess",
     "Nieprawidłowe dane": "invalid",

@@ -39,6 +39,7 @@ export function check(error: { message: string } | null) {
   const messages: Record<string, string> = {
     REVISION_CONFLICT: "Odpowiedź zmieniła się w innej sesji. Odśwież stronę.",
     RSVP_CLOSED: "Termin odpowiedzi minął.",
+    RSVP_DISABLED: "Potwierdzanie obecności jest wyłączone.",
     FORBIDDEN: "Dostęp wygasł. Otwórz zaproszenie ponownie.",
     UNPUBLISHED: "Strona nie jest dostępna.",
     INVALID_ANSWERS: "Odpowiedzi nie pasują do zaproszenia.",
@@ -68,18 +69,45 @@ export type GuestRecord = {
   rsvp_revision: number;
   note: string;
   label: string;
+  short_code?: string;
+  origin?: "organizer" | "self_registered";
+  review_status?: "approved" | "pending_match";
   guest_details?: import("@invitations/domain/operations").GuestDetails;
 };
 export type SiteRecord = {
   id: string;
   published_release_id: string | null;
-  access_mode: "public" | "code" | "email";
+  access_mode: "public" | "code";
   access_code_hash: string | null;
   access_version: number;
   public_variant_id: string;
   rsvp_deadline: string | null;
+  rsvp_enabled: boolean;
+  allow_self_registration: boolean;
   rsvp_questions?: import("@invitations/domain/operations").QuestionSettings;
 };
+const lookupCookieName = (siteId: string) => `guest_inv_${siteId}`;
+export async function setLookupInvitationCookie(
+  siteId: string,
+  invitationId: string,
+) {
+  (await cookies()).set(lookupCookieName(siteId), invitationId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 7 * 86400,
+  });
+}
+export async function clearLookupInvitationCookie(siteId: string) {
+  (await cookies()).set(lookupCookieName(siteId), "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}
 export async function context(kind: string, key: string) {
   if (
     !["s", "i", "v"].includes(kind) ||
@@ -104,7 +132,7 @@ export async function context(kind: string, key: string) {
     const result = await client
       .from("sites")
       .select(
-        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
+        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions,rsvp_enabled,allow_self_registration",
       )
       .eq(field, value)
       .is("deleted_at", null)
@@ -119,37 +147,59 @@ export async function context(kind: string, key: string) {
       (await findSite("public_slug", key));
   if (!site?.published_release_id)
     throw new GuestError(404, "Strona jest niedostępna");
+
+  if (kind === "s" && site.rsvp_enabled) {
+    const lookupInvId = (await cookies()).get(lookupCookieName(site.id))?.value;
+    if (lookupInvId && isSiteUuidKey(lookupInvId)) {
+      const invRes = await client
+        .from("invitations")
+        .select("*")
+        .eq("id", lookupInvId)
+        .eq("site_id", site.id)
+        .maybeSingle();
+      check(invRes.error);
+      const candidate = invRes.data as GuestRecord | null;
+      if (candidate && !candidate.revoked) {
+        const candidateSession = await readInvitationSession(site, candidate);
+        if (candidateSession) {
+          invitation = candidate;
+        }
+      }
+    }
+  }
+
   return { site, invitation, requiresSession: kind === "v" };
 }
 export type Context = Awaited<ReturnType<typeof context>>;
 const cookieName = (ctx: Context) =>
   `guest_${ctx.invitation?.id || ctx.site.id}`;
-export async function session(ctx: Context) {
-  const raw = (await cookies()).get(cookieName(ctx))?.value;
+export async function readInvitationSession(
+  site: SiteRecord,
+  invitation: GuestRecord | null,
+) {
+  const raw = (await cookies()).get(`guest_${invitation?.id || site.id}`)?.value;
   if (!raw) return null;
   const { data, error } = await db()
     .from("guest_sessions")
     .select("*")
     .eq("token_hash", digest(raw))
-    .eq("site_id", ctx.site.id)
+    .eq("site_id", site.id)
     .maybeSingle();
   check(error);
   if (
     !data ||
     Date.parse(data.expires_at) <= Date.now() ||
-    data.access_version !== ctx.site.access_version ||
-    data.invitation_id !== (ctx.invitation?.id || null) ||
-    (ctx.invitation && data.invitation_version !== ctx.invitation.version)
-  )
-    return null;
-  if (
-    ctx.site.access_mode === "email" &&
-    (!ctx.invitation || !ctx.invitation.emails.includes(data.email))
+    data.access_version !== site.access_version ||
+    data.invitation_id !== (invitation?.id || null) ||
+    (invitation && data.invitation_version !== invitation.version)
   )
     return null;
   return data;
 }
-export async function grant(ctx: Context, email: string | null = null) {
+export async function session(ctx: Context) {
+  return readInvitationSession(ctx.site, ctx.invitation);
+}
+export async function grant(ctx: Context) {
   const token = randomBytes(32).toString("base64url");
   const { error } = await db()
     .from("guest_sessions")
@@ -159,7 +209,7 @@ export async function grant(ctx: Context, email: string | null = null) {
       invitation_id: ctx.invitation?.id || null,
       access_version: ctx.site.access_version,
       invitation_version: ctx.invitation?.version || null,
-      email,
+      email: null,
       expires_at: new Date(Date.now() + 7 * 86400_000).toISOString(),
     });
   check(error);

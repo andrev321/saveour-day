@@ -1,36 +1,39 @@
-import { randomInt as nodeRandomInt } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { digest } from "@invitations/domain/access-code";
-import { buildOtpEmail } from "@invitations/domain/email";
-import { rsvpSchema } from "@invitations/domain/guest";
-import { guestDetailsSchema } from "@invitations/domain/operations";
 import {
-  sendEmail as defaultSendEmail,
-  type SendEmailInput,
-  type SendEmailResult,
-} from "@invitations/email";
+  guestLookupSchema,
+  rsvpSchema,
+  selfRegisterSchema,
+} from "@invitations/domain/guest";
+import { guestDetailsSchema } from "@invitations/domain/operations";
 import {
   allowed as defaultAllowed,
   check,
+  clearLookupInvitationCookie,
   context,
   db as defaultDb,
   grant as defaultGrant,
   GuestError,
-  required,
+  readInvitationSession,
   session as defaultSession,
+  setLookupInvitationCookie,
   unlock as defaultUnlock,
   type Context,
 } from "./server";
 
-export type GuestAction = "code" | "otp-send" | "otp-verify" | "rsvp";
+export type GuestAction =
+  | "code"
+  | "lookup"
+  | "lookup-reset"
+  | "self-register"
+  | "rsvp";
 
 export type GuestActionDb = ReturnType<typeof defaultDb>;
 
 export type GuestActionDeps = {
   db?: GuestActionDb;
-  sendEmail?: (input: SendEmailInput) => Promise<SendEmailResult>;
   now?: () => number;
-  randomInt?: (min: number, max: number) => number;
   request?: Request;
   limit?: (
     request: Request,
@@ -38,30 +41,27 @@ export type GuestActionDeps = {
     max?: number,
     seconds?: number,
   ) => Promise<void>;
-  grant?: (ctx: Context, email?: string | null) => Promise<void>;
+  grant?: (ctx: Context) => Promise<void>;
   unlock?: (ctx: Context, code: string) => Promise<void>;
   session?: (ctx: Context) => Promise<{ token_hash: string } | null>;
   allowed?: (ctx: Context) => Promise<boolean>;
   loadContext?: (invitationId: string) => Promise<Context>;
+  setLookupCookie?: (siteId: string, invitationId: string) => Promise<void>;
+  clearLookupCookie?: (siteId: string) => Promise<void>;
+  readDeviceSession?: typeof readInvitationSession;
 };
 
 const codePayloadSchema = z.object({
   code: z.string().max(128),
 });
 
-const otpPayloadSchema = z.object({
-  email: z.email().transform((s) => s.toLowerCase()),
-  token: z
-    .string()
-    .regex(/^\d{6,10}$/)
-    .optional(),
-});
-
 const rsvpPayloadSchema = rsvpSchema.extend({
   details: guestDetailsSchema.optional(),
 });
 
-const OTP_TTL_SECONDS = 900;
+const selfRegisterWithDetailsSchema = selfRegisterSchema.extend({
+  details: guestDetailsSchema.optional(),
+});
 
 export async function executeGuestAction(
   ctx: Context,
@@ -70,15 +70,16 @@ export async function executeGuestAction(
   deps: GuestActionDeps = {},
 ) {
   const client = deps.db ?? defaultDb();
-  const send = deps.sendEmail ?? defaultSendEmail;
   const now = deps.now ?? (() => Date.now());
-  const randInt = deps.randomInt ?? nodeRandomInt;
   const req = deps.request ?? new Request("http://localhost");
   const doGrant = deps.grant ?? defaultGrant;
   const doUnlock = deps.unlock ?? defaultUnlock;
   const getSession = deps.session ?? defaultSession;
   const isAllowed = deps.allowed ?? defaultAllowed;
   const loadContext = deps.loadContext ?? ((id: string) => context("v", id));
+  const setLookup = deps.setLookupCookie ?? setLookupInvitationCookie;
+  const clearLookup = deps.clearLookupCookie ?? clearLookupInvitationCookie;
+  const checkDeviceSession = deps.readDeviceSession ?? readInvitationSession;
 
   const rateLimit =
     deps.limit ??
@@ -108,109 +109,124 @@ export async function executeGuestAction(
     return { ok: true };
   }
 
-  if (action === "otp-send" || action === "otp-verify") {
-    if (ctx.site.access_mode !== "email")
-      throw new GuestError(400, "Logowanie e-mail nie jest włączone");
+  if (action === "lookup-reset") {
+    await clearLookup(ctx.site.id);
+    return { ok: true };
+  }
 
-    const p = otpPayloadSchema.parse(payload);
-    await rateLimit(
-      req,
-      `${action}:${ctx.site.id}:${p.email}`,
-      action === "otp-send" ? 3 : 10,
-    );
-
-    const { data: matching, error } = await client
-      .from("invitations")
-      .select("id")
-      .eq("site_id", ctx.site.id)
-      .eq("revoked", false)
-      .contains("emails", [p.email]);
+  if (action === "lookup") {
+    await rateLimit(req, `lookup:${ctx.site.id}`, 10, 600);
+    if (!(await isAllowed(ctx))) {
+      throw new GuestError(401, "Brak dostępu do strony");
+    }
+    if (!ctx.site.rsvp_enabled) {
+      return { status: "not_found" as const };
+    }
+    const p = guestLookupSchema.parse(payload);
+    const { data, error } = await client.rpc("lookup_guest_invitation", {
+      sid: ctx.site.id,
+      query_text: p.query,
+      disambiguator: p.disambiguator ?? null,
+      session_hash: null,
+    });
     check(error);
+    const result = (data || { status: "not_found" }) as {
+      status: "not_found" | "ambiguous" | "locked" | "matched";
+      invitationId?: string;
+    };
 
-    const eligible = ctx.invitation
-      ? ctx.invitation.emails.includes(p.email)
-      : !!matching?.length;
-
-    if (action === "otp-send") {
-      if (eligible) {
-        const code = String(randInt(100000, 1000000));
-        const codeHash = digest(`${ctx.site.id}:${p.email}:${code}`);
-        const { error: otpError } = await client.rpc("create_guest_otp", {
-          sid: ctx.site.id,
-          target_email: p.email,
-          code_hash: codeHash,
-          ttl_seconds: OTP_TTL_SECONDS,
-        });
-        check(otpError);
-
-        const { data: release, error: releaseError } = await client
-          .from("releases")
-          .select("config")
-          .eq("site_id", ctx.site.id)
-          .eq("id", ctx.site.published_release_id!)
-          .maybeSingle();
-        check(releaseError);
-
-        const releaseConfig = release?.config as
-          | { locale?: string; identity?: { displayName?: string } }
-          | undefined;
-        const locale = releaseConfig?.locale || "pl-PL";
-        const displayName =
-          releaseConfig?.identity?.displayName?.trim() || "Save Our Day";
-
-        const message = buildOtpEmail({ locale, displayName, code });
-        const result = await send({
-          apiKey: required("RESEND_API_KEY"),
-          from: required("MAIL_FROM"),
-          to: p.email,
-          subject: message.subject,
-          text: message.text,
-        });
-        if (!result.ok) {
-          throw new GuestError(
-            503,
-            "Nie udało się wysłać kodu. Spróbuj ponownie później.",
-          );
-        }
+    if (result.status === "locked" && result.invitationId) {
+      const individual = await loadContext(result.invitationId);
+      const deviceSession = await checkDeviceSession(
+        individual.site,
+        individual.invitation,
+      );
+      if (deviceSession) {
+        await setLookup(ctx.site.id, result.invitationId);
+        return { status: "matched" as const };
       }
-      return {
-        ok: true,
-        message: "Jeżeli adres ma dostęp, otrzyma kod logowania.",
-      };
+      return { status: "locked" as const };
     }
 
-    if (!p.token || !eligible)
-      throw new GuestError(401, "Nieprawidłowy kod lub brak dostępu");
+    if (result.status === "matched" && result.invitationId) {
+      const individual = await loadContext(result.invitationId);
+      await doGrant(individual);
+      await setLookup(ctx.site.id, result.invitationId);
+      return { status: "matched" as const };
+    }
 
-    const codeHash = digest(`${ctx.site.id}:${p.email}:${p.token}`);
-    const { data: verified, error: verifyError } = await client.rpc(
-      "verify_guest_otp",
+    return { status: result.status };
+  }
+
+  if (action === "self-register") {
+    await rateLimit(req, `self-register:${ctx.site.id}`, 5, 600);
+    if (!(await isAllowed(ctx))) {
+      throw new GuestError(401, "Brak dostępu do strony");
+    }
+    if (!ctx.site.rsvp_enabled) {
+      throw new GuestError(409, "Potwierdzanie obecności jest wyłączone.");
+    }
+    if (!ctx.site.allow_self_registration) {
+      throw new GuestError(403, "Zgłoszenia spoza listy są wyłączone.");
+    }
+    if (
+      ctx.site.rsvp_deadline &&
+      now() > Date.parse(ctx.site.rsvp_deadline)
+    ) {
+      throw new GuestError(409, "Termin odpowiedzi minął.");
+    }
+
+    const p = selfRegisterWithDetailsSchema.parse(payload);
+    const newInvId = randomUUID();
+    const rawToken = randomBytes(24).toString("base64url");
+
+    const { error: createError } = await client.rpc(
+      "create_self_registered_invitation",
       {
         sid: ctx.site.id,
-        target_email: p.email,
-        code_hash: codeHash,
+        iid: newInvId,
+        guest_name: p.name,
+        token_hash: digest(rawToken),
+        allow_plus_one: false,
       },
     );
-    check(verifyError);
-    if (!verified)
-      throw new GuestError(401, "Nieprawidłowy kod lub brak dostępu");
+    check(createError);
 
-    if (ctx.invitation) {
-      await doGrant(ctx, p.email);
-      return { ok: true };
-    }
+    const createdCtx = await loadContext(newInvId);
+    await doGrant(createdCtx);
+    const active = await getSession(createdCtx);
+    if (!active) throw new GuestError(401, "Dostęp wygasł");
 
-    const links = [];
-    for (const row of matching || []) {
-      const individual = await loadContext(row.id);
-      if (!individual.invitation?.emails.includes(p.email)) continue;
-      await doGrant(individual, p.email);
-      links.push({ href: `/v/${row.id}`, label: individual.invitation.label });
-    }
-    return { ok: true, links };
+    const createdGuestId = createdCtx.invitation?.guests[0]?.id;
+    const remappedAnswers = createdGuestId
+      ? p.rsvp.answers.map((a) => ({
+          ...a,
+          guestId: createdGuestId,
+        }))
+      : [];
+
+    const { data: rev, error: rsvpError } = await client.rpc(
+      "save_guest_rsvp",
+      {
+        sid: ctx.site.id,
+        iid: newInvId,
+        expected_revision: 0,
+        answers: remappedAnswers,
+        message: p.rsvp.note,
+        details: p.details && createdGuestId ? { [createdGuestId]: Object.values(p.details)[0] ?? {} } : null,
+        plus_one_input: null,
+        session_hash: active.token_hash,
+      },
+    );
+    check(rsvpError);
+    await setLookup(ctx.site.id, newInvId);
+    return { ok: true, revision: rev };
   }
 
   await rateLimit(req, `rsvp:${ctx.site.id}`, 60);
+  if (!ctx.site.rsvp_enabled) {
+    throw new GuestError(409, "Potwierdzanie obecności jest wyłączone.");
+  }
   if (!ctx.invitation || !(await isAllowed(ctx)))
     throw new GuestError(401, "Brak dostępu do odpowiedzi");
   if (
