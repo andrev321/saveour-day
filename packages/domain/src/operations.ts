@@ -34,7 +34,7 @@ export type GuestDetails = z.infer<typeof guestDetailsSchema>;
 export const invitationInputSchema = z.object({
   label: z.string().trim().min(1).max(200),
   variantId: z.string().min(1).max(64),
-  emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10),
+  emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10).default([]),
   names: z.array(z.string().trim().min(1).max(200)).min(1).max(20),
   allowPlusOne: z.boolean().default(false),
 });
@@ -83,7 +83,7 @@ export function parseGuestCsv(
     emails = col(["email", "emails", "e-mail"]);
   if (label < 0 || names < 0)
     throw new Error(
-      "CSV wymaga kolumn: rodzina, goscie, email. Osoby i adresy oddziel znakiem |.",
+      "CSV wymaga kolumn: rodzina, goscie (opcjonalnie: email). Osoby oddziel znakiem |.",
     );
   if (!rows.length || rows.length > 200)
     throw new Error("Import wymaga od 1 do 200 zaproszeń.");
@@ -94,10 +94,13 @@ export function parseGuestCsv(
         .split("|")
         .map((v) => v.trim())
         .filter(Boolean),
-      emails: (r[emails] || "")
-        .split("|")
-        .map((v) => v.trim())
-        .filter(Boolean),
+      emails:
+        emails >= 0
+          ? (r[emails] || "")
+              .split("|")
+              .map((v) => v.trim())
+              .filter(Boolean)
+          : [],
       variantId,
     });
     if (!parsed.success)

@@ -20,7 +20,7 @@ import {
   questionSettingsSchema,
   guestDetailsSchema,
 } from "@invitations/domain/operations";
-import { readAllPages } from "@invitations/email";
+import { readAllPages } from "@invitations/domain/hybrid-rsvp";
 import { digest, hashCode } from "@invitations/domain/access-code";
 
 const idFrom = (r: Request) => new URL(r.url).pathname.split("/")[3]!;

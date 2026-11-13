@@ -17,6 +17,16 @@ export const rsvpSchema = z.object({
   plusOne: plusOneSchema.optional(),
 });
 
+export const guestLookupSchema = z.object({
+  query: z.string().trim().min(1).max(200),
+  disambiguator: z.string().trim().max(200).optional(),
+});
+
+export const selfRegisterSchema = z.object({
+  name: z.string().trim().min(1).max(200),
+  rsvp: rsvpSchema,
+});
+
 /** Only this projection may cross the guest boundary. Never send the editor config. */
 export type GuestContent = SiteConfig & { audience: "guest" };
 export function guestContent(
