@@ -136,16 +136,19 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       "update public.guest_sessions set access_version=2 where token_hash='session'",
     );
     assert.equal((await save(1)).rows[0].revision, 2);
+    await assert.rejects(
+      db.query<Record<string, unknown>>(
+        "select public.configure_access($1,$2,'email',null,$3,now()-interval '1 minute',2)",
+        [sid, actor, config.defaultVariant],
+      ),
+      /INVALID_MODE/,
+    );
     await db.query<Record<string, unknown>>(
-      "select public.configure_access($1,$2,'email',null,$3,now()-interval '1 minute',2)",
+      "select public.configure_access($1,$2,'code','hash1',$3,now()-interval '1 minute',2)",
       [sid, actor, config.defaultVariant],
     );
     await db.query(
       "update public.guest_sessions set access_version=3 where token_hash='session'",
-    );
-    await assert.rejects(save(2), /FORBIDDEN/);
-    await db.query(
-      "update public.guest_sessions set email='family@example.com' where token_hash='session'",
     );
     await assert.rejects(save(2), /RSVP_CLOSED/);
     assert.equal((await save(2, answer, "missing", actor)).rows[0].revision, 3);

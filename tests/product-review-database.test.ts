@@ -154,45 +154,9 @@ test("member edits preserve RSVP, question history, transactional imports and re
       (await db.query("select * from public.invitations")).rows.length,
       2,
     );
-    await db.query(
-      "select public.configure_access($1,$2,'email',null,$3,null,3)",
-      [sid, owner, config.defaultVariant],
-    );
-    const claim = (actor = owner) =>
-      db.query<{
-        result: Array<{ id: string; email: string; payload: unknown }>;
-      }>(
-        "select public.claim_email_batch($1,$2,'reminder',$3,50) result",
-        [
-          sid,
-          actor,
-          JSON.stringify([
-            {
-              invitationId: imported,
-              expectedVersion: 1,
-              expectedRsvp: 0,
-              email: "family@example.com",
-              payload: { text: "first" },
-            },
-          ]),
-        ],
-      );
-    await assert.rejects(claim(other), /FORBIDDEN/);
-    const first = (await claim()).rows[0].result[0]!;
-    assert.ok(first.id);
-    assert.equal((await claim()).rows[0].result.length, 0);
-    await db.query(
-      "update public.email_deliveries set lease_until=now()-interval '1 second'",
-    );
-    assert.equal((await claim()).rows[0].result[0]!.id, first.id);
-    await db.query(
-      "select public.finalize_email_batch($1)",
-      [JSON.stringify([{ id: first.id, status: "sent", provider_id: "re_1" }])],
-    );
-    assert.equal((await claim()).rows[0].result.length, 0);
     await db.exec("set role authenticated");
     await assert.rejects(
-      db.query("select * from public.email_deliveries"),
+      db.query("select * from public.guest_imports"),
       /permission denied/,
     );
   } finally {
