@@ -20,7 +20,9 @@ export type InvitationRow = {
   guest_details?: GuestDetails;
   allow_plus_one: boolean;
   plus_one: PlusOneGuest;
-  invitation_sent_at: string | null;
+  short_code: string;
+  origin: "organizer" | "self_registered";
+  review_status: "approved" | "pending_match";
   events: { id: string; title: string }[];
 };
 export type Management = {
@@ -31,8 +33,12 @@ export type Management = {
     access_version: number;
     rsvp_deadline: string | null;
     published_release_id: string | null;
+    rsvp_enabled: boolean;
+    allow_self_registration: boolean;
     rsvp_questions?: QuestionSettings;
   };
+  locale: string;
+  displayName: string;
   url: string;
   invitations: InvitationRow[];
   answers: {

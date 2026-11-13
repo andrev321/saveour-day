@@ -47,7 +47,6 @@ type InvitationEditorProps = {
   invitation: InvitationRow | null;
   variants: { value: string; label: string }[];
   defaultVariantId: string;
-  accessMode: string;
   busy: boolean;
   saving: boolean;
   onClose: () => void;
@@ -92,7 +91,6 @@ function InvitationEditorForm({
   invitation,
   variants,
   defaultVariantId,
-  accessMode,
   busy,
   saving,
   onClose,
@@ -109,9 +107,6 @@ function InvitationEditorForm({
   const [members, setMembers] = useState<{ id?: string; name: string }[]>(() =>
     invitation ? invitation.guests.map((g) => ({ ...g })) : [],
   );
-  const [emails, setEmails] = useState(
-    invitation ? invitation.emails.join("\n") : "",
-  );
   const [variantId, setVariantId] = useState(
     invitation?.variant_id ?? defaultVariantId,
   );
@@ -123,10 +118,6 @@ function InvitationEditorForm({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          const parsedEmails = emails
-            .split(/[\n,;]/)
-            .map((s) => s.trim())
-            .filter(Boolean);
           if (invitation) {
             const removedGuests = invitation.guests.some(
               (g) => !members.some((m) => m.id === g.id),
@@ -139,7 +130,7 @@ function InvitationEditorForm({
                 version: invitation.version,
                 label,
                 variantId,
-                emails: parsedEmails,
+                emails: [],
                 guests: members,
                 allowPlusOne,
               },
@@ -150,7 +141,7 @@ function InvitationEditorForm({
               payload: {
                 label,
                 variantId,
-                emails: parsedEmails,
+                emails: [],
                 names: names
                   .split("\n")
                   .map((s) => s.trim())
@@ -251,21 +242,6 @@ function InvitationEditorForm({
               minRows={2}
             />
           )}
-          <Textarea
-            label={labelText(
-              "Uprawnione adresy e-mail",
-              "Allowed email addresses",
-              "Berechtigte E-Mail-Adressen",
-            )}
-            description={labelText(
-              "Oddziel przecinkami lub nowymi wierszami. Wymagane w trybie e-mail.",
-              "Separate with commas or new lines. Required for email access.",
-              "Mit Kommas oder Zeilenumbrüchen trennen. Für E-Mail-Zugang erforderlich.",
-            )}
-            value={emails}
-            onChange={(e) => setEmails(e.currentTarget.value)}
-            required={accessMode === "email"}
-          />
           <Select
             label={labelText(
               "Wariant zaproszenia",

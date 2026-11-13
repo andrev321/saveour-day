@@ -23,6 +23,7 @@ import {
   Pagination,
   SimpleGrid,
   Skeleton,
+  Switch,
 } from "@mantine/core";
 import { apiFetch } from "./Dashboard";
 import {
@@ -33,12 +34,15 @@ import {
   type QuestionSettings,
 } from "@invitations/domain/operations";
 import {
+  detectGuestCollisions,
+  formatShareMessage,
+} from "@invitations/domain/hybrid-rsvp";
+import {
   formatRsvpCsv,
   type InvitationRow,
   type Management,
 } from "../lib/guest-management";
 import { usePanelI18n } from "../lib/i18n";
-import { EmailDeliveryPanel } from "./EmailDeliveryPanel";
 import {
   InvitationEditorModal,
   type InvitationEditorSubmit,
@@ -91,7 +95,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [importId, setImportId] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [importLinks, setImportLinks] = useState<
-    { label: string; url: string }[]
+    { id?: string; label: string; url: string; shortCode?: string | null }[]
   >([]);
   const [questions, setQuestions] =
     useState<QuestionSettings>(defaultQuestions);
@@ -129,7 +133,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     [code, setCode] = useState(""),
     [variant, setVariant] = useState(""),
     [deadline, setDeadline] = useState("");
+  const [rsvpEnabled, setRsvpEnabled] = useState(true);
+  const [allowSelfRegistration, setAllowSelfRegistration] = useState(false);
   const [link, setLink] = useState("");
+  const [lastShortCode, setLastShortCode] = useState<string | null>(null);
+  const [mergeTargets, setMergeTargets] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<string | null>(null),
     [note, setNote] = useState(""),
     [replies, setReplies] = useState<Record<string, string>>({});
@@ -142,6 +150,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     setMode(result.site.access_mode);
     setVariant(result.site.public_variant_id || result.variants[0]?.id || "");
     setDeadline(localDeadline(result.site.rsvp_deadline));
+    setRsvpEnabled(result.site.rsvp_enabled ?? true);
+    setAllowSelfRegistration(result.site.allow_self_registration ?? false);
     setQuestions(result.site.rsvp_questions || defaultQuestions);
   }
   useEffect(() => {
@@ -156,6 +166,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             result.site.public_variant_id || result.variants[0]?.id || "",
           );
           setDeadline(localDeadline(result.site.rsvp_deadline));
+          setRsvpEnabled(result.site.rsvp_enabled ?? true);
+          setAllowSelfRegistration(result.site.allow_self_registration ?? false);
         }
       })
       .catch((e) => {
@@ -168,30 +180,51 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       alive = false;
     };
   }, [endpoint, loadAttempt]);
+  async function copyText(text: string, successText: string) {
+    try {
+      await navigator.clipboard.writeText(text);
+      setMessage(successText);
+    } catch {
+      setMessage(
+        labelText(
+          "Nie udało się skopiować automatycznie. Skopiuj ręcznie.",
+          "Could not copy automatically. Please copy manually.",
+          "Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.",
+        ),
+      );
+    }
+  }
   async function action(action: string, payload: unknown) {
     if (!start(action)) return;
     setMessage("");
     try {
       const result = await apiFetch<{
         url?: string;
-        links?: { label: string; url: string }[];
+        shortCode?: string | null;
+        links?: { id?: string; label: string; url: string; shortCode?: string | null }[];
         alreadyImported?: boolean;
       }>(endpoint, {
         method: "POST",
         body: JSON.stringify({ action, payload }),
       });
-      if (result.url) setLink(result.url);
+      if (result.url) {
+        setLink(result.url);
+        setLastShortCode(result.shortCode ?? null);
+      }
       if (action === "import") {
         setImported([]);
         setImportOpen(false);
         setImportLinks(result.links || []);
       }
       if (action === "questions") setQuestions(questions);
-      if (action === "revoke") setLink("");
+      if (action === "revoke") {
+        setLink("");
+        setLastShortCode(null);
+      }
       const refreshed = await apiFetch<Management>(endpoint);
-      if (action === "settings") {
+      if (action === "settings" || action === "rsvp-options") {
         accept(refreshed);
-        setCode("");
+        if (action === "settings") setCode("");
       } else setData(refreshed);
       setConfirmation(null);
       setEditing(null);
@@ -238,7 +271,19 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       a.attending,
     ]) || [],
   );
-  const active = data?.invitations.filter((i) => !i.revoked) || [];
+  const active =
+    data?.invitations.filter(
+      (i) => !i.revoked && i.review_status !== "pending_match",
+    ) || [];
+  const pendingInvitations =
+    data?.invitations.filter(
+      (i) => !i.revoked && i.review_status === "pending_match",
+    ) || [];
+  const collisions = detectGuestCollisions(active);
+  const approvedMergeOptions = active.map((i) => ({
+    value: i.id,
+    label: `${i.label} (${i.guests.map((g) => g.name).join(", ")})`,
+  }));
   const events = [
     ...new Map(
       active.flatMap((i) => i.events.map((e) => [e.id, e] as const)),
@@ -256,12 +301,18 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   }
   const filtered = (data?.invitations || []).filter(
     (i) =>
-      `${i.label} ${i.guests.map((g) => g.name).join(" ")} ${i.emails.join(" ")}`
+      `${i.label} ${i.short_code} ${i.guests.map((g) => g.name).join(" ")} ${i.emails.join(" ")}`
         .toLowerCase()
         .includes(query.toLowerCase()) &&
-      (filter === "all" || filter === "revoked"
-        ? filter === "all" || i.revoked
-        : !i.revoked && invitationStatus(i) === filter),
+      (filter === "all"
+        ? true
+        : filter === "revoked"
+          ? i.revoked
+          : filter === "pending_match"
+            ? !i.revoked && i.review_status === "pending_match"
+            : !i.revoked &&
+              i.review_status !== "pending_match" &&
+              invitationStatus(i) === filter),
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / 20));
   const visible = filtered.slice(
@@ -529,14 +580,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                                 "Gemeinsamer Zugangscode",
                               ),
                             },
-                            {
-                              value: "email",
-                              label: labelText(
-                                "E-mail i kod jednorazowy",
-                                "Email and one-time code",
-                                "E-Mail und Einmalcode",
-                              ),
-                            },
                           ]}
                         />
                         {mode === "code" && (
@@ -603,6 +646,58 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         </ActionButton>
                       </Stack>
                     </form>
+                    <Card withBorder>
+                      <Stack gap="sm">
+                        <Text fw={600}>
+                          {labelText(
+                            "Tryb RSVP i samorejestracja",
+                            "RSVP mode & self-registration",
+                            "RSVP-Modus & Selbstregistrierung",
+                          )}
+                        </Text>
+                        <Switch
+                          label={labelText(
+                            "Włącz RSVP na stronie (wyłącz dla trybu czysto informacyjnego)",
+                            "Enable RSVP on site (disable for info-only mode)",
+                            "RSVP auf der Seite aktivieren (für reinen Infomodus deaktivieren)",
+                          )}
+                          checked={rsvpEnabled}
+                          onChange={(e) =>
+                            setRsvpEnabled(e.currentTarget.checked)
+                          }
+                        />
+                        <Switch
+                          label={labelText(
+                            "Pozwól gościom spoza listy na samorejestrację (kolejka do akceptacji)",
+                            "Allow unlisted guests to self-register (approval queue)",
+                            "Selbstregistrierung nicht gelisteter Gäste erlauben",
+                          )}
+                          checked={allowSelfRegistration}
+                          disabled={!rsvpEnabled}
+                          onChange={(e) =>
+                            setAllowSelfRegistration(e.currentTarget.checked)
+                          }
+                        />
+                        <ActionButton
+                          disabled={busy}
+                          loading={operation === "rsvp-options"}
+                          onClick={() =>
+                            void action("rsvp-options", {
+                              rsvpEnabled,
+                              allowSelfRegistration:
+                                rsvpEnabled && allowSelfRegistration,
+                              version: data.site.access_version,
+                            })
+                          }
+                        >
+                          {labelText(
+                            "Zapisz tryb RSVP",
+                            "Save RSVP mode",
+                            "RSVP-Modus speichern",
+                          )}
+                        </ActionButton>
+                      </Stack>
+                    </Card>
                   </Stack>
                 </Accordion.Panel>
               </Accordion.Item>
@@ -674,13 +769,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Accordion.Panel>
               </Accordion.Item>
             </Accordion>
-            <EmailDeliveryPanel
-              siteId={siteId}
-              mode={data.site.access_mode}
-              published={!!data.site.published_release_id}
-              onMessage={setMessage}
-              onSent={() => setLoadAttempt((attempt) => attempt + 1)}
-            />
             <Group>
               <Button
                 disabled={busy}
@@ -755,8 +843,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   download(
                     "goscie-wzor.csv",
                     csvFile([
-                      ["rodzina", "goscie", "email"],
-                      ["Rodzina Kowalskich", "Anna|Jan", "anna@example.com"],
+                      ["rodzina", "goscie"],
+                      ["Rodzina Kowalskich", "Anna|Jan"],
                     ]),
                   )
                 }
@@ -776,30 +864,45 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   "Links importierter Einladungen",
                 )}
               >
-                <Text>
-                  {labelText(
-                    "Zapisz linki w bezpiecznym miejscu. Umożliwiają dostęp do konkretnych zaproszeń.",
-                    "Store these links securely. They provide access to individual invitations.",
-                    "Links sicher aufbewahren. Sie gewähren Zugang zu einzelnen Einladungen.",
+                <Stack gap="xs">
+                  <Text>
+                    {labelText(
+                      "Zapisz linki i kody w bezpiecznym miejscu. Umożliwiają dostęp do konkretnych zaproszeń.",
+                      "Store these links and codes securely. They provide access to individual invitations.",
+                      "Links und Codes sicher aufbewahren.",
+                    )}
+                  </Text>
+                  {importLinks.some((l) => l.id && collisions.has(l.id)) && (
+                    <Alert color="yellow">
+                      {labelText(
+                        "Uwaga: wśród zaimportowanych osób są powtarzające się imiona i nazwiska. Przekaż tym osobom wspólny link z kodem weryfikacyjnym albo ich link osobisty.",
+                        "Warning: some imported guests share the same name as other invitations. Share the general link with their verification code or their personal link.",
+                        "Hinweis: Einige importierte Gäste haben identische Namen. Geben Sie den allgemeinen Link mit Code oder den persönlichen Link weiter.",
+                      )}
+                    </Alert>
                   )}
-                </Text>
-                <Button
-                  onClick={() =>
-                    download(
-                      "linki-zaproszen.csv",
-                      csvFile([
-                        ["Rodzina", "Link"],
-                        ...importLinks.map((i) => [i.label, i.url]),
-                      ]),
-                    )
-                  }
-                >
-                  {labelText(
-                    "Pobierz linki",
-                    "Download links",
-                    "Links herunterladen",
-                  )}
-                </Button>
+                  <Button
+                    onClick={() =>
+                      download(
+                        "linki-zaproszen.csv",
+                        csvFile([
+                          ["Rodzina", "Kod", "Link"],
+                          ...importLinks.map((i) => [
+                            i.label,
+                            i.shortCode || "",
+                            i.url,
+                          ]),
+                        ]),
+                      )
+                    }
+                  >
+                    {labelText(
+                      "Pobierz linki i kody (CSV)",
+                      "Download links & codes (CSV)",
+                      "Links & Codes herunterladen (CSV)",
+                    )}
+                  </Button>
+                </Stack>
               </Alert>
             )}
             <InvitationEditorModal
@@ -807,7 +910,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               invitation={editingInvite}
               variants={options}
               defaultVariantId={variant || options[0]?.value || ""}
-              accessMode={data.site.access_mode}
               busy={busy}
               saving={operation === "create" || operation === "update"}
               onClose={() => {
@@ -824,49 +926,108 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   "Familienlink für den Empfänger",
                 )}
               >
-                <Text size="sm">
-                  {labelText(
-                    "To link rodzinny — umożliwia odpowiedzi za wskazane osoby. Przekaż go tylko odbiorcom.",
-                    "This family link allows responses for the invited people. Share it only with recipients.",
-                    "Dieser Familienlink erlaubt Antworten für eingeladene Personen. Nur an Empfänger weitergeben.",
+                <Stack gap="xs">
+                  <Text size="sm">
+                    {labelText(
+                      "To link rodzinny — umożliwia odpowiedzi za wskazane osoby. Przekaż go tylko odbiorcom.",
+                      "This family link allows responses for the invited people. Share it only with recipients.",
+                      "Dieser Familienlink erlaubt Antworten für eingeladene Personen. Nur an Empfänger weitergeben.",
+                    )}
+                  </Text>
+                  {lastShortCode && (
+                    <Text size="sm" fw={600}>
+                      {labelText("Kod zaproszenia", "Invitation code", "Einladungscode")}:{" "}
+                      {lastShortCode}
+                    </Text>
                   )}
-                </Text>
-                <TextInput
-                  aria-label={labelText(
-                    "Wygenerowany link",
-                    "Generated link",
-                    "Erstellter Link",
-                  )}
-                  readOnly
-                  value={link}
-                />
-                <Button
-                  mt="sm"
-                  onClick={() => {
-                    void navigator.clipboard
-                      .writeText(link)
-                      .then(() =>
-                        setMessage(
+                  <TextInput
+                    aria-label={labelText(
+                      "Wygenerowany link",
+                      "Generated link",
+                      "Erstellter Link",
+                    )}
+                    readOnly
+                    value={link}
+                  />
+                  <Group>
+                    <Button
+                      onClick={() =>
+                        void copyText(
+                          link,
                           labelText(
                             "Skopiowano link.",
                             "Link copied.",
                             "Link kopiert.",
                           ),
-                        ),
-                      )
-                      .catch(() =>
-                        setMessage(
+                        )
+                      }
+                    >
+                      {labelText("Kopiuj link", "Copy link", "Link kopieren")}
+                    </Button>
+                    <Button
+                      variant="light"
+                      onClick={() =>
+                        void copyText(
+                          formatShareMessage({
+                            locale: data.locale,
+                            displayName: data.displayName,
+                            kind: "personal",
+                            url: link,
+                            deadline: data.site.rsvp_deadline
+                              ? localDeadline(data.site.rsvp_deadline).replace(
+                                  "T",
+                                  " ",
+                                )
+                              : null,
+                          }),
                           labelText(
-                            "Zaznacz i skopiuj link z pola powyżej.",
-                            "Select and copy the link from the field above.",
-                            "Link im Feld oben auswählen und kopieren.",
+                            "Skopiowano wiadomość z linkiem osobistym.",
+                            "Personal link message copied.",
+                            "Nachricht mit persönlichem Link kopiert.",
                           ),
-                        ),
-                      );
-                  }}
-                >
-                  {labelText("Kopiuj link", "Copy link", "Link kopieren")}
-                </Button>
+                        )
+                      }
+                    >
+                      {labelText(
+                        "Kopiuj link osobisty",
+                        "Copy personal link",
+                        "Persönlichen Link kopieren",
+                      )}
+                    </Button>
+                    {lastShortCode && (
+                      <Button
+                        variant="light"
+                        onClick={() =>
+                          void copyText(
+                            formatShareMessage({
+                              locale: data.locale,
+                              displayName: data.displayName,
+                              kind: "shared_with_code",
+                              url: data.url,
+                              shortCode: lastShortCode,
+                              deadline: data.site.rsvp_deadline
+                                ? localDeadline(
+                                    data.site.rsvp_deadline,
+                                  ).replace("T", " ")
+                                : null,
+                            }),
+                            labelText(
+                              "Skopiowano link ogólny + kod.",
+                              "General link + code copied.",
+                              "Allgemeiner Link + Code kopiert.",
+                            ),
+                          )
+                        }
+                      >
+                        {labelText(
+                          "Kopiuj link + kod",
+                          "Copy link + code",
+                          "Link + Code kopieren",
+                        )}
+                      </Button>
+                    )}
+                  </Group>
+                </Stack>
               </Alert>
             )}
             {link && (
@@ -888,6 +1049,41 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 "Einladungen und RSVP",
               )}
             </Title>
+            {pendingInvitations.length > 0 && (
+              <Alert
+                color="orange"
+                title={labelText(
+                  `Samorejestracje oczekujące na akceptację (${pendingInvitations.length})`,
+                  `Self-registrations pending approval (${pendingInvitations.length})`,
+                  `Ausstehende Selbstregistrierungen (${pendingInvitations.length})`,
+                )}
+              >
+                <Group justify="space-between" wrap="wrap">
+                  <Text size="sm">
+                    {labelText(
+                      "Goście spoza listy zgłosili swoją obecność. Zatwierdź ich jako nowe zaproszenie lub połącz z istniejącym.",
+                      "Unlisted guests submitted an RSVP. Approve as a new invitation or merge with an existing one.",
+                      "Nicht gelistete Gäste haben geantwortet. Genehmigen oder mit bestehender Einladung zusammenführen.",
+                    )}
+                  </Text>
+                  <Button
+                    size="xs"
+                    variant="light"
+                    color="orange"
+                    onClick={() => {
+                      setFilter("pending_match");
+                      setPage(1);
+                    }}
+                  >
+                    {labelText(
+                      "Pokaż oczekujące",
+                      "Show pending",
+                      "Ausstehende anzeigen",
+                    )}
+                  </Button>
+                </Group>
+              </Alert>
+            )}
             {!data.invitations.length && (
               <Text>
                 {labelText(
@@ -900,9 +1096,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             <FilterGrid>
               <TextInput
                 label={labelText(
-                  "Szukaj gościa, rodziny lub e-maila",
-                  "Search guest, family or email",
-                  "Gast, Familie oder E-Mail suchen",
+                  "Szukaj gościa, rodziny lub kodu",
+                  "Search guest, family or code",
+                  "Gast, Familie oder Code suchen",
                 )}
                 value={query}
                 onChange={(e) => {
@@ -939,6 +1135,14 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     label: labelText("Odmówili", "Declined", "Absagen"),
                   },
                   {
+                    value: "pending_match",
+                    label: labelText(
+                      `Do akceptacji (${pendingInvitations.length})`,
+                      `Pending review (${pendingInvitations.length})`,
+                      `Ausstehend (${pendingInvitations.length})`,
+                    ),
+                  },
+                  {
                     value: "revoked",
                     label: labelText("Cofnięte", "Revoked", "Widerrufen"),
                   },
@@ -959,33 +1163,42 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 ...i.guests,
                 ...(i.plus_one ? [i.plus_one] : []),
               ];
+              const collidingNames = collisions.get(i.id);
+              const isPending = i.review_status === "pending_match" && !i.revoked;
               return (
                 <Card withBorder key={i.id}>
                   <Stack gap="sm">
                     <Group justify="space-between" wrap="wrap">
                       <Title order={4}>{i.label}</Title>
                       <Group gap="xs">
+                        {i.short_code && (
+                          <Badge variant="outline" color="dark">
+                            {labelText("Kod", "Code", "Code")}: {i.short_code}
+                          </Badge>
+                        )}
                         {i.allow_plus_one && (
                           <Badge variant="light" color="blue">
                             +1
                           </Badge>
                         )}
-                        <Badge
-                          variant="light"
-                          color={i.invitation_sent_at ? "green" : "gray"}
-                        >
-                          {i.invitation_sent_at
-                            ? labelText(
-                                "Wysłano zaproszenie",
-                                "Invitation sent",
-                                "Einladung gesendet",
-                              )
-                            : labelText(
-                                "Niewysłane",
-                                "Not sent",
-                                "Nicht gesendet",
-                              )}
-                        </Badge>
+                        {isPending && (
+                          <Badge variant="filled" color="orange">
+                            {labelText(
+                              "Do akceptacji",
+                              "Pending review",
+                              "Ausstehend",
+                            )}
+                          </Badge>
+                        )}
+                        {collidingNames && (
+                          <Badge variant="light" color="yellow">
+                            {labelText(
+                              "Kolizja imienia i nazwiska",
+                              "Name collision",
+                              "Namenskollision",
+                            )}
+                          </Badge>
+                        )}
                         <Badge>
                           {i.revoked
                             ? labelText("Cofnięte", "Revoked", "Widerrufen")
@@ -993,14 +1206,117 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         </Badge>
                       </Group>
                     </Group>
-                    <Text size="sm">
-                      {i.emails.join(", ") ||
-                        labelText(
-                          "Bez adresu e-mail",
-                          "No email address",
-                          "Keine E-Mail-Adresse",
-                        )}
-                    </Text>
+                    {collidingNames && (
+                      <Alert color="yellow">
+                        <Group justify="space-between" wrap="wrap">
+                          <Text size="sm">
+                            {labelText(
+                              `Powtarzające się dane: ${collidingNames.join(", ")}. Przekaż gościowi link ogólny wraz z kodem weryfikacyjnym ${i.short_code}.`,
+                              `Duplicate name: ${collidingNames.join(", ")}. Share the general link with verification code ${i.short_code}.`,
+                              `Doppelter Name: ${collidingNames.join(", ")}. Allgemeinen Link mit Code ${i.short_code} teilen.`,
+                            )}
+                          </Text>
+                          <Button
+                            size="xs"
+                            variant="light"
+                            onClick={() =>
+                              void copyText(
+                                formatShareMessage({
+                                  locale: data.locale,
+                                  displayName: data.displayName,
+                                  kind: "shared_with_code",
+                                  url: data.url,
+                                  shortCode: i.short_code,
+                                  deadline: data.site.rsvp_deadline
+                                    ? localDeadline(
+                                        data.site.rsvp_deadline,
+                                      ).replace("T", " ")
+                                    : null,
+                                }),
+                                labelText(
+                                  `Skopiowano link + kod (${i.short_code}).`,
+                                  `Copied link + code (${i.short_code}).`,
+                                  `Link + Code kopiert (${i.short_code}).`,
+                                ),
+                              )
+                            }
+                          >
+                            {labelText(
+                              "Kopiuj link + kod",
+                              "Copy link + code",
+                              "Link + Code kopieren",
+                            )}
+                          </Button>
+                        </Group>
+                      </Alert>
+                    )}
+                    {isPending && (
+                      <Alert color="orange">
+                        <Stack gap="xs">
+                          <Text size="sm">
+                            {labelText(
+                              "Gość dopisał się samodzielnie na stronie. Zatwierdź jako nowe zaproszenie lub połącz z istniejącym zaproszeniem.",
+                              "Guest self-registered on the site. Approve as a new invitation or merge into an existing invitation.",
+                              "Gast hat sich selbst registriert. Genehmigen oder mit bestehender Einladung zusammenführen.",
+                            )}
+                          </Text>
+                          <Group align="flex-end" wrap="wrap">
+                            <Button
+                              size="xs"
+                              color="green"
+                              disabled={busy}
+                              onClick={() =>
+                                void action("approve-pending", { id: i.id })
+                              }
+                            >
+                              {labelText(
+                                "Zatwierdź",
+                                "Approve",
+                                "Genehmigen",
+                              )}
+                            </Button>
+                            {approvedMergeOptions.length > 0 && (
+                              <>
+                                <Select
+                                  size="xs"
+                                  placeholder={labelText(
+                                    "Wybierz zaproszenie do połączenia",
+                                    "Select invitation to merge into",
+                                    "Einladung zum Zusammenführen wählen",
+                                  )}
+                                  data={approvedMergeOptions}
+                                  value={mergeTargets[i.id] || null}
+                                  onChange={(v) =>
+                                    setMergeTargets((prev) => ({
+                                      ...prev,
+                                      [i.id]: v || "",
+                                    }))
+                                  }
+                                  searchable
+                                />
+                                <Button
+                                  size="xs"
+                                  variant="light"
+                                  disabled={busy || !mergeTargets[i.id]}
+                                  onClick={() =>
+                                    void action("merge-pending", {
+                                      pendingId: i.id,
+                                      targetId: mergeTargets[i.id],
+                                    })
+                                  }
+                                >
+                                  {labelText(
+                                    "Połącz z istniejącym",
+                                    "Merge with existing",
+                                    "Zusammenführen",
+                                  )}
+                                </Button>
+                              </>
+                            )}
+                          </Group>
+                        </Stack>
+                      </Alert>
+                    )}
                     {allActiveGuests.map((g) => {
                       const isPlusOne = i.plus_one?.id === g.id;
                       return (
@@ -1344,9 +1660,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             />
             {imported.slice(0, 10).map((entry, i) => (
               <Text size="sm" key={i}>
-                {entry.label}: {entry.names.join(", ")} ·{" "}
-                {entry.emails.join(", ") ||
-                  labelText("bez e-maila", "no email", "ohne E-Mail")}
+                {entry.label}: {entry.names.join(", ")}
               </Text>
             ))}
             <Text size="sm">
@@ -1360,10 +1674,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             <ActionButton
               loading={operation === "import"}
               pendingLabel={loadingText(language, "import")}
-              disabled={
-                data?.site.access_mode === "email" &&
-                imported.some((i) => !i.emails.length)
-              }
               onClick={() =>
                 void action("import", {
                   requestId: importId,
@@ -1377,16 +1687,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 "Import bestätigen",
               )}
             </ActionButton>
-            {data?.site.access_mode === "email" &&
-              imported.some((i) => !i.emails.length) && (
-                <Text c="red">
-                  {labelText(
-                    "Każde zaproszenie wymaga e-maila w tym trybie dostępu.",
-                    "Each invitation needs an email in this access mode.",
-                    "Jede Einladung benötigt in diesem Modus eine E-Mail.",
-                  )}
-                </Text>
-              )}
           </Stack>
         </Modal>
       </Stack>

@@ -12,7 +12,6 @@
     "./readiness": "./src/readiness.ts",
     "./operations": "./src/operations.ts",
     "./editor": "./src/editor.ts",
-    "./email": "./src/email.ts",
     "./hybrid-rsvp": "./src/hybrid-rsvp.ts"
   },
   "dependencies": {

@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@invitations/domain": "*",
-    "@invitations/email": "*",
     "@invitations/renderer": "*",
     "server-only": "0.0.1",
     "@invitations/ui": "*"

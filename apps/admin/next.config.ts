@@ -4,7 +4,6 @@ const config: NextConfig = {
   devIndicators: false,
   transpilePackages: [
     "@invitations/domain",
-    "@invitations/email",
     "@invitations/renderer",
     "@invitations/ui",
   ],

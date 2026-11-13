@@ -380,20 +380,6 @@ test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and 
       url: `https://invite.example.test/s/${siteId}`,
     });
 
-    const { previewEmailCampaign } = await import("../apps/admin/lib/emails.ts");
-    const preview = await previewEmailCampaign({
-      id: siteId,
-      access_mode: "email",
-      published_release_id: "release-1",
-      rsvp_deadline: null,
-    });
-    assert.equal(preview.reminderRecipients.length, 1);
-    assert.ok(
-      preview.reminderRecipients[0]!.text.includes(
-        `https://invite.example.test/s/${siteId}`,
-      ),
-    );
-
     // Also verify apps/site/lib/server.ts context("s", key) resolves UUID first, then falls back to public_slug
     const queriedFields: string[] = [];
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://supabase.example.test";

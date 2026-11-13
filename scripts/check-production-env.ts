@@ -14,8 +14,6 @@ const required = [
   "SUPABASE_SERVICE_ROLE_KEY",
   ...(site ? [] : ["APP_URL"]),
   "SITE_URL",
-  "RESEND_API_KEY",
-  "MAIL_FROM",
 ] as const;
 
 let env: Record<string, string | undefined>;
