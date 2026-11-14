@@ -13,6 +13,8 @@ test("normalizeGuestLookup folds Polish and German diacritics and collapses whit
   assert.equal(normalizeGuestLookup("  Łukasz   Żółć "), "lukasz zolc");
   assert.equal(normalizeGuestLookup("ĄĘĆŁŃÓŚŹŻ"), "aeclnoszz");
   assert.equal(normalizeGuestLookup("Müller Straße"), "muller strase");
+  assert.equal(normalizeGuestLookup("Anna Nowak-Kowalska"), "anna nowak kowalska");
+  assert.equal(normalizeGuestLookup("Anna Nowak Kowalska"), "anna nowak kowalska");
 });
 
 test("detectGuestCollisions flags names shared across different invitations only", () => {

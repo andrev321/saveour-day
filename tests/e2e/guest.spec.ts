@@ -142,42 +142,70 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
   ).toHaveCount(0);
 });
 
-test("email gate requests OTP and displays only returned household links", async ({
+test("public site supports guest lookup, collision disambiguation, and info-only mode", async ({
   page,
 }) => {
+  let matched = false;
   await page.route("**/api/guest/s/wedding", async (route) => {
-    if (route.request().method() === "GET")
-      return route.fulfill({ json: { authorized: false, mode: "email" } });
-    const body = route.request().postDataJSON();
-    expect(body.payload.email).toBe("family@example.com");
-    return route.fulfill({
-      json:
-        body.action === "otp-send"
-          ? {
-              ok: true,
-              message: "Jeżeli adres ma dostęp, otrzyma kod logowania.",
-            }
-          : {
-              ok: true,
-              links: [
-                {
-                  href: "/v/30000000-0000-4000-8000-000000000001",
-                  label: "Rodzina",
-                },
-              ],
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        json: {
+          authorized: true,
+          mode: "public",
+          rsvpEnabled: true,
+          allowSelfRegistration: false,
+          canResetLookup: matched,
+          config: {
+            id: "00000000-0000-4000-8000-000000000001",
+            locale: "pl-PL",
+            theme: "editorial",
+            design: {
+              paper: "#ffffff",
+              surface: "#f8f7f4",
+              ink: "#1a1a1a",
+              accent: "#7a5c3e",
             },
-    });
+            identity: { displayName: "Anna & Jan", subtitle: "" },
+            hero: { headline: "Anna & Jan", lead: "", mediaId: null },
+            sections: [],
+            events: [
+              { id: "ceremony", title: "Ceremonia", date: "2027-07-01" },
+            ],
+            venues: [],
+            contacts: [],
+            media: [],
+          },
+          invitation: matched
+            ? {
+                label: "Rodzina Kowalskich",
+                guests: [{ id: "g1", name: "Anna Kowalska" }],
+                allowPlusOne: false,
+                plusOne: null,
+                revision: 0,
+                note: "",
+                answers: [],
+              }
+            : null,
+        },
+      });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === "lookup" && !body.payload.disambiguator) {
+      return route.fulfill({ json: { status: "ambiguous" } });
+    }
+    matched = true;
+    return route.fulfill({ json: { status: "matched" } });
   });
   await page.goto("/s/wedding");
-  await page.getByLabel("Adres e-mail").fill("family@example.com");
-  await page.getByRole("button", { name: "Wyślij kod", exact: true }).click();
-  await page.getByLabel("Kod z wiadomości e-mail").fill("123456");
-  await page.getByRole("button", { name: "Potwierdź dostęp" }).click();
-  await expect(page.getByRole("link", { name: "Rodzina" })).toHaveAttribute(
-    "href",
-    "/v/30000000-0000-4000-8000-000000000001",
-  );
-  await expect(page.getByLabel("Adres e-mail")).toHaveCount(0);
+  await page
+    .getByLabel("Wpisz imię i nazwisko lub kod zaproszenia")
+    .fill("Anna Kowalska");
+  await page.getByRole("button", { name: "Szukaj zaproszenia" }).click();
+  await page
+    .getByLabel("Kod zaproszenia lub imię drugiej osoby")
+    .fill("KOW123");
+  await page.getByRole("button", { name: "Potwierdź" }).click();
+  await expect(page.getByText("Anna Kowalska")).toBeVisible();
 });
 
 test("expired invitations show a recoverable message without content", async ({

@@ -130,7 +130,7 @@ function InvitationEditorForm({
                 version: invitation.version,
                 label,
                 variantId,
-                emails: [],
+                emails: invitation.emails,
                 guests: members,
                 allowPlusOne,
               },

@@ -229,6 +229,20 @@ test("hybrid RSVP migration supports short_code, Polish lookup, collision disamb
       ),
       /RSVP_DISABLED/,
     );
+
+    // Re-enable RSVP and verify hyphenated surname & reversed disambiguator.
+    await db.query("select public.configure_rsvp_options($1,$2,true,false,3)", [
+      sid,
+      actor,
+    ]);
+    assert.equal(
+      (await lookup("Anna Kowalska", "Kowalski Marek")).invitationId,
+      iid2,
+    );
+    const hyphenNorm = await db.query<{ norm: string }>(
+      "select public.normalize_guest_lookup('Anna Nowak-Kowalska') as norm",
+    );
+    assert.equal(hyphenNorm.rows[0]!.norm, "anna nowak kowalska");
   } finally {
     await db.close();
   }

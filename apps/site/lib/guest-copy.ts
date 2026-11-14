@@ -61,7 +61,7 @@ const pl = {
   lookupLabel: "Wpisz imię i nazwisko lub kod zaproszenia",
   lookupAction: "Szukaj zaproszenia",
   lookupNotFound:
-    "Nie znaleźliśmy zaproszenia dla podanych danych. Sprawdź pisownię lub wpisz kod z zaproszenia.",
+    "Nie znaleźliśmy zaproszenia dla podanych danych. Sprawdź pełne imię i nazwisko (bez zdrobnień) lub wpisz 6-znakowy kod z zaproszenia.",
   lookupAmbiguous:
     "Znaleźliśmy więcej niż jedno zaproszenie o tym nazwisku. Podaj kod zaproszenia lub imię drugiej osoby z zaproszenia.",
   lookupDisambiguator: "Kod zaproszenia lub imię drugiej osoby",
@@ -139,7 +139,7 @@ const en: Copy = {
   lookupLabel: "Enter your full name or invitation code",
   lookupAction: "Find invitation",
   lookupNotFound:
-    "We couldn't find an invitation matching that name or code. Check the spelling or contact the organizer.",
+    "We couldn't find an invitation matching that name or code. Check your full name spelling or enter the 6-character invitation code.",
   lookupAmbiguous:
     "We found more than one invitation with that name. Enter your invitation code or the name of another guest on your invitation.",
   lookupDisambiguator: "Invitation code or second guest name",
@@ -218,7 +218,7 @@ const de: Copy = {
   lookupLabel: "Vor- und Nachname oder Einladungscode eingeben",
   lookupAction: "Einladung suchen",
   lookupNotFound:
-    "Keine passende Einladung gefunden. Bitte Schreibweise prüfen oder den Veranstalter kontaktieren.",
+    "Keine passende Einladung gefunden. Bitte vollständigen Vor- und Nachnamen prüfen oder den 6-stelligen Einladungscode eingeben.",
   lookupAmbiguous:
     "Es wurden mehrere Einladungen mit diesem Namen gefunden. Bitte Einladungscode oder den Namen einer zweiten Person eingeben.",
   lookupDisambiguator: "Einladungscode oder Name der zweiten Person",

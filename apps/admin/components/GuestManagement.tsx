@@ -384,6 +384,22 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         )}
         {data && (
           <>
+            {!data.site.rsvp_enabled && (
+              <Alert
+                color="blue"
+                title={labelText(
+                  "Tryb informacyjny jest aktywny",
+                  "Info-only mode is active",
+                  "Infomodus ist aktiv",
+                )}
+              >
+                {labelText(
+                  "Goście nie widzą wyszukiwarki ani formularza RSVP na stronie zaproszenia. Możesz ponownie włączyć RSVP w sekcji „Publikacja i dostęp”.",
+                  "Guests cannot see the RSVP lookup or form on the invitation page. You can re-enable RSVP under “Publication and access”.",
+                  "Gäste sehen weder die RSVP-Suche noch das Formular auf der Einladungsseite. Sie können RSVP unter „Veröffentlichung und Zugang“ wieder aktivieren.",
+                )}
+              </Alert>
+            )}
             <SimpleGrid cols={{ base: 1, sm: 3 }}>
               <Card withBorder>
                 <Text>
@@ -1410,6 +1426,39 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                       </Text>
                     )}
                     <Group>
+                      {!i.revoked && i.short_code && (
+                        <Button
+                          variant="light"
+                          disabled={busy}
+                          onClick={() =>
+                            void copyText(
+                              formatShareMessage({
+                                locale: data.locale,
+                                displayName: data.displayName,
+                                kind: "shared_with_code",
+                                url: data.url,
+                                shortCode: i.short_code,
+                                deadline: data.site.rsvp_deadline
+                                  ? localDeadline(
+                                      data.site.rsvp_deadline,
+                                    ).replace("T", " ")
+                                  : null,
+                              }),
+                              labelText(
+                                `Skopiowano link + kod (${i.short_code}).`,
+                                `Copied link + code (${i.short_code}).`,
+                                `Link + Code kopiert (${i.short_code}).`,
+                              ),
+                            )
+                          }
+                        >
+                          {labelText(
+                            "Kopiuj link + kod",
+                            "Copy link + code",
+                            "Link + Code kopieren",
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="light"
                         disabled={busy}

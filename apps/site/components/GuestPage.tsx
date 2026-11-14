@@ -477,6 +477,11 @@ export function GuestPage({
                 onSubmit={(e) => {
                   e.preventDefault();
                   const fakeGuestId = "00000000-0000-4000-8000-000000000000";
+                  const selfDetail = Object.fromEntries(
+                    Object.entries(details[fakeGuestId] || {}).filter(
+                      ([key]) => questions[key as keyof QuestionSettings],
+                    ),
+                  );
                   void action("self-register", {
                     name: selfRegName,
                     rsvp: {
@@ -490,6 +495,9 @@ export function GuestPage({
                           attending: selfRegAnswers[ev.id] === "true",
                         })),
                     },
+                    ...(Object.keys(selfDetail).length
+                      ? { details: { [fakeGuestId]: selfDetail } }
+                      : {}),
                   });
                 }}
               >
@@ -535,6 +543,7 @@ export function GuestPage({
                     </label>
                   </fieldset>
                 ))}
+                {renderGuestDetails("00000000-0000-4000-8000-000000000000")}
                 <label>
                   {copy.notes}
                   <textarea

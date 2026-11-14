@@ -26,6 +26,7 @@ export function normalizeGuestLookup(input: string): string {
     .trim()
     .toLowerCase()
     .replace(/[ąćęłńóśźżäöüß]/g, (ch) => DIACRITIC_MAP[ch] ?? ch)
+    .replace(/[-–—]+/g, " ")
     .replace(/\s+/g, " ");
 }
 

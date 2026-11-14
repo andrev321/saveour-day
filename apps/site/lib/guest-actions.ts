@@ -115,7 +115,7 @@ export async function executeGuestAction(
   }
 
   if (action === "lookup") {
-    await rateLimit(req, `lookup:${ctx.site.id}`, 10, 600);
+    await rateLimit(req, `lookup:${ctx.site.id}`, 30, 600);
     if (!(await isAllowed(ctx))) {
       throw new GuestError(401, "Brak dostępu do strony");
     }
