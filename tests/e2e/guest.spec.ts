@@ -148,7 +148,14 @@ test("public site supports guest lookup, collision disambiguation, and info-only
   const demo = createDemo();
   demo.identity.displayName = "Anna & Jan";
   demo.hero.title = "Anna & Jan";
-  demo.events = [{ id: "ceremony", title: "Ceremonia", date: "2027-07-01" }];
+  demo.events = [
+    {
+      ...demo.events[0],
+      id: "ceremony",
+      title: "Ceremonia",
+      date: "2027-07-01",
+    },
+  ];
   demo.variants[0].eventIds = ["ceremony"];
   const config = guestContent(demo, demo.defaultVariant);
   let matched = false;
@@ -201,7 +208,14 @@ test("public site hides RSVP in info-only mode and supports self-registration af
   const demo = createDemo();
   demo.identity.displayName = "Anna & Jan";
   demo.hero.title = "Anna & Jan";
-  demo.events = [{ id: "ceremony", title: "Ceremonia", date: "2027-07-01" }];
+  demo.events = [
+    {
+      ...demo.events[0],
+      id: "ceremony",
+      title: "Ceremonia",
+      date: "2027-07-01",
+    },
+  ];
   demo.variants[0].eventIds = ["ceremony"];
   const config = guestContent(demo, demo.defaultVariant);
 
