@@ -44,6 +44,22 @@ The editor autosaves valid changes, provides undo/redo and recovery, and handles
 
 ## Publishing and rollback
 
+```mermaid
+flowchart TB
+  subgraph Editor["Organizer Workspace (Draft)"]
+    D1["Edit sections, media, and variants"] --> D2["Autosave + latest 20 Draft snapshots"]
+  end
+
+  subgraph DB["Database (Releases and RSVP)"]
+    D2 -->|"publish_content (single transaction)"| R1["Release #1"]
+    R1 -->|subsequent publish| R2["Release #2 (active: published_release_id)"]
+    R2 -->|restore creates a new release| R3["Release #3 (copy of #1)"]
+    RSVP[("RSVP Answers\n(stored outside Releases — survive resets and rollbacks)")]
+  end
+
+  R3 -->|authorized read| Guest["Guest Browser"]
+```
+
 Draft writes use revision checks. Publishing validates configuration and media, then `publish_content` checks permissions and revision, records a release, and updates `sites.published_release_id` in one transaction.
 
 Publishing does not call Vercel or build code. Guests receive the active release on their next authorized read. Draft changes do not alter published content.
@@ -53,6 +69,15 @@ Restoring a previous publication creates another release. It does not roll back 
 A code deployment changes the shared renderer for every site; content releases do not pin an application version. The earlier v1/v2 runtime adapters have been removed. The one-time v3 migration converted drafts, releases, and snapshots, including archived sites. Migration history is retained; ordinary publication does not rewrite historical releases.
 
 ## Authentication and access
+
+```mermaid
+flowchart LR
+  Rel["Active Release\n(all sections, events, contacts, media)"] --> Auth{"Guest access check\n(public / code + token or lookup)"}
+  Auth -->|"Variant: general"| P1["Server-side Variant Projection\n• visible sections only\n• hidden contacts/venues stripped"]
+  Auth -->|"Variant: household"| P2["Server-side Variant Projection\n• permitted Events for variant\n• authorized media routes"]
+  P1 --> Browser1["Guest Browser\n(no hidden data in DOM or JSON)"]
+  P2 --> Browser2["Guest Browser\n(RSVP scoped to permitted Events)"]
+```
 
 Organizers use Supabase email/password or Google OAuth authentication and must have a confirmed email before creating a site. `site_members` and `platform_admins` control access; a signed-in account is not automatically authorized for another site's data.
 

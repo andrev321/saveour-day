@@ -14,6 +14,15 @@ Entities are shared. The editor shows usage counts and can create independent co
 
 ## Data contract
 
+```mermaid
+flowchart TB
+  Lib["Media Asset (1 file in library)"] --> Hero["Hero section\n(independent desktop/tablet/mobile Crop)"]
+  Lib --> Gal["Gallery section\n(independent desktop/tablet/mobile Crop)"]
+  Events["Shared Events, Venues, Contacts\n(referenced by ID)"] --> Timeline["Timeline / Venue / Contact sections"]
+  Timeline --> Var["Variant (ordered sections + permitted eventIds)"]
+  Var --> Proj["Guest Projection\n(strips hidden sections & unreferenced entities)"]
+```
+
 - `schemaVersion: 3` is the only accepted runtime version.
 - Sections are typed: `timeline.eventIds`, `contact.contactIds`, `venue.venueId`, `gallery.mediaIds`/`gallery.crops`, or `text`.
 - `variant.sections` is an ordered list of `{sectionId, visible}`. Every variant, including the default, has independent placement and visibility.
@@ -22,5 +31,9 @@ Entities are shared. The editor shows usage counts and can create independent co
 - Guest projection includes only visible sections and related contacts, images, and venues. Allowed RSVP events can exist without a visible timeline.
 
 ## Verification
+
+| Limited variant (`ograniczona`) | Guest confirmation & venue details |
+| --- | --- |
+| ![Limited guest variant](images/guest-variant-limited.png) | ![Guest confirmation and venue section](images/guest-rsvp-desktop.png) |
 
 Domain and PGlite tests cover migration, references, independent variants, RSVP authorization, contact isolation, and history. E2E cover contextual editing, preview selection, device crops, variants, and viewports from 320 to 2560 px. PostgreSQL concurrency checks require a disposable `TEST_DATABASE_URL`; CI supplies PostgreSQL 17. See [Testing](TESTING.md).

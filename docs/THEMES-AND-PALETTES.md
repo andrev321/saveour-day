@@ -1,5 +1,7 @@
 # Themes and palettes
 
+![Overview of the 5 invitation designs and 20 palettes](../assets/theme-designs/overview.png)
+
 Open **Appearance → Color palette**. Each theme has four palettes. Switching a palette preserves content, photos, crops, layout, decorations, and audience variants. Manual colors remain available and are labeled Custom colors. Clicking the active theme again does not discard custom settings.
 
 | Theme ID | Design | Palettes |
@@ -21,6 +23,10 @@ The five theme IDs are stable. Configuration stores four colors in `design`; pal
 Light/dark presentation follows the background color, not the theme name. Built-in palettes are tested for at least 4.5:1 text/accent contrast on both backgrounds. Custom configuration validation checks text at 4.5:1 and accent at 3:1 against the page background; arbitrary custom colors and photographs still need visual review. Date-strip text is selected against the accent color; photo overlays use a dark gradient.
 
 ## Previews and tests
+
+| Desktop (1440 px) | Mobile (390 px) |
+| --- | --- |
+| ![Classic theme on desktop](../assets/theme-designs/classic-1440.png) | ![Classic theme on mobile](../assets/theme-designs/classic-390.png) |
 
 `tests/themes.test.ts` covers contrast, template/language/palette combinations, and configuration round trips. Browser tests cover palette selection, content preservation, images, mobile/desktop layouts, and horizontal overflow.
 

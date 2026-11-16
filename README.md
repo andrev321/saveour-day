@@ -1,8 +1,21 @@
+![saveour.day — Event invitations, audience variants & RSVP tracking](docs/images/hero-banner.png)
+
 # saveour.day
 
 Create and manage event invitations with customizable templates, guest management, and RSVP tracking.
 
 Organizers start with an event template or a blank draft, customize content and appearance, and publish invitations for individuals or households. Access can be public, protected by a shared code, or verified by email OTP. Content publication updates the database without rebuilding the application.
+
+```mermaid
+flowchart LR
+  Org["Organizer<br/>(apps/admin)"] -->|edits with autosave| Draft["Draft (schema v3)"]
+  Draft -->|publish_content| Rel["Release in database<br/>(no app rebuild)"]
+  Rel -->|Variant Projection| Site["Guest Invitation<br/>(apps/site)"]
+  Site -->|"/s/&lt;public_slug&gt; (lookup / short_code)"| RSVP["RSVP Answer + .ics"]
+  Site -->|"/i/&lt;token&gt; (household link)"| RSVP
+```
+
+![Contextual editor workspace with live mobile preview](docs/images/admin-editor-desktop.png)
 
 ## Environments
 

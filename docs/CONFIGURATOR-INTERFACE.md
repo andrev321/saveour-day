@@ -6,6 +6,10 @@ The original layout direction was called Focus × Paper. The current panel uses 
 
 ## Adaptive layout
 
+| Desktop (`1440 px`) | Mobile (`390 px`) |
+| --- | --- |
+| ![Admin editor on desktop](images/admin-editor-desktop.png) | ![Admin editor on mobile](images/admin-editor-mobile.png) |
+
 | Window width | Behavior |
 | --- | --- |
 | 1600 px and above | Labeled navigation, 440–560 px form, remaining space for preview |
