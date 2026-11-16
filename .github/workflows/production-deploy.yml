@@ -23,7 +23,7 @@ jobs:
       - name: Link production Supabase project
         run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - name: Push pending migrations to production
-        run: supabase db push
+        run: supabase db push --remote
 
   deploy-admin:
     needs: migrate
