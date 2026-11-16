@@ -294,7 +294,7 @@ test("public site hides RSVP in info-only mode and supports self-registration af
   await expect(page.getByLabel("Twoje imię i nazwisko")).toHaveValue(
     "Piotr Zieliński",
   );
-  await page.getByRole("radio", { name: "Tak", exact: true }).check();
+  await page.getByRole("radio", { name: "Będę", exact: true }).check();
   await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
   await expect(page.getByTestId("saved-summary")).toBeVisible();
 });

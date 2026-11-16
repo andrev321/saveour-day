@@ -121,6 +121,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     await expect(member).toHaveValue("Anna Kowalskich");
     expect((await member.boundingBox())!.width).toBeGreaterThan(180);
     await expectContained(page);
+    await page.getByRole("button", { name: "Anuluj", exact: true }).click();
     await page
       .getByRole("button", { name: "Publikacja i dostęp", exact: true })
       .click();
