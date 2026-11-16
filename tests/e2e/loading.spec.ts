@@ -89,7 +89,7 @@ test("upload only marks its own action pending and resets after failure", async 
       name: "photo.png",
       mimeType: "image/png",
       buffer: Buffer.from(
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jvKkAAAAASUVORK5CYII=",
+        "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAEklEQVQImWM4URFwoiKAAUIBAC2uBkF0WpZTAAAAAElFTkSuQmCC",
         "base64",
       ),
     });
