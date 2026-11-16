@@ -19,7 +19,7 @@ jobs:
         with:
           version: latest
       - name: Push pending migrations to production
-        run: supabase db push --db-url "$SUPABASE_DB_URL"
+        run: supabase db push --remote="$SUPABASE_DB_URL" --yes
 
   deploy-admin:
     needs: migrate
