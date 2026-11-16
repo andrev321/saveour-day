@@ -471,8 +471,17 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   )}
                 </Accordion.Control>
                 <Accordion.Panel>
-                  <Stack>
-                    <Group>
+                  <Stack gap="md">
+                    {!data.site.published_release_id && (
+                      <Alert color="yellow">
+                        {labelText(
+                          "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
+                          "This site is not published yet — the link and QR code will start working only after publishing.",
+                          "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
+                        )}
+                      </Alert>
+                    )}
+                    <Group gap="xs" wrap="wrap">
                       <Badge
                         color={
                           data.site.published_release_id ? "green" : "gray"
@@ -490,19 +499,21 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                               "Nicht veröffentlicht",
                             )}
                       </Badge>
-                      <Button
-                        component="a"
-                        href={data.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        variant="subtle"
-                      >
-                        {labelText(
-                          "Otwórz stronę",
-                          "Open invitation",
-                          "Einladung öffnen",
-                        )}
-                      </Button>
+                      {data.site.published_release_id && (
+                        <Button
+                          component="a"
+                          href={data.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          variant="subtle"
+                        >
+                          {labelText(
+                            "Otwórz stronę",
+                            "Open invitation",
+                            "Einladung öffnen",
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="light"
                         onClick={() => {
@@ -526,34 +537,32 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                           "Allgemeinen Link kopieren",
                         )}
                       </Button>
-                      <Button
-                        color="red"
-                        variant="subtle"
-                        disabled={busy || !data.site.published_release_id}
-                        onClick={() =>
-                          setConfirmation({
-                            action: "unpublish",
-                            payload: {},
-                            description: labelText(
-                              "Zaproszenie przestanie być dostępne dla wszystkich gości. Treść i odpowiedzi zostaną zachowane.",
-                              "The invitation will become unavailable to all guests. Content and answers will be kept.",
-                              "Die Einladung wird für alle Gäste gesperrt. Inhalte und Antworten bleiben erhalten.",
-                            ),
-                          })
-                        }
-                      >
-                        {labelText(
-                          "Wycofaj publikację",
-                          "Unpublish",
-                          "Veröffentlichung zurückziehen",
-                        )}
-                      </Button>
+                      {data.site.published_release_id && (
+                        <Button
+                          color="red"
+                          variant="subtle"
+                          disabled={busy}
+                          onClick={() =>
+                            setConfirmation({
+                              action: "unpublish",
+                              payload: {},
+                              description: labelText(
+                                "Zaproszenie przestanie być dostępne dla wszystkich gości. Treść i odpowiedzi zostaną zachowane.",
+                                "The invitation will become unavailable to all guests. Content and answers will be kept.",
+                                "Die Einladung wird für alle Gäste gesperrt. Inhalte und Antworten bleiben erhalten.",
+                              ),
+                            })
+                          }
+                        >
+                          {labelText(
+                            "Wycofaj publikację",
+                            "Unpublish",
+                            "Veröffentlichung zurückziehen",
+                          )}
+                        </Button>
+                      )}
                     </Group>
-                    <QrCodeCard
-                      url={data.url}
-                      published={!!data.site.published_release_id}
-                      onMessage={setMessage}
-                    />
+                    <QrCodeCard url={data.url} onMessage={setMessage} />
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
@@ -1049,7 +1058,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             {link && (
               <QrCodeCard
                 url={link}
-                published={!!data.site.published_release_id}
                 onMessage={setMessage}
                 title={labelText(
                   "QR zaproszenia rodzinnego",

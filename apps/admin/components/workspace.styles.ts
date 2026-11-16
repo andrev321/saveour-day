@@ -26,6 +26,11 @@ html { scroll-behavior: smooth; }
   .mantine-Modal-body .mantine-Button-label { white-space: normal; }
   .mantine-Modal-body .mantine-InputWrapper-root { min-width: 0; }
 }
+.mantine-Switch-root:not([data-disabled]) .mantine-Switch-track,
+.mantine-Switch-root:not([data-disabled]) .mantine-Switch-thumb,
+.mantine-Switch-root:not([data-disabled]) .mantine-Switch-label {
+  cursor: pointer;
+}
 `;
 
 export const EditorWorkspace = styled.div.attrs<{ "data-ui"?: string }>({
@@ -474,6 +479,8 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Button-label {
     white-space: normal;
+    line-height: 1.3;
+    overflow: visible;
   }
   @media (pointer: coarse) {
     & .mantine-Button-root {

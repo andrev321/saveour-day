@@ -29,9 +29,29 @@ export const QrPreview = styled.div`
   width: 100%;
   max-width: 280px;
   aspect-ratio: 1;
+  border-radius: var(--mantine-radius-md);
+  overflow: hidden;
   & canvas {
     display: block;
     width: 100%;
     height: auto;
+  }
+  & [data-qr-copy] {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 150ms ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  }
+  &:hover [data-qr-copy],
+  &:focus-within [data-qr-copy] {
+    opacity: 1;
+  }
+  @media (hover: none) {
+    & [data-qr-copy] {
+      opacity: 1;
+    }
   }
 `;
