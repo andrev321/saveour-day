@@ -12,18 +12,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     env:
-      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-      SUPABASE_DB_PASSWORD: ${{ secrets.PROD_SUPABASE_DB_PASSWORD }}
-      SUPABASE_PROJECT_REF: mcvbebjovdjoptchscel
+      SUPABASE_DB_URL: ${{ secrets.PROD_SUPABASE_DB_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
           version: latest
-      - name: Link production Supabase project
-        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
       - name: Push pending migrations to production
-        run: supabase db push --remote
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
 
   deploy-admin:
     needs: migrate

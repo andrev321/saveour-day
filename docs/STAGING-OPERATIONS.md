@@ -1,6 +1,6 @@
 # Staging operations
 
-Use dedicated Vercel and Supabase projects and separate credentials for staging. Record the real project names and origins in a private operator record. The staging Git integration can deploy changes automatically. Confirm that both deployed applications use the intended branch and commit.
+Use dedicated Vercel and Supabase projects and separate credentials for staging. Record the real project names and origins in a private operator record. The staging Git integration can deploy changes automatically, and `.github/workflows/staging-migrate.yml` pushes pending `supabase/migrations/` changes to the staging database on `main` (or via manual `workflow_dispatch` using `STAGING_SUPABASE_DB_URL`, the IPv4 Session pooler URI). Confirm that both deployed applications use the intended branch and commit.
 
 ## Tester access
 
