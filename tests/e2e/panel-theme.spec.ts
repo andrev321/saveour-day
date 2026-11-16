@@ -81,6 +81,9 @@ test("appearance synchronizes across tabs and keeps explicit choice", async ({
   await page.goto(`${admin}/demo`);
   const other = await context.newPage();
   await other.goto(`${admin}/account`);
+  await expect(
+    other.getByRole("button", { name: "Wygląd panelu" }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Wygląd panelu" }).click();
   await page
     .getByRole("menuitemradio", { name: "Ciemny", exact: true })
