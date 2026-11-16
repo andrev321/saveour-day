@@ -55,7 +55,6 @@ import {
 import { publicationWarnings } from "@invitations/domain/readiness";
 import { ApiError, apiFetch } from "./Dashboard";
 import { EditorWorkspace } from "./EditorWorkspace";
-import { PreparationChecklist } from "./PreparationChecklist";
 import { DismissibleAlert } from "./DismissibleAlert";
 import { GuestManagement } from "./GuestManagement";
 import { PanelPreferences } from "./PanelPreferences";
@@ -644,15 +643,6 @@ export function Editor({
                 {label("Ponów zapis", "Retry save", "Erneut speichern")}
               </Button>
             </Alert>
-          )}
-          {!data.site.published_release_id && (
-            <PreparationChecklist
-              siteId={initial.site.id}
-              language={language}
-              onSelect={setActivePanel}
-              onReview={() => setConfirm("publish")}
-              reviewDisabled={!readyToPublish || dirty || busy}
-            />
           )}
           {operation && operation !== "save" && (
             <LoadingState

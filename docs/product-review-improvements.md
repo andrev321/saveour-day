@@ -1,6 +1,6 @@
 # Product review improvements
 
-The editor autosaves validated drafts after 1.8 seconds of inactivity, keeps edits made during a pending request, and records up to 50 undo steps. A failed save requires a retry. A revision conflict loads the current server draft and offers a three-way merge; overlapping fields require a user choice. Per-tab recovery retains unsaved changes for seven days, including unfinished text fields. Publishing remains a separate action with a readiness checklist.
+The editor autosaves validated drafts after 1.8 seconds of inactivity, keeps edits made during a pending request, and records up to 50 undo steps. A failed save requires a retry. A revision conflict loads the current server draft and offers a three-way merge; overlapping fields require a user choice. Per-tab recovery retains unsaved changes for seven days, including unfinished text fields. Publishing remains a separate action with readiness checks.
 
 Guest management includes per-event totals, search, response filters, pagination, CSV export/import, stable household member IDs, archived members, family QR codes and confirmation before invalidating links or taking an invitation offline. CSV headers are `rodzina;goscie;email`; separate multiple names or email addresses with `|`. Import is atomic and retry-safe. Export protects spreadsheet formula cells. Store newly generated family links securely: the server stores only token hashes and cannot reveal the same secrets again.
 
