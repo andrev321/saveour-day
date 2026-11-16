@@ -24,6 +24,7 @@ import {
 } from "@mantine/core";
 import { useClipboard } from "@mantine/hooks";
 import {
+  Children,
   useEffect,
   useRef,
   useState,
@@ -374,8 +375,9 @@ export function Invitation({
   const events = variant.eventIds
     .map((id) => config.events.find((e) => e.id === id)!)
     .filter(Boolean);
+  const hasChildren = Children.toArray(children).length > 0;
   const motionRef = useInvitationMotion(
-    `${variant.id}:${sections.map((section) => section.id).join(":")}:${Boolean(children)}`,
+    `${variant.id}:${sections.map((section) => section.id).join(":")}:${hasChildren}`,
   );
   const colors = {
     "--paper": config.design.paper,
@@ -405,7 +407,7 @@ export function Invitation({
             details: "Details ansehen",
             navigation: "Einladungsnavigation",
           };
-  const response = Boolean(children);
+  const response = hasChildren;
   const contact = sections.find(
     (section) =>
       section.type === "contact" && (section.contactIds.length || section.body),
@@ -435,7 +437,7 @@ export function Invitation({
     !config.hero.eyebrow &&
     !hero &&
     !sections.length &&
-    !children
+    !hasChildren
   ) {
     return (
       <InvitationProvider config={config}>

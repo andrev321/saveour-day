@@ -145,6 +145,12 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
 test("public site supports guest lookup, collision disambiguation, and info-only mode", async ({
   page,
 }) => {
+  const demo = createDemo();
+  demo.identity.displayName = "Anna & Jan";
+  demo.hero.title = "Anna & Jan";
+  demo.events = [{ id: "ceremony", title: "Ceremonia", date: "2027-07-01" }];
+  demo.variants[0].eventIds = ["ceremony"];
+  const config = guestContent(demo, demo.defaultVariant);
   let matched = false;
   await page.route("**/api/guest/s/wedding", async (route) => {
     if (route.request().method() === "GET") {
@@ -155,26 +161,7 @@ test("public site supports guest lookup, collision disambiguation, and info-only
           rsvpEnabled: true,
           allowSelfRegistration: false,
           canResetLookup: matched,
-          config: {
-            id: "00000000-0000-4000-8000-000000000001",
-            locale: "pl-PL",
-            theme: "editorial",
-            design: {
-              paper: "#ffffff",
-              surface: "#f8f7f4",
-              ink: "#1a1a1a",
-              accent: "#7a5c3e",
-            },
-            identity: { displayName: "Anna & Jan", subtitle: "" },
-            hero: { headline: "Anna & Jan", lead: "", mediaId: null },
-            sections: [],
-            events: [
-              { id: "ceremony", title: "Ceremonia", date: "2027-07-01" },
-            ],
-            venues: [],
-            contacts: [],
-            media: [],
-          },
+          config,
           invitation: matched
             ? {
                 label: "Rodzina Kowalskich",
@@ -206,6 +193,96 @@ test("public site supports guest lookup, collision disambiguation, and info-only
     .fill("KOW123");
   await page.getByRole("button", { name: "Potwierdź" }).click();
   await expect(page.getByText("Anna Kowalska")).toBeVisible();
+});
+
+test("public site hides RSVP in info-only mode and supports self-registration after not_found", async ({
+  page,
+}) => {
+  const demo = createDemo();
+  demo.identity.displayName = "Anna & Jan";
+  demo.hero.title = "Anna & Jan";
+  demo.events = [{ id: "ceremony", title: "Ceremonia", date: "2027-07-01" }];
+  demo.variants[0].eventIds = ["ceremony"];
+  const config = guestContent(demo, demo.defaultVariant);
+
+  await page.route("**/api/guest/s/info-only", (route) =>
+    route.fulfill({
+      json: {
+        authorized: true,
+        mode: "public",
+        rsvpEnabled: false,
+        config,
+      },
+    }),
+  );
+  await page.goto("/s/info-only");
+  await expect(
+    page.getByRole("heading", { name: "Anna & Jan", exact: true }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Wpisz imię i nazwisko lub kod zaproszenia"),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: "Zapisz odpowiedzi" }),
+  ).toHaveCount(0);
+
+  let registered = false;
+  await page.route("**/api/guest/s/self-reg", async (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        json: {
+          authorized: true,
+          mode: "public",
+          rsvpEnabled: true,
+          allowSelfRegistration: true,
+          config,
+          invitation: registered
+            ? {
+                label: "Piotr Zieliński",
+                guests: [{ id: "g-self", name: "Piotr Zieliński" }],
+                revision: 0,
+                note: "",
+                answers: [
+                  {
+                    guest_id: "g-self",
+                    event_id: "ceremony",
+                    attending: true,
+                  },
+                ],
+              }
+            : null,
+        },
+      });
+    }
+    const body = route.request().postDataJSON();
+    if (body.action === "lookup") {
+      return route.fulfill({ json: { status: "not_found" } });
+    }
+    if (body.action === "self-register") {
+      expect(body.payload.name).toBe("Piotr Zieliński");
+      registered = true;
+      return route.fulfill({ json: { status: "registered" } });
+    }
+    return route.fulfill({ json: { saved: true } });
+  });
+
+  await page.goto("/s/self-reg");
+  await page
+    .getByLabel("Wpisz imię i nazwisko lub kod zaproszenia")
+    .fill("Piotr Zieliński");
+  await page.getByRole("button", { name: "Szukaj zaproszenia" }).click();
+  await expect(
+    page.getByText("Nie znaleźliśmy zaproszenia dla podanych danych."),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Nie ma mnie na liście — wypełnij zgłoszenie" })
+    .click();
+  await expect(page.getByLabel("Twoje imię i nazwisko")).toHaveValue(
+    "Piotr Zieliński",
+  );
+  await page.getByRole("radio", { name: "Tak", exact: true }).check();
+  await page.getByRole("button", { name: "Wyślij zgłoszenie" }).click();
+  await expect(page.getByTestId("saved-summary")).toBeVisible();
 });
 
 test("expired invitations show a recoverable message without content", async ({

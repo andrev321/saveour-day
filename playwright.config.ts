@@ -3,7 +3,7 @@ const siteUrl = process.env.E2E_SITE_URL || "http://127.0.0.1:5173";
 const adminUrl = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 export default defineConfig({
   testDir: "tests/e2e",
-  fullyParallel: false,
+  fullyParallel: true,
   projects: [
     { name: "chromium", use: { browserName: "chromium" } },
     {
@@ -12,7 +12,7 @@ export default defineConfig({
       testMatch: /.*(guest|workspace|photo-selectors|product-review|motion)\.spec\.ts/,
     },
   ],
-  workers: 1,
+  workers: process.env.CI ? 3 : undefined,
   timeout: 60000,
   use: {
     baseURL: siteUrl,

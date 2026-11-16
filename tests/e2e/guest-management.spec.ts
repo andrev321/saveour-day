@@ -75,7 +75,13 @@ test("organizer creates family links, edits recipients and changes access settin
       });
     }
     if (action === "update") {
-      invitations[0].emails = payload.emails;
+      invitations[0].label = payload.label;
+      invitations[0].guests = payload.guests.map(
+        (g: { id?: string; name: string }, n: number) => ({
+          id: g.id || `guest-${n}`,
+          name: g.name,
+        }),
+      );
       invitations[0].version++;
     }
     if (action === "settings") {
@@ -90,6 +96,7 @@ test("organizer creates family links, edits recipients and changes access settin
     `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
   );
   await page.getByRole("tab", { name: "Goście", exact: true }).click();
+  await page.getByRole("button", { name: "Nowe zaproszenie", exact: true }).click();
   await page.getByLabel("Nazwa osoby lub rodziny").fill("Rodzina Kowalskich");
   await page
     .getByLabel("Goście — każda osoba w osobnym wierszu")
@@ -104,12 +111,14 @@ test("organizer creates family links, edits recipients and changes access settin
   await page
     .getByRole("button", { name: "Edytuj zaproszenie", exact: true })
     .click();
-  await page.getByLabel("Uprawnione adresy e-mail").fill("family@example.com");
+  await page
+    .getByLabel("Nazwa osoby lub rodziny")
+    .fill("Rodzina Kowalskich (edycja)");
   await page
     .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
     .click();
   await expect(
-    page.getByRole("paragraph").filter({ hasText: /^family@example\.com$/ }),
+    page.getByRole("heading", { name: "Rodzina Kowalskich (edycja)" }),
   ).toBeVisible();
   await page
     .getByRole("button", { name: "Publikacja i dostęp", exact: true })
@@ -118,12 +127,12 @@ test("organizer creates family links, edits recipients and changes access settin
     .getByRole("combobox", { name: "Dostęp do całej realizacji" })
     .click();
   await page
-    .getByRole("option", { name: "E-mail i kod jednorazowy", exact: true })
+    .getByRole("option", { name: "Wspólny kod dostępu", exact: true })
     .click();
   await page.getByRole("button", { name: "Zapisz ustawienia dostępu" }).click();
   await expect(
     page.getByRole("combobox", { name: "Dostęp do całej realizacji" }),
-  ).toHaveValue("E-mail i kod jednorazowy");
+  ).toHaveValue("Wspólny kod dostępu");
   await page.screenshot({
     path: "test-results/guest-management.png",
     fullPage: true,
@@ -137,4 +146,93 @@ test("organizer creates family links, edits recipients and changes access settin
       .getByRole("tabpanel", { name: "Goście" })
       .getByText("Cofnięte", { exact: true }),
   ).toBeVisible();
+});
+
+test("organizer adds a guest member and enables plus-one in invitation editor", async ({
+  page,
+}) => {
+  const id = "20000000-0000-4000-8000-000000000002";
+  const config = createDemo();
+  config.id = id;
+  const site = {
+    id,
+    name: "Wesele",
+    access_mode: "public",
+    public_variant_id: config.defaultVariant,
+    access_version: 1,
+    rsvp_deadline: null,
+    published_release_id: "release",
+  };
+  const invitation = {
+    id: "30000000-0000-4000-8000-000000000002",
+    label: "Jan Nowak",
+    variant_id: config.defaultVariant,
+    emails: [] as string[],
+    guests: [{ id: "guest-1", name: "Jan Nowak" }],
+    allow_plus_one: false,
+    revoked: false,
+    version: 1,
+    rsvp_revision: 0,
+    note: "",
+    events: config.events,
+  };
+  await page.addInitScript(() =>
+    localStorage.setItem("wedding-panel-language", "pl"),
+  );
+  await page.route(`**/api/sites/${id}`, (route) =>
+    route.fulfill({
+      json: {
+        site,
+        draft: { config, revision: 1 },
+        releases: [],
+        media: [],
+        urls: {},
+      },
+    }),
+  );
+  await page.route(`**/api/sites/${id}/guests`, async (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        json: {
+          site,
+          invitations: [invitation],
+          variants: config.variants,
+          answers: [],
+          url: "https://example.test/s/wesele",
+        },
+      });
+    }
+    const { action, payload } = route.request().postDataJSON();
+    if (action === "update") {
+      expect(payload.allowPlusOne).toBe(true);
+      expect(payload.guests).toHaveLength(2);
+      invitation.allow_plus_one = payload.allowPlusOne;
+      invitation.guests = payload.guests.map(
+        (g: { id?: string; name: string }, n: number) => ({
+          id: g.id || `guest-${n + 1}`,
+          name: g.name,
+        }),
+      );
+      invitation.version++;
+    }
+    return route.fulfill({ json: { saved: true } });
+  });
+  await page.goto(
+    `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
+  );
+  await page.getByRole("tab", { name: "Goście", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Edytuj zaproszenie", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Dodaj osobę", exact: true }).click();
+  await page
+    .getByRole("textbox", { name: "Gość 2", exact: true })
+    .fill("Ewa Nowak");
+  await page
+    .getByRole("switch", { name: "Pozwól na osobę towarzyszącą (+1)" })
+    .click();
+  await page
+    .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
+    .click();
+  await expect(page.getByText("Ewa Nowak")).toBeVisible();
 });

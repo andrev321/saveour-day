@@ -99,7 +99,7 @@ test("upload only marks its own action pending and resets after failure", async 
   await expect(
     page.getByRole("button", { name: "Zapisz szkic", exact: true }),
   ).not.toHaveAttribute("aria-busy", "true");
-  expect(requests).toBe(1);
+  await expect.poll(() => requests).toBe(1);
   pending.release();
   await expect(
     page.getByText("Upload unavailable", { exact: true }),
@@ -130,7 +130,7 @@ test("guest code submission explains pending state and prevents duplicate reques
   await expect(
     page.getByRole("button", { name: "Sprawdzamy kod…", exact: true }),
   ).toBeDisabled();
-  expect(requests).toBe(1);
+  await expect.poll(() => requests).toBe(1);
   pending.release();
   await expect(page.locator("form button").first()).toBeEnabled();
   await expect(page.locator('main [role="alert"]')).toHaveText(

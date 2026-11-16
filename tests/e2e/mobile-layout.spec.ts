@@ -86,7 +86,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     page,
   }) => {
     await openGuests(page, width);
-    const search = page.getByLabel("Szukaj gościa, rodziny lub e-maila");
+    const search = page.getByLabel("Szukaj gościa, rodziny lub kodu");
     const responses = page.getByRole("combobox", {
       name: "Odpowiedzi",
       exact: true,
