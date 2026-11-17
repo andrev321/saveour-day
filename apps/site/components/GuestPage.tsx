@@ -3,17 +3,27 @@ import { useViewMotion } from "@invitations/ui/motion";
 import { LoadingState, BusyLabel, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
 import {
-  defaultQuestions,
-  type GuestDetails,
-  type QuestionSettings,
-} from "@invitations/domain/operations";
+  guestDisplayName,
+  invitationDisplayName,
+  type InvitationGuest,
+} from "@invitations/domain/invitation";
+import {
+  formatQuestionValue,
+  type QuestionValue,
+  type RsvpQuestion,
+} from "@invitations/domain/rsvp-questions";
 import type { InvitationLocale } from "@invitations/domain";
 import { BrandLogo } from "@invitations/ui/brand";
 import { guestCopy, guestError } from "../lib/guest-copy";
+import { RsvpForm } from "./RsvpForm";
+
+const SELF_REG_NAMED_ID = "00000000-0000-4000-8000-000000000001";
+const SELF_REG_COMP_ID = "00000000-0000-4000-8000-000000000002";
+
 type Reply = {
   authorized: boolean;
   mode: string;
@@ -25,18 +35,21 @@ type Reply = {
   config?: GuestContent;
   deadline?: string | null;
   closed?: boolean;
-  questions?: QuestionSettings;
+  questions?: RsvpQuestion[];
   invitation?: {
-    label: string;
-    guests: { id: string; name: string }[];
-    allowPlusOne?: boolean;
-    plusOne?: { id: string; name: string } | null;
+    groupName: string | null;
+    guests: InvitationGuest[];
     revision: number;
     note: string;
-    details?: GuestDetails;
     answers: { guest_id: string; event_id: string; attending: boolean }[];
+    questionAnswers: {
+      questionId: string;
+      guestId: string | null;
+      value: QuestionValue;
+    }[];
   } | null;
 };
+
 export function GuestPage({
   kind,
   accessKey,
@@ -45,57 +58,47 @@ export function GuestPage({
   accessKey: string;
 }) {
   const endpoint = `/api/guest/${kind}/${encodeURIComponent(accessKey)}`;
-  const [data, setData] = useState<Reply | null>(null),
-    [error, setError] = useState(""),
-    [success, setSuccess] = useState(false);
+  const [data, setData] = useState<Reply | null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const viewMotion = useViewMotion(
     `${Boolean(data)}:${data?.authorized}:${success}`,
   );
   const { operation, busy, start, end } = useOperation();
   const [code, setCode] = useState("");
-  const [lookupQuery, setLookupQuery] = useState(""),
-    [lookupDisambiguator, setLookupDisambiguator] = useState(""),
-    [lookupUnlockCode, setLookupUnlockCode] = useState(""),
-    [lookupState, setLookupState] = useState<
-      "idle" | "not_found" | "ambiguous" | "locked"
-    >("idle");
-  const [selfRegOpen, setSelfRegOpen] = useState(false),
-    [selfRegName, setSelfRegName] = useState(""),
-    [selfRegAnswers, setSelfRegAnswers] = useState<Record<string, string>>({}),
-    [selfRegNote, setSelfRegNote] = useState("");
-  const [note, setNote] = useState(""),
-    [plusOne, setPlusOne] = useState<{ id: string; name: string } | null>(null),
-    [answers, setAnswers] = useState<Record<string, string>>({}),
-    [details, setDetails] = useState<GuestDetails>({}),
-    [refreshConfirm, setRefreshConfirm] = useState(false);
-  const [browserLocale, setBrowserLocale] = useState<InvitationLocale>("pl-PL");
-  useEffect(() => {
-    const language = navigator.language.toLowerCase();
-    setBrowserLocale(
-      language.startsWith("de")
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [lookupDisambiguator, setLookupDisambiguator] = useState("");
+  const [lookupUnlockCode, setLookupUnlockCode] = useState("");
+  const [lookupState, setLookupState] = useState<
+    "idle" | "not_found" | "ambiguous" | "locked"
+  >("idle");
+  const [selfRegOpen, setSelfRegOpen] = useState(false);
+  const [selfRegName, setSelfRegName] = useState("");
+  const [selfRegWithCompanion, setSelfRegWithCompanion] = useState(false);
+  const [dirty, setDirty] = useState(false);
+  const [refreshConfirm, setRefreshConfirm] = useState(false);
+  const browserLocale = useSyncExternalStore<InvitationLocale>(
+    () => () => {},
+    () => {
+      const language = navigator.language.toLowerCase();
+      return language.startsWith("de")
         ? "de-DE"
         : language.startsWith("en")
           ? "en-GB"
-          : "pl-PL",
-    );
-  }, []);
+          : "pl-PL";
+    },
+    () => "pl-PL",
+  );
+
   const locale = data?.config?.locale || data?.locale || browserLocale;
   const language = locale.slice(0, 2);
   const copy = guestCopy[locale];
+
   function accept(next: Reply) {
     setData(next);
-    setNote(next.invitation?.note || "");
-    setPlusOne(next.invitation?.plusOne ?? null);
-    setDetails(next.invitation?.details || {});
-    setAnswers(
-      Object.fromEntries(
-        (next.invitation?.answers || []).map((a) => [
-          `${a.guest_id}:${a.event_id}`,
-          String(a.attending),
-        ]),
-      ),
-    );
+    setDirty(false);
   }
+
   useEffect(() => {
     const controller = new AbortController();
     fetch(endpoint, {
@@ -112,6 +115,7 @@ export function GuestPage({
       });
     return () => controller.abort();
   }, [endpoint]);
+
   async function reload() {
     const r = await fetch(endpoint, { cache: "no-store" });
     const result = await r.json();
@@ -123,26 +127,27 @@ export function GuestPage({
     setError("");
     setRefreshConfirm(false);
   }
-  async function action(action: string, payload: unknown) {
-    if (!start(action)) return;
+
+  async function action(actionName: string, payload: unknown) {
+    if (!start(actionName)) return;
     setError("");
     setSuccess(false);
     try {
       const r = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, payload }),
+        body: JSON.stringify({ action: actionName, payload }),
       });
       const result = await r.json();
       if (!r.ok) {
-        if (action === "rsvp" && [401, 403, 404].includes(r.status)) {
+        if (actionName === "rsvp" && [401, 403, 404].includes(r.status)) {
           setData(null);
           setCode("");
           await reload();
         }
         throw new Error(result.error);
       }
-      if (action === "lookup") {
+      if (actionName === "lookup") {
         if (result.status === "matched") {
           setLookupState("idle");
           setLookupDisambiguator("");
@@ -152,7 +157,7 @@ export function GuestPage({
         } else {
           setLookupState(result.status);
         }
-      } else if (action === "lookup-reset") {
+      } else if (actionName === "lookup-reset") {
         setLookupState("idle");
         setLookupQuery("");
         setLookupDisambiguator("");
@@ -160,7 +165,7 @@ export function GuestPage({
         await reload();
       } else {
         await reload();
-        if (action === "rsvp" || action === "self-register") {
+        if (actionName === "rsvp" || actionName === "self-register") {
           setSelfRegOpen(false);
           setSuccess(true);
         }
@@ -171,6 +176,7 @@ export function GuestPage({
       end();
     }
   }
+
   async function refresh() {
     if (!start("refresh")) return;
     try {
@@ -181,24 +187,14 @@ export function GuestPage({
       end();
     }
   }
-  const savedAnswers = Object.fromEntries(
-    (data?.invitation?.answers || []).map((a) => [
-      `${a.guest_id}:${a.event_id}`,
-      String(a.attending),
-    ]),
-  );
-  const dirty =
-    note !== (data?.invitation?.note || "") ||
-    JSON.stringify(plusOne) !==
-      JSON.stringify(data?.invitation?.plusOne ?? null) ||
-    JSON.stringify(answers) !== JSON.stringify(savedAnswers) ||
-    JSON.stringify(details) !== JSON.stringify(data?.invitation?.details || {});
+
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => e.preventDefault();
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
+
   if (!data?.authorized)
     return (
       <S.GuestCard ref={viewMotion} lang={locale.slice(0, 2)}>
@@ -257,7 +253,8 @@ export function GuestPage({
         {data?.mode === "public" && <p>{copy.original}</p>}
       </S.GuestCard>
     );
-  const questions = data.questions || defaultQuestions;
+
+  const questions = data.questions || [];
   const theme = data.config?.design;
   const styles = {
     "--guest-paper": theme?.paper,
@@ -265,99 +262,42 @@ export function GuestPage({
     "--guest-ink": theme?.ink,
     "--guest-accent": theme?.accent,
   } as CSSProperties;
-  const formGuests = [
-    ...(data.invitation?.guests || []),
-    ...(plusOne ? [plusOne] : []),
-  ];
-  const missing =
-    formGuests.reduce(
-      (sum, g) =>
-        sum +
-        (data.config?.events.filter((e) => !answers[`${g.id}:${e.id}`])
-          .length || 0),
-      0,
-    ) || 0;
-  function detailValue(id: string, key: "lodging" | "transport") {
-    const value = details[id]?.[key];
-    return value === undefined ? "" : String(value);
-  }
-  const selectedDetails = Object.fromEntries(
-    formGuests.map((g) => [
-      g.id,
-      Object.fromEntries(
-        Object.entries(details[g.id] || {}).filter(
-          ([key]) => questions[key as keyof QuestionSettings],
-        ),
-      ),
-    ]),
-  );
-  function removePlusOne() {
-    if (!plusOne) return;
-    const removedId = plusOne.id;
-    setPlusOne(null);
-    setAnswers((old) =>
-      Object.fromEntries(
-        Object.entries(old).filter(([key]) => !key.startsWith(`${removedId}:`)),
-      ),
-    );
-    setDetails((old) => {
-      const next = { ...old };
-      delete next[removedId];
-      return next;
-    });
-    setSuccess(false);
-  }
-  function renderGuestDetails(guestId: string) {
-    return (
-      <>
-        {questions.diet && (
-          <label>
-            {copy.diet}
-            <input
-              maxLength={300}
-              value={details[guestId]?.diet || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setDetails((old) => ({
-                  ...old,
-                  [guestId]: { ...old[guestId], diet: value },
-                }));
-              }}
-            />
-          </label>
-        )}
-        {(["lodging", "transport"] as const)
-          .filter((key) => questions[key])
-          .map((key) => (
-            <label key={key}>
-              {copy[key]}
-              <select
-                value={detailValue(guestId, key)}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setDetails((old) => ({
-                    ...old,
-                    [guestId]: {
-                      ...old[guestId],
-                      [key]: value === "true",
-                    },
-                  }));
-                }}
-              >
-                <option value="" disabled>
-                  {copy.choose}
-                </option>
-                <option value="true">{copy.yesShort}</option>
-                <option value="false">{copy.noShort}</option>
-              </select>
-            </label>
-          ))}
-      </>
-    );
-  }
+
   const rsvpEnabled = data.rsvpEnabled !== false;
   const showRsvpAction =
     rsvpEnabled && (Boolean(data.invitation) || kind === "s");
+
+  const savedAnswers = Object.fromEntries(
+    (data.invitation?.answers || []).map((a) => [
+      `${a.guest_id}:${a.event_id}`,
+      String(a.attending),
+    ]),
+  );
+
+  const initialCompanionNames = Object.fromEntries(
+    (data.invitation?.guests || [])
+      .filter((g) => g.kind === "companion" && g.name)
+      .map((g) => [g.id, g.name!]),
+  );
+
+  const initialQuestionAnswers = Object.fromEntries(
+    (data.invitation?.questionAnswers || []).map((qa) => [
+      `${qa.questionId}:${qa.guestId ?? ""}`,
+      qa.value,
+    ]),
+  );
+
+  const selfRegGuests: InvitationGuest[] = [
+    {
+      id: SELF_REG_NAMED_ID,
+      kind: "named",
+      name: selfRegName.trim() || copy.selfRegisterName,
+    },
+    ...(selfRegWithCompanion
+      ? [{ id: SELF_REG_COMP_ID, kind: "companion" as const, name: null }]
+      : []),
+  ];
+
   return (
     <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
       {(showRsvpAction || data.config?.events.some((e) => e.date)) && (
@@ -473,34 +413,7 @@ export function GuestPage({
             )}
 
             {data.allowSelfRegistration && selfRegOpen && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const fakeGuestId = "00000000-0000-4000-8000-000000000000";
-                  const selfDetail = Object.fromEntries(
-                    Object.entries(details[fakeGuestId] || {}).filter(
-                      ([key]) => questions[key as keyof QuestionSettings],
-                    ),
-                  );
-                  void action("self-register", {
-                    name: selfRegName,
-                    rsvp: {
-                      revision: 0,
-                      note: selfRegNote,
-                      answers: (data.config?.events || [])
-                        .filter((ev) => selfRegAnswers[ev.id] !== undefined)
-                        .map((ev) => ({
-                          guestId: fakeGuestId,
-                          eventId: ev.id,
-                          attending: selfRegAnswers[ev.id] === "true",
-                        })),
-                    },
-                    ...(Object.keys(selfDetail).length
-                      ? { details: { [fakeGuestId]: selfDetail } }
-                      : {}),
-                  });
-                }}
-              >
+              <div>
                 <label>
                   {copy.selfRegisterName}
                   <input
@@ -510,56 +423,48 @@ export function GuestPage({
                     maxLength={200}
                   />
                 </label>
-                {data.config?.events.map((ev) => (
-                  <fieldset key={ev.id}>
-                    <legend>{ev.title}</legend>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`self-${ev.id}`}
-                        checked={selfRegAnswers[ev.id] === "true"}
-                        onChange={() =>
-                          setSelfRegAnswers((old) => ({
-                            ...old,
-                            [ev.id]: "true",
-                          }))
-                        }
-                      />{" "}
-                      {copy.yes}
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`self-${ev.id}`}
-                        checked={selfRegAnswers[ev.id] === "false"}
-                        onChange={() =>
-                          setSelfRegAnswers((old) => ({
-                            ...old,
-                            [ev.id]: "false",
-                          }))
-                        }
-                      />{" "}
-                      {copy.no}
-                    </label>
-                  </fieldset>
-                ))}
-                {renderGuestDetails("00000000-0000-4000-8000-000000000000")}
                 <label>
-                  {copy.notes}
-                  <textarea
-                    maxLength={2000}
-                    value={selfRegNote}
-                    onChange={(e) => setSelfRegNote(e.target.value)}
-                  />
+                  <input
+                    type="checkbox"
+                    checked={selfRegWithCompanion}
+                    onChange={(e) => setSelfRegWithCompanion(e.target.checked)}
+                  />{" "}
+                  {copy.withCompanionCheckbox}
                 </label>
-                <button disabled={busy} aria-busy={busy || undefined}>
-                  <BusyLabel
-                    busy={operation === "self-register"}
-                    label={loadingText(language, "save")}
-                  >
-                    {copy.selfRegisterSubmit}
-                  </BusyLabel>
-                </button>
+                <RsvpForm
+                  key={`self-${selfRegWithCompanion}`}
+                  guests={selfRegGuests}
+                  events={data.config?.events || []}
+                  questions={questions}
+                  variantId={data.config?.defaultVariant || ""}
+                  initialAnswers={{}}
+                  initialNote=""
+                  busy={busy}
+                  saving={operation === "self-register"}
+                  closed={Boolean(data.closed)}
+                  language={language}
+                  copy={copy}
+                  submitLabel={copy.selfRegisterSubmit}
+                  onSubmit={(payload) => {
+                    if (!selfRegName.trim()) {
+                      setError("Nieprawidłowe dane");
+                      return;
+                    }
+                    void action("self-register", {
+                      name: selfRegName.trim(),
+                      withCompanion: selfRegWithCompanion,
+                      companionName: selfRegWithCompanion
+                        ? (payload.companionNames[SELF_REG_COMP_ID] ?? null)
+                        : null,
+                      rsvp: {
+                        revision: 0,
+                        note: payload.note,
+                        answers: payload.answers,
+                        questionAnswers: payload.questionAnswers,
+                      },
+                    });
+                  }}
+                />
                 <button
                   type="button"
                   disabled={busy}
@@ -567,16 +472,23 @@ export function GuestPage({
                 >
                   {copy.cancel}
                 </button>
-              </form>
+              </div>
             )}
             {error && <p role="alert">{guestError(error, copy)}</p>}
           </div>
         )}
+
         {rsvpEnabled && data.invitation && (
           <div id="rsvp">
             <h2>{copy.rsvp}</h2>
             <p>
-              {data.invitation.label}{" "}
+              {invitationDisplayName(
+                {
+                  groupName: data.invitation.groupName,
+                  guests: data.invitation.guests,
+                },
+                { companion: copy.companion, and: copy.and },
+              )}{" "}
               {data.canResetLookup && (
                 <button
                   type="button"
@@ -603,12 +515,11 @@ export function GuestPage({
               <S.ResponseSummary role="status" data-testid="saved-summary">
                 <h3>{copy.saved}</h3>
                 <p>{copy.summary}</p>
-                {[
-                  ...data.invitation.guests,
-                  ...(data.invitation.plusOne ? [data.invitation.plusOne] : []),
-                ].map((g) => (
+                {data.invitation.guests.map((g) => (
                   <div key={g.id}>
-                    <strong>{g.name}</strong>
+                    <strong>
+                      {guestDisplayName(g, { companion: copy.companion })}
+                    </strong>
                     <ul>
                       {data.config!.events.map((e) => {
                         const value = savedAnswers[`${g.id}:${e.id}`];
@@ -624,8 +535,36 @@ export function GuestPage({
                         );
                       })}
                     </ul>
+                    {questions
+                      .filter((q) => q.scope === "guest")
+                      .map((q) => {
+                        const qa = data.invitation!.questionAnswers.find(
+                          (a) => a.questionId === q.id && a.guestId === g.id,
+                        );
+                        if (!qa) return null;
+                        return (
+                          <p key={q.id}>
+                            {q.label}:{" "}
+                            {formatQuestionValue(q, qa.value, copy.otherOption)}
+                          </p>
+                        );
+                      })}
                   </div>
                 ))}
+                {questions
+                  .filter((q) => q.scope === "invitation")
+                  .map((q) => {
+                    const qa = data.invitation!.questionAnswers.find(
+                      (a) => a.questionId === q.id && a.guestId === null,
+                    );
+                    if (!qa) return null;
+                    return (
+                      <p key={q.id}>
+                        {q.label}:{" "}
+                        {formatQuestionValue(q, qa.value, copy.otherOption)}
+                      </p>
+                    );
+                  })}
                 {data.invitation.note && (
                   <p>
                     {copy.notes}: {data.invitation.note}
@@ -633,198 +572,66 @@ export function GuestPage({
                 )}
               </S.ResponseSummary>
             )}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const values = formGuests.flatMap((g) =>
-                  data.config!.events.flatMap((event) => {
-                    const value = answers[`${g.id}:${event.id}`];
-                    return value === "true" || value === "false"
-                      ? [
-                          {
-                            guestId: g.id,
-                            eventId: event.id,
-                            attending: value === "true",
-                          },
-                        ]
-                      : [];
-                  }),
-                );
+
+            <RsvpForm
+              key={`${data.invitation.revision}-${data.invitation.guests.map((g) => g.id).join(",")}`}
+              guests={data.invitation.guests}
+              events={data.config?.events || []}
+              questions={questions}
+              variantId={data.config?.defaultVariant || ""}
+              initialAnswers={savedAnswers}
+              initialCompanionNames={initialCompanionNames}
+              initialQuestionAnswers={initialQuestionAnswers}
+              initialNote={data.invitation.note}
+              busy={busy}
+              saving={operation === "rsvp"}
+              closed={Boolean(data.closed)}
+              dirty={dirty}
+              language={language}
+              copy={copy}
+              onDirtyChange={() => {
+                setDirty(true);
+                setSuccess(false);
+              }}
+              onRefresh={() => {
+                if (dirty) setRefreshConfirm(true);
+                else void refresh();
+              }}
+              onSubmit={(payload) => {
                 void action("rsvp", {
                   revision: data.invitation!.revision,
-                  note,
-                  answers: values,
-                  plusOne: plusOne
-                    ? { id: plusOne.id, name: plusOne.name.trim() }
-                    : null,
-                  ...(Object.values(questions).some(Boolean)
-                    ? { details: selectedDetails }
-                    : {}),
+                  note: payload.note,
+                  answers: payload.answers,
+                  companionNames: payload.companionNames,
+                  questionAnswers: payload.questionAnswers,
                 });
               }}
-            >
-              {!data.config!.events.length && <p>{copy.noEvents}</p>}
-              {!!data.config!.events.length && (
-                <p>
-                  {copy.pending}: {missing}
-                </p>
-              )}
-              {!!data.config!.events.length &&
-                data.invitation.guests.map((g) => (
-                  <fieldset key={g.id} disabled={busy || data.closed}>
-                    <legend>{g.name}</legend>
-                    {data.config!.events.map((event) => (
-                      <label key={event.id}>
-                        {event.title}
-                        <select
-                          value={answers[`${g.id}:${event.id}`] || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setAnswers((old) => ({
-                              ...old,
-                              [`${g.id}:${event.id}`]: value,
-                            }));
-                            setSuccess(false);
-                          }}
-                        >
-                          <option value="" disabled>
-                            {copy.missing}
-                          </option>
-                          <option value="true">{copy.yes}</option>
-                          <option value="false">{copy.no}</option>
-                        </select>
-                      </label>
-                    ))}
-                    {renderGuestDetails(g.id)}
-                  </fieldset>
-                ))}
-              {!!data.config!.events.length &&
-                data.invitation.allowPlusOne &&
-                (plusOne ? (
-                  <fieldset key={plusOne.id} disabled={busy || data.closed}>
-                    <legend>{plusOne.name.trim() || copy.plusOne}</legend>
-                    <label>
-                      {copy.plusOneName}
-                      <input
-                        type="text"
-                        required
-                        maxLength={200}
-                        value={plusOne.name}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          setPlusOne((old) => (old ? { ...old, name } : null));
-                          setSuccess(false);
-                        }}
-                      />
-                    </label>
-                    {data.config!.events.map((event) => (
-                      <label key={event.id}>
-                        {event.title}
-                        <select
-                          value={answers[`${plusOne.id}:${event.id}`] || ""}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setAnswers((old) => ({
-                              ...old,
-                              [`${plusOne.id}:${event.id}`]: value,
-                            }));
-                            setSuccess(false);
-                          }}
-                        >
-                          <option value="" disabled>
-                            {copy.missing}
-                          </option>
-                          <option value="true">{copy.yes}</option>
-                          <option value="false">{copy.no}</option>
-                        </select>
-                      </label>
-                    ))}
-                    {renderGuestDetails(plusOne.id)}
-                    <button
-                      type="button"
-                      disabled={busy || data.closed}
-                      onClick={removePlusOne}
-                    >
-                      {copy.removePlusOne}
-                    </button>
-                  </fieldset>
-                ) : (
-                  <button
-                    type="button"
-                    disabled={busy || data.closed}
-                    onClick={() => {
-                      setPlusOne({ id: crypto.randomUUID(), name: "" });
-                      setSuccess(false);
-                    }}
-                  >
-                    {copy.addPlusOne}
-                  </button>
-                ))}
-              {Object.values(questions).some(Boolean) && (
-                <p>{copy.privateInfo}</p>
-              )}
-              <label>
-                {copy.notes}
-                <textarea
-                  maxLength={2000}
-                  value={note}
-                  disabled={busy || data.closed}
-                  onChange={(e) => {
-                    setNote(e.target.value);
-                    setSuccess(false);
-                  }}
-                />
-              </label>
-              <button
-                disabled={busy || data.closed || !data.config!.events.length}
-              >
-                <BusyLabel
-                  busy={operation === "rsvp"}
-                  label={loadingText(language, "save")}
+            />
+
+            {refreshConfirm && (
+              <div role="alert">
+                <p>{copy.refreshWarning}</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-busy={busy || undefined}
+                  onClick={() => void refresh()}
                 >
-                  {copy.save}
-                </BusyLabel>
-              </button>
-              <button
-                type="button"
-                disabled={busy}
-                aria-busy={busy || undefined}
-                onClick={() =>
-                  dirty ? setRefreshConfirm(true) : void refresh()
-                }
-              >
-                <BusyLabel
-                  busy={operation === "refresh"}
-                  label={loadingText(language, "refresh")}
+                  <BusyLabel
+                    busy={operation === "refresh"}
+                    label={loadingText(language, "refresh")}
+                  >
+                    {copy.discard}
+                  </BusyLabel>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRefreshConfirm(false)}
                 >
-                  {copy.refresh}
-                </BusyLabel>
-              </button>
-              {refreshConfirm && (
-                <div role="alert">
-                  <p>{copy.refreshWarning}</p>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    aria-busy={busy || undefined}
-                    onClick={() => void refresh()}
-                  >
-                    <BusyLabel
-                      busy={operation === "refresh"}
-                      label={loadingText(language, "refresh")}
-                    >
-                      {copy.discard}
-                    </BusyLabel>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRefreshConfirm(false)}
-                  >
-                    {copy.cancel}
-                  </button>
-                </div>
-              )}
-            </form>
+                  {copy.cancel}
+                </button>
+              </div>
+            )}
             {error && <p role="alert">{guestError(error, copy)}</p>}
           </div>
         )}

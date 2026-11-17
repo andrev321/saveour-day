@@ -43,6 +43,7 @@ export function check(error: { message: string } | null) {
     FORBIDDEN: "Dostęp wygasł. Otwórz zaproszenie ponownie.",
     UNPUBLISHED: "Strona nie jest dostępna.",
     INVALID_ANSWERS: "Odpowiedzi nie pasują do zaproszenia.",
+    REQUIRED_QUESTION_MISSING: "Wypełnij wszystkie wymagane pytania.",
     VARIANT_MISSING: "Wariant zaproszenia nie jest dostępny.",
   };
   for (const [key, message] of Object.entries(messages))
@@ -60,19 +61,20 @@ export type GuestRecord = {
   id: string;
   site_id: string;
   variant_id: string;
-  emails: string[];
-  guests: { id: string; name: string }[];
-  allow_plus_one: boolean;
-  plus_one: { id: string; name: string } | null;
+  group_name: string | null;
+  guests: {
+    id: string;
+    kind: "named" | "companion";
+    name: string | null;
+    position: number;
+  }[];
   revoked: boolean;
   version: number;
   rsvp_revision: number;
   note: string;
-  label: string;
   short_code?: string;
   origin?: "organizer" | "self_registered";
   review_status?: "approved" | "pending_match";
-  guest_details?: import("@invitations/domain/operations").GuestDetails;
 };
 export type SiteRecord = {
   id: string;
@@ -84,7 +86,6 @@ export type SiteRecord = {
   rsvp_deadline: string | null;
   rsvp_enabled: boolean;
   allow_self_registration: boolean;
-  rsvp_questions?: import("@invitations/domain/operations").QuestionSettings;
 };
 const lookupCookieName = (siteId: string) => `guest_inv_${siteId}`;
 export async function setLookupInvitationCookie(
@@ -108,6 +109,21 @@ export async function clearLookupInvitationCookie(siteId: string) {
     maxAge: 0,
   });
 }
+function mapInvitationRow(
+  row:
+    | (Omit<GuestRecord, "guests"> & {
+        invitation_guests?: GuestRecord["guests"];
+      })
+    | null,
+): GuestRecord | null {
+  if (!row) return null;
+  const { invitation_guests, ...rest } = row;
+  const guests = [...(invitation_guests || [])].sort(
+    (a, b) => a.position - b.position,
+  );
+  return { ...rest, guests };
+}
+
 export async function context(kind: string, key: string) {
   if (
     !["s", "i", "v"].includes(kind) ||
@@ -120,11 +136,11 @@ export async function context(kind: string, key: string) {
   if (kind !== "s") {
     const result = await client
       .from("invitations")
-      .select("*")
+      .select("*, invitation_guests(id,kind,name,position)")
       .eq(kind === "v" ? "id" : "token_hash", kind === "v" ? key : digest(key))
       .maybeSingle();
     check(result.error);
-    invitation = result.data;
+    invitation = mapInvitationRow(result.data as never);
     if (!invitation || invitation.revoked)
       throw new GuestError(404, "Zaproszenie jest niedostępne");
   }
@@ -132,7 +148,7 @@ export async function context(kind: string, key: string) {
     const result = await client
       .from("sites")
       .select(
-        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_questions,rsvp_enabled,allow_self_registration",
+        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_enabled,allow_self_registration",
       )
       .eq(field, value)
       .is("deleted_at", null)
@@ -153,12 +169,12 @@ export async function context(kind: string, key: string) {
     if (lookupInvId && isSiteUuidKey(lookupInvId)) {
       const invRes = await client
         .from("invitations")
-        .select("*")
+        .select("*, invitation_guests(id,kind,name,position)")
         .eq("id", lookupInvId)
         .eq("site_id", site.id)
         .maybeSingle();
       check(invRes.error);
-      const candidate = invRes.data as GuestRecord | null;
+      const candidate = mapInvitationRow(invRes.data as never);
       if (candidate && !candidate.revoked) {
         const candidateSession = await readInvitationSession(site, candidate);
         if (candidateSession) {

@@ -6,7 +6,6 @@ import {
   rsvpSchema,
   selfRegisterSchema,
 } from "@invitations/domain/guest";
-import { guestDetailsSchema } from "@invitations/domain/operations";
 import {
   allowed as defaultAllowed,
   check,
@@ -28,6 +27,11 @@ export type GuestAction =
   | "lookup-reset"
   | "self-register"
   | "rsvp";
+
+export const SELF_REGISTER_NAMED_PLACEHOLDER =
+  "00000000-0000-4000-8000-000000000001";
+export const SELF_REGISTER_COMPANION_PLACEHOLDER =
+  "00000000-0000-4000-8000-000000000002";
 
 export type GuestActionDb = ReturnType<typeof defaultDb>;
 
@@ -53,14 +57,6 @@ export type GuestActionDeps = {
 
 const codePayloadSchema = z.object({
   code: z.string().max(128),
-});
-
-const rsvpPayloadSchema = rsvpSchema.extend({
-  details: guestDetailsSchema.optional(),
-});
-
-const selfRegisterWithDetailsSchema = selfRegisterSchema.extend({
-  details: guestDetailsSchema.optional(),
 });
 
 export async function executeGuestAction(
@@ -176,7 +172,7 @@ export async function executeGuestAction(
       throw new GuestError(409, "Termin odpowiedzi minął.");
     }
 
-    const p = selfRegisterWithDetailsSchema.parse(payload);
+    const p = selfRegisterSchema.parse(payload);
     const newInvId = randomUUID();
     const rawToken = randomBytes(24).toString("base64url");
 
@@ -187,40 +183,19 @@ export async function executeGuestAction(
         iid: newInvId,
         guest_name: p.name,
         token_hash: digest(rawToken),
-        allow_plus_one: false,
+        with_companion: p.withCompanion,
+        companion_name: p.withCompanion ? (p.companionName ?? null) : null,
+        answers: p.rsvp.answers,
+        message: p.rsvp.note,
+        question_answers: p.rsvp.questionAnswers ?? [],
       },
     );
     check(createError);
 
     const createdCtx = await loadContext(newInvId);
     await doGrant(createdCtx);
-    const active = await getSession(createdCtx);
-    if (!active) throw new GuestError(401, "Dostęp wygasł");
-
-    const createdGuestId = createdCtx.invitation?.guests[0]?.id;
-    const remappedAnswers = createdGuestId
-      ? p.rsvp.answers.map((a) => ({
-          ...a,
-          guestId: createdGuestId,
-        }))
-      : [];
-
-    const { data: rev, error: rsvpError } = await client.rpc(
-      "save_guest_rsvp",
-      {
-        sid: ctx.site.id,
-        iid: newInvId,
-        expected_revision: 0,
-        answers: remappedAnswers,
-        message: p.rsvp.note,
-        details: p.details && createdGuestId ? { [createdGuestId]: Object.values(p.details)[0] ?? {} } : null,
-        plus_one_input: null,
-        session_hash: active.token_hash,
-      },
-    );
-    check(rsvpError);
     await setLookup(ctx.site.id, newInvId);
-    return { ok: true, revision: rev };
+    return { ok: true, revision: 1 };
   }
 
   await rateLimit(req, `rsvp:${ctx.site.id}`, 60);
@@ -243,10 +218,7 @@ export async function executeGuestAction(
   )
     throw new GuestError(409, "Termin odpowiedzi minął.");
 
-  const p = rsvpPayloadSchema.parse(payload);
-  if (p.plusOne && !ctx.invitation.allow_plus_one) {
-    throw new GuestError(409, "Odpowiedzi nie pasują do zaproszenia.");
-  }
+  const p = rsvpSchema.parse(payload);
 
   const { data, error } = await client.rpc("save_guest_rsvp", {
     sid: ctx.site.id,
@@ -254,8 +226,8 @@ export async function executeGuestAction(
     expected_revision: p.revision,
     answers: p.answers,
     message: p.note,
-    details: p.details ?? null,
-    plus_one_input: p.plusOne ?? null,
+    companion_names: p.companionNames ?? {},
+    question_answers: p.questionAnswers ?? [],
     session_hash: active.token_hash,
   });
   check(error);
