@@ -1,5 +1,5 @@
 import { visibleSections, type SiteConfig } from "./index";
-import { plusOneSchema } from "./operations";
+import { questionAnswerInputSchema } from "./rsvp-questions";
 import { z } from "zod";
 
 export const rsvpSchema = z.object({
@@ -14,7 +14,10 @@ export const rsvpSchema = z.object({
       }),
     )
     .max(1000),
-  plusOne: plusOneSchema.optional(),
+  companionNames: z
+    .record(z.uuid(), z.string().trim().max(200).nullable())
+    .optional(),
+  questionAnswers: z.array(questionAnswerInputSchema).max(500).optional(),
 });
 
 export const guestLookupSchema = z.object({
@@ -24,6 +27,8 @@ export const guestLookupSchema = z.object({
 
 export const selfRegisterSchema = z.object({
   name: z.string().trim().min(1).max(200),
+  withCompanion: z.boolean().default(false),
+  companionName: z.string().trim().max(200).nullable().optional(),
   rsvp: rsvpSchema,
 });
 

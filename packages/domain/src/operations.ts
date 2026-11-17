@@ -1,44 +1,12 @@
-import { z } from "zod";
 import type { SiteConfig } from "./index";
+import {
+  INVITATION_POLICY,
+  buildGuestList,
+  invitationInputSchema,
+  type ImportedInvitation,
+} from "./invitation";
 
-export const questionSettingsSchema = z
-  .object({ diet: z.boolean(), lodging: z.boolean(), transport: z.boolean() })
-  .strict();
-export type QuestionSettings = z.infer<typeof questionSettingsSchema>;
-export const defaultQuestions: QuestionSettings = {
-  diet: false,
-  lodging: false,
-  transport: false,
-};
-export const plusOneSchema = z
-  .object({
-    id: z.uuid(),
-    name: z.string().trim().min(1).max(200),
-  })
-  .nullable();
-export type PlusOneGuest = z.infer<typeof plusOneSchema>;
-
-export const guestDetailsSchema = z
-  .record(
-    z.uuid(),
-    z
-      .object({
-        diet: z.string().trim().max(300).optional(),
-        lodging: z.boolean().optional(),
-        transport: z.boolean().optional(),
-      })
-      .strict(),
-  )
-  .refine((value) => Object.keys(value).length <= 21);
-export type GuestDetails = z.infer<typeof guestDetailsSchema>;
-export const invitationInputSchema = z.object({
-  label: z.string().trim().min(1).max(200),
-  variantId: z.string().min(1).max(64),
-  emails: z.array(z.email().transform((s) => s.toLowerCase())).max(10).default([]),
-  names: z.array(z.string().trim().min(1).max(200)).min(1).max(20),
-  allowPlusOne: z.boolean().default(false),
-});
-export type ImportedInvitation = z.infer<typeof invitationInputSchema>;
+export { invitationInputSchema, type ImportedInvitation };
 
 /** RFC 4180 quoting, UTF-8 BOM and semicolon-separated spreadsheet exports. */
 export function parseGuestCsv(
@@ -78,30 +46,45 @@ export function parseGuestCsv(
   const headers = rows.shift()?.map((h) => h.trim().toLowerCase()) || [];
   const col = (aliases: string[]) =>
     headers.findIndex((h) => aliases.includes(h));
-  const label = col(["rodzina", "label", "family"]),
-    names = col(["goscie", "goście", "names", "guests"]),
-    emails = col(["email", "emails", "e-mail"]);
-  if (label < 0 || names < 0)
+  const groupCol = col(["grupa", "group", "rodzina", "label"]),
+    namesCol = col(["osoby", "goscie", "goście", "names", "guests"]),
+    companionsCol = col([
+      "towarzyszace",
+      "towarzyszące",
+      "companions",
+      "companion",
+    ]);
+  if (namesCol < 0)
     throw new Error(
-      "CSV wymaga kolumn: rodzina, goscie (opcjonalnie: email). Osoby oddziel znakiem |.",
+      "CSV wymaga kolumny: osoby (opcjonalnie: grupa, towarzyszace). Osoby oddziel znakiem |.",
     );
   if (!rows.length || rows.length > 200)
     throw new Error("Import wymaga od 1 do 200 zaproszeń.");
   return rows.map((r, i) => {
+    const namedList = (r[namesCol] || "")
+      .split("|")
+      .map((v) => v.trim())
+      .filter(Boolean);
+    const rawComp = companionsCol >= 0 ? (r[companionsCol] || "").trim() : "";
+    let compCount = 0;
+    if (rawComp) {
+      if (!/^\d+$/.test(rawComp)) {
+        throw new Error(
+          `Wiersz ${i + 2}: Nieprawidłowa liczba osób towarzyszących.`,
+        );
+      }
+      compCount = Number.parseInt(rawComp, 10);
+      if (compCount < 0 || compCount > INVITATION_POLICY.maxCompanions) {
+        throw new Error(
+          `Wiersz ${i + 2}: Liczba osób towarzyszących musi wynosić od 0 do ${INVITATION_POLICY.maxCompanions}.`,
+        );
+      }
+    }
+    const guests = buildGuestList(namedList, compCount);
     const parsed = invitationInputSchema.safeParse({
-      label: r[label],
-      names: (r[names] || "")
-        .split("|")
-        .map((v) => v.trim())
-        .filter(Boolean),
-      emails:
-        emails >= 0
-          ? (r[emails] || "")
-              .split("|")
-              .map((v) => v.trim())
-              .filter(Boolean)
-          : [],
+      groupName: groupCol >= 0 ? r[groupCol] || null : null,
       variantId,
+      guests,
     });
     if (!parsed.success)
       throw new Error(

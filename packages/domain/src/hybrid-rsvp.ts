@@ -1,7 +1,10 @@
 export interface CollisionInvitationInput {
   id: string;
-  label: string;
-  guests: Array<{ id: string; name: string }>;
+  guests: Array<{
+    id: string;
+    kind?: "named" | "companion";
+    name: string | null;
+  }>;
 }
 
 const DIACRITIC_MAP: Record<string, string> = {
@@ -42,6 +45,7 @@ export function detectGuestCollisions(
   for (const inv of invitations) {
     const seenInInv = new Set<string>();
     for (const guest of inv.guests) {
+      if (guest.kind === "companion" || !guest.name) continue;
       const normalized = normalizeGuestLookup(guest.name);
       if (!normalized || seenInInv.has(normalized)) continue;
       seenInInv.add(normalized);

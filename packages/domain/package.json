@@ -12,7 +12,9 @@
     "./readiness": "./src/readiness.ts",
     "./operations": "./src/operations.ts",
     "./editor": "./src/editor.ts",
-    "./hybrid-rsvp": "./src/hybrid-rsvp.ts"
+    "./hybrid-rsvp": "./src/hybrid-rsvp.ts",
+    "./invitation": "./src/invitation.ts",
+    "./rsvp-questions": "./src/rsvp-questions.ts"
   },
   "dependencies": {
     "zod": "^4.6.7"
