@@ -54,7 +54,7 @@ export async function requireSite(siteId: string) {
   const { data, error } = await db
     .from("sites")
     .select(
-      "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline,rsvp_questions",
+      "id,name,public_slug,owner_id,published_release_id,access_mode,access_version,public_variant_id,rsvp_deadline",
     )
     .eq("id", siteId)
     .is("deleted_at", null)
