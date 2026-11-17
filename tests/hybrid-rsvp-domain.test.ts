@@ -62,8 +62,14 @@ test("formatShareMessage builds localized personal and shared_with_code messages
     url: "https://saveour.day/i/tok1",
     deadline: "2027-07-01",
   });
-  assert.ok(personalPl.includes("https://saveour.day/i/tok1"));
-  assert.ok(personalPl.includes("2027-07-01"));
+  assert.equal(
+    personalPl,
+    [
+      "Cześć! Przesyłamy zaproszenie na wydarzenie: Zuzanna & Michał.",
+      "Twój indywidualny link do zaproszenia i potwierdzenia obecności: https://saveour.day/i/tok1",
+      "Prosimy o odpowiedź do: 2027-07-01.",
+    ].join("\n\n"),
+  );
 
   const sharedWithCodePl = formatShareMessage({
     locale: "pl-PL",
@@ -72,8 +78,13 @@ test("formatShareMessage builds localized personal and shared_with_code messages
     url: "https://saveour.day/s/nasz-slub",
     shortCode: "KOW482",
   });
-  assert.ok(sharedWithCodePl.includes("https://saveour.day/s/nasz-slub"));
-  assert.ok(sharedWithCodePl.includes("KOW482"));
+  assert.equal(
+    sharedWithCodePl,
+    [
+      "Cześć! Przesyłamy zaproszenie na wydarzenie: Zuzanna & Michał.",
+      "Link do zaproszenia: https://saveour.day/s/nasz-slub\nTwój kod zaproszenia do potwierdzenia obecności: KOW482",
+    ].join("\n\n"),
+  );
 
   const sharedEn = formatShareMessage({
     locale: "en-US",

@@ -356,7 +356,7 @@ export function parseQuickAdd(text: string, variantId: string): QuickAddResult {
     }
 
     let companionCount = 0;
-    const plusMatch = /\s*\+(\d+)$/.exec(body);
+    const plusMatch = /\+(\d+)$/.exec(body);
     if (plusMatch) {
       companionCount = Number.parseInt(plusMatch[1]!, 10);
       body = body.slice(0, plusMatch.index).trim();
