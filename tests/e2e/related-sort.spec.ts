@@ -109,11 +109,12 @@ for (const touch of [false, true]) {
       const contact = page.getByTestId("section-contact");
       await contact.getByRole("button", { name: /Dajcie znać/ }).click();
       await dialog.getByRole("button", { name: "Dodaj nowy element" }).click();
-      const contactModal = page.getByRole("dialog").last();
+      const contactModal = page.getByRole("dialog", { name: "Nowy kontakt" });
       await contactModal.getByLabel(/Imię \/ nazwa/).fill("Drugi kontakt");
       await contactModal
         .getByRole("button", { name: "Dodaj kontakt", exact: true })
         .click();
+      await expect(contactModal).toBeHidden();
       const before = await order(dialog);
       await drag(
         page,
