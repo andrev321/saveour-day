@@ -12,8 +12,8 @@ jobs:
       STAGING_SITE_URL: ${{ vars.STAGING_SITE_URL }}
       STAGING_PANEL_STORAGE_STATE: ${{ secrets.STAGING_PANEL_STORAGE_STATE }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
