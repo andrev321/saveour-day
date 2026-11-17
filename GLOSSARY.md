@@ -28,26 +28,48 @@ The server-side filtering process that strips hidden **Sections** and unreferenc
 A typed content block inside a **Site** configuration (`hero`, `story`, `timeline`, `venues`, `accommodation`, `rsvp`, `faq`, `gifts`, `contacts`, `gallery`, `custom`). Sections reference domain entities (such as **Events**, **Venues**, **Contacts**, or **Media Assets**) by ID.
 
 ### Invitation
-A record assigning an individual or household to a specific **Variant** within a **Site**. Holds a hashed random **Invitation Token** (`/i/<token>`), an auto-generated 6-character **Short Code**, a list of **Guests** (up to 20), origin (`organizer` | `self_registered`), review status (`approved` | `pending_match`), revocation state, and an RSVP revision counter.
-- *Avoid*: "guest group", "household account", "ticket".
+An invitation of one person or several people to a **Site**, seen through a single **Variant**. It is a list of one to twenty **Guests**, at least one of them a **Named Guest**, with an optional **Group Name**, its own **Short Code** and private link, and one shared **RSVP**.
+- *Avoid*: "family", "household", "rodzina", "guest group", "ticket".
+
+### Group Name
+An optional display name for an **Invitation** with several **Guests** (e.g. "Rodzina Nowaków"). When absent, the name is derived from the **Guests**. "Group" is UI wording only, not a separate domain concept.
 
 ### Guest
-An individual person belonging to an **Invitation**. **RSVP Answers** are recorded per **Guest** and per **Event** pair (`(guest_id, event_id)`), whereas an **Invitation** represents the household unit.
+One person (seat) on an **Invitation**: either a **Named Guest** or a **Companion**. Every **Guest** counts toward headcounts and has their own **Attendance**.
+- *Avoid*: "member", "attendee" (for a not-yet-confirmed person).
 
-### Plus-One
-An optional unnamed companion slot enabled by an **Organizer** on an **Invitation**. When permitted, the household may name one additional person during RSVP submission and record **RSVP Answers** and optional details for that companion.
+### Named Guest
+A **Guest** whose name is set by the **Organizer**. Only **Named Guests** can be used to find an **Invitation** by name, and only the **Organizer** can change their name.
+
+### Companion
+A **Guest** whose identity the **Organizer** does not know in advance (PL: "osoba towarzysząca"). The guest may optionally give their name in the **RSVP**. A **Companion** cannot attend an **Event** when every **Named Guest** of the **Invitation** declines that **Event**. The **Organizer** may convert a **Companion** into a **Named Guest**.
+- *Avoid*: "Plus-One", "+1", "osoba dodatkowa".
 
 ### Event
-A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** a household can RSVP to, independently of whether the timeline **Section** is visible.
+A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** an **Invitation** can RSVP to, independently of whether the timeline **Section** is visible.
 
-### RSVP Answer
-A guest's attendance response (`attending`, `declined`, or no response) for a specific `(guest_id, event_id)` pair within an **Invitation**, along with optional dietary/custom notes and revision tracking. Stored outside **Releases** so answers survive new publications and **Template** resets.
+### RSVP
+The whole response of an **Invitation**: the **Attendance** of each **Guest**, the **Question Answers**, and a free-text note. Kept outside **Releases**, so it survives new publications and **Template** resets.
+
+### Attendance
+Whether a **Guest** will attend a given **Event**: attending, declined, or no response yet. The **Invitation**'s response status depends on **Attendance** only.
+- *Avoid*: "RSVP Answer", "answer" (ambiguous with **Question Answer**).
+
+### RSVP Question
+An **Organizer**-defined question asked in the **RSVP**, either per **Guest** or once per **Invitation**, with an open, single-choice, multiple-choice, or numeric answer. It may be required and limited to chosen **Variants**. It is shown only to attending **Guests** (or, for per-**Invitation** questions, when anyone attends). **RSVP Questions** belong to the **Site**, not to a **Release**.
+- *Avoid*: "detail", "extra field", "survey".
+
+### Question Preset
+A ready-made **RSVP Question** (e.g. diet, allergies, lodging, parking) that an **Organizer** copies into the **Site** in one click. Once added, it is an ordinary **RSVP Question**.
+
+### Question Answer
+A **Guest**'s or **Invitation**'s answer to one **RSVP Question**.
 
 ### Short Code
 An auto-generated, 6-character unambiguous alphanumeric code (`23456789ABCDEFGHJKLMNPQRSTUVWXYZ`) assigned to every **Invitation** for **Guest Lookup** disambiguation, name-collision verification, and unlocking already-answered invitations on a new device.
 
 ### Self-Registration
-An optional **Site** setting (`allow_self_registration`, default `false`) that lets an unlisted guest submit an RSVP on `/s/<public_slug>` into a `pending_match` queue for the **Organizer** to approve or merge into an existing **Invitation**.
+An optional **Site** setting (`allow_self_registration`, default `false`) that lets an unlisted guest (optionally with one **Companion**) submit an RSVP on `/s/<public_slug>` into a `pending_match` queue for the **Organizer** to approve or merge into an existing **Invitation**.
 
 ### Info-Only Mode
 A **Site** state (`rsvp_enabled = false`) in which `/s/<public_slug>` and `/i/<token>` display event details and `.ics` calendar downloads without any RSVP lookup, form, or API write access.
@@ -58,8 +80,8 @@ A **Site** state (`rsvp_enabled = false`) in which `/s/<public_slug>` and `/i/<t
 
 ### Access Mode
 The site-wide guest authentication rule configured by the **Organizer**:
-- `public`: Open access to `/s/<public_slug>` (renders default **Variant** with optional **Guest Lookup**) and `/i/<token>` (renders household **Variant** + RSVP).
-- `code`: Requires a shared, scrypt-hashed **Site Code** for both general and household links.
+- `public`: Open access to `/s/<public_slug>` (renders default **Variant** with optional **Guest Lookup**) and `/i/<token>` (renders the **Invitation**'s **Variant** + RSVP).
+- `code`: Requires a shared, scrypt-hashed **Site Code** for both general and **Invitation** links.
 
 ### Guest Session
 A versioned, 7-day `HttpOnly` cookie session issued after successful **Site Code**, `/i/<token>`, or **Guest Lookup** verification. Validated against `sites.access_version` and `invitations.access_version` so rotating a code, revoking an **Invitation**, or changing **Access Mode** immediately invalidates affected sessions.
@@ -78,7 +100,7 @@ Public, versioned example WebP images (`640w`, `1280w`, `1536w`) bundled with th
 Per-use focal point and zoom coordinates (`desktop`, `tablet`, `mobile`) attached to a specific placement of a **Media Asset** inside a `hero` or `gallery` **Section** (not mutated on the asset itself).
 
 ### Template
-Starter configuration data (10 populated templates + 1 blank, in PL/EN/DE) used to initialize or reset a **Draft**. Once applied, a **Template** becomes ordinary **Draft** configuration. Resetting a **Template** backs up the previous **Draft**, generates fresh **Event** IDs to prevent accidental RSVP reassignment, and preserves **Invitations** and **Media Assets**.
+Starter configuration data (10 populated templates + 1 blank, in PL/EN/DE) used to initialize or reset a **Draft**. Once applied, a **Template** becomes ordinary **Draft** configuration. Resetting a **Template** backs up the previous **Draft**, generates fresh **Event** IDs to prevent accidental **Attendance** reassignment, and preserves **Invitations**, **RSVP Questions**, **Question Answers**, and **Media Assets**.
 
 ### Theme
 A visual styling preset (typography, color palette, surface tokens, motion style) applied to the shared renderer independently of **Template** content and **Variants**.
