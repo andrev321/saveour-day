@@ -16,10 +16,11 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
     await page
       .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
-    await page
-      .getByLabel("Główny napis", { exact: true })
-      .fill("Spotkanie przyjaciół");
+    const headingInput = page.getByLabel("Główny napis", { exact: true });
+    await headingInput.fill("Spotkanie przyjaciół");
+    await expect(headingInput).toHaveValue("Spotkanie przyjaciół");
     await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
     await page
       .getByRole("button", { name: "Zapisz szkic", exact: true })
       .click();
@@ -195,8 +196,11 @@ test("mobile project menu publishes saved changes and reduced motion disables pa
   await page
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
-  await page.getByLabel("Główny napis", { exact: true }).fill("Urodziny Oli");
+  const headingInput = page.getByLabel("Główny napis", { exact: true });
+  await headingInput.fill("Urodziny Oli");
+  await expect(headingInput).toHaveValue("Urodziny Oli");
   await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   await page.getByRole("button", { name: "Opcje projektu" }).click();
   await page.getByRole("button", { name: "Symuluj publikację" }).click();
