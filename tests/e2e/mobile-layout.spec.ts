@@ -19,14 +19,16 @@ async function openGuests(page: Page, width: number) {
   };
   const invitations = ["Kowalskich", "Nowaków"].map((family, n) => ({
     id: `invitation-${n}`,
-    label: `Rodzina ${family}`,
+    group_name: `Rodzina ${family}`,
     variant_id: config.defaultVariant,
-    emails: [`${"dlugi-adres-".repeat(5)}${n}@example.test`],
-    guests: [{ id: `guest-${n}`, name: `Anna ${family}` }],
+    guests: [{ id: `guest-${n}`, kind: "named", name: `Anna ${family}` }],
     revoked: false,
     version: 1,
     rsvp_revision: 0,
     note: "",
+    short_code: `KOD${n}23`,
+    origin: "organizer",
+    review_status: "approved",
     events: config.events,
   }));
   await page.setViewportSize({ width, height: 844 });
@@ -86,7 +88,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     page,
   }) => {
     await openGuests(page, width);
-    const search = page.getByLabel("Szukaj gościa, rodziny lub kodu");
+    const search = page.getByLabel("Szukaj osoby, grupy lub kodu");
     const responses = page.getByRole("combobox", {
       name: "Odpowiedzi",
       exact: true,
@@ -99,18 +101,14 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     // Controls must either share a row without overlap, or form separate rows.
     expect(a.y + a.height <= b.y || a.x + a.width <= b.x).toBe(true);
     await search.fill("Kowalskich");
-    await expect(
-      page.getByRole("heading", { name: "Rodzina Nowaków" }),
-    ).toHaveCount(0);
-    await expect(
-      page.getByRole("heading", { name: "Rodzina Kowalskich" }),
-    ).toBeVisible();
+    await expect(page.getByText("Rodzina Nowaków")).toHaveCount(0);
+    await expect(page.getByText("Rodzina Kowalskich")).toBeVisible();
     await search.fill("");
     await responses.click();
     await page
-      .getByRole("option", { name: "Brak kompletu odpowiedzi", exact: true })
+      .getByRole("option", { name: "Czekamy", exact: true })
       .click();
-    await expect(responses).toHaveValue("Brak kompletu odpowiedzi");
+    await expect(responses).toHaveValue("Czekamy");
     await expectContained(page);
     await page.screenshot({ path: `test-results/mobile-guests-${width}.png` });
     await page

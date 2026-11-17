@@ -17,27 +17,25 @@ test("normalizeGuestLookup folds Polish and German diacritics and collapses whit
   assert.equal(normalizeGuestLookup("Anna Nowak Kowalska"), "anna nowak kowalska");
 });
 
-test("detectGuestCollisions flags names shared across different invitations only", () => {
+test("detectGuestCollisions flags names shared across different invitations only and ignores companions", () => {
   const collisions = detectGuestCollisions([
     {
       id: "inv-1",
-      label: "Anna Kowalska (praca)",
-      guests: [{ id: "g1", name: "Anna Kowalska" }],
+      guests: [{ id: "g1", kind: "named", name: "Anna Kowalska" }],
     },
     {
       id: "inv-2",
-      label: "Kowalscy",
       guests: [
-        { id: "g2", name: "  anna   kowalska " },
-        { id: "g3", name: "Marek Kowalski" },
+        { id: "g2", kind: "named", name: "  anna   kowalska " },
+        { id: "g3", kind: "named", name: "Marek Kowalski" },
+        { id: "g3b", kind: "companion", name: "Piotr Nowak" },
       ],
     },
     {
       id: "inv-3",
-      label: "Nowakowie",
       guests: [
-        { id: "g4", name: "Piotr Nowak" },
-        { id: "g5", name: "Piotr Nowak" },
+        { id: "g4", kind: "named", name: "Piotr Nowak" },
+        { id: "g5", kind: "named", name: "Piotr Nowak" },
       ],
     },
   ]);
@@ -78,14 +76,22 @@ test("formatShareMessage builds localized personal and shared_with_code messages
   assert.ok(sharedEn.includes("ABC234"));
 });
 
-test("parseGuestCsv accepts CSV without email column", () => {
+test("parseGuestCsv parses group, named guests and companion slots", () => {
   const parsed = parseGuestCsv(
-    "rodzina;goscie\nKowalscy;Anna Kowalska|Marek Kowalski\nNowak;Piotr Nowak",
+    "grupa;osoby;towarzyszace\nKowalscy;Anna Kowalska|Marek Kowalski;1\n;Piotr Nowak;",
     "slub",
   );
   assert.equal(parsed.length, 2);
-  assert.deepEqual(parsed[0]!.emails, []);
-  assert.deepEqual(parsed[0]!.names, ["Anna Kowalska", "Marek Kowalski"]);
+  assert.equal(parsed[0]!.groupName, "Kowalscy");
+  assert.deepEqual(parsed[0]!.guests, [
+    { kind: "named", name: "Anna Kowalska" },
+    { kind: "named", name: "Marek Kowalski" },
+    { kind: "companion", name: null },
+  ]);
+  assert.equal(parsed[1]!.groupName, null);
+  assert.deepEqual(parsed[1]!.guests, [
+    { kind: "named", name: "Piotr Nowak" },
+  ]);
 });
 
 test("readAllPages paginates and stops on error", async () => {

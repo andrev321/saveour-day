@@ -121,7 +121,7 @@ test("database conversion preserves media, history and RSVP and removes legacy a
     const migration = files.find((f) =>
       f.endsWith("_contextual_editor_v3.sql"),
     )!;
-    for (const file of files.filter((f) => f !== migration))
+    for (const file of files.filter((f) => f < migration))
       await db.exec(
         (await readFile("supabase/migrations/" + file, "utf8")).replace(
           /create extension if not exists \w+;/g,

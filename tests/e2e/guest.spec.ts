@@ -39,15 +39,25 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
               mode: "code",
               config: visible,
               invitation: {
-                label: "Rodzina Kowalskich",
+                groupName: "Rodzina Kowalskich",
                 guests: [
-                  { id: "40000000-0000-4000-8000-000000000001", name: "Maria" },
-                  { id: "40000000-0000-4000-8000-000000000002", name: "Adam" },
+                  {
+                    id: "40000000-0000-4000-8000-000000000001",
+                    kind: "named",
+                    name: "Maria",
+                  },
+                  {
+                    id: "40000000-0000-4000-8000-000000000002",
+                    kind: "named",
+                    name: "Adam",
+                  },
                 ],
                 revision,
                 note,
                 answers,
+                questionAnswers: [],
               },
+              questions: [],
               deadline: "2030-06-01T18:00:00Z",
               closed: false,
             }
@@ -111,12 +121,12 @@ test("code gate hides content, then a family submits and corrects RSVP", async (
   ).toHaveCount(0);
   await page
     .getByRole("group", { name: "Maria" })
-    .getByRole("combobox")
-    .selectOption("true");
+    .getByLabel("Będę", { exact: true })
+    .check();
   await page
     .getByRole("group", { name: "Adam" })
-    .getByRole("combobox")
-    .selectOption("false");
+    .getByLabel("Nie będę", { exact: true })
+    .check();
   await page.getByLabel("Uwagi").fill("Dziękujemy!");
   await page.getByRole("button", { name: "Zapisz odpowiedzi" }).click();
   await expect(page.getByRole("status")).toContainText(
@@ -169,17 +179,19 @@ test("public site supports guest lookup, collision disambiguation, and info-only
           allowSelfRegistration: false,
           canResetLookup: matched,
           config,
-          invitation: matched
-            ? {
-                label: "Rodzina Kowalskich",
-                guests: [{ id: "g1", name: "Anna Kowalska" }],
-                allowPlusOne: false,
-                plusOne: null,
-                revision: 0,
-                note: "",
-                answers: [],
-              }
-            : null,
+              invitation: matched
+                ? {
+                    groupName: "Rodzina Kowalskich",
+                    guests: [
+                      { id: "g1", kind: "named", name: "Anna Kowalska" },
+                    ],
+                    revision: 0,
+                    note: "",
+                    answers: [],
+                    questionAnswers: [],
+                  }
+                : null,
+              questions: [],
         },
       });
     }

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { createDemo } from "../../packages/domain/src/demo";
-test("organizer creates family links, edits recipients and changes access settings", async ({
+
+test("organizer creates group links, edits recipients and changes access settings", async ({
   page,
 }) => {
   const id = "20000000-0000-4000-8000-000000000001";
@@ -17,14 +18,16 @@ test("organizer creates family links, edits recipients and changes access settin
   };
   const invitations: {
     id: string;
-    label: string;
+    group_name: string | null;
     variant_id: string;
-    emails: string[];
-    guests: { id: string; name: string }[];
+    guests: { id: string; kind: "named" | "companion"; name: string | null }[];
     revoked: boolean;
     version: number;
     rsvp_revision: number;
     note: string;
+    short_code: string;
+    origin: "organizer";
+    review_status: "approved";
     events: { id: string; title: string }[];
   }[] = [];
   await page.addInitScript(() =>
@@ -49,47 +52,60 @@ test("organizer creates family links, edits recipients and changes access settin
           invitations,
           variants: config.variants,
           answers: [],
+          questions: [],
+          questionAnswers: [],
+          locale: "pl-PL",
+          displayName: "Wesele",
           url: "https://example.test/s/wesele",
         },
       });
     const { action, payload } = route.request().postDataJSON();
     if (action === "create") {
-      expect(payload.names).toEqual(["Maria", "Adam"]);
+      expect(payload.guests.map((g: { name: string }) => g.name)).toEqual([
+        "Maria",
+        "Adam",
+      ]);
       invitations.push({
         id: "30000000-0000-4000-8000-000000000001",
-        label: payload.label,
+        group_name: payload.groupName ?? null,
         variant_id: payload.variantId,
-        emails: payload.emails,
-        guests: payload.names.map((name: string, n: number) => ({
-          id: `guest-${n}`,
-          name,
-        })),
+        guests: payload.guests.map(
+          (g: { kind: "named" | "companion"; name: string | null }, n: number) => ({
+            id: `guest-${n}`,
+            kind: g.kind,
+            name: g.name,
+          }),
+        ),
         revoked: false,
         version: 1,
         rsvp_revision: 0,
         note: "",
+        short_code: "KOW123",
+        origin: "organizer",
+        review_status: "approved",
         events: config.events,
       });
       return route.fulfill({
-        json: { url: "https://example.test/i/family-token" },
+        json: { url: "https://example.test/i/family-token", shortCode: "KOW123" },
       });
     }
     if (action === "update") {
-      invitations[0].label = payload.label;
-      invitations[0].guests = payload.guests.map(
-        (g: { id?: string; name: string }, n: number) => ({
+      invitations[0]!.group_name = payload.groupName ?? null;
+      invitations[0]!.guests = payload.guests.map(
+        (g: { id?: string; kind: "named" | "companion"; name: string | null }, n: number) => ({
           id: g.id || `guest-${n}`,
+          kind: g.kind,
           name: g.name,
         }),
       );
-      invitations[0].version++;
+      invitations[0]!.version++;
     }
     if (action === "settings") {
       expect(payload.version).toBe(1);
       site.access_mode = payload.mode;
       site.access_version++;
     }
-    if (action === "revoke") invitations[0].revoked = true;
+    if (action === "revoke") invitations[0]!.revoked = true;
     return route.fulfill({ json: { saved: true } });
   });
   await page.goto(
@@ -97,29 +113,29 @@ test("organizer creates family links, edits recipients and changes access settin
   );
   await page.getByRole("tab", { name: "Goście", exact: true }).click();
   await page.getByRole("button", { name: "Nowe zaproszenie", exact: true }).click();
-  await page.getByLabel("Nazwa osoby lub rodziny").fill("Rodzina Kowalskich");
-  await page
-    .getByLabel("Goście — każda osoba w osobnym wierszu")
-    .fill("Maria\nAdam");
+  await page.getByText("Grupa", { exact: true }).click();
+  await page.getByLabel("Nazwa grupy (opcjonalnie)").fill("Rodzina Kowalskich");
+  await page.getByLabel("Osoba 1").fill("Maria");
+  await page.getByRole("button", { name: "+ Dodaj osobę", exact: true }).click();
+  await page.getByLabel("Osoba 2").fill("Adam");
   await page.getByRole("button", { name: "Utwórz zaproszenie i link" }).click();
   await expect(page.getByLabel("Wygenerowany link")).toHaveValue(
     "https://example.test/i/family-token",
   );
-  await expect(
-    page.getByRole("heading", { name: "Rodzina Kowalskich" }),
-  ).toBeVisible();
+  await expect(page.getByText("Rodzina Kowalskich")).toBeVisible();
+
+  await page.getByRole("button", { name: "⋯", exact: true }).click();
   await page
-    .getByRole("button", { name: "Edytuj zaproszenie", exact: true })
+    .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
     .click();
   await page
-    .getByLabel("Nazwa osoby lub rodziny")
+    .getByLabel("Nazwa grupy (opcjonalnie)")
     .fill("Rodzina Kowalskich (edycja)");
   await page
     .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
     .click();
-  await expect(
-    page.getByRole("heading", { name: "Rodzina Kowalskich (edycja)" }),
-  ).toBeVisible();
+  await expect(page.getByText("Rodzina Kowalskich (edycja)")).toBeVisible();
+
   await page
     .getByRole("button", { name: "Publikacja i dostęp", exact: true })
     .click();
@@ -137,8 +153,10 @@ test("organizer creates family links, edits recipients and changes access settin
     path: "test-results/guest-management.png",
     fullPage: true,
   });
+
+  await page.getByRole("button", { name: "⋯", exact: true }).click();
   await page
-    .getByRole("button", { name: "Cofnij dostęp", exact: true })
+    .getByRole("menuitem", { name: "Cofnij dostęp", exact: true })
     .click();
   await page.getByRole("button", { name: "Potwierdź", exact: true }).click();
   await expect(
@@ -148,7 +166,7 @@ test("organizer creates family links, edits recipients and changes access settin
   ).toBeVisible();
 });
 
-test("organizer adds a guest member and enables plus-one in invitation editor", async ({
+test("organizer adds a companion slot in invitation editor", async ({
   page,
 }) => {
   const id = "20000000-0000-4000-8000-000000000002";
@@ -165,15 +183,18 @@ test("organizer adds a guest member and enables plus-one in invitation editor", 
   };
   const invitation = {
     id: "30000000-0000-4000-8000-000000000002",
-    label: "Jan Nowak",
+    group_name: null as string | null,
     variant_id: config.defaultVariant,
-    emails: [] as string[],
-    guests: [{ id: "guest-1", name: "Jan Nowak" }],
-    allow_plus_one: false,
+    guests: [
+      { id: "guest-1", kind: "named" as const, name: "Jan Nowak" },
+    ] as { id: string; kind: "named" | "companion"; name: string | null }[],
     revoked: false,
     version: 1,
     rsvp_revision: 0,
     note: "",
+    short_code: "NOW456",
+    origin: "organizer" as const,
+    review_status: "approved" as const,
     events: config.events,
   };
   await page.addInitScript(() =>
@@ -198,18 +219,22 @@ test("organizer adds a guest member and enables plus-one in invitation editor", 
           invitations: [invitation],
           variants: config.variants,
           answers: [],
+          questions: [],
+          questionAnswers: [],
+          locale: "pl-PL",
+          displayName: "Wesele",
           url: "https://example.test/s/wesele",
         },
       });
     }
     const { action, payload } = route.request().postDataJSON();
     if (action === "update") {
-      expect(payload.allowPlusOne).toBe(true);
       expect(payload.guests).toHaveLength(2);
-      invitation.allow_plus_one = payload.allowPlusOne;
+      expect(payload.guests[1].kind).toBe("companion");
       invitation.guests = payload.guests.map(
-        (g: { id?: string; name: string }, n: number) => ({
+        (g: { id?: string; kind: "named" | "companion"; name: string | null }, n: number) => ({
           id: g.id || `guest-${n + 1}`,
+          kind: g.kind,
           name: g.name,
         }),
       );
@@ -221,18 +246,15 @@ test("organizer adds a guest member and enables plus-one in invitation editor", 
     `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
   );
   await page.getByRole("tab", { name: "Goście", exact: true }).click();
+  await page.getByRole("button", { name: "⋯", exact: true }).click();
   await page
-    .getByRole("button", { name: "Edytuj zaproszenie", exact: true })
+    .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
     .click();
-  await page.getByRole("button", { name: "Dodaj osobę", exact: true }).click();
   await page
-    .getByRole("textbox", { name: "Gość 2", exact: true })
-    .fill("Ewa Nowak");
-  await page
-    .getByRole("switch", { name: "Pozwól na osobę towarzyszącą (+1)" })
-    .click();
+    .getByLabel("Może przyjść z osobą towarzyszącą")
+    .check();
   await page
     .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
     .click();
-  await expect(page.getByText("Ewa Nowak")).toBeVisible();
+  await expect(page.getByText("Jan Nowak + 1")).toBeVisible();
 });

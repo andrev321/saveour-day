@@ -125,7 +125,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
         (f) =>
           f.endsWith(".sql") &&
           f > "202609230001_invitation_templates.sql" &&
-          !f.endsWith("_contextual_editor_v3.sql"),
+          f < "20260930204955_contextual_editor_v3.sql",
       )
       .sort()) {
       await db.exec(
@@ -137,13 +137,24 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
     }
     await db.exec(
       await readFile(
-        "supabase/migrations/" +
-          (await readdir("supabase/migrations")).find((f) =>
-            f.endsWith("_contextual_editor_v3.sql"),
-          ),
+        "supabase/migrations/20260930204955_contextual_editor_v3.sql",
         "utf8",
       ),
     );
+    for (const file of (await readdir("supabase/migrations"))
+      .filter(
+        (f) =>
+          f.endsWith(".sql") &&
+          f > "20260930204955_contextual_editor_v3.sql",
+      )
+      .sort()) {
+      await db.exec(
+        (await readFile("supabase/migrations/" + file, "utf8")).replace(
+          /create extension if not exists \w+;/g,
+          "",
+        ),
+      );
+    }
     Object.assign(
       old,
       (
@@ -174,21 +185,23 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
       actor,
       iid,
       JSON.stringify({
-        label: "Family",
+        groupName: "Family",
         variantId: old.defaultVariant,
         tokenHash: "secret",
-        emails: [],
-        guests: [{ id: guest, name: "Guest" }],
+        guests: [{ id: guest, kind: "named", name: "Guest" }],
       }),
     ]);
-    await db.query("select public.save_rsvp($1,$2,0,$3,'note',null,$4)", [
-      sid,
-      iid,
-      JSON.stringify([
-        { guestId: guest, eventId: old.events[0].id, attending: true },
-      ]),
-      actor,
-    ]);
+    await db.query(
+      "select public.save_guest_rsvp($1,$2,0,$3,'note','{}'::jsonb,'[]'::jsonb,null,$4)",
+      [
+        sid,
+        iid,
+        JSON.stringify([
+          { guestId: guest, eventId: old.events[0].id, attending: true },
+        ]),
+        actor,
+      ],
+    );
     const currentRelease = (
       await db.query<{ id: string }>(
         "select published_release_id id from public.sites where id=$1",
@@ -227,7 +240,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
     assert.equal(
       (
         await db.query<{ n: number }>(
-          "select count(*)::int n from public.rsvp_answers",
+          "select count(*)::int n from public.attendances",
         )
       ).rows[0].n,
       1,
@@ -271,7 +284,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
     assert.equal(
       (
         await db.query<{ n: number }>(
-          "select count(*)::int n from public.rsvp_answers where event_id=$1",
+          "select count(*)::int n from public.attendances where event_id=$1",
           [old.events[0].id],
         )
       ).rows[0].n,

@@ -50,15 +50,25 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     id: "30000000-0000-4000-8000-000000000001",
     site_id: site.id,
     variant_id: config.defaultVariant,
-    emails: [],
-    guests: [{ id: "40000000-0000-4000-8000-000000000001", name: "Anna Kowalska" }],
+    invitation_guests: [
+      {
+        id: "40000000-0000-4000-8000-000000000001",
+        kind: "named",
+        name: "Anna Kowalska",
+        position: 0,
+      },
+      {
+        id: "50000000-0000-4000-8000-000000000001",
+        kind: "companion",
+        name: null,
+        position: 1,
+      },
+    ],
     revoked: false,
     version: 1,
     rsvp_revision: 0,
     note: "",
-    label: "Family",
-    allow_plus_one: false,
-    plus_one: null,
+    group_name: null,
     short_code: "KOW482",
   };
   let storedSession: unknown = null;
@@ -98,11 +108,13 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
         return new Response("private-image", {
           headers: { "Content-Type": "image/webp" },
         });
-      } else if (table === "rsvp_answers") {
+      } else if (table === "attendances") {
         assert.equal(
           url.searchParams.get("event_id"),
           `in.(${config.events.map((e) => e.id).join(",")})`,
         );
+        data = [];
+      } else if (table === "rsvp_questions" || table === "rsvp_question_answers") {
         data = [];
       } else if (table === "consume_access_attempt") {
         buckets.push(JSON.parse(String(init?.body)).attempt_key);
@@ -222,7 +234,7 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     const sharedAfterLookup = await (await GET(new Request(sharedUrl))).json();
     assert.equal(sharedAfterLookup.rsvpEnabled, true);
     assert.equal(sharedAfterLookup.canResetLookup, true);
-    assert.equal(sharedAfterLookup.invitation.label, "Family");
+    assert.equal(sharedAfterLookup.invitation.guests.length, 2);
 
     site.rsvp_enabled = false;
     const infoOnly = await (await GET(new Request(sharedUrl))).json();
@@ -235,23 +247,16 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     site.rsvp_enabled = true;
     await postShared("lookup-reset", {});
     jar.clear();
-    const forbiddenPlusOne = await post("rsvp", {
-      revision: 0,
-      note: "",
-      answers: [],
-      plusOne: { id: "50000000-0000-4000-8000-000000000001", name: "Gość +1" },
-    });
-    assert.equal(forbiddenPlusOne.status, 409);
-    invitation.allow_plus_one = true;
     const reply = await post("rsvp", {
       revision: 0,
       note: "",
       answers: [],
-      plusOne: { id: "50000000-0000-4000-8000-000000000001", name: "Gość +1" },
+      companionNames: {
+        "50000000-0000-4000-8000-000000000001": "Marek Towarzysz",
+      },
     });
     assert.equal(reply.status, 200);
     assert.deepEqual(await reply.json(), { revision: 1 });
-    invitation.allow_plus_one = false;
     assert.equal(
       (
         await (
@@ -314,14 +319,11 @@ test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and 
     const invitationRows = [
       {
         id: "30000000-0000-4000-8000-000000000001",
-        label: "Nowakowie",
+        group_name: "Nowakowie",
         version: 1,
         rsvp_revision: 0,
         variant_id: config.defaultVariant,
-        guests: [{ id: "g1", name: "Jan" }],
-        emails: ["jan@example.com"],
-        allow_plus_one: false,
-        plus_one: null,
+        invitation_guests: [{ id: "g1", kind: "named", name: "Jan", position: 0 }],
       },
     ];
     const chain: Record<string, unknown> = {
@@ -329,6 +331,8 @@ test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and 
       eq: () => chain,
       in: () => chain,
       order: () => chain,
+      then: (resolve: (v: { data: unknown[]; error: null }) => void) =>
+        resolve({ data: [], error: null }),
       single: async () => ({
         data: table === "releases" || table === "drafts" ? { config } : null,
         error: null,
@@ -434,38 +438,45 @@ test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and 
   }
 });
 
-test("rsvpSchema accepts optional and nullable plusOne and rejects invalid plusOne payloads", async () => {
+test("rsvpSchema accepts optional companionNames and questionAnswers and rejects invalid payloads", async () => {
   const { rsvpSchema } = await import("../packages/domain/src/guest.ts");
-  const plusOneId = "40000000-0000-4000-8000-000000000002";
+  const companionId = "40000000-0000-4000-8000-000000000002";
+  const questionId = "50000000-0000-4000-8000-000000000001";
 
-  const withPlusOne = rsvpSchema.parse({
+  const withCompanion = rsvpSchema.parse({
     revision: 0,
     note: "",
     answers: [
       {
-        guestId: plusOneId,
+        guestId: companionId,
         eventId: "ceremony",
         attending: true,
       },
     ],
-    plusOne: { id: plusOneId, name: "  Anna Nowak  " },
+    companionNames: { [companionId]: "  Anna Nowak  " },
+    questionAnswers: [
+      { questionId, guestId: companionId, value: { text: "Bez orzechów" } },
+    ],
   });
-  assert.deepEqual(withPlusOne.plusOne, { id: plusOneId, name: "Anna Nowak" });
+  assert.deepEqual(withCompanion.companionNames, {
+    [companionId]: "Anna Nowak",
+  });
+  assert.equal(withCompanion.questionAnswers?.length, 1);
 
-  const clearedPlusOne = rsvpSchema.parse({
+  const clearedCompanion = rsvpSchema.parse({
     revision: 1,
     note: "",
     answers: [],
-    plusOne: null,
+    companionNames: { [companionId]: null },
   });
-  assert.equal(clearedPlusOne.plusOne, null);
+  assert.deepEqual(clearedCompanion.companionNames, { [companionId]: null });
 
   assert.throws(() =>
     rsvpSchema.parse({
       revision: 0,
       note: "",
       answers: [],
-      plusOne: { id: "not-a-uuid", name: "Anna" },
+      companionNames: { "not-a-uuid": "Anna" },
     }),
   );
   assert.throws(() =>
@@ -473,7 +484,7 @@ test("rsvpSchema accepts optional and nullable plusOne and rejects invalid plusO
       revision: 0,
       note: "",
       answers: [],
-      plusOne: { id: plusOneId, name: "   " },
+      questionAnswers: [{ questionId: "bad-id", value: { number: 2 } }],
     }),
   );
 });

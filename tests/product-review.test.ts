@@ -5,8 +5,8 @@ import {
   calendarFile,
   csvFile,
   parseGuestCsv,
-  guestDetailsSchema,
 } from "../packages/domain/src/operations.ts";
+import { questionValueSchema } from "../packages/domain/src/rsvp-questions.ts";
 import {
   DraftHistory,
   createDraftTabSnapshot,
@@ -17,18 +17,21 @@ import {
 import { publicationWarnings } from "../packages/domain/src/readiness.ts";
 test("CSV handles quoted records, Polish letters and rejects invalid or oversized input", () => {
   const source =
-    '\uFEFFrodzina;goscie;email\r\n"Nowak; rodzina";"Żaneta|Jan";JAN@example.com';
+    '\uFEFFgrupa;osoby;towarzyszace\r\n"Nowak; rodzina";"Żaneta|Jan";2';
   assert.deepEqual(parseGuestCsv(source, "all"), [
     {
-      label: "Nowak; rodzina",
-      names: ["Żaneta", "Jan"],
-      emails: ["jan@example.com"],
+      groupName: "Nowak; rodzina",
+      guests: [
+        { kind: "named", name: "Żaneta" },
+        { kind: "named", name: "Jan" },
+        { kind: "companion", name: null },
+        { kind: "companion", name: null },
+      ],
       variantId: "all",
-      allowPlusOne: false,
     },
   ]);
-  assert.throws(() => parseGuestCsv("rodzina;goscie;email\nA;Jan;bad", "all"));
-  assert.throws(() => parseGuestCsv('rodzina;goscie\n"unfinished', "all"));
+  assert.throws(() => parseGuestCsv("grupa;osoby;towarzyszace\nA;Jan;bad", "all"));
+  assert.throws(() => parseGuestCsv('grupa;osoby\n"unfinished', "all"));
   assert.throws(() => parseGuestCsv("x".repeat(200001), "all"));
   assert.equal(
     csvFile([["=SUM(1)", '"Żaneta"', " @evil"]]),
@@ -71,12 +74,10 @@ test("readiness and question validation catch incomplete setup", () => {
     publicationWarnings(config).some((i) => i.message.includes("daty")),
   );
   assert.ok(
-    !guestDetailsSchema.safeParse({ "not-a-uuid": { diet: "vegan" } }).success,
+    !questionValueSchema.safeParse({ number: -1 }).success,
   );
   assert.ok(
-    !guestDetailsSchema.safeParse({
-      "40000000-0000-4000-8000-000000000001": { diet: "x".repeat(301) },
-    }).success,
+    !questionValueSchema.safeParse({ text: "x".repeat(501) }).success,
   );
 });
 

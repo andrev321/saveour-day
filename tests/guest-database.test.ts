@@ -89,11 +89,10 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
         actor,
         iid,
         JSON.stringify({
-          label: "Family",
+          groupName: "Family",
           variantId: variant.id,
           tokenHash: "token1",
-          emails: ["family@example.com"],
-          guests: [{ id: guest, name: "Guest" }],
+          guests: [{ id: guest, kind: "named", name: "Guest" }],
         }),
       ],
     );
@@ -111,7 +110,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       admin: string | null = null,
     ) =>
       db.query<Record<string, unknown>>(
-        "select public.save_rsvp($1,$2,$3,$4,'note',$5,$6) revision",
+        "select public.save_guest_rsvp($1,$2,$3,$4,'note','{}'::jsonb,'[]'::jsonb,$5,$6) revision",
         [sid, iid, revision, JSON.stringify(values), token, admin],
       );
     assert.equal((await save(0)).rows[0].revision, 1);
@@ -166,9 +165,9 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       actor,
       iid,
       JSON.stringify({
-        label: "Updated family",
+        groupName: "Updated family",
         variantId: variant.id,
-        emails: ["new@example.com"],
+        guests: [{ id: guest, kind: "named", name: "Guest" }],
         version: 3,
       }),
     ]);
@@ -178,9 +177,9 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
         actor,
         iid,
         JSON.stringify({
-          label: "Stale",
+          groupName: "Stale",
           variantId: variant.id,
-          emails: ["new@example.com"],
+          guests: [{ id: guest, kind: "named", name: "Guest" }],
           version: 3,
         }),
       ]),
@@ -190,7 +189,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       "select public.unpublish_content($1,$2)",
       [sid, actor],
     );
-    await assert.rejects(save(3, answer, "missing", actor), /UNPUBLISHED/);
+    await assert.rejects(save(4, answer, "missing", actor), /UNPUBLISHED/);
     await db.query<Record<string, unknown>>(
       "select public.publish_content($1,$2,0,$3,'{}',$4)",
       [sid, actor, JSON.stringify(config), release],
@@ -198,7 +197,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
     assert.equal(
       (
         await db.query<Record<string, unknown>>(
-          "select count(*)::int n from public.rsvp_answers",
+          "select count(*)::int n from public.attendances",
         )
       ).rows[0].n,
       1,
@@ -210,7 +209,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
           [iid],
         )
       ).rows[0].rsvp_revision,
-      3,
+      4,
     );
     await db.query(
       "update public.sites set vercel_project_id='legacy' where id=$1",
