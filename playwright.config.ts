@@ -1,6 +1,7 @@
 import { defineConfig } from "@playwright/test";
 const siteUrl = process.env.E2E_SITE_URL || "http://127.0.0.1:5173";
 const adminUrl = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
+const nextMode = process.env.CI || process.env.E2E_BUILT ? "start" : "dev";
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
@@ -27,13 +28,13 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: `node node_modules/next/dist/bin/next dev apps/site --hostname 127.0.0.1 --port ${new URL(siteUrl).port}`,
+      command: `node node_modules/next/dist/bin/next ${nextMode} apps/site --hostname 127.0.0.1 --port ${new URL(siteUrl).port}`,
       url: siteUrl,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
     },
     {
-      command: `node node_modules/next/dist/bin/next dev apps/admin --hostname 127.0.0.1 --port ${new URL(adminUrl).port}`,
+      command: `node node_modules/next/dist/bin/next ${nextMode} apps/admin --hostname 127.0.0.1 --port ${new URL(adminUrl).port}`,
       url: adminUrl,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
