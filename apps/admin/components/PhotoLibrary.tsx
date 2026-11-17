@@ -2,6 +2,7 @@
 import { LoadingImage } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import { ActionButton } from "./ActionButton";
+import { NoticePopover } from "./NoticePopover";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   Alert,
@@ -162,8 +163,14 @@ export function PhotoLibrary({
           );
         })}
       </S.Grid>
-      {config.media.length >= 30 && <Alert color="orange">{copy.limit}</Alert>}
-      <Title order={3}>{copy.title}</Title>
+      <Group gap="xs" align="center">
+        <Title order={3}>{copy.title}</Title>
+        {config.media.length >= 30 && (
+          <NoticePopover color="orange" label={copy.limit}>
+            {copy.limit}
+          </NoticePopover>
+        )}
+      </Group>
       <Text size="sm" c="dimmed">
         {copy.help}
       </Text>
@@ -248,11 +255,27 @@ export function PhotoLibrary({
       >
         {photo && (
           <Stack gap="lg">
-            {isSampleMedia(photo) && <Alert>{copy.exampleHelp}</Alert>}
-            {full && !locked && !deleting && (
-              <Alert color="orange">{copy.limit}</Alert>
+            {(isSampleMedia(photo) ||
+              (full && !locked && !deleting) ||
+              locked) && (
+              <Group gap="xs">
+                {isSampleMedia(photo) && (
+                  <NoticePopover color="blue" label={copy.exampleHelp}>
+                    {copy.exampleHelp}
+                  </NoticePopover>
+                )}
+                {full && !locked && !deleting && (
+                  <NoticePopover color="orange" label={copy.limit}>
+                    {copy.limit}
+                  </NoticePopover>
+                )}
+                {locked && (
+                  <NoticePopover color="orange" label={copy.deleting}>
+                    {copy.deleting}
+                  </NoticePopover>
+                )}
+              </Group>
             )}
-            {locked && <Alert color="orange">{copy.deleting}</Alert>}
             <TextInput
               label={copy.alt}
               description={copy.altHelp}

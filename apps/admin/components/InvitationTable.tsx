@@ -1,5 +1,6 @@
 "use client";
 import { Fragment, useState } from "react";
+import { NoticePopover } from "./NoticePopover";
 import {
   Alert,
   Badge,
@@ -370,17 +371,29 @@ export function InvitationTable({
                     <Table.Td colSpan={5}>
                       <Stack gap="xs" py="xs" pl="sm">
                         {collidingNames && (
-                          <Alert color="yellow">
-                            <Group justify="space-between" wrap="wrap">
-                              <Text size="xs">
-                                {labelText(
-                                  `Powtarzające się dane: ${collidingNames.join(", ")}. Przekaż gościowi link ogólny wraz z kodem ${inv.short_code}.`,
-                                  `Duplicate name: ${collidingNames.join(", ")}. Share the general link with code ${inv.short_code}.`,
-                                  `Doppelter Name: ${collidingNames.join(", ")}. Allgemeinen Link mit Code ${inv.short_code} teilen.`,
-                                )}
-                              </Text>
-                            </Group>
-                          </Alert>
+                          <Group gap="xs" align="center">
+                            <NoticePopover
+                              color="yellow"
+                              label={labelText(
+                                `Powtarzające się dane: ${collidingNames.join(", ")}. Przekaż gościowi link ogólny wraz z kodem ${inv.short_code}.`,
+                                `Duplicate name: ${collidingNames.join(", ")}. Share the general link with code ${inv.short_code}.`,
+                                `Doppelter Name: ${collidingNames.join(", ")}. Allgemeinen Link mit Code ${inv.short_code} teilen.`,
+                              )}
+                            >
+                              {labelText(
+                                `Powtarzające się dane: ${collidingNames.join(", ")}. Przekaż gościowi link ogólny wraz z kodem ${inv.short_code}.`,
+                                `Duplicate name: ${collidingNames.join(", ")}. Share the general link with code ${inv.short_code}.`,
+                                `Doppelter Name: ${collidingNames.join(", ")}. Allgemeinen Link mit Code ${inv.short_code} teilen.`,
+                              )}
+                            </NoticePopover>
+                            <Text size="xs" c="dimmed">
+                              {labelText(
+                                "Powtarzające się dane",
+                                "Duplicate name",
+                                "Doppelter Name",
+                              )}
+                            </Text>
+                          </Group>
                         )}
 
                         {isPending && (

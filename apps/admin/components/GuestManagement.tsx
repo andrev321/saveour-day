@@ -1,5 +1,6 @@
 "use client";
 import { ActionButton } from "./ActionButton";
+import { NoticePopover } from "./NoticePopover";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import { useEffect, useState } from "react";
@@ -390,20 +391,34 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         {data && (
           <>
             {!data.site.rsvp_enabled && (
-              <Alert
-                color="blue"
-                title={labelText(
-                  "Tryb informacyjny jest aktywny",
-                  "Info-only mode is active",
-                  "Infomodus ist aktiv",
-                )}
-              >
-                {labelText(
-                  "Goście nie widzą wyszukiwarki ani formularza RSVP na stronie zaproszenia. Możesz ponownie włączyć RSVP w sekcji „Publikacja i dostęp”.",
-                  "Guests cannot see the RSVP lookup or form on the invitation page. You can re-enable RSVP under “Publication and access”.",
-                  "Gäste sehen weder die RSVP-Suche noch das Formular auf der Einladungsseite. Sie können RSVP unter „Veröffentlichung und Zugang“ wieder aktivieren.",
-                )}
-              </Alert>
+              <Group gap="xs" align="center">
+                <Badge color="blue" variant="light">
+                  {labelText(
+                    "Tryb informacyjny jest aktywny",
+                    "Info-only mode is active",
+                    "Infomodus ist aktiv",
+                  )}
+                </Badge>
+                <NoticePopover
+                  color="blue"
+                  title={labelText(
+                    "Tryb informacyjny jest aktywny",
+                    "Info-only mode is active",
+                    "Infomodus ist aktiv",
+                  )}
+                  label={labelText(
+                    "Tryb informacyjny jest aktywny",
+                    "Info-only mode is active",
+                    "Infomodus ist aktiv",
+                  )}
+                >
+                  {labelText(
+                    "Goście nie widzą wyszukiwarki ani formularza RSVP na stronie zaproszenia. Możesz ponownie włączyć RSVP w sekcji „Publikacja i dostęp”.",
+                    "Guests cannot see the RSVP lookup or form on the invitation page. You can re-enable RSVP under “Publication and access”.",
+                    "Gäste sehen weder die RSVP-Suche noch das Formular auf der Einladungsseite. Sie können RSVP unter „Veröffentlichung und Zugang“ wieder aktivieren.",
+                  )}
+                </NoticePopover>
+              </Group>
             )}
             <RsvpSummaryCards
               summary={rsvpSummary}
@@ -421,15 +436,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Accordion.Control>
                 <Accordion.Panel>
                   <Stack gap="md">
-                    {!data.site.published_release_id && (
-                      <Alert color="yellow">
-                        {labelText(
-                          "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
-                          "This site is not published yet — the link and QR code will start working only after publishing.",
-                          "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
-                        )}
-                      </Alert>
-                    )}
                     <Group gap="xs" wrap="wrap">
                       <Badge
                         color={
@@ -448,6 +454,22 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                               "Nicht veröffentlicht",
                             )}
                       </Badge>
+                      {!data.site.published_release_id && (
+                        <NoticePopover
+                          color="yellow"
+                          label={labelText(
+                            "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
+                            "This site is not published yet — the link and QR code will start working only after publishing.",
+                            "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
+                          )}
+                        >
+                          {labelText(
+                            "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
+                            "This site is not published yet — the link and QR code will start working only after publishing.",
+                            "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
+                          )}
+                        </NoticePopover>
+                      )}
                       {data.site.published_release_id && (
                         <Button
                           component="a"

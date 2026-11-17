@@ -4,6 +4,7 @@ import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   ActionIcon,
   Alert,
+  Box,
   Button,
   Card,
   Checkbox,
@@ -17,6 +18,7 @@ import {
   Textarea,
   Title,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   DotsSixIcon,
   EyeIcon,
@@ -50,6 +52,7 @@ import { usePanelI18n } from "../lib/i18n";
 import { ContentPhotoField } from "./ContentPhotoField";
 import type { PhotoDevice } from "./DeviceSelector";
 import { PhotoReference, photoName } from "./PhotoReference";
+import { NoticePopover } from "./NoticePopover";
 import { SectionPreview } from "./SectionPreview";
 import {
   ContactCreateModal,
@@ -86,24 +89,24 @@ function Shared({
   disabled?: boolean;
 }) {
   const t = useText();
-  return count > 1 ? (
-    <Alert>
-      <Text size="sm">
-        {t(
-          `Wspólna treść: ${count} użycia. Zmiana zaktualizuje wszystkie.`,
-          `Shared content: ${count} uses. Changes update all of them.`,
-          `Gemeinsamer Inhalt: ${count} Verwendungen. Änderungen gelten überall.`,
-        )}
-      </Text>
-      <Button size="xs" variant="subtle" disabled={disabled} onClick={onCopy}>
+  if (count <= 1) return null;
+  const message = t(
+    `Wspólna treść: ${count} użycia. Zmiana zaktualizuje wszystkie.`,
+    `Shared content: ${count} uses. Changes update all of them.`,
+    `Gemeinsamer Inhalt: ${count} Verwendungen. Änderungen gelten überall.`,
+  );
+  return (
+    <NoticePopover color="blue" label={message}>
+      <Text size="xs">{message}</Text>
+      <Button size="xs" variant="light" disabled={disabled} onClick={onCopy}>
         {t(
           "Utwórz niezależną kopię",
           "Create independent copy",
           "Unabhängige Kopie erstellen",
         )}
       </Button>
-    </Alert>
-  ) : null;
+    </NoticePopover>
+  );
 }
 function VenueEditor({
   config,
@@ -668,38 +671,40 @@ function SectionDetails({
         />
       ) : section ? (
         <>
-          <Title order={3}>{types[section.type]}</Title>
-          <Shared
-            count={
-              config.variants.filter((v) =>
-                v.sections.some((p) => p.sectionId === section.id),
-              ).length
-            }
-            disabled={config.sections.length >= 30}
-            onCopy={() => {
-              const next = {
-                ...structuredClone(section),
-                id: newId("section"),
-              };
-              onChange((c) => ({
-                ...c,
-                sections: [...c.sections, next],
-                variants: c.variants.map((v) =>
-                  v.id === variant.id
-                    ? {
-                        ...v,
-                        sections: v.sections.map((p) =>
-                          p.sectionId === section.id
-                            ? { ...p, sectionId: next.id }
-                            : p,
-                        ),
-                      }
-                    : v,
-                ),
-              }));
-              onSelect(next.id);
-            }}
-          />
+          <Group gap="xs" align="center">
+            <Title order={3}>{types[section.type]}</Title>
+            <Shared
+              count={
+                config.variants.filter((v) =>
+                  v.sections.some((p) => p.sectionId === section.id),
+                ).length
+              }
+              disabled={config.sections.length >= 30}
+              onCopy={() => {
+                const next = {
+                  ...structuredClone(section),
+                  id: newId("section"),
+                };
+                onChange((c) => ({
+                  ...c,
+                  sections: [...c.sections, next],
+                  variants: c.variants.map((v) =>
+                    v.id === variant.id
+                      ? {
+                          ...v,
+                          sections: v.sections.map((p) =>
+                            p.sectionId === section.id
+                              ? { ...p, sectionId: next.id }
+                              : p,
+                          ),
+                        }
+                      : v,
+                  ),
+                }));
+                onSelect(next.id);
+              }}
+            />
+          </Group>
           <TextInput
             label={t("Tytuł sekcji", "Section title", "Abschnittstitel")}
             value={section.title}
@@ -805,46 +810,55 @@ function SectionDetails({
                         />
                       }
                     />
-                    <Checkbox
-                      label={t(
-                        "Goście tego wariantu są zaproszeni na to wydarzenie",
-                        "Guests of this variant are invited to this event",
-                        "Gäste dieser Variante sind zu dieser Veranstaltung eingeladen",
-                      )}
-                      checked={variant.eventIds.includes(event.id)}
-                      onChange={(e) => {
-                        const checked = e.currentTarget.checked;
-                        onChange((c) => ({
-                          ...c,
-                          variants: c.variants.map((v) =>
-                            v.id === variant.id
-                              ? {
-                                  ...v,
-                                  eventIds: checked
-                                    ? [
-                                        ...v.eventIds.filter(
+                    <Group gap="xs" align="center" wrap="nowrap">
+                      <Checkbox
+                        label={t(
+                          "Goście tego wariantu są zaproszeni na to wydarzenie",
+                          "Guests of this variant are invited to this event",
+                          "Gäste dieser Variante sind zu dieser Veranstaltung eingeladen",
+                        )}
+                        checked={variant.eventIds.includes(event.id)}
+                        onChange={(e) => {
+                          const checked = e.currentTarget.checked;
+                          onChange((c) => ({
+                            ...c,
+                            variants: c.variants.map((v) =>
+                              v.id === variant.id
+                                ? {
+                                    ...v,
+                                    eventIds: checked
+                                      ? [
+                                          ...v.eventIds.filter(
+                                            (id) => id !== event.id,
+                                          ),
+                                          event.id,
+                                        ]
+                                      : v.eventIds.filter(
                                           (id) => id !== event.id,
                                         ),
-                                        event.id,
-                                      ]
-                                    : v.eventIds.filter(
-                                        (id) => id !== event.id,
-                                      ),
-                                }
-                              : v,
-                          ),
-                        }));
-                      }}
-                    />
-                    {!variant.eventIds.includes(event.id) && (
-                      <Alert color="orange">
-                        {t(
-                          "To wydarzenie nie pojawi się w programie ani RSVP gości tego wariantu.",
-                          "This event is excluded from the programme and RSVP of this variant.",
-                          "Dieses Ereignis erscheint nicht im Programm und RSVP dieser Variante.",
-                        )}
-                      </Alert>
-                    )}
+                                  }
+                                : v,
+                            ),
+                          }));
+                        }}
+                      />
+                      {!variant.eventIds.includes(event.id) && (
+                        <NoticePopover
+                          color="orange"
+                          label={t(
+                            "To wydarzenie nie pojawi się w programie ani RSVP gości tego wariantu.",
+                            "This event is excluded from the programme and RSVP of this variant.",
+                            "Dieses Ereignis erscheint nicht im Programm und RSVP dieser Variante.",
+                          )}
+                        >
+                          {t(
+                            "To wydarzenie nie pojawi się w programie ani RSVP gości tego wariantu.",
+                            "This event is excluded from the programme and RSVP of this variant.",
+                            "Dieses Ereignis erscheint nicht im Programm und RSVP dieser Variante.",
+                          )}
+                        </NoticePopover>
+                      )}
+                    </Group>
                   </Stack>
                 </Card>
               )}
@@ -1062,31 +1076,57 @@ function FixedSection({
   );
 }
 function SectionModalBody(
-  props: ContentEditorProps & { selectedTitle: string },
+  props: ContentEditorProps & { selectedTitle: string; isWide: boolean },
 ) {
   const t = useText();
   const [modalTab, setModalTab] = useState<"edit" | "preview">("edit");
-  const { config, variantId, selected, onSelect, selectedTitle } = props;
+  const { config, variantId, selected, onSelect, selectedTitle, isWide } =
+    props;
   if (!selected) return null;
   return (
     <Stack>
-      <SegmentedControl
-        value={modalTab}
-        onChange={(v) => setModalTab(v as "edit" | "preview")}
-        data={[
-          { value: "edit", label: t("Edycja", "Edit", "Bearbeiten") },
-          { value: "preview", label: t("Podgląd", "Preview", "Vorschau") },
-        ]}
-      />
-      {modalTab === "edit" ? (
-        <SectionDetails {...props} />
+      {isWide ? (
+        <Box
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+            gap: "var(--mantine-spacing-lg)",
+            alignItems: "start",
+          }}
+        >
+          <Box style={{ minWidth: 0 }}>
+            <SectionDetails {...props} />
+          </Box>
+          <Box style={{ position: "sticky", top: 0, minWidth: 0 }}>
+            <SectionPreview
+              config={config}
+              variantId={variantId}
+              focusSection={selected}
+              title={selectedTitle}
+            />
+          </Box>
+        </Box>
       ) : (
-        <SectionPreview
-          config={config}
-          variantId={variantId}
-          focusSection={selected}
-          title={selectedTitle}
-        />
+        <>
+          <SegmentedControl
+            value={modalTab}
+            onChange={(v) => setModalTab(v as "edit" | "preview")}
+            data={[
+              { value: "edit", label: t("Edycja", "Edit", "Bearbeiten") },
+              { value: "preview", label: t("Podgląd", "Preview", "Vorschau") },
+            ]}
+          />
+          {modalTab === "edit" ? (
+            <SectionDetails {...props} />
+          ) : (
+            <SectionPreview
+              config={config}
+              variantId={variantId}
+              focusSection={selected}
+              title={selectedTitle}
+            />
+          )}
+        </>
       )}
       <Group justify="flex-end">
         <Button variant="default" onClick={() => onSelect(null)}>
@@ -1100,6 +1140,7 @@ export function ContentEditor(props: ContentEditorProps) {
   const { config, onChange, variantId, selected, onSelect } = props;
   const t = useText(),
     types = useTypes();
+  const isWide = useMediaQuery("(min-width: 62em)") ?? false;
   const [adding, setAdding] = useState(false),
     [resources, setResources] = useState(false);
   const variant = config.variants.find((v) => v.id === variantId)!;
@@ -1286,7 +1327,7 @@ export function ContentEditor(props: ContentEditorProps) {
       <Modal
         opened={!!selected}
         onClose={() => onSelect(null)}
-        size="lg"
+        size={isWide ? "min(1160px, 94vw)" : "lg"}
         title={selectedTitle}
       >
         {selected && (
@@ -1294,6 +1335,7 @@ export function ContentEditor(props: ContentEditorProps) {
             key={selected}
             {...props}
             selectedTitle={selectedTitle}
+            isWide={isWide}
           />
         )}
       </Modal>
