@@ -51,7 +51,6 @@ export function RsvpForm({
   busy,
   saving,
   closed,
-  dirty,
   language,
   copy,
   submitLabel,
@@ -367,13 +366,7 @@ export function RsvpForm({
           </BusyLabel>
         </button>
         {onRefresh && (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => {
-              if (!dirty) onRefresh();
-            }}
-          >
+          <button type="button" disabled={busy} onClick={onRefresh}>
             {copy.refresh}
           </button>
         )}

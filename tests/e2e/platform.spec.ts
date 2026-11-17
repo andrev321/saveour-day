@@ -74,7 +74,9 @@ test("admin demo forwards custom color tokens to the preview", async ({
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
   await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
-  await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
+  await page
+    .getByRole("textbox", { name: "Kolor akcentu", exact: true })
+    .fill("#123456");
   await expect(
     page.frameLocator("iframe").locator("[data-ui=invitation]"),
   ).toHaveCSS("--accent", "#123456");
@@ -215,8 +217,9 @@ test("program edits events and places without leaving the section", async ({
   await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Powitanie");
   await page.getByLabel("Nazwa miejsca", { exact: true }).fill("Ogród");
   await page.getByRole("button", { name: "Dodaj nowy element" }).click();
-  await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Toast");
-  await page
+  const eventModal = page.getByRole("dialog").last();
+  await eventModal.getByLabel(/Nazwa wydarzenia/).fill("Toast");
+  await eventModal
     .getByRole("button", { name: "Dodaj wydarzenie", exact: true })
     .click();
   await page.keyboard.press("Escape");

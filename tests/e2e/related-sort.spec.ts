@@ -109,10 +109,9 @@ for (const touch of [false, true]) {
       const contact = page.getByTestId("section-contact");
       await contact.getByRole("button", { name: /Dajcie znać/ }).click();
       await dialog.getByRole("button", { name: "Dodaj nowy element" }).click();
-      await page
-        .getByLabel("Imię / nazwa", { exact: true })
-        .fill("Drugi kontakt");
-      await page
+      const contactModal = page.getByRole("dialog").last();
+      await contactModal.getByLabel(/Imię \/ nazwa/).fill("Drugi kontakt");
+      await contactModal
         .getByRole("button", { name: "Dodaj kontakt", exact: true })
         .click();
       const before = await order(dialog);
@@ -160,7 +159,9 @@ test("gallery items reorder with keyboard and keep photo selection", async ({
   await sectionDialog
     .getByRole("button", { name: "Dodaj zdjęcie", exact: true })
     .click();
-  await page.getByLabel("Wybierz zdjęcie", { exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Wybierz zdjęcie", exact: true })
+    .click();
   await page.getByRole("option", { name: /Zdjęcie z biblioteki/ }).click();
   await page
     .getByRole("dialog")

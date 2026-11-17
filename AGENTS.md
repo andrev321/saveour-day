@@ -23,3 +23,4 @@ Single-context domain model at [`GLOSSARY.md`](./GLOSSARY.md) and [`docs/adr/`](
 - Typecheck only: `npm run typecheck`
 - Unit & integration tests: `npm test`
 - Module boundary check: `npm run lint:boundaries`
+- E2E tests (Chromium): `npm run test:e2e:chromium` (on Windows, run outside the sandbox / with `BypassSandbox: true`, because the sandbox blocks loopback connections to `127.0.0.1` needed by Playwright's `webServer`)

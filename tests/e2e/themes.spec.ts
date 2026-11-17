@@ -48,16 +48,18 @@ test("all palette controls update actual colors without changing event content",
         .toBe(palette.design.paper);
     }
   }
-  await page.getByLabel("Kolor akcentu", { exact: true }).fill("#502030");
+  await page
+    .getByRole("textbox", { name: "Kolor akcentu", exact: true })
+    .fill("#502030");
   await expect(page.locator('[data-ui="selected-palette"]')).toHaveText(
     "Własne kolory",
   );
   await page
     .getByRole("button", { name: themes.celebration.labels.pl, exact: true })
     .click();
-  await expect(page.getByLabel("Kolor akcentu", { exact: true })).toHaveValue(
-    "#502030",
-  );
+  await expect(
+    page.getByRole("textbox", { name: "Kolor akcentu", exact: true }),
+  ).toHaveValue("#502030");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   await page.getByRole("tab", { name: "Treść", exact: true }).click();
   await page

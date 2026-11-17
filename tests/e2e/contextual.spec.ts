@@ -50,11 +50,12 @@ for (const width of [390, 1440])
     await expect(dialog).toHaveCount(0);
     await contactToggle.click();
     await dialog.getByRole("button", { name: "Dodaj nowy element" }).click();
-    await page.getByLabel("Imię / nazwa", { exact: true }).fill("Nowa osoba");
-    await page
+    const contactModal = page.getByRole("dialog").last();
+    await contactModal.getByLabel(/Imię \/ nazwa/).fill("Nowa osoba");
+    await contactModal
       .getByRole("textbox", { name: "Telefon", exact: true })
       .fill("+48123456789");
-    await page
+    await contactModal
       .getByRole("button", { name: "Dodaj kontakt", exact: true })
       .click();
     await page.screenshot({
@@ -93,6 +94,12 @@ test("shared section copy isolates titles and unlinking preserves other variants
   await page
     .getByTestId("section-timeline")
     .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page
+    .getByRole("button", {
+      name: "Wspólna treść: 2 użycia. Zmiana zaktualizuje wszystkie.",
+      exact: true,
+    })
     .click();
   await expect(
     page.getByText("Wspólna treść: 2 użycia. Zmiana zaktualizuje wszystkie.", {

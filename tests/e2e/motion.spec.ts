@@ -27,7 +27,6 @@ for (const width of [390, 1280]) {
       await expect(toggle).toHaveCSS("translate", "none");
       expect(await toggle.boundingBox()).toEqual(before);
       await page.mouse.up();
-      await toggle.click();
       const dialog = page.getByRole("dialog");
       await expect(dialog).toBeVisible();
       const input = dialog.getByLabel("Główny napis", { exact: true });

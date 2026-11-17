@@ -61,7 +61,7 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
         .getByRole("button", { name: "Wygląd", exact: true })
         .click();
       await expect(
-        page.getByLabel("Kolor akcentu", { exact: true }),
+        page.getByRole("textbox", { name: "Kolor akcentu", exact: true }),
       ).toBeVisible();
       await page.getByRole("button", { name: "Menu", exact: true }).click();
       await page
