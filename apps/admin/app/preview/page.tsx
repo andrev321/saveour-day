@@ -11,6 +11,7 @@ export default function Preview() {
     config: SiteConfig;
     variant?: string;
     urls: Record<string, string>;
+    focusSection?: string;
   } | null>(null);
   useEffect(() => {
     const listener = (e: MessageEvent) => {
@@ -35,7 +36,17 @@ export default function Preview() {
         )
           ? e.data.variant
           : result.data.defaultVariant;
-        setState({ config: result.data, variant, urls: e.data.urls || {} });
+        setState({
+          config: result.data,
+          variant,
+          urls: e.data.urls || {},
+          focusSection:
+            typeof e.data.focusSection === "string"
+              ? e.data.focusSection
+              : undefined,
+        });
+      } else {
+        window.parent.postMessage({ type: "preview-invalid" }, location.origin);
       }
     };
     window.addEventListener("message", listener);
@@ -48,14 +59,18 @@ export default function Preview() {
   }, [state]);
   return state ? (
     <Invitation
-      onEditSection={(id) =>
-        window.parent.postMessage(
-          { type: "preview-select-section", id },
-          location.origin,
-        )
+      onEditSection={
+        state.focusSection
+          ? undefined
+          : (id) =>
+              window.parent.postMessage(
+                { type: "preview-select-section", id },
+                location.origin,
+              )
       }
       config={state.config}
       variantId={state.variant}
+      focusSection={state.focusSection}
       resolveMedia={(src) => state.urls[src] || src}
     />
   ) : (

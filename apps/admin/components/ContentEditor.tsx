@@ -1,14 +1,6 @@
 "use client";
-import { MotionDisclosure } from "@invitations/ui/motion-components";
 import { FormRow } from "./form-layout.styles";
-import {
-  useState,
-  useEffect,
-  useRef,
-  type ReactNode,
-  type Dispatch,
-  type SetStateAction,
-} from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   ActionIcon,
   Alert,
@@ -17,6 +9,7 @@ import {
   Checkbox,
   Group,
   Modal,
+  SegmentedControl,
   Select,
   Stack,
   Text,
@@ -29,7 +22,6 @@ import {
   EyeIcon,
   EyeSlashIcon,
   TrashIcon,
-  CaretDownIcon,
 } from "@phosphor-icons/react";
 import {
   DndContext,
@@ -58,6 +50,16 @@ import { usePanelI18n } from "../lib/i18n";
 import { ContentPhotoField } from "./ContentPhotoField";
 import type { PhotoDevice } from "./DeviceSelector";
 import { PhotoReference, photoName } from "./PhotoReference";
+import { SectionPreview } from "./SectionPreview";
+import {
+  ContactCreateModal,
+  ContactFormFields,
+  EventCreateModal,
+  EventFormFields,
+  GalleryPhotoModal,
+  VenueCreateModal,
+  VenueFormFields,
+} from "./ContentEntityModals";
 type Change = Dispatch<SetStateAction<SiteConfig>>;
 function useText() {
   const { language } = usePanelI18n();
@@ -115,6 +117,7 @@ function VenueEditor({
   onSelect: (id: string | undefined) => void;
 }) {
   const t = useText();
+  const [creating, setCreating] = useState(false);
   const venue = config.venues.find((v) => v.id === id);
   const update = (patch: Partial<SiteConfig["venues"][number]>) =>
     onChange((c) => ({
@@ -138,28 +141,19 @@ function VenueEditor({
         />
         <Button
           disabled={config.venues.length >= 30}
-          onClick={() => {
-            const id = newId("venue");
-            onChange((c) => ({
-              ...c,
-              venues: [
-                ...c.venues,
-                {
-                  id,
-                  name: t("Nowe miejsce", "New venue", "Neuer Ort"),
-                  address: "",
-                  description: "",
-                  mapUrl: "",
-                  navigationUrl: "",
-                },
-              ],
-            }));
-            onSelect(id);
-          }}
+          onClick={() => setCreating(true)}
         >
           {t("Dodaj miejsce", "Add venue", "Ort hinzufügen")}
         </Button>
       </FormRow>
+      <VenueCreateModal
+        opened={creating}
+        onClose={() => setCreating(false)}
+        onCreate={(next) => {
+          onChange((c) => ({ ...c, venues: [...c.venues, next] }));
+          onSelect(next.id);
+        }}
+      />
       {venue && (
         <>
           <Shared
@@ -171,39 +165,7 @@ function VenueEditor({
               onSelect(next.id);
             }}
           />
-          <TextInput
-            label={t("Nazwa miejsca", "Venue name", "Name des Ortes")}
-            value={venue.name}
-            onChange={(e) => update({ name: e.currentTarget.value })}
-          />
-          <TextInput
-            label={t("Adres", "Address", "Adresse")}
-            value={venue.address}
-            onChange={(e) => update({ address: e.currentTarget.value })}
-          />
-          <Textarea
-            label={t("Opis miejsca", "Venue description", "Ortsbeschreibung")}
-            value={venue.description}
-            onChange={(e) => update({ description: e.currentTarget.value })}
-          />
-          <TextInput
-            label={t(
-              "Link nawigacji (opcjonalny)",
-              "Navigation link (optional)",
-              "Navigationslink (optional)",
-            )}
-            value={venue.navigationUrl}
-            onChange={(e) => update({ navigationUrl: e.currentTarget.value })}
-          />
-          <TextInput
-            label={t(
-              "Mapa Google — adres osadzania (opcjonalny)",
-              "Google Maps embed URL (optional)",
-              "Google Maps Einbettung (optional)",
-            )}
-            value={venue.mapUrl}
-            onChange={(e) => update({ mapUrl: e.currentTarget.value })}
-          />
+          <VenueFormFields value={venue} onPatch={update} />
         </>
       )}
     </Stack>
@@ -353,6 +315,8 @@ function RelatedList({
   onSelect,
   onIds,
   onAdd,
+  addLabel,
+  hideExisting = false,
   photos,
 }: {
   ids: string[];
@@ -361,6 +325,8 @@ function RelatedList({
   onSelect: (id: string | null) => void;
   onIds: (ids: string[]) => void;
   onAdd: () => void;
+  addLabel?: string;
+  hideExisting?: boolean;
   photos?: MediaAsset[];
 }) {
   const t = useText();
@@ -407,9 +373,10 @@ function RelatedList({
         </SortableContext>
       </DndContext>
       <Button variant="light" onClick={onAdd}>
-        {t("Dodaj nowy element", "Add new item", "Neuen Eintrag hinzufügen")}
+        {addLabel ||
+          t("Dodaj nowy element", "Add new item", "Neuen Eintrag hinzufügen")}
       </Button>
-      {options.some((o) => !ids.includes(o.id)) && (
+      {!hideExisting && options.some((o) => !ids.includes(o.id)) && (
         <FormRow>
           <Select
             searchable
@@ -455,11 +422,7 @@ function SectionRow({
   visible,
   onEdit,
   onVisibility,
-  expanded,
-  children,
 }: {
-  expanded: boolean;
-  children: ReactNode;
   section: Section;
   visible: boolean;
   onEdit: () => void;
@@ -503,8 +466,6 @@ function SectionRow({
           py={4}
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           onClick={onEdit}
-          aria-expanded={expanded}
-          aria-controls={`content-${section.id}`}
           styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
         >
           <Group gap="xs" wrap="nowrap" w="100%">
@@ -520,14 +481,6 @@ function SectionRow({
                 {types[section.type]}
               </Text>
             </Stack>
-            <CaretDownIcon
-              className="content-disclosure-chevron"
-              size={16}
-              style={{
-                flexShrink: 0,
-                transform: expanded ? "rotate(180deg)" : undefined,
-              }}
-            />
           </Group>
         </Button>
         <ActionIcon
@@ -542,9 +495,6 @@ function SectionRow({
           {visible ? <EyeIcon /> : <EyeSlashIcon />}
         </ActionIcon>
       </Group>
-      <MotionDisclosure id={`content-${section.id}`} open={expanded}>
-        {children}
-      </MotionDisclosure>
     </Card>
   );
 }
@@ -569,6 +519,9 @@ function SectionDetails({
   const t = useText(),
     types = useTypes();
   const [entity, setEntity] = useState<string | null>(null),
+    [creatingEntity, setCreatingEntity] = useState<
+      "event" | "contact" | "gallery" | null
+    >(null),
     [deleting, setDeleting] = useState(false);
   const variant = config.variants.find((v) => v.id === variantId)!;
   const section = config.sections.find((s) => s.id === selected);
@@ -609,12 +562,8 @@ function SectionDetails({
         x.id === contact?.id ? { ...x, ...patch } : x,
       ),
     }));
-  const formRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    formRef.current?.scrollIntoView({ block: "nearest" });
-  }, []);
   return (
-    <Stack ref={formRef} pt="md">
+    <Stack pt="md">
       {selected === "hero" ? (
         <>
           <Title order={3}>
@@ -786,35 +735,31 @@ function SectionDetails({
                 onIds={(eventIds) => update({ eventIds })}
                 onAdd={() => {
                   if (config.events.length >= 50) return;
-                  const id = newId("event");
+                  setCreatingEntity("event");
+                }}
+              />
+              <EventCreateModal
+                opened={creatingEntity === "event"}
+                onClose={() => setCreatingEntity(null)}
+                venues={config.venues}
+                onCreate={(nextEvent, includeInVariant) => {
                   onChange((c) => ({
                     ...c,
-                    events: [
-                      ...c.events,
-                      {
-                        id,
-                        title: t(
-                          "Nowe wydarzenie",
-                          "New event",
-                          "Neue Veranstaltung",
-                        ),
-                        time: "15:00",
-                        url: "",
-                        dateLabel: "",
-                      },
-                    ],
+                    events: [...c.events, nextEvent],
                     sections: c.sections.map((s) =>
                       s.id === section.id && s.type === "timeline"
-                        ? { ...s, eventIds: [...s.eventIds, id] }
+                        ? { ...s, eventIds: [...s.eventIds, nextEvent.id] }
                         : s,
                     ),
-                    variants: c.variants.map((v) =>
-                      v.id === variant.id
-                        ? { ...v, eventIds: [...v.eventIds, id] }
-                        : v,
-                    ),
+                    variants: includeInVariant
+                      ? c.variants.map((v) =>
+                          v.id === variant.id
+                            ? { ...v, eventIds: [...v.eventIds, nextEvent.id] }
+                            : v,
+                        )
+                      : c.variants,
                   }));
-                  setEntity(id);
+                  setEntity(nextEvent.id);
                 }}
               />
               {event && (
@@ -848,63 +793,16 @@ function SectionDetails({
                         setEntity(next.id);
                       }}
                     />
-                    <TextInput
-                      label={t(
-                        "Nazwa wydarzenia",
-                        "Event name",
-                        "Name der Veranstaltung",
-                      )}
-                      value={event.title}
-                      onChange={(e) =>
-                        updateEvent({ title: e.currentTarget.value })
-                      }
-                    />
-                    <Group grow>
-                      <TextInput
-                        type="date"
-                        label={t("Data", "Date", "Datum")}
-                        value={event.date || ""}
-                        onChange={(e) =>
-                          updateEvent({
-                            date: e.currentTarget.value || undefined,
-                          })
-                        }
-                      />
-                      <TextInput
-                        type="time"
-                        label={t("Godzina", "Time", "Uhrzeit")}
-                        value={event.time}
-                        onChange={(e) =>
-                          updateEvent({ time: e.currentTarget.value })
-                        }
-                      />
-                    </Group>
-                    <TextInput
-                      label={t(
-                        "Opis daty (opcjonalny)",
-                        "Date label (optional)",
-                        "Datumsbeschreibung (optional)",
-                      )}
-                      value={event.dateLabel}
-                      onChange={(e) =>
-                        updateEvent({ dateLabel: e.currentTarget.value })
-                      }
-                    />
-                    <VenueEditor
-                      config={config}
-                      id={event.venueId}
-                      onChange={onChange}
-                      onSelect={(venueId) => updateEvent({ venueId })}
-                    />
-                    <TextInput
-                      label={t(
-                        "Link wydarzenia (opcjonalny)",
-                        "Event link (optional)",
-                        "Veranstaltungslink (optional)",
-                      )}
-                      value={event.url}
-                      onChange={(e) =>
-                        updateEvent({ url: e.currentTarget.value })
+                    <EventFormFields
+                      value={event}
+                      onPatch={updateEvent}
+                      venueField={
+                        <VenueEditor
+                          config={config}
+                          id={event.venueId}
+                          onChange={onChange}
+                          onSelect={(venueId) => updateEvent({ venueId })}
+                        />
                       }
                     />
                     <Checkbox
@@ -965,24 +863,23 @@ function SectionDetails({
                 onIds={(contactIds) => update({ contactIds })}
                 onAdd={() => {
                   if (config.contacts.length >= 10) return;
-                  const id = newId("contact");
+                  setCreatingEntity("contact");
+                }}
+              />
+              <ContactCreateModal
+                opened={creatingEntity === "contact"}
+                onClose={() => setCreatingEntity(null)}
+                onCreate={(nextContact) => {
                   onChange((c) => ({
                     ...c,
-                    contacts: [
-                      ...c.contacts,
-                      {
-                        id,
-                        name: t("Nowy kontakt", "New contact", "Neuer Kontakt"),
-                        phone: "",
-                      },
-                    ],
+                    contacts: [...c.contacts, nextContact],
                     sections: c.sections.map((s) =>
                       s.id === section.id && s.type === "contact"
-                        ? { ...s, contactIds: [...s.contactIds, id] }
+                        ? { ...s, contactIds: [...s.contactIds, nextContact.id] }
                         : s,
                     ),
                   }));
-                  setEntity(id);
+                  setEntity(nextContact.id);
                 }}
               />
               {contact && (
@@ -1011,20 +908,9 @@ function SectionDetails({
                         setEntity(next.id);
                       }}
                     />
-                    <TextInput
-                      label={t("Imię / nazwa", "Name", "Name")}
-                      value={contact.name}
-                      onChange={(e) =>
-                        updateContact({ name: e.currentTarget.value })
-                      }
-                    />
-                    <TextInput
-                      type="tel"
-                      label={t("Telefon", "Phone", "Telefon")}
-                      value={contact.phone}
-                      onChange={(e) =>
-                        updateContact({ phone: e.currentTarget.value })
-                      }
+                    <ContactFormFields
+                      value={contact}
+                      onPatch={updateContact}
                     />
                   </Stack>
                 </Card>
@@ -1052,56 +938,47 @@ function SectionDetails({
                     ),
                   })
                 }
-                onAdd={() => setEntity("choose")}
+                addLabel={t("Dodaj zdjęcie", "Add photo", "Foto hinzufügen")}
+                hideExisting
+                onAdd={() => setCreatingEntity("gallery")}
               />
-              {entity === "choose" ? (
-                <Select
-                  label={t("Wybierz zdjęcie", "Choose photo", "Foto auswählen")}
-                  data={config.media
-                    .filter((p) => !section.mediaIds.includes(p.id))
-                    .map((p) => ({ value: p.id, label: photoName(p) }))}
-                  renderOption={({ option }) => (
-                    <PhotoReference
-                      photo={config.media.find((p) => p.id === option.value)!}
-                    />
-                  )}
-                  onChange={(id) => {
-                    if (id) {
-                      update({ mediaIds: [...section.mediaIds, id] });
-                      setEntity(id);
-                    }
+              <GalleryPhotoModal
+                opened={creatingEntity === "gallery"}
+                onClose={() => setCreatingEntity(null)}
+                media={config.media}
+                excludedIds={section.mediaIds}
+                onSelectPhoto={(id) => {
+                  update({ mediaIds: [...section.mediaIds, id] });
+                  setEntity(id);
+                }}
+              />
+              {entity && section.mediaIds.includes(entity) && (
+                <ContentPhotoField
+                  config={config}
+                  id={entity}
+                  crops={section.crops[entity] || {}}
+                  device={device}
+                  onDevice={onDevice}
+                  onCrops={(crops) =>
+                    update({ crops: { ...section.crops, [entity]: crops } })
+                  }
+                  onId={(id) => {
+                    if (
+                      id === entity ||
+                      (id && section.mediaIds.includes(id))
+                    )
+                      return;
+                    const crops = { ...section.crops };
+                    delete crops[entity];
+                    update({
+                      mediaIds: id
+                        ? section.mediaIds.map((x) => (x === entity ? id : x))
+                        : section.mediaIds.filter((x) => x !== entity),
+                      crops,
+                    });
+                    setEntity(id);
                   }}
                 />
-              ) : (
-                entity &&
-                section.mediaIds.includes(entity) && (
-                  <ContentPhotoField
-                    config={config}
-                    id={entity}
-                    crops={section.crops[entity] || {}}
-                    device={device}
-                    onDevice={onDevice}
-                    onCrops={(crops) =>
-                      update({ crops: { ...section.crops, [entity]: crops } })
-                    }
-                    onId={(id) => {
-                      if (
-                        id === entity ||
-                        (id && section.mediaIds.includes(id))
-                      )
-                        return;
-                      const crops = { ...section.crops };
-                      delete crops[entity];
-                      update({
-                        mediaIds: id
-                          ? section.mediaIds.map((x) => (x === entity ? id : x))
-                          : section.mediaIds.filter((x) => x !== entity),
-                        crops,
-                      });
-                      setEntity(id);
-                    }}
-                  />
-                )
               )}
             </>
           )}
@@ -1147,17 +1024,11 @@ function SectionDetails({
   );
 }
 function FixedSection({
-  id,
   label,
-  expanded,
-  onToggle,
-  children,
+  onSelect,
 }: {
-  id: string;
   label: string;
-  expanded: boolean;
-  onToggle: () => void;
-  children: ReactNode;
+  onSelect: () => void;
 }) {
   return (
     <Card withBorder padding="xs">
@@ -1169,9 +1040,7 @@ function FixedSection({
           py={4}
           style={{ flex: 1, minWidth: 0, height: "auto", minHeight: 44 }}
           styles={{ label: { width: "100%", minWidth: 0, textAlign: "left" } }}
-          onClick={onToggle}
-          aria-expanded={expanded}
-          aria-controls={`content-${id}`}
+          onClick={onSelect}
         >
           <Group gap="xs" wrap="nowrap" w="100%">
             <Text
@@ -1185,22 +1054,46 @@ function FixedSection({
             >
               {label}
             </Text>
-            <CaretDownIcon
-              className="content-disclosure-chevron"
-              size={16}
-              style={{
-                flexShrink: 0,
-                transform: expanded ? "rotate(180deg)" : undefined,
-              }}
-            />
           </Group>
         </Button>
         <span aria-hidden="true" style={{ width: 28, flexShrink: 0 }} />
       </Group>
-      <MotionDisclosure id={`content-${id}`} open={expanded}>
-        {children}
-      </MotionDisclosure>
     </Card>
+  );
+}
+function SectionModalBody(
+  props: ContentEditorProps & { selectedTitle: string },
+) {
+  const t = useText();
+  const [modalTab, setModalTab] = useState<"edit" | "preview">("edit");
+  const { config, variantId, selected, onSelect, selectedTitle } = props;
+  if (!selected) return null;
+  return (
+    <Stack>
+      <SegmentedControl
+        value={modalTab}
+        onChange={(v) => setModalTab(v as "edit" | "preview")}
+        data={[
+          { value: "edit", label: t("Edycja", "Edit", "Bearbeiten") },
+          { value: "preview", label: t("Podgląd", "Preview", "Vorschau") },
+        ]}
+      />
+      {modalTab === "edit" ? (
+        <SectionDetails {...props} />
+      ) : (
+        <SectionPreview
+          config={config}
+          variantId={variantId}
+          focusSection={selected}
+          title={selectedTitle}
+        />
+      )}
+      <Group justify="flex-end">
+        <Button variant="default" onClick={() => onSelect(null)}>
+          {t("Gotowe", "Done", "Fertig")}
+        </Button>
+      </Group>
+    </Stack>
   );
 }
 export function ContentEditor(props: ContentEditorProps) {
@@ -1211,8 +1104,21 @@ export function ContentEditor(props: ContentEditorProps) {
     [resources, setResources] = useState(false);
   const variant = config.variants.find((v) => v.id === variantId)!;
   const sensors = useSortSensors();
-  const toggle = (id: string) => onSelect(selected === id ? null : id);
-  const details = <SectionDetails key={selected} {...props} />;
+  const selectedSectionObj =
+    selected && selected !== "hero" && selected !== "footer"
+      ? config.sections.find((s) => s.id === selected)
+      : undefined;
+  const selectedTitle =
+    selected === "hero"
+      ? t(
+          "Początek zaproszenia",
+          "Invitation introduction",
+          "Beginn der Einladung",
+        )
+      : selected === "footer"
+        ? t("Stopka", "Footer", "Fußzeile")
+        : selectedSectionObj?.title ||
+          t("Edycja sekcji", "Edit section", "Abschnitt bearbeiten");
   const place = (id: string) =>
     onChange((c) => ({
       ...c,
@@ -1232,23 +1138,19 @@ export function ContentEditor(props: ContentEditorProps) {
       </Title>
       <Text size="sm" c="dimmed">
         {t(
-          "Rozwiń sekcję, aby edytować jej treść. Kolejność i widoczność dotyczą wybranego wariantu.",
-          "Expand a section to edit. Order and visibility apply to the selected variant.",
-          "Klappe einen Abschnitt auf. Reihenfolge und Sichtbarkeit gelten für die ausgewählte Variante.",
+          "Kliknij sekcję, aby edytować jej treść w oknie. Kolejność i widoczność dotyczą wybranego wariantu.",
+          "Click a section to edit its content. Order and visibility apply to the selected variant.",
+          "Klicke auf einen Abschnitt, um ihn zu bearbeiten. Reihenfolge und Sichtbarkeit gelten für die ausgewählte Variante.",
         )}
       </Text>
       <FixedSection
-        id="hero"
         label={t(
           "Początek zaproszenia",
           "Invitation introduction",
           "Beginn der Einladung",
         )}
-        expanded={selected === "hero"}
-        onToggle={() => toggle("hero")}
-      >
-        {selected === "hero" && details}
-      </FixedSection>
+        onSelect={() => onSelect("hero")}
+      />
       <DndContext
         id="content-sections"
         sensors={sensors}
@@ -1277,8 +1179,7 @@ export function ContentEditor(props: ContentEditorProps) {
                   key={s.id}
                   section={s}
                   visible={p.visible}
-                  expanded={selected === s.id}
-                  onEdit={() => toggle(s.id)}
+                  onEdit={() => onSelect(s.id)}
                   onVisibility={() =>
                     onChange((c) => ({
                       ...c,
@@ -1296,9 +1197,7 @@ export function ContentEditor(props: ContentEditorProps) {
                       ),
                     }))
                   }
-                >
-                  {selected === s.id && details}
-                </SectionRow>
+                />
               );
             })}
           </Stack>
@@ -1308,13 +1207,9 @@ export function ContentEditor(props: ContentEditorProps) {
         {t("Dodaj sekcję", "Add section", "Abschnitt hinzufügen")}
       </Button>
       <FixedSection
-        id="footer"
         label={t("Stopka", "Footer", "Fußzeile")}
-        expanded={selected === "footer"}
-        onToggle={() => toggle("footer")}
-      >
-        {selected === "footer" && details}
-      </FixedSection>
+        onSelect={() => onSelect("footer")}
+      />
       <Button variant="subtle" onClick={() => setResources(true)}>
         {t(
           "Zarządzaj wspólnymi danymi",
@@ -1387,6 +1282,20 @@ export function ContentEditor(props: ContentEditorProps) {
               </Button>
             ))}
         </Stack>
+      </Modal>
+      <Modal
+        opened={!!selected}
+        onClose={() => onSelect(null)}
+        size="lg"
+        title={selectedTitle}
+      >
+        {selected && (
+          <SectionModalBody
+            key={selected}
+            {...props}
+            selectedTitle={selectedTitle}
+          />
+        )}
       </Modal>
       <Resources
         opened={resources}

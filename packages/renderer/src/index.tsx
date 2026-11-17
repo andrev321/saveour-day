@@ -357,12 +357,14 @@ export function Invitation({
   variantId,
   resolveMedia,
   onEditSection,
+  focusSection,
   children,
 }: {
   config: SiteConfig;
   variantId?: string;
   onEditSection?: (id: string) => void;
   resolveMedia?: (src: string) => string;
+  focusSection?: string;
   children?: ReactNode;
 }) {
   const variant = config.variants.find(
@@ -372,6 +374,15 @@ export function Invitation({
   const mobile = config.media.find((m) => m.id === config.hero.mobileMediaId);
   const tablet = config.media.find((m) => m.id === config.hero.tabletMediaId);
   const sections = visibleSections(config, variant);
+  const showHero = !focusSection || focusSection === "hero";
+  const showMain =
+    !focusSection || (focusSection !== "hero" && focusSection !== "footer");
+  const showFooter =
+    (!focusSection || focusSection === "footer") && Boolean(config.copy.footer);
+  const renderedSections =
+    focusSection && showMain
+      ? config.sections.filter((section) => section.id === focusSection)
+      : sections;
   const events = variant.eventIds
     .map((id) => config.events.find((e) => e.id === id)!)
     .filter(Boolean);
@@ -431,6 +442,7 @@ export function Invitation({
   const heading = config.identity.displayName || config.hero.title;
   const dateLabel = variant.dateLabel || config.hero.dateLabel;
   if (
+    !focusSection &&
     !config.identity.displayName &&
     !config.hero.title &&
     !config.hero.description &&
@@ -467,29 +479,32 @@ export function Invitation({
         data-decorations={config.appearance.decorations}
         style={colors}
       >
-        <S.InvitationHeader>
-          <span>{config.identity.displayName || config.hero.eyebrow}</span>
-          {navigation.length || actionTarget ? (
-            <nav aria-label={labels.navigation}>
-              {navigation
-                .filter((section) => `section-${section.id}` !== actionTarget)
-                .map((section) => (
-                  <a key={section.id} href={`#section-${section.id}`}>
-                    {section.title}
+        {!focusSection && (
+          <S.InvitationHeader>
+            <span>{config.identity.displayName || config.hero.eyebrow}</span>
+            {navigation.length || actionTarget ? (
+              <nav aria-label={labels.navigation}>
+                {navigation
+                  .filter((section) => `section-${section.id}` !== actionTarget)
+                  .map((section) => (
+                    <a key={section.id} href={`#section-${section.id}`}>
+                      {section.title}
+                    </a>
+                  ))}
+                {actionTarget && (
+                  <a href={`#${actionTarget}`}>
+                    {actionLabel} <span aria-hidden="true">↗</span>
                   </a>
-                ))}
-              {actionTarget && (
-                <a href={`#${actionTarget}`}>
-                  {actionLabel} <span aria-hidden="true">↗</span>
-                </a>
-              )}
-            </nav>
-          ) : null}
-        </S.InvitationHeader>
-        <S.InvitationHero
-          data-layout={config.hero.layout}
-          data-has-photo={Boolean(hero)}
-        >
+                )}
+              </nav>
+            ) : null}
+          </S.InvitationHeader>
+        )}
+        {showHero && (
+          <S.InvitationHero
+            data-layout={config.hero.layout}
+            data-has-photo={Boolean(hero)}
+          >
           {onEditSection && (
             <PreviewEditButton
               title="Nagłówek"
@@ -542,13 +557,15 @@ export function Invitation({
               />
             </S.InvitationHeroPhoto>
           )}
-        </S.InvitationHero>
-        {config.theme === "editorial" && dateLabel && (
+          </S.InvitationHero>
+        )}
+        {showHero && config.theme === "editorial" && dateLabel && (
           <S.DateBand>{dateLabel}</S.DateBand>
         )}
-        <S.InvitationMain>
-          <S.SectionGrid>
-            {sections.map((section, index) => (
+        {showMain && (
+          <S.InvitationMain>
+            <S.SectionGrid>
+              {renderedSections.map((section, index) => (
               <S.InvitationSection
                 component="section"
                 key={section.id}
@@ -657,16 +674,27 @@ export function Invitation({
             ))}
           </S.SectionGrid>
         </S.InvitationMain>
-        {children && (
+        )}
+        {!focusSection && children && (
           <S.InvitationResponse id="invitation-response">
             {children}
           </S.InvitationResponse>
         )}
-        {config.copy.footer && (
+        {showFooter ? (
           <S.InvitationFooter>
             <Text>{config.copy.footer}</Text>
           </S.InvitationFooter>
-        )}
+        ) : focusSection === "footer" ? (
+          <S.InvitationFooter>
+            <Text c="dimmed">
+              {config.locale === "pl-PL"
+                ? "Stopka jest pusta."
+                : config.locale === "en-GB"
+                  ? "Footer is empty."
+                  : "Fußzeile ist leer."}
+            </Text>
+          </S.InvitationFooter>
+        ) : null}
       </S.ThemedInvitation>
     </InvitationProvider>
   );
