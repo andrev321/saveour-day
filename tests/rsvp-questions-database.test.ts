@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PGlite } from "@electric-sql/pglite";
@@ -205,6 +206,24 @@ test("RSVP questions enforce required checks for guests, clean up removed option
         .rows.length,
       0,
     );
+
+    // Admin requireSite select columns must match the migrated sites schema and authenticated grants.
+    const adminServerSource = readFileSync(
+      new URL("../apps/admin/lib/server.ts", import.meta.url),
+      "utf8",
+    );
+    const siteSelectMatch = adminServerSource.match(
+      /\.from\("sites"\)\s*\.select\(\s*"([^"]+)"/,
+    );
+    assert.ok(siteSelectMatch?.[1], "requireSite select columns not found");
+    await db.exec(
+      `set role authenticated; set request.jwt.claim.role='authenticated'; set request.jwt.claim.sub='${owner}'`,
+    );
+    const siteRow = await db.query(
+      `select ${siteSelectMatch[1]} from public.sites where id = $1 and deleted_at is null`,
+      [sid],
+    );
+    assert.equal(siteRow.rows.length, 1);
 
     // RLS isolation: another organizer cannot read questions, answers, or guests.
     await db.exec(
