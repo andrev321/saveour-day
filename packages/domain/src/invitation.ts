@@ -25,9 +25,12 @@ export const invitationGuestInputSchema = z
       .nullable()
       .transform((v) => (v && v.length > 0 ? v : null)),
   })
-  .refine((g) => g.kind === "companion" || (g.name !== null && g.name.length >= 1), {
-    message: "Osoba imienna musi mieć imię i nazwisko.",
-  });
+  .refine(
+    (g) => g.kind === "companion" || (g.name !== null && g.name.length >= 1),
+    {
+      message: "Osoba imienna musi mieć imię i nazwisko.",
+    },
+  );
 
 export type InvitationGuestInput = z.infer<typeof invitationGuestInputSchema>;
 
@@ -99,7 +102,9 @@ export function invitationDisplayName(
   const named = inv.guests
     .filter((g) => g.kind === "named" && g.name?.trim())
     .map((g) => g.name!.trim());
-  const companionCount = inv.guests.filter((g) => g.kind === "companion").length;
+  const companionCount = inv.guests.filter(
+    (g) => g.kind === "companion",
+  ).length;
 
   if (named.length === 0) {
     return companionCount > 0 ? `${copy.companion} (${companionCount})` : "";
@@ -167,7 +172,9 @@ export function isEventCompanionAllowed(
   eventId: string,
 ): boolean {
   return guests.some(
-    (g) => g.kind === "named" && attendances[attendanceKey(g.id, eventId)] === "true",
+    (g) =>
+      g.kind === "named" &&
+      attendances[attendanceKey(g.id, eventId)] === "true",
   );
 }
 
@@ -178,9 +185,16 @@ export function applyNamedDeclineCascade(
   eventId: string,
   val: "true" | "false",
 ): Record<string, string> {
-  const next = { ...attendances, [attendanceKey(changedGuestId, eventId)]: val };
+  const next = {
+    ...attendances,
+    [attendanceKey(changedGuestId, eventId)]: val,
+  };
   const target = guests.find((g) => g.id === changedGuestId);
-  if (target?.kind === "named" && val === "false" && !isEventCompanionAllowed(guests, next, eventId)) {
+  if (
+    target?.kind === "named" &&
+    val === "false" &&
+    !isEventCompanionAllowed(guests, next, eventId)
+  ) {
     for (const g of guests) {
       if (g.kind === "companion") {
         next[attendanceKey(g.id, eventId)] = "false";

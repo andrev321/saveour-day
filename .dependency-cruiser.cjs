@@ -66,6 +66,28 @@ module.exports = {
       from: { path: `^${PACKAGES_ROOT}/domain/` },
       to: { path: `(^${PACKAGES_ROOT}/(ui|renderer)/|^apps/)` },
     },
+    {
+      name: "ui-is-independent",
+      comment:
+        "@invitations/ui must not depend on @invitations/renderer or apps/*.",
+      severity: "error",
+      from: { path: `^${PACKAGES_ROOT}/ui/` },
+      to: { path: `(^${PACKAGES_ROOT}/renderer/|^apps/)` },
+    },
+    {
+      name: "renderer-not-from-apps",
+      comment: "@invitations/renderer must not depend on apps/*.",
+      severity: "error",
+      from: { path: `^${PACKAGES_ROOT}/renderer/` },
+      to: { path: `^apps/` },
+    },
+    {
+      name: "apps-are-isolated",
+      comment: "apps/admin and apps/site must not import from each other.",
+      severity: "error",
+      from: { path: `^apps/([^/]+)/` },
+      to: { path: `^apps/`, pathNot: `^apps/$1/` },
+    },
   ],
   options: {
     doNotFollow: { path: "node_modules" },

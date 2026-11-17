@@ -105,9 +105,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     await expect(page.getByText("Rodzina Kowalskich")).toBeVisible();
     await search.fill("");
     await responses.click();
-    await page
-      .getByRole("option", { name: "Czekamy", exact: true })
-      .click();
+    await page.getByRole("option", { name: "Czekamy", exact: true }).click();
     await expect(responses).toHaveValue("Czekamy");
     await expectContained(page);
     await page.screenshot({ path: `test-results/mobile-guests-${width}.png` });

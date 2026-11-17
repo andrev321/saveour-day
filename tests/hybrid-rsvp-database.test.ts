@@ -109,7 +109,11 @@ test("hybrid RSVP migration supports short_code, Polish lookup, companion rules,
       sessionHash: string | null = null,
     ) => {
       const res = await db.query<{
-        res: { status: string; invitationId?: string; shortCodeMatched?: boolean };
+        res: {
+          status: string;
+          invitationId?: string;
+          shortCodeMatched?: boolean;
+        };
       }>("select public.lookup_guest_invitation($1,$2,$3,$4) res", [
         sid,
         query,
@@ -176,7 +180,11 @@ test("hybrid RSVP migration supports short_code, Polish lookup, companion rules,
         sid,
         actor,
         iid1,
-        JSON.stringify({ version: 1, guestId: guest1Comp, name: "Tomek Towarzysz" }),
+        JSON.stringify({
+          version: 1,
+          guestId: guest1Comp,
+          name: "Tomek Towarzysz",
+        }),
       ],
     );
     const convertedLookup = await lookup("Tomek Towarzysz");
@@ -190,10 +198,17 @@ test("hybrid RSVP migration supports short_code, Polish lookup, companion rules,
     );
     await db.query(
       "select public.save_guest_rsvp($1,$2,0,$3,'Cześć!','{}'::jsonb,'[]'::jsonb,'sess1',null)",
-      [sid, iid3, JSON.stringify([{ guestId: guest3, eventId, attending: true }])],
+      [
+        sid,
+        iid3,
+        JSON.stringify([{ guestId: guest3, eventId, attending: true }]),
+      ],
     );
     assert.equal((await lookup("Łukasz Żółć", null, null)).status, "locked");
-    assert.equal((await lookup("Łukasz Żółć", null, "sess1")).status, "matched");
+    assert.equal(
+      (await lookup("Łukasz Żółć", null, "sess1")).status,
+      "matched",
+    );
     const code3 = codes.rows.find((r) => r.id === iid3)!.short_code;
     const unlockByCode = await lookup(code3, null, null);
     assert.equal(unlockByCode.status, "matched");
@@ -265,15 +280,22 @@ test("hybrid RSVP migration supports short_code, Polish lookup, companion rules,
     assert.equal(mergedAnswers.rows[0]!.attending, true);
 
     // Info-only mode disables lookup and guest RSVP writes.
-    await db.query("select public.configure_rsvp_options($1,$2,false,false,2)", [
-      sid,
-      actor,
-    ]);
-    assert.equal((await lookup("Łukasz Żółć", null, "sess1")).status, "not_found");
+    await db.query(
+      "select public.configure_rsvp_options($1,$2,false,false,2)",
+      [sid, actor],
+    );
+    assert.equal(
+      (await lookup("Łukasz Żółć", null, "sess1")).status,
+      "not_found",
+    );
     await assert.rejects(
       db.query(
         "select public.save_guest_rsvp($1,$2,1,$3,'Próba','{}'::jsonb,'[]'::jsonb,'sess1',null)",
-        [sid, iid3, JSON.stringify([{ guestId: guest3, eventId, attending: false }])],
+        [
+          sid,
+          iid3,
+          JSON.stringify([{ guestId: guest3, eventId, attending: false }]),
+        ],
       ),
       /RSVP_DISABLED/,
     );

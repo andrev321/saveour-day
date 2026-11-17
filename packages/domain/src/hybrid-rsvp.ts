@@ -40,7 +40,10 @@ export function normalizeGuestLookup(input: string): string {
 export function detectGuestCollisions(
   invitations: CollisionInvitationInput[],
 ): Map<string, string[]> {
-  const byName = new Map<string, Array<{ invitationId: string; rawName: string }>>();
+  const byName = new Map<
+    string,
+    Array<{ invitationId: string; rawName: string }>
+  >();
 
   for (const inv of invitations) {
     const seenInInv = new Set<string>();

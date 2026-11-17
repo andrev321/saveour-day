@@ -59,7 +59,11 @@ export function RsvpQuestionModal({
       size="lg"
       title={
         mode === "create"
-          ? labelText("Nowe pytanie RSVP", "New RSVP question", "Neue RSVP-Frage")
+          ? labelText(
+              "Nowe pytanie RSVP",
+              "New RSVP question",
+              "Neue RSVP-Frage",
+            )
           : labelText(
               "Edycja pytania RSVP",
               "Edit RSVP question",
@@ -390,11 +394,7 @@ function RsvpQuestionForm({
             </Text>
             <Text size="sm" fw={500}>
               {q.label ||
-                labelText(
-                  "(Treść pytania)",
-                  "(Question label)",
-                  "(Fragetext)",
-                )}
+                labelText("(Treść pytania)", "(Question label)", "(Fragetext)")}
               {q.required ? " *" : ""}
             </Text>
             {q.help && (
@@ -404,11 +404,7 @@ function RsvpQuestionForm({
             )}
             <Text size="xs" c="dimmed">
               {q.type === "text" &&
-                labelText(
-                  "[ Pole tekstowe ]",
-                  "[ Text area ]",
-                  "[ Textfeld ]",
-                )}
+                labelText("[ Pole tekstowe ]", "[ Text area ]", "[ Textfeld ]")}
               {q.type === "number" && "[ − ]  0  [ + ]"}
               {needsOptions &&
                 [

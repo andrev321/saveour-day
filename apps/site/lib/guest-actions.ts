@@ -22,11 +22,7 @@ import {
 } from "./server";
 
 export type GuestAction =
-  | "code"
-  | "lookup"
-  | "lookup-reset"
-  | "self-register"
-  | "rsvp";
+  "code" | "lookup" | "lookup-reset" | "self-register" | "rsvp";
 
 export const SELF_REGISTER_NAMED_PLACEHOLDER =
   "00000000-0000-4000-8000-000000000001";
@@ -165,10 +161,7 @@ export async function executeGuestAction(
     if (!ctx.site.allow_self_registration) {
       throw new GuestError(403, "Zgłoszenia spoza listy są wyłączone.");
     }
-    if (
-      ctx.site.rsvp_deadline &&
-      now() > Date.parse(ctx.site.rsvp_deadline)
-    ) {
+    if (ctx.site.rsvp_deadline && now() > Date.parse(ctx.site.rsvp_deadline)) {
       throw new GuestError(409, "Termin odpowiedzi minął.");
     }
 
@@ -212,10 +205,7 @@ export async function executeGuestAction(
     await doGrant(ctx);
   const active = await getSession(ctx);
   if (!active) throw new GuestError(401, "Dostęp wygasł");
-  if (
-    ctx.site.rsvp_deadline &&
-    now() > Date.parse(ctx.site.rsvp_deadline)
-  )
+  if (ctx.site.rsvp_deadline && now() > Date.parse(ctx.site.rsvp_deadline))
     throw new GuestError(409, "Termin odpowiedzi minął.");
 
   const p = rsvpSchema.parse(payload);

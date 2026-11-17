@@ -1,4 +1,4 @@
-import wordmarks from "./brand-wordmarks.json";
+import wordmarks from "./lib/brand-wordmarks.json";
 
 // Two paper elements: a folded back sheet (two faces) and a front flap.
 export const brandArt = {

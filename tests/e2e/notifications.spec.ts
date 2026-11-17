@@ -50,11 +50,9 @@ test("notices can be dismissed without bypassing validation and return for new e
   await expect(page.getByText("Popraw konfigurację")).toBeVisible();
   await url.fill("https://example.com");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
-  const notice = page
-    .getByRole("status")
-    .filter({
-      has: page.getByRole("button", { name: "Zamknij powiadomienie" }),
-    });
+  const notice = page.getByRole("status").filter({
+    has: page.getByRole("button", { name: "Zamknij powiadomienie" }),
+  });
   await notice.getByRole("button", { name: "Zamknij powiadomienie" }).click();
   await expect(notice).not.toBeVisible();
 });

@@ -144,8 +144,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
     for (const file of (await readdir("supabase/migrations"))
       .filter(
         (f) =>
-          f.endsWith(".sql") &&
-          f > "20260930204955_contextual_editor_v3.sql",
+          f.endsWith(".sql") && f > "20260930204955_contextual_editor_v3.sql",
       )
       .sort()) {
       await db.exec(

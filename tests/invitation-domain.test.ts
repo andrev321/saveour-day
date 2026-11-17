@@ -101,10 +101,30 @@ test("summarizeRsvp counts companions in totals and computes partial/answered st
       },
     ],
     [
-      { invitation_id: "inv-1", guest_id: "g1", event_id: "e1", attending: true },
-      { invitation_id: "inv-1", guest_id: "g1", event_id: "e2", attending: false },
-      { invitation_id: "inv-1", guest_id: "g2", event_id: "e1", attending: true },
-      { invitation_id: "inv-1", guest_id: "g2", event_id: "e2", attending: true },
+      {
+        invitation_id: "inv-1",
+        guest_id: "g1",
+        event_id: "e1",
+        attending: true,
+      },
+      {
+        invitation_id: "inv-1",
+        guest_id: "g1",
+        event_id: "e2",
+        attending: false,
+      },
+      {
+        invitation_id: "inv-1",
+        guest_id: "g2",
+        event_id: "e1",
+        attending: true,
+      },
+      {
+        invitation_id: "inv-1",
+        guest_id: "g2",
+        event_id: "e2",
+        attending: true,
+      },
     ],
   );
 

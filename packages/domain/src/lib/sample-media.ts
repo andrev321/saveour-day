@@ -1,4 +1,4 @@
-import type { InvitationLocale } from "./index.ts";
+import type { InvitationLocale } from "../index.ts";
 type SampleMediaManifest = {
   id: string;
   src: string;

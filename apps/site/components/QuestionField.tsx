@@ -110,9 +110,8 @@ export function QuestionField({
     );
   }
 
-  const selectedIds =
-    value && "optionIds" in value ? value.optionIds : [];
-  const otherText = value && "other" in value ? value.other ?? "" : "";
+  const selectedIds = value && "optionIds" in value ? value.optionIds : [];
+  const otherText = value && "other" in value ? (value.other ?? "") : "";
   const isOtherActive =
     value && "other" in value && typeof value.other === "string";
 

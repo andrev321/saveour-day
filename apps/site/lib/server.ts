@@ -159,8 +159,8 @@ export async function context(kind: string, key: string) {
   // Existing public links still resolve through their stored slug.
   const site = invitation
     ? await findSite("id", invitation.site_id)
-    : (isSiteUuidKey(key) ? await findSite("id", key) : null) ??
-      (await findSite("public_slug", key));
+    : ((isSiteUuidKey(key) ? await findSite("id", key) : null) ??
+      (await findSite("public_slug", key)));
   if (!site?.published_release_id)
     throw new GuestError(404, "Strona jest niedostępna");
 
@@ -193,7 +193,9 @@ export async function readInvitationSession(
   site: SiteRecord,
   invitation: GuestRecord | null,
 ) {
-  const raw = (await cookies()).get(`guest_${invitation?.id || site.id}`)?.value;
+  const raw = (await cookies()).get(
+    `guest_${invitation?.id || site.id}`,
+  )?.value;
   if (!raw) return null;
   const { data, error } = await db()
     .from("guest_sessions")

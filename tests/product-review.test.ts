@@ -30,7 +30,9 @@ test("CSV handles quoted records, Polish letters and rejects invalid or oversize
       variantId: "all",
     },
   ]);
-  assert.throws(() => parseGuestCsv("grupa;osoby;towarzyszace\nA;Jan;bad", "all"));
+  assert.throws(() =>
+    parseGuestCsv("grupa;osoby;towarzyszace\nA;Jan;bad", "all"),
+  );
   assert.throws(() => parseGuestCsv('grupa;osoby\n"unfinished', "all"));
   assert.throws(() => parseGuestCsv("x".repeat(200001), "all"));
   assert.equal(
@@ -73,12 +75,8 @@ test("readiness and question validation catch incomplete setup", () => {
   assert.ok(
     publicationWarnings(config).some((i) => i.message.includes("daty")),
   );
-  assert.ok(
-    !questionValueSchema.safeParse({ number: -1 }).success,
-  );
-  assert.ok(
-    !questionValueSchema.safeParse({ text: "x".repeat(501) }).success,
-  );
+  assert.ok(!questionValueSchema.safeParse({ number: -1 }).success);
+  assert.ok(!questionValueSchema.safeParse({ text: "x".repeat(501) }).success);
 });
 
 test("tab recovery preserves incomplete text and URLs while rejecting malformed structure", () => {
@@ -140,7 +138,10 @@ test("DraftHistory coalesces rapid edits within 500ms and supports undo, redo, a
 
   assert.equal(history.undo()?.identity.displayName, "AB");
   assert.equal(history.canRedo, true);
-  assert.equal(history.undo()?.identity.displayName, initial.identity.displayName);
+  assert.equal(
+    history.undo()?.identity.displayName,
+    initial.identity.displayName,
+  );
   assert.equal(history.canUndo, false);
   // Empty undo returns null
   assert.equal(history.undo(), null);
@@ -167,7 +168,8 @@ test("DraftHistory coalesces rapid edits within 500ms and supports undo, redo, a
 
   // Malformed JSON and null raw inputs to parseDraftTabSnapshot return null safely
   assert.equal(parseDraftTabSnapshot(null, initial.id, initial), null);
-  assert.equal(parseDraftTabSnapshot("{broken-json", initial.id, initial), null);
+  assert.equal(
+    parseDraftTabSnapshot("{broken-json", initial.id, initial),
+    null,
+  );
 });
-
-

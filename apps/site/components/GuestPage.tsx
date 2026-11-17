@@ -3,7 +3,12 @@ import { useViewMotion } from "@invitations/ui/motion";
 import { LoadingState, BusyLabel, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
-import { useEffect, useState, useSyncExternalStore, type CSSProperties } from "react";
+import {
+  useEffect,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
 import { Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
 import {
@@ -624,10 +629,7 @@ export function GuestPage({
                     {copy.discard}
                   </BusyLabel>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setRefreshConfirm(false)}
-                >
+                <button type="button" onClick={() => setRefreshConfirm(false)}>
                   {copy.cancel}
                 </button>
               </div>

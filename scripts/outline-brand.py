@@ -22,4 +22,4 @@ for variant, text in [("full", "saveour.day"), ("short", "saveour")]:
         glyph.draw(TransformPen(pen, (scale, 0, 0, -scale, cursor, 82)))
         cursor += glyph.width * scale - 1.6
     outlines[variant] = {"path": pen.getCommands(), "width": round(cursor + 1.6, 2)}
-(root / "packages/ui/src/brand-wordmarks.json").write_text(json.dumps(outlines, indent=2) + "\n", encoding="utf-8")
+(root / "packages/ui/src/lib/brand-wordmarks.json").write_text(json.dumps(outlines, indent=2) + "\n", encoding="utf-8")

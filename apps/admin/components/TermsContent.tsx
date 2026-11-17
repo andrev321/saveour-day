@@ -16,11 +16,7 @@ import {
 import { BrandLogo } from "@invitations/ui/brand";
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
 
-export function TermsContent({
-  initialLang = "pl",
-}: {
-  initialLang?: string;
-}) {
+export function TermsContent({ initialLang = "pl" }: { initialLang?: string }) {
   const [lang, setLang] = useState<string>(initialLang === "en" ? "en" : "pl");
 
   return (
@@ -54,7 +50,12 @@ export function TermsContent({
         {lang === "pl" ? (
           <>
             <div>
-              <Text size="xs" fw={700} c="brand" style={{ letterSpacing: ".15em" }}>
+              <Text
+                size="xs"
+                fw={700}
+                c="brand"
+                style={{ letterSpacing: ".15em" }}
+              >
                 DOKUMENT PRAWNY
               </Text>
               <Title order={1} mt="xs">
@@ -72,13 +73,15 @@ export function TermsContent({
                     1. Postanowienia ogólne
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Niniejszy regulamin określa zasady korzystania z platformy internetowej{" "}
-                    <strong>saveour.day</strong> („Serwis”), służącej do tworzenia,
-                    edycji i publikowania cyfrowych zaproszeń okolicznościowych oraz
-                    zarządzania potwierdzeniami obecności gości (RSVP).
+                    Niniejszy regulamin określa zasady korzystania z platformy
+                    internetowej <strong>saveour.day</strong> („Serwis”),
+                    służącej do tworzenia, edycji i publikowania cyfrowych
+                    zaproszeń okolicznościowych oraz zarządzania potwierdzeniami
+                    obecności gości (RSVP).
                   </Text>
                   <Text size="sm" c="dimmed" mt="xs">
-                    Korzystanie z Serwisu oznacza akceptację niniejszych warunków.
+                    Korzystanie z Serwisu oznacza akceptację niniejszych
+                    warunków.
                   </Text>
                 </section>
 
@@ -90,16 +93,17 @@ export function TermsContent({
                   </Title>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
-                      • Utworzenie konta Organizatora wymaga podania adresu e-mail i hasła
-                      lub skorzystania z uwierzytelnienia przez konto Google (OAuth 2.0).
+                      • Utworzenie konta Organizatora wymaga podania adresu
+                      e-mail i hasła lub skorzystania z uwierzytelnienia przez
+                      konto Google (OAuth 2.0).
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • Użytkownik zobowiązany jest do zachowania poufności swoich danych
-                      dostępowych.
+                      • Użytkownik zobowiązany jest do zachowania poufności
+                      swoich danych dostępowych.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • Jeden użytkownik może zarządzać wieloma realizacjami w ramach
-                      dostępnych limitów platformy.
+                      • Jeden użytkownik może zarządzać wieloma realizacjami w
+                      ramach dostępnych limitów platformy.
                     </Text>
                   </Stack>
                 </section>
@@ -112,17 +116,18 @@ export function TermsContent({
                   </Title>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
-                      • Organizator ponosi wyłączną odpowiedzialność za materiały, teksty,
-                      zdjęcia i dane gości zamieszczane w tworzonych zaproszeniach.
+                      • Organizator ponosi wyłączną odpowiedzialność za
+                      materiały, teksty, zdjęcia i dane gości zamieszczane w
+                      tworzonych zaproszeniach.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • Zabronione jest publikowanie treści niezgodnych z prawem,
-                      nawołujących do nienawiści, naruszających prawa osób trzecich lub
-                      prawa autorskie.
+                      • Zabronione jest publikowanie treści niezgodnych z
+                      prawem, nawołujących do nienawiści, naruszających prawa
+                      osób trzecich lub prawa autorskie.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • Serwis zastrzega sobie prawo do zablokowania lub usunięcia
-                      zaproszeń naruszających niniejszy regulamin.
+                      • Serwis zastrzega sobie prawo do zablokowania lub
+                      usunięcia zaproszeń naruszających niniejszy regulamin.
                     </Text>
                   </Stack>
                 </section>
@@ -135,13 +140,15 @@ export function TermsContent({
                   </Title>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
-                      • Użytkownik zachowuje pełne prawa autorskie do wszelkich własnych
-                      treści, fotografii i danych przesłanych do Serwisu.
+                      • Użytkownik zachowuje pełne prawa autorskie do wszelkich
+                      własnych treści, fotografii i danych przesłanych do
+                      Serwisu.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • Szablony, kod źródłowy, szata graficzna, znaki towarowe i
-                      rozwiązania technologiczne platformy saveour.day stanowią
-                      własność operatora serwisu i podlegają ochronie prawnej.
+                      • Szablony, kod źródłowy, szata graficzna, znaki towarowe
+                      i rozwiązania technologiczne platformy saveour.day
+                      stanowią własność operatora serwisu i podlegają ochronie
+                      prawnej.
                     </Text>
                   </Stack>
                 </section>
@@ -153,10 +160,11 @@ export function TermsContent({
                     5. Dostępność usługi i ograniczenie odpowiedzialności
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Dokładamy starań, aby Serwis działał w sposób ciągły i bezawaryjny.
-                    Nie ponosimy jednak odpowiedzialności za przerwy techniczne
-                    wynikające z siły wyższej, prac konserwacyjnych lub awarii
-                    niezależnych dostawców infrastruktury.
+                    Dokładamy starań, aby Serwis działał w sposób ciągły i
+                    bezawaryjny. Nie ponosimy jednak odpowiedzialności za
+                    przerwy techniczne wynikające z siły wyższej, prac
+                    konserwacyjnych lub awarii niezależnych dostawców
+                    infrastruktury.
                   </Text>
                 </section>
 
@@ -167,9 +175,9 @@ export function TermsContent({
                     6. Rozwiązanie umowy i usunięcie konta
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Użytkownik może w dowolnym momencie zrezygnować z korzystania z
-                    Serwisu, usuwając swoje projekty lub zgłaszając dyspozycję usunięcia
-                    konta pod adresem{" "}
+                    Użytkownik może w dowolnym momencie zrezygnować z
+                    korzystania z Serwisu, usuwając swoje projekty lub
+                    zgłaszając dyspozycję usunięcia konta pod adresem{" "}
                     <Anchor href="mailto:contact@saveour.day">
                       contact@saveour.day
                     </Anchor>
@@ -184,8 +192,9 @@ export function TermsContent({
                     7. Kontakt
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Wszelkie zapytania, uwagi oraz reklamacje dotyczące działania Serwisu
-                    można kierować drogą elektroniczną na adres:{" "}
+                    Wszelkie zapytania, uwagi oraz reklamacje dotyczące
+                    działania Serwisu można kierować drogą elektroniczną na
+                    adres:{" "}
                     <Anchor href="mailto:contact@saveour.day">
                       contact@saveour.day
                     </Anchor>
@@ -198,7 +207,12 @@ export function TermsContent({
         ) : (
           <>
             <div>
-              <Text size="xs" fw={700} c="brand" style={{ letterSpacing: ".15em" }}>
+              <Text
+                size="xs"
+                fw={700}
+                c="brand"
+                style={{ letterSpacing: ".15em" }}
+              >
                 LEGAL DOCUMENT
               </Text>
               <Title order={1} mt="xs">
@@ -217,13 +231,14 @@ export function TermsContent({
                   </Title>
                   <Text size="sm" c="dimmed">
                     These Terms of Service govern the use of the{" "}
-                    <strong>saveour.day</strong> online platform (&quot;Service&quot;,
-                    &quot;Application&quot;) for creating, publishing, and managing
-                    digital event invitations and RSVP responses.
+                    <strong>saveour.day</strong> online platform
+                    (&quot;Service&quot;, &quot;Application&quot;) for creating,
+                    publishing, and managing digital event invitations and RSVP
+                    responses.
                   </Text>
                   <Text size="sm" c="dimmed" mt="xs">
-                    By using or creating an account in the Service, you agree to these
-                    Terms.
+                    By using or creating an account in the Service, you agree to
+                    these Terms.
                   </Text>
                 </section>
 
@@ -235,12 +250,13 @@ export function TermsContent({
                   </Title>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
-                      • Creating an Organizer account requires an email address and
-                      password or authentication via Google OAuth (Google Sign-In).
+                      • Creating an Organizer account requires an email address
+                      and password or authentication via Google OAuth (Google
+                      Sign-In).
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • You are responsible for safeguarding your credentials and
-                      all activities that occur under your account.
+                      • You are responsible for safeguarding your credentials
+                      and all activities that occur under your account.
                     </Text>
                     <Text size="sm" c="dimmed">
                       • Organizers can manage multiple event projects within the
@@ -257,12 +273,12 @@ export function TermsContent({
                   </Title>
                   <Stack gap="xs">
                     <Text size="sm" c="dimmed">
-                      • You retain sole responsibility for all text, images, media,
-                      and guest details uploaded to your invitations.
+                      • You retain sole responsibility for all text, images,
+                      media, and guest details uploaded to your invitations.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • You agree not to upload unlawful, offensive, defamatory, or
-                      infringing content.
+                      • You agree not to upload unlawful, offensive, defamatory,
+                      or infringing content.
                     </Text>
                     <Text size="sm" c="dimmed">
                       • We reserve the right to suspend or remove any content or
@@ -298,9 +314,9 @@ export function TermsContent({
                   </Title>
                   <Text size="sm" c="dimmed">
                     The Service is provided on an &quot;as is&quot; and &quot;as
-                    available&quot; basis. While we strive for maximum uptime and
-                    reliability, we do not warrant that operation will be entirely
-                    error-free or uninterrupted.
+                    available&quot; basis. While we strive for maximum uptime
+                    and reliability, we do not warrant that operation will be
+                    entirely error-free or uninterrupted.
                   </Text>
                 </section>
 
@@ -327,8 +343,8 @@ export function TermsContent({
                     7. Contact
                   </Title>
                   <Text size="sm" c="dimmed">
-                    For inquiries, feedback, or complaints regarding the Service,
-                    please email:{" "}
+                    For inquiries, feedback, or complaints regarding the
+                    Service, please email:{" "}
                     <Anchor href="mailto:contact@saveour.day">
                       contact@saveour.day
                     </Anchor>

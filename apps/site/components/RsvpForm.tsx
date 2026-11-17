@@ -83,7 +83,8 @@ export function RsvpForm({
     note: string;
   }) => void;
 }) {
-  const [answers, setAnswers] = useState<Record<string, string>>(initialAnswers);
+  const [answers, setAnswers] =
+    useState<Record<string, string>>(initialAnswers);
   const [companionNames, setCompanionNames] = useState<Record<string, string>>(
     initialCompanionNames ?? {},
   );
@@ -118,13 +119,15 @@ export function RsvpForm({
   });
 
   const missingCount = guests.reduce(
-    (sum, g) =>
-      sum +
-      events.filter((ev) => !effectiveAnswer(g, ev.id)).length,
+    (sum, g) => sum + events.filter((ev) => !effectiveAnswer(g, ev.id)).length,
     0,
   );
 
-  function setGuestEventAnswer(guestId: string, eventId: string, val: "true" | "false") {
+  function setGuestEventAnswer(
+    guestId: string,
+    eventId: string,
+    val: "true" | "false",
+  ) {
     setAnswers((old) =>
       applyNamedDeclineCascade(guests, old, guestId, eventId, val),
     );
@@ -189,7 +192,14 @@ export function RsvpForm({
     <form onSubmit={handleSubmit}>
       {!events.length && <p>{copy.noEvents}</p>}
       {!!events.length && (
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: 12,
+            alignItems: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <p style={{ margin: 0 }}>
             {copy.pending}: {missingCount}
           </p>
@@ -221,7 +231,15 @@ export function RsvpForm({
                 const value = effectiveAnswer(g, ev.id);
                 const yesAllowed = !isCompanion || companionAllowedFor(ev.id);
                 return (
-                  <div key={ev.id} style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                  <div
+                    key={ev.id}
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     {events.length > 1 && <span>{ev.title}</span>}
                     <label>
                       <input
@@ -229,7 +247,9 @@ export function RsvpForm({
                         name={`att-${g.id}-${ev.id}`}
                         disabled={busy || closed || !yesAllowed}
                         checked={value === "true"}
-                        onChange={() => setGuestEventAnswer(g.id, ev.id, "true")}
+                        onChange={() =>
+                          setGuestEventAnswer(g.id, ev.id, "true")
+                        }
                       />{" "}
                       {copy.yes}
                     </label>
@@ -239,7 +259,9 @@ export function RsvpForm({
                         name={`att-${g.id}-${ev.id}`}
                         disabled={busy || closed}
                         checked={value === "false"}
-                        onChange={() => setGuestEventAnswer(g.id, ev.id, "false")}
+                        onChange={() =>
+                          setGuestEventAnswer(g.id, ev.id, "false")
+                        }
                       />{" "}
                       {copy.no}
                     </label>

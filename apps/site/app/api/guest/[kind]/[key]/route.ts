@@ -128,7 +128,13 @@ export const POST = endpoint(async (request) => {
   const ctx = await readContext(request);
   const body = z
     .object({
-      action: z.enum(["code", "lookup", "lookup-reset", "self-register", "rsvp"]),
+      action: z.enum([
+        "code",
+        "lookup",
+        "lookup-reset",
+        "self-register",
+        "rsvp",
+      ]),
       payload: z.unknown(),
     })
     .parse(await json(request));

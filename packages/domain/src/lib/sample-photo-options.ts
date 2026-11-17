@@ -1,5 +1,5 @@
 import { samplePhoto, type SamplePhotoKey } from "./sample-media.ts";
-import type { InvitationLocale, SiteConfig } from "./index.ts";
+import type { InvitationLocale, SiteConfig } from "../index.ts";
 
 // Curated choices are independent of the invitation theme and editable content.
 export const samplePhotoGroups = {

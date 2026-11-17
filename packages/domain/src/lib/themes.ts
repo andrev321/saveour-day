@@ -1,4 +1,4 @@
-import type { SiteConfig } from "./index.ts";
+import type { SiteConfig } from "../index.ts";
 
 // Stable IDs preserve existing drafts, published invitations and API payloads.
 export const themeNames = [

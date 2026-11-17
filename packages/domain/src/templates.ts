@@ -7,8 +7,8 @@
   type ThemeAppearance,
   type InvitationLocale,
 } from "./index.ts";
-import { personalTemplateExample } from "./template-examples.ts";
-import { samplePhoto, type SamplePhotoKey } from "./sample-media.ts";
+import { personalTemplateExample } from "./lib/template-examples.ts";
+import { samplePhoto, type SamplePhotoKey } from "./lib/sample-media.ts";
 
 const definitions = [
   ["wedding", "Ślub", "Wedding ceremony", "Trauung"],

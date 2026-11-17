@@ -17,7 +17,7 @@ Keep the project inventory, deployed commit, deployment IDs, and acceptance evid
 
 ## Release
 
-Preferred: run `.github/workflows/production-deploy.yml` (*Actions → Deploy production → Run workflow*). It pushes pending `supabase/migrations/` to production first (`PROD_SUPABASE_DB_URL`, the IPv4 Session pooler URI), and only after migrations succeed deploys `apps/admin` and `apps/site` to Vercel (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROD_ADMIN_PROJECT_ID`, `VERCEL_PROD_SITE_PROJECT_ID`).
+Preferred: run `.github/workflows/production-deploy.yml` (*Actions → Deploy production → Run workflow*). The workflow first verifies that `Quality checks` succeeded for the target commit, optionally pushes pending `supabase/migrations/` to production when `apply_migrations` is enabled (`PROD_SUPABASE_DB_URL`, the IPv4 Session pooler URI), and then deploys `apps/admin` and `apps/site` to Vercel (`VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROD_ADMIN_PROJECT_ID`, `VERCEL_PROD_SITE_PROJECT_ID`).
 
 Manual fallback from a clean checkout of the tested release commit (run from the repository root for each application at the same commit, substituting the actual team, project, and deployment values):
 

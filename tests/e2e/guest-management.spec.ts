@@ -70,7 +70,10 @@ test("organizer creates group links, edits recipients and changes access setting
         group_name: payload.groupName ?? null,
         variant_id: payload.variantId,
         guests: payload.guests.map(
-          (g: { kind: "named" | "companion"; name: string | null }, n: number) => ({
+          (
+            g: { kind: "named" | "companion"; name: string | null },
+            n: number,
+          ) => ({
             id: `guest-${n}`,
             kind: g.kind,
             name: g.name,
@@ -86,13 +89,19 @@ test("organizer creates group links, edits recipients and changes access setting
         events: config.events,
       });
       return route.fulfill({
-        json: { url: "https://example.test/i/family-token", shortCode: "KOW123" },
+        json: {
+          url: "https://example.test/i/family-token",
+          shortCode: "KOW123",
+        },
       });
     }
     if (action === "update") {
       invitations[0]!.group_name = payload.groupName ?? null;
       invitations[0]!.guests = payload.guests.map(
-        (g: { id?: string; kind: "named" | "companion"; name: string | null }, n: number) => ({
+        (
+          g: { id?: string; kind: "named" | "companion"; name: string | null },
+          n: number,
+        ) => ({
           id: g.id || `guest-${n}`,
           kind: g.kind,
           name: g.name,
@@ -112,11 +121,15 @@ test("organizer creates group links, edits recipients and changes access setting
     `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
   );
   await page.getByRole("tab", { name: "Goście", exact: true }).click();
-  await page.getByRole("button", { name: "Nowe zaproszenie", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Nowe zaproszenie", exact: true })
+    .click();
   await page.getByText("Grupa", { exact: true }).click();
   await page.getByLabel("Nazwa grupy (opcjonalnie)").fill("Rodzina Kowalskich");
   await page.getByLabel("Osoba 1").fill("Maria");
-  await page.getByRole("button", { name: "+ Dodaj osobę", exact: true }).click();
+  await page
+    .getByRole("button", { name: "+ Dodaj osobę", exact: true })
+    .click();
   await page.getByLabel("Osoba 2").fill("Adam");
   await page.getByRole("button", { name: "Utwórz zaproszenie i link" }).click();
   await expect(page.getByLabel("Wygenerowany link")).toHaveValue(
@@ -185,9 +198,11 @@ test("organizer adds a companion slot in invitation editor", async ({
     id: "30000000-0000-4000-8000-000000000002",
     group_name: null as string | null,
     variant_id: config.defaultVariant,
-    guests: [
-      { id: "guest-1", kind: "named" as const, name: "Jan Nowak" },
-    ] as { id: string; kind: "named" | "companion"; name: string | null }[],
+    guests: [{ id: "guest-1", kind: "named" as const, name: "Jan Nowak" }] as {
+      id: string;
+      kind: "named" | "companion";
+      name: string | null;
+    }[],
     revoked: false,
     version: 1,
     rsvp_revision: 0,
@@ -232,7 +247,10 @@ test("organizer adds a companion slot in invitation editor", async ({
       expect(payload.guests).toHaveLength(2);
       expect(payload.guests[1].kind).toBe("companion");
       invitation.guests = payload.guests.map(
-        (g: { id?: string; kind: "named" | "companion"; name: string | null }, n: number) => ({
+        (
+          g: { id?: string; kind: "named" | "companion"; name: string | null },
+          n: number,
+        ) => ({
           id: g.id || `guest-${n + 1}`,
           kind: g.kind,
           name: g.name,
@@ -250,9 +268,7 @@ test("organizer adds a companion slot in invitation editor", async ({
   await page
     .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
     .click();
-  await page
-    .getByLabel("Może przyjść z osobą towarzyszącą")
-    .check();
+  await page.getByLabel("Może przyjść z osobą towarzyszącą").check();
   await page
     .getByRole("button", { name: "Zapisz zaproszenie", exact: true })
     .click();

@@ -69,11 +69,7 @@ export function InvitationEditorModal(props: InvitationEditorProps) {
               "Edit invitation",
               "Einladung bearbeiten",
             )
-          : labelText(
-              "Nowe zaproszenie",
-              "New invitation",
-              "Neue Einladung",
-            )
+          : labelText("Nowe zaproszenie", "New invitation", "Neue Einladung")
       }
       size="lg"
     >
@@ -223,7 +219,11 @@ function InvitationEditorForm({
       ? [
           {
             value: "quick",
-            label: labelText("Szybkie dodawanie", "Quick add", "Schnell hinzufügen"),
+            label: labelText(
+              "Szybkie dodawanie",
+              "Quick add",
+              "Schnell hinzufügen",
+            ),
           },
         ]
       : []),
@@ -295,9 +295,7 @@ function InvitationEditorForm({
                       onChange={(e) => {
                         const name = e.currentTarget.value;
                         setGuests((old) =>
-                          old.map((m, n) =>
-                            n === index ? { ...m, name } : m,
-                          ),
+                          old.map((m, n) => (n === index ? { ...m, name } : m)),
                         );
                       }}
                     />
@@ -443,10 +441,7 @@ function InvitationEditorForm({
             }
             type="submit"
             loading={saving}
-            pendingLabel={loadingText(
-              language,
-              invitation ? "save" : "create",
-            )}
+            pendingLabel={loadingText(language, invitation ? "save" : "create")}
           >
             {invitation
               ? labelText(

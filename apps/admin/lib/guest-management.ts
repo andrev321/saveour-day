@@ -88,9 +88,7 @@ export function formatRsvpCsv(
     );
 
     for (const g of inv.guests) {
-      const relevant = inv.events.length
-        ? inv.events
-        : [{ id: "", title: "" }];
+      const relevant = inv.events.length ? inv.events : [{ id: "", title: "" }];
 
       for (const event of relevant) {
         const answer = event.id

@@ -8,6 +8,7 @@ Run commands from the repository root with Node.js 24 and npm 11. Install the lo
 npm ci
 npm run typecheck
 npm run lint
+npm run lint:boundaries
 npm test
 npm run build
 npm run build:admin

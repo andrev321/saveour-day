@@ -98,8 +98,16 @@ test("member edits cascade answers, RSVP questions enforce immutability and vali
         iid,
         JSON.stringify(answer),
         JSON.stringify([
-          { questionId: qDietId, guestId: guest, value: { optionIds: ["veg"] } },
-          { questionId: qLodgingId, guestId: null, value: { optionIds: ["yes"] } },
+          {
+            questionId: qDietId,
+            guestId: guest,
+            value: { optionIds: ["veg"] },
+          },
+          {
+            questionId: qLodgingId,
+            guestId: null,
+            value: { optionIds: ["yes"] },
+          },
         ]),
         owner,
       ],
@@ -134,8 +142,11 @@ test("member edits cascade answers, RSVP questions enforce immutability and vali
     });
 
     assert.equal(
-      (await db.query("select * from public.attendances where guest_id=$1", [guest]))
-        .rows.length,
+      (
+        await db.query("select * from public.attendances where guest_id=$1", [
+          guest,
+        ])
+      ).rows.length,
       0,
     );
     assert.equal(

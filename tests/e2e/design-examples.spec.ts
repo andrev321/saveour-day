@@ -3,14 +3,14 @@ import { readFile } from "node:fs/promises";
 import {
   applyTheme,
   applyThemePalette,
+  mediaSchema,
   themeNames,
   themePalettes,
-} from "../../packages/domain/src/themes";
+} from "../../packages/domain/src/index";
 import {
   createTemplate,
   type TemplateId,
 } from "../../packages/domain/src/templates";
-import { mediaSchema } from "../../packages/domain/src/index";
 import { guestContent } from "../../packages/domain/src/guest";
 
 const occasions: TemplateId[] = [

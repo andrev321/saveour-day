@@ -180,7 +180,10 @@ export function InvitationTable({
             const collidingNames = collisions.get(inv.id);
             const isPending =
               inv.review_status === "pending_match" && !inv.revoked;
-            const isExpanded = Boolean(expanded[inv.id]) || isPending || editingRsvpId === inv.id;
+            const isExpanded =
+              Boolean(expanded[inv.id]) ||
+              isPending ||
+              editingRsvpId === inv.id;
 
             const selectedMergeTarget = mergeTargets[inv.id]
               ? allActiveInvitations.find((x) => x.id === mergeTargets[inv.id])
@@ -225,7 +228,9 @@ export function InvitationTable({
                           <Badge
                             key={g.id}
                             size="sm"
-                            variant={g.kind === "companion" ? "outline" : "light"}
+                            variant={
+                              g.kind === "companion" ? "outline" : "light"
+                            }
                             color={personBadgeColor(status)}
                             style={
                               g.kind === "companion"
@@ -317,13 +322,14 @@ export function InvitationTable({
                           </Menu.Item>
                           <Menu.Item
                             disabled={
-                              busy ||
-                              !publishedReleaseId ||
-                              !inv.events.length
+                              busy || !publishedReleaseId || !inv.events.length
                             }
                             onClick={() => {
                               setEditingRsvpId(inv.id);
-                              setExpanded((old) => ({ ...old, [inv.id]: true }));
+                              setExpanded((old) => ({
+                                ...old,
+                                [inv.id]: true,
+                              }));
                             }}
                           >
                             {labelText(
@@ -397,7 +403,11 @@ export function InvitationTable({
                                   disabled={busy}
                                   onClick={() => onApprovePending(inv.id)}
                                 >
-                                  {labelText("Zatwierdź", "Approve", "Genehmigen")}
+                                  {labelText(
+                                    "Zatwierdź",
+                                    "Approve",
+                                    "Genehmigen",
+                                  )}
                                 </Button>
                                 {approvedMergeOptions.length > 0 && (
                                   <>

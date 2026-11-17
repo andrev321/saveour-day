@@ -54,7 +54,12 @@ export function PrivacyContent({
         {lang === "pl" ? (
           <>
             <div>
-              <Text size="xs" fw={700} c="brand" style={{ letterSpacing: ".15em" }}>
+              <Text
+                size="xs"
+                fw={700}
+                c="brand"
+                style={{ letterSpacing: ".15em" }}
+              >
                 DOKUMENT PRAWNY
               </Text>
               <Title order={1} mt="xs">
@@ -72,15 +77,15 @@ export function PrivacyContent({
                     1. Informacje ogólne i Administrator Danych
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Niniejsza Polityka prywatności określa zasady przetwarzania i
-                    ochrony danych osobowych użytkowników korzystających z serwisu
-                    oraz aplikacji <strong>saveour.day</strong> („Aplikacja”,
-                    „Serwis”).
+                    Niniejsza Polityka prywatności określa zasady przetwarzania
+                    i ochrony danych osobowych użytkowników korzystających z
+                    serwisu oraz aplikacji <strong>saveour.day</strong>{" "}
+                    („Aplikacja”, „Serwis”).
                   </Text>
                   <Text size="sm" c="dimmed" mt="xs">
                     Administratorem danych osobowych jest operator serwisu
-                    saveour.day. W sprawach związanych z ochroną danych osobowych
-                    można kontaktować się pod adresem e-mail:{" "}
+                    saveour.day. W sprawach związanych z ochroną danych
+                    osobowych można kontaktować się pod adresem e-mail:{" "}
                     <Anchor href="mailto:privacy@saveour.day">
                       privacy@saveour.day
                     </Anchor>
@@ -101,10 +106,13 @@ export function PrivacyContent({
                   </Text>
                   <Stack gap="xs" mt="sm">
                     <Text size="sm" c="dimmed">
-                      • <strong>Konto Organizatora (Rejestracja i logowanie):</strong>{" "}
+                      •{" "}
+                      <strong>
+                        Konto Organizatora (Rejestracja i logowanie):
+                      </strong>{" "}
                       adres e-mail, identyfikator konta oraz hasło (w postaci
-                      bezpiecznego skrótu kryptograficznego) lub tożsamość dostawcy
-                      logowania (Google OAuth).
+                      bezpiecznego skrótu kryptograficznego) lub tożsamość
+                      dostawcy logowania (Google OAuth).
                     </Text>
                     <Text size="sm" c="dimmed">
                       • <strong>Dane realizacji (zaproszeń):</strong> treść
@@ -112,9 +120,10 @@ export function PrivacyContent({
                       multimedialne (zdjęcia) oraz konfiguracja wariantów.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Zarządzanie gośćmi:</strong> imiona, nazwiska lub
-                      oznaczenia zaproszonych gości, przypisane adresy e-mail oraz
-                      statusy odpowiedzi RSVP i uwagi przekazane przez gości.
+                      • <strong>Zarządzanie gośćmi:</strong> imiona, nazwiska
+                      lub oznaczenia zaproszonych gości, przypisane adresy
+                      e-mail oraz statusy odpowiedzi RSVP i uwagi przekazane
+                      przez gości.
                     </Text>
                   </Stack>
                 </section>
@@ -126,33 +135,37 @@ export function PrivacyContent({
                     3. Integracja z Google OAuth i zasady ochrony danych Google
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Użytkownicy mogą logować się do panelu organizatora za pomocą
-                    usługi <strong>Google Sign-In (OAuth 2.0)</strong>.
+                    Użytkownicy mogą logować się do panelu organizatora za
+                    pomocą usługi <strong>Google Sign-In (OAuth 2.0)</strong>.
                   </Text>
                   <Stack gap="xs" mt="sm">
                     <Text size="sm" c="dimmed">
-                      • <strong>Pobierane dane z konta Google:</strong> adres e-mail,
-                      podstawowe dane profilowe (imię i nazwisko) oraz unikalny
-                      identyfikator użytkownika Google.
+                      • <strong>Pobierane dane z konta Google:</strong> adres
+                      e-mail, podstawowe dane profilowe (imię i nazwisko) oraz
+                      unikalny identyfikator użytkownika Google.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Cel wykorzystania:</strong> dane te są wykorzystywane
-                      wyłącznie do założenia konta, bezpiecznego uwierzytelnienia
-                      użytkownika w Serwisie oraz powiązania utworzonych zaproszeń z
-                      danym Organizatorem.
+                      • <strong>Cel wykorzystania:</strong> dane te są
+                      wykorzystywane wyłącznie do założenia konta, bezpiecznego
+                      uwierzytelnienia użytkownika w Serwisie oraz powiązania
+                      utworzonych zaproszeń z danym Organizatorem.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Zakaz wykorzystywania komercyjnego i reklamowego:</strong>{" "}
+                      •{" "}
+                      <strong>
+                        Zakaz wykorzystywania komercyjnego i reklamowego:
+                      </strong>{" "}
                       dane pozyskane za pośrednictwem Google OAuth nigdy nie są
                       sprzedawane, wypożyczane, wykorzystywane do profilowania,
                       reklam ani do trenowania modeli sztucznej inteligencji.
                     </Text>
                     <Text size="sm" c="dimmed" fw={500} mt="xs">
-                      Klauzula zgodności z zasadami Google (Google API Services User Data Policy):
+                      Klauzula zgodności z zasadami Google (Google API Services
+                      User Data Policy):
                     </Text>
                     <Text size="sm" c="dimmed" style={{ fontStyle: "italic" }}>
-                      Aplikacja saveour.day korzysta z danych uzyskanych z interfejsów
-                      Google API zgodnie z zasadami{" "}
+                      Aplikacja saveour.day korzysta z danych uzyskanych z
+                      interfejsów Google API zgodnie z zasadami{" "}
                       <Anchor
                         href="https://developers.google.com/terms/api-services-user-data-policy"
                         target="_blank"
@@ -173,17 +186,18 @@ export function PrivacyContent({
                     4. Odbiorcy danych i bezpieczeństwo
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Dane użytkowników są przechowywane w bezpiecznej infrastrukturze
-                    chmurowej <strong>Supabase</strong> (serwery zlokalizowane na
-                    terenie Unii Europejskiej). Stosujemy szyfrowanie połączeń (TLS/HTTPS),
-                    mechanizmy izolacji danych na poziomie bazy (Row Level Security)
-                    oraz restrykcyjną kontrolę uprawnień.
+                    Dane użytkowników są przechowywane w bezpiecznej
+                    infrastrukturze chmurowej <strong>Supabase</strong> (serwery
+                    zlokalizowane na terenie Unii Europejskiej). Stosujemy
+                    szyfrowanie połączeń (TLS/HTTPS), mechanizmy izolacji danych
+                    na poziomie bazy (Row Level Security) oraz restrykcyjną
+                    kontrolę uprawnień.
                   </Text>
                   <Text size="sm" c="dimmed" mt="xs">
-                    Dane nie są przekazywane podmiotom trzecim, z wyjątkiem zaufanych
-                    dostawców infrastruktury technicznej (hosting, baza danych,
-                    transakcyjna wysyłka powiadomień e-mail) niezbędnych do działania
-                    Aplikacji.
+                    Dane nie są przekazywane podmiotom trzecim, z wyjątkiem
+                    zaufanych dostawców infrastruktury technicznej (hosting,
+                    baza danych, transakcyjna wysyłka powiadomień e-mail)
+                    niezbędnych do działania Aplikacji.
                   </Text>
                 </section>
 
@@ -194,20 +208,21 @@ export function PrivacyContent({
                     5. Okres przechowywania i usuwanie danych
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Dane przechowywane są przez okres posiadania aktywnego konta w
-                    Serwisie. Użytkownik ma pełne prawo do usunięcia swoich projektów
-                    oraz całego konta:
+                    Dane przechowywane są przez okres posiadania aktywnego konta
+                    w Serwisie. Użytkownik ma pełne prawo do usunięcia swoich
+                    projektów oraz całego konta:
                   </Text>
                   <Stack gap="xs" mt="sm">
                     <Text size="sm" c="dimmed">
                       • Usunięcie projektu w panelu powoduje natychmiastowe
                       zablokowanie dostępu do strony zaproszenia oraz oznaczenie
-                      wszystkich powiązanych danych i zdjęć do trwałego usunięcia.
+                      wszystkich powiązanych danych i zdjęć do trwałego
+                      usunięcia.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • W celu trwałego usunięcia konta Organizatora lub wycofania
-                      zgody na przetwarzanie danych wystarczy wysłać wiadomość na
-                      adres{" "}
+                      • W celu trwałego usunięcia konta Organizatora lub
+                      wycofania zgody na przetwarzanie danych wystarczy wysłać
+                      wiadomość na adres{" "}
                       <Anchor href="mailto:privacy@saveour.day">
                         privacy@saveour.day
                       </Anchor>
@@ -223,11 +238,11 @@ export function PrivacyContent({
                     6. Prawa użytkownika (RODO / GDPR)
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Każdemu użytkownikowi przysługuje prawo dostępu do swoich danych,
-                    ich sprostowania, żądania ich usunięcia („prawo do bycia
-                    zapomnianym”), ograniczenia przetwarzania, prawo do przenoszenia
-                    danych oraz prawo wniesienia skargi do organu nadzorczego (Prezesa
-                    Urzędu Ochrony Danych Osobowych).
+                    Każdemu użytkownikowi przysługuje prawo dostępu do swoich
+                    danych, ich sprostowania, żądania ich usunięcia („prawo do
+                    bycia zapomnianym”), ograniczenia przetwarzania, prawo do
+                    przenoszenia danych oraz prawo wniesienia skargi do organu
+                    nadzorczego (Prezesa Urzędu Ochrony Danych Osobowych).
                   </Text>
                 </section>
               </Stack>
@@ -236,7 +251,12 @@ export function PrivacyContent({
         ) : (
           <>
             <div>
-              <Text size="xs" fw={700} c="brand" style={{ letterSpacing: ".15em" }}>
+              <Text
+                size="xs"
+                fw={700}
+                c="brand"
+                style={{ letterSpacing: ".15em" }}
+              >
                 LEGAL DOCUMENT
               </Text>
               <Title order={1} mt="xs">
@@ -286,14 +306,14 @@ export function PrivacyContent({
                       or Google OAuth identity.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Invitation Content:</strong> event titles, dates,
-                      schedule details, venues, uploaded photos, and display
-                      preferences.
+                      • <strong>Invitation Content:</strong> event titles,
+                      dates, schedule details, venues, uploaded photos, and
+                      display preferences.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Guest & RSVP Information:</strong> guest names or
-                      household labels, assigned email addresses, RSVP attendance
-                      responses, and optional guest notes.
+                      • <strong>Guest & RSVP Information:</strong> guest names
+                      or household labels, assigned email addresses, RSVP
+                      attendance responses, and optional guest notes.
                     </Text>
                   </Stack>
                 </section>
@@ -314,15 +334,16 @@ export function PrivacyContent({
                       address, basic profile name, and unique Google account ID.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>Purpose of use:</strong> this information is used
-                      strictly to create and authenticate your organizer account
-                      and associate your event invitations with your profile.
+                      • <strong>Purpose of use:</strong> this information is
+                      used strictly to create and authenticate your organizer
+                      account and associate your event invitations with your
+                      profile.
                     </Text>
                     <Text size="sm" c="dimmed">
-                      • <strong>No Advertising or Commercial Resale:</strong> data
-                      obtained via Google OAuth is never sold, leased, used for
-                      personalized advertising, or used to train machine learning
-                      models.
+                      • <strong>No Advertising or Commercial Resale:</strong>{" "}
+                      data obtained via Google OAuth is never sold, leased, used
+                      for personalized advertising, or used to train machine
+                      learning models.
                     </Text>
                     <Text size="sm" c="dimmed" fw={500} mt="xs">
                       Google Limited Use Disclosure:
@@ -374,8 +395,9 @@ export function PrivacyContent({
                   </Text>
                   <Stack gap="xs" mt="sm">
                     <Text size="sm" c="dimmed">
-                      • Deleting a project in your dashboard immediately disables
-                      guest links and marks data and media for permanent purge.
+                      • Deleting a project in your dashboard immediately
+                      disables guest links and marks data and media for
+                      permanent purge.
                     </Text>
                     <Text size="sm" c="dimmed">
                       • To permanently delete your account and all associated
@@ -395,10 +417,10 @@ export function PrivacyContent({
                     6. Your Rights under GDPR
                   </Title>
                   <Text size="sm" c="dimmed">
-                    Users have the right to access, rectify, port, or request the
-                    erasure of their personal data, as well as the right to lodge a
-                    complaint with a relevant data protection supervisory
-                    authority.
+                    Users have the right to access, rectify, port, or request
+                    the erasure of their personal data, as well as the right to
+                    lodge a complaint with a relevant data protection
+                    supervisory authority.
                   </Text>
                 </section>
               </Stack>

@@ -1,11 +1,12 @@
 import { test, expect } from "@playwright/test";
-import {
-  themeNames,
-  themes,
-  themePalettes,
-} from "../../packages/domain/src/themes";
 import { createDemo } from "../../packages/domain/src/demo";
-import { mediaSchema, parseSiteConfig } from "../../packages/domain/src/index";
+import {
+  mediaSchema,
+  parseSiteConfig,
+  themeNames,
+  themePalettes,
+  themes,
+} from "../../packages/domain/src/index";
 import sharp from "sharp";
 const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 

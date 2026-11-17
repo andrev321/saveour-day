@@ -129,7 +129,9 @@ export function Dashboard({
     if (authError === "expired") return copy.linkExpired;
     return copy.oauthError;
   });
-  const [messageKind, setMessageKind] = useState<"error" | "success" | "warning">("error");
+  const [messageKind, setMessageKind] = useState<
+    "error" | "success" | "warning"
+  >("error");
   const pendingEmails = useRef(new Set<string>());
   const { operation, busy, start, end } = useOperation();
   const [query, setQuery] = useState("");
@@ -316,7 +318,11 @@ export function Dashboard({
           {message && (
             <Alert
               mt="lg"
-              color={{ error: "red", success: "green", warning: "yellow" }[messageKind]}
+              color={
+                { error: "red", success: "green", warning: "yellow" }[
+                  messageKind
+                ]
+              }
               role={messageKind === "success" ? "status" : "alert"}
             >
               {message}
@@ -392,12 +398,13 @@ export function Dashboard({
                       setMessage("");
                       setMessageKind("error");
                       try {
-                        const { error } = await browserDb().auth.signInWithOAuth({
-                          provider: "google",
-                          options: {
-                            redirectTo: `${window.location.origin}/auth/confirm`,
-                          },
-                        });
+                        const { error } =
+                          await browserDb().auth.signInWithOAuth({
+                            provider: "google",
+                            options: {
+                              redirectTo: `${window.location.origin}/auth/confirm`,
+                            },
+                          });
                         if (error) throw error;
                       } catch (error) {
                         setMessage((error as Error).message);
@@ -407,7 +414,11 @@ export function Dashboard({
                   >
                     {copy.continueWithGoogle}
                   </ActionButton>
-                  <Divider label={copy.orEmail} labelPosition="center" my="xs" />
+                  <Divider
+                    label={copy.orEmail}
+                    labelPosition="center"
+                    my="xs"
+                  />
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -423,98 +434,99 @@ export function Dashboard({
                         value={email}
                         onChange={(e) => setEmail(e.currentTarget.value)}
                       />
-                    <PasswordInput
-                      aria-label={t("password")}
-                      label={t("password")}
-                      required
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.currentTarget.value)}
-                    />
-                    <ActionButton
-                      type="submit"
-                      loading={operation === "login"}
-                      disabled={busy}
-                      pendingLabel={loadingText(language, "login")}
-                    >
-                      {t("login")}
-                    </ActionButton>
-                    <ActionButton
-                      variant="light"
-                      loading={operation === "signup"}
-                      pendingLabel={loadingText(language, "signup")}
-                      disabled={busy || !email || password.length < 12}
-                      onClick={async () => {
-                        if (!start("signup")) return;
-                        setMessage("");
-                        setMessageKind("error");
-                        const emailKey = email.trim().toLowerCase();
-                        try {
-                          if (pendingEmails.current.has(emailKey)) {
-                            setMessageKind("warning");
-                            setMessage(copy.signupPending);
-                            return;
+                      <PasswordInput
+                        aria-label={t("password")}
+                        label={t("password")}
+                        required
+                        autoComplete="current-password"
+                        value={password}
+                        onChange={(e) => setPassword(e.currentTarget.value)}
+                      />
+                      <ActionButton
+                        type="submit"
+                        loading={operation === "login"}
+                        disabled={busy}
+                        pendingLabel={loadingText(language, "login")}
+                      >
+                        {t("login")}
+                      </ActionButton>
+                      <ActionButton
+                        variant="light"
+                        loading={operation === "signup"}
+                        pendingLabel={loadingText(language, "signup")}
+                        disabled={busy || !email || password.length < 12}
+                        onClick={async () => {
+                          if (!start("signup")) return;
+                          setMessage("");
+                          setMessageKind("error");
+                          const emailKey = email.trim().toLowerCase();
+                          try {
+                            if (pendingEmails.current.has(emailKey)) {
+                              setMessageKind("warning");
+                              setMessage(copy.signupPending);
+                              return;
+                            }
+                            const { data, error } =
+                              await browserDb().auth.signUp({
+                                email,
+                                password,
+                                options: {
+                                  emailRedirectTo:
+                                    location.origin + "/auth/confirm",
+                                },
+                              });
+                            if (error) throw error;
+                            if (data.user?.identities?.length === 0) {
+                              setMessageKind("warning");
+                              setMessage(copy.signupCheckEmail);
+                              return;
+                            }
+                            pendingEmails.current.add(emailKey);
+                            setMessageKind("success");
+                            setMessage(copy.signupSent);
+                          } catch (error) {
+                            setMessage((error as Error).message);
+                          } finally {
+                            end();
                           }
-                          const { data, error } = await browserDb().auth.signUp({
-                            email,
-                            password,
-                            options: {
-                              emailRedirectTo:
-                                location.origin + "/auth/confirm",
-                            },
-                          });
-                          if (error) throw error;
-                          if (data.user?.identities?.length === 0) {
-                            setMessageKind("warning");
-                            setMessage(copy.signupCheckEmail);
-                            return;
+                        }}
+                      >
+                        {copy.signup}
+                      </ActionButton>
+                      <Text size="sm" c="dimmed">
+                        {copy.passwordHelp}
+                      </Text>
+                      <ActionButton
+                        variant="subtle"
+                        loading={operation === "reset"}
+                        pendingLabel={loadingText(language, "reset")}
+                        disabled={busy || !email}
+                        onClick={async () => {
+                          if (!start("reset")) return;
+                          setMessage("");
+                          setMessageKind("error");
+                          try {
+                            const { error } =
+                              await browserDb().auth.resetPasswordForEmail(
+                                email,
+                                { redirectTo: `${location.origin}/account` },
+                              );
+                            if (error) throw error;
+                            setMessageKind("success");
+                            setMessage(t("resetSent"));
+                          } catch (error) {
+                            setMessage((error as Error).message);
+                          } finally {
+                            end();
                           }
-                          pendingEmails.current.add(emailKey);
-                          setMessageKind("success");
-                          setMessage(copy.signupSent);
-                        } catch (error) {
-                          setMessage((error as Error).message);
-                        } finally {
-                          end();
-                        }
-                      }}
-                    >
-                      {copy.signup}
-                    </ActionButton>
-                    <Text size="sm" c="dimmed">
-                      {copy.passwordHelp}
-                    </Text>
-                    <ActionButton
-                      variant="subtle"
-                      loading={operation === "reset"}
-                      pendingLabel={loadingText(language, "reset")}
-                      disabled={busy || !email}
-                      onClick={async () => {
-                        if (!start("reset")) return;
-                        setMessage("");
-                        setMessageKind("error");
-                        try {
-                          const { error } =
-                            await browserDb().auth.resetPasswordForEmail(
-                              email,
-                              { redirectTo: `${location.origin}/account` },
-                            );
-                          if (error) throw error;
-                          setMessageKind("success");
-                          setMessage(t("resetSent"));
-                        } catch (error) {
-                          setMessage((error as Error).message);
-                        } finally {
-                          end();
-                        }
-                      }}
-                    >
-                      {t("forgot")}
-                    </ActionButton>
-                  </Stack>
-                </form>
-              </Stack>
-            </Card>
+                        }}
+                      >
+                        {t("forgot")}
+                      </ActionButton>
+                    </Stack>
+                  </form>
+                </Stack>
+              </Card>
             </S.Login>
           )}
           {logged && (

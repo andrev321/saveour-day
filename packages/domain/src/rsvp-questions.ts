@@ -66,7 +66,10 @@ export const rsvpQuestionInputSchema = z
       .transform((v) => (v && v.length > 0 ? v : null)),
     required: z.boolean().default(false),
     allowOther: z.boolean().default(false),
-    options: z.array(questionOptionSchema).max(QUESTION_POLICY.maxOptions).default([]),
+    options: z
+      .array(questionOptionSchema)
+      .max(QUESTION_POLICY.maxOptions)
+      .default([]),
     variantIds: z.array(z.string().min(1).max(64)).max(50).default([]),
     presetKey: z
       .enum(["diet", "allergies", "lodging", "parking"])
@@ -199,7 +202,8 @@ export function questionPresets(
       parking: {
         scope: "invitation",
         type: "single",
-        label: "Czy przyjedziecie samochodem i potrzebujecie miejsca parkingowego?",
+        label:
+          "Czy przyjedziecie samochodem i potrzebujecie miejsca parkingowego?",
         help: null,
         required: false,
         allowOther: false,
@@ -391,14 +395,13 @@ function isAnswerValid(q: RsvpQuestion, value: QuestionValue): boolean {
     typeof value.other === "string" && value.other.trim().length > 0;
   if (
     hasOther &&
-    (!q.allowOther || value.other!.trim().length > QUESTION_POLICY.maxOtherLength)
+    (!q.allowOther ||
+      value.other!.trim().length > QUESTION_POLICY.maxOtherLength)
   ) {
     return false;
   }
   if (q.type === "single") {
-    return (
-      (seen.size === 1 && !hasOther) || (seen.size === 0 && hasOther)
-    );
+    return (seen.size === 1 && !hasOther) || (seen.size === 0 && hasOther);
   }
   return seen.size > 0 || hasOther;
 }
@@ -458,7 +461,11 @@ export function collectVisibleQuestionAnswers(
 export function validateQuestionAnswers(
   questions: RsvpQuestion[],
   answers: QuestionAnswerInput[],
-  ctx: { variantId: string; attendingGuestIds: Set<string>; enforceRequired?: boolean },
+  ctx: {
+    variantId: string;
+    attendingGuestIds: Set<string>;
+    enforceRequired?: boolean;
+  },
 ): QuestionFieldError[] {
   const { invitation, byGuest } = visibleQuestions(questions, ctx);
   const enforceRequired = ctx.enforceRequired ?? true;
@@ -504,7 +511,11 @@ export type QuestionSummary =
       type: "choice";
       counts: Record<string, number>;
       otherCount: number;
-      otherTexts: { invitationId: string; guestId: string | null; text: string }[];
+      otherTexts: {
+        invitationId: string;
+        guestId: string | null;
+        text: string;
+      }[];
       answeredCount: number;
       missingCount: number;
     }
@@ -518,7 +529,11 @@ export type QuestionSummary =
   | {
       question: RsvpQuestion;
       type: "text";
-      responses: { invitationId: string; guestId: string | null; text: string }[];
+      responses: {
+        invitationId: string;
+        guestId: string | null;
+        text: string;
+      }[];
       answeredCount: number;
       missingCount: number;
     };
@@ -552,12 +567,16 @@ export function summarizeQuestions(
         expectedKeys.has(`${a.invitationId}:${a.guestId ?? ""}`),
     );
 
-    const missingCount = Math.max(0, expectedKeys.size - relevantAnswers.length);
+    const missingCount = Math.max(
+      0,
+      expectedKeys.size - relevantAnswers.length,
+    );
 
     if (q.type === "text") {
       const responses = relevantAnswers
-        .filter((a): a is QuestionAnswerRecord & { value: { text: string } } =>
-          "text" in a.value,
+        .filter(
+          (a): a is QuestionAnswerRecord & { value: { text: string } } =>
+            "text" in a.value,
         )
         .map((a) => ({
           invitationId: a.invitationId,
@@ -596,7 +615,11 @@ export function summarizeQuestions(
       counts[opt.id] = 0;
     }
     let otherCount = 0;
-    const otherTexts: { invitationId: string; guestId: string | null; text: string }[] = [];
+    const otherTexts: {
+      invitationId: string;
+      guestId: string | null;
+      text: string;
+    }[] = [];
 
     for (const a of relevantAnswers) {
       if (!("optionIds" in a.value)) continue;

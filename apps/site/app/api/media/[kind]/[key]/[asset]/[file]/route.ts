@@ -32,4 +32,3 @@ export const GET = endpoint(async (request) => {
     },
   });
 });
-

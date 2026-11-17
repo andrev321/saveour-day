@@ -7,14 +7,23 @@ import {
   readAllPages,
 } from "../packages/domain/src/hybrid-rsvp.ts";
 import { parseGuestCsv } from "../packages/domain/src/operations.ts";
-import { guestLookupSchema, selfRegisterSchema } from "../packages/domain/src/guest.ts";
+import {
+  guestLookupSchema,
+  selfRegisterSchema,
+} from "../packages/domain/src/guest.ts";
 
 test("normalizeGuestLookup folds Polish and German diacritics and collapses whitespace", () => {
   assert.equal(normalizeGuestLookup("  Łukasz   Żółć "), "lukasz zolc");
   assert.equal(normalizeGuestLookup("ĄĘĆŁŃÓŚŹŻ"), "aeclnoszz");
   assert.equal(normalizeGuestLookup("Müller Straße"), "muller strase");
-  assert.equal(normalizeGuestLookup("Anna Nowak-Kowalska"), "anna nowak kowalska");
-  assert.equal(normalizeGuestLookup("Anna Nowak Kowalska"), "anna nowak kowalska");
+  assert.equal(
+    normalizeGuestLookup("Anna Nowak-Kowalska"),
+    "anna nowak kowalska",
+  );
+  assert.equal(
+    normalizeGuestLookup("Anna Nowak Kowalska"),
+    "anna nowak kowalska",
+  );
 });
 
 test("detectGuestCollisions flags names shared across different invitations only and ignores companions", () => {
@@ -89,9 +98,7 @@ test("parseGuestCsv parses group, named guests and companion slots", () => {
     { kind: "companion", name: null },
   ]);
   assert.equal(parsed[1]!.groupName, null);
-  assert.deepEqual(parsed[1]!.guests, [
-    { kind: "named", name: "Piotr Nowak" },
-  ]);
+  assert.deepEqual(parsed[1]!.guests, [{ kind: "named", name: "Piotr Nowak" }]);
 });
 
 test("readAllPages paginates and stops on error", async () => {
@@ -105,7 +112,10 @@ test("readAllPages paginates and stops on error", async () => {
 });
 
 test("guestLookupSchema and selfRegisterSchema validate lookup and self-registration payloads", () => {
-  assert.equal(guestLookupSchema.safeParse({ query: "Anna Kowalska" }).success, true);
+  assert.equal(
+    guestLookupSchema.safeParse({ query: "Anna Kowalska" }).success,
+    true,
+  );
   assert.equal(guestLookupSchema.safeParse({ query: "   " }).success, false);
   assert.equal(
     selfRegisterSchema.safeParse({

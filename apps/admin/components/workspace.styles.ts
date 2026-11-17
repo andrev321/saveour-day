@@ -675,8 +675,13 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
     }
   }
   @media (max-width: 359px) {
-    & .mantine-Button-root { padding-inline: 4px; font-size: 12px; }
-    & .mantine-Button-section { margin-inline-end: 4px; }
+    & .mantine-Button-root {
+      padding-inline: 4px;
+      font-size: 12px;
+    }
+    & .mantine-Button-section {
+      margin-inline-end: 4px;
+    }
   }
 `;
 

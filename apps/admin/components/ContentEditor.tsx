@@ -875,7 +875,10 @@ function SectionDetails({
                     contacts: [...c.contacts, nextContact],
                     sections: c.sections.map((s) =>
                       s.id === section.id && s.type === "contact"
-                        ? { ...s, contactIds: [...s.contactIds, nextContact.id] }
+                        ? {
+                            ...s,
+                            contactIds: [...s.contactIds, nextContact.id],
+                          }
                         : s,
                     ),
                   }));
@@ -963,10 +966,7 @@ function SectionDetails({
                     update({ crops: { ...section.crops, [entity]: crops } })
                   }
                   onId={(id) => {
-                    if (
-                      id === entity ||
-                      (id && section.mediaIds.includes(id))
-                    )
+                    if (id === entity || (id && section.mediaIds.includes(id)))
                       return;
                     const crops = { ...section.crops };
                     delete crops[entity];

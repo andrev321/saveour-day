@@ -33,7 +33,7 @@ import {
 } from "react";
 import { LoadingSkeleton, LoadingState } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
-import * as S from "./styles";
+import * as S from "./lib/styles";
 import { useInvitationMotion } from "@invitations/ui/motion";
 import {
   ClockIcon,
@@ -505,58 +505,58 @@ export function Invitation({
             data-layout={config.hero.layout}
             data-has-photo={Boolean(hero)}
           >
-          {onEditSection && (
-            <PreviewEditButton
-              title="Nagłówek"
-              onClick={() => onEditSection("hero")}
-            />
-          )}
-          <S.InvitationHeroCopy>
-            <ThemeOrnament config={config} />
-            {config.hero.eyebrow && (
-              <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
-            )}
-            {heading && (
-              <Title order={1} data-long={heading.length > 32}>
-                {heading.split(/( & )/).map((part, index) =>
-                  part === " & " ? (
-                    <span key={index} className="title-ampersand">
-                      {part}
-                    </span>
-                  ) : (
-                    part
-                  ),
-                )}
-              </Title>
-            )}
-            {config.identity.displayName && config.hero.title && (
-              <S.InvitationTagline order={2}>
-                {config.hero.title}
-              </S.InvitationTagline>
-            )}
-            {config.hero.description && (
-              <S.InvitationProse>{config.hero.description}</S.InvitationProse>
-            )}
-            {dateLabel && <S.HeroDate>{dateLabel}</S.HeroDate>}
-            {actionTarget && (
-              <S.HeroAction href={`#${actionTarget}`}>
-                {actionLabel}
-                <span aria-hidden="true">↗</span>
-              </S.HeroAction>
-            )}
-          </S.InvitationHeroCopy>
-          {hero && (
-            <S.InvitationHeroPhoto>
-              <Photo
-                crops={config.hero.crops}
-                tablet={tablet}
-                media={hero}
-                mobile={mobile}
-                resolveMedia={resolveMedia}
-                hero
+            {onEditSection && (
+              <PreviewEditButton
+                title="Nagłówek"
+                onClick={() => onEditSection("hero")}
               />
-            </S.InvitationHeroPhoto>
-          )}
+            )}
+            <S.InvitationHeroCopy>
+              <ThemeOrnament config={config} />
+              {config.hero.eyebrow && (
+                <S.InvitationEyebrow>{config.hero.eyebrow}</S.InvitationEyebrow>
+              )}
+              {heading && (
+                <Title order={1} data-long={heading.length > 32}>
+                  {heading.split(/( & )/).map((part, index) =>
+                    part === " & " ? (
+                      <span key={index} className="title-ampersand">
+                        {part}
+                      </span>
+                    ) : (
+                      part
+                    ),
+                  )}
+                </Title>
+              )}
+              {config.identity.displayName && config.hero.title && (
+                <S.InvitationTagline order={2}>
+                  {config.hero.title}
+                </S.InvitationTagline>
+              )}
+              {config.hero.description && (
+                <S.InvitationProse>{config.hero.description}</S.InvitationProse>
+              )}
+              {dateLabel && <S.HeroDate>{dateLabel}</S.HeroDate>}
+              {actionTarget && (
+                <S.HeroAction href={`#${actionTarget}`}>
+                  {actionLabel}
+                  <span aria-hidden="true">↗</span>
+                </S.HeroAction>
+              )}
+            </S.InvitationHeroCopy>
+            {hero && (
+              <S.InvitationHeroPhoto>
+                <Photo
+                  crops={config.hero.crops}
+                  tablet={tablet}
+                  media={hero}
+                  mobile={mobile}
+                  resolveMedia={resolveMedia}
+                  hero
+                />
+              </S.InvitationHeroPhoto>
+            )}
           </S.InvitationHero>
         )}
         {showHero && config.theme === "editorial" && dateLabel && (
@@ -566,114 +566,118 @@ export function Invitation({
           <S.InvitationMain>
             <S.SectionGrid>
               {renderedSections.map((section, index) => (
-              <S.InvitationSection
-                component="section"
-                key={section.id}
-                id={`section-${section.id}`}
-                data-kind={section.type}
-              >
-                {onEditSection && (
-                  <PreviewEditButton
-                    title={section.title}
-                    onClick={() => onEditSection(section.id)}
-                  />
-                )}
-                <S.SectionHeading>
-                  <span aria-hidden="true">
-                    {String(index + 1).padStart(2, "0")} /
-                  </span>
-                  {config.appearance.icons && (
-                    <SectionIcon kind={section.type} theme={config.theme} />
+                <S.InvitationSection
+                  component="section"
+                  key={section.id}
+                  id={`section-${section.id}`}
+                  data-kind={section.type}
+                >
+                  {onEditSection && (
+                    <PreviewEditButton
+                      title={section.title}
+                      onClick={() => onEditSection(section.id)}
+                    />
                   )}
-                  <Title order={2} size="h3">
-                    {section.title}
-                  </Title>
-                </S.SectionHeading>
-                {section.body ? (
-                  <S.InvitationProse mb="lg">{section.body}</S.InvitationProse>
-                ) : null}
-                {section.type === "timeline" ? (
-                  <S.Schedule>
-                    {section.eventIds
-                      .map((id) => events.find((e) => e.id === id))
-                      .filter((e): e is SiteConfig["events"][number] => !!e)
-                      .map((event) => {
-                        return (
-                          <li key={event.id}>
-                            <Text
-                              component="span"
-                              className="event-time"
-                              fw={600}
-                            >
-                              {event.time}
-                            </Text>
-                            <div>
-                              <Title order={3} size="h2">
-                                {event.title}
-                              </Title>
-                              <Text size="sm" c="dimmed">
-                                {event.dateLabel ||
-                                  (event.date
-                                    ? new Intl.DateTimeFormat(config.locale, {
-                                        day: "numeric",
-                                        month: "long",
-                                        timeZone: config.timeZone,
-                                      }).format(
-                                        new Date(`${event.date}T12:00:00Z`),
-                                      )
-                                    : "")}
+                  <S.SectionHeading>
+                    <span aria-hidden="true">
+                      {String(index + 1).padStart(2, "0")} /
+                    </span>
+                    {config.appearance.icons && (
+                      <SectionIcon kind={section.type} theme={config.theme} />
+                    )}
+                    <Title order={2} size="h3">
+                      {section.title}
+                    </Title>
+                  </S.SectionHeading>
+                  {section.body ? (
+                    <S.InvitationProse mb="lg">
+                      {section.body}
+                    </S.InvitationProse>
+                  ) : null}
+                  {section.type === "timeline" ? (
+                    <S.Schedule>
+                      {section.eventIds
+                        .map((id) => events.find((e) => e.id === id))
+                        .filter((e): e is SiteConfig["events"][number] => !!e)
+                        .map((event) => {
+                          return (
+                            <li key={event.id}>
+                              <Text
+                                component="span"
+                                className="event-time"
+                                fw={600}
+                              >
+                                {event.time}
                               </Text>
-                              {event.url ? (
-                                <Anchor
-                                  href={event.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {config.copy.eventLink}
-                                </Anchor>
-                              ) : null}
-                            </div>
-                          </li>
-                        );
-                      })}
-                  </S.Schedule>
-                ) : null}
-                {section.type === "venue" ? (
-                  <Venue
-                    venue={config.venues.find((v) => v.id === section.venueId)!}
-                    config={config}
-                  />
-                ) : null}
-                {section.type === "contact" ? (
-                  <Stack gap="xl">
-                    {section.contactIds
-                      .map((id) => config.contacts.find((c) => c.id === id)!)
-                      .filter(Boolean)
-                      .map((contact) => (
-                        <Contact
-                          key={contact.id}
-                          contact={contact}
-                          copy={config.copy}
+                              <div>
+                                <Title order={3} size="h2">
+                                  {event.title}
+                                </Title>
+                                <Text size="sm" c="dimmed">
+                                  {event.dateLabel ||
+                                    (event.date
+                                      ? new Intl.DateTimeFormat(config.locale, {
+                                          day: "numeric",
+                                          month: "long",
+                                          timeZone: config.timeZone,
+                                        }).format(
+                                          new Date(`${event.date}T12:00:00Z`),
+                                        )
+                                      : "")}
+                                </Text>
+                                {event.url ? (
+                                  <Anchor
+                                    href={event.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    {config.copy.eventLink}
+                                  </Anchor>
+                                ) : null}
+                              </div>
+                            </li>
+                          );
+                        })}
+                    </S.Schedule>
+                  ) : null}
+                  {section.type === "venue" ? (
+                    <Venue
+                      venue={config.venues.find(
+                        (v) => v.id === section.venueId,
+                      )!}
+                      config={config}
+                    />
+                  ) : null}
+                  {section.type === "contact" ? (
+                    <Stack gap="xl">
+                      {section.contactIds
+                        .map((id) => config.contacts.find((c) => c.id === id)!)
+                        .filter(Boolean)
+                        .map((contact) => (
+                          <Contact
+                            key={contact.id}
+                            contact={contact}
+                            copy={config.copy}
+                          />
+                        ))}
+                    </Stack>
+                  ) : null}
+                  {section.type === "gallery" ? (
+                    <S.Gallery>
+                      {section.mediaIds.map((id) => (
+                        <Photo
+                          key={id}
+                          crops={section.crops[id]}
+                          media={config.media.find((m) => m.id === id)!}
+                          resolveMedia={resolveMedia}
                         />
                       ))}
-                  </Stack>
-                ) : null}
-                {section.type === "gallery" ? (
-                  <S.Gallery>
-                    {section.mediaIds.map((id) => (
-                      <Photo
-                        key={id}
-                        crops={section.crops[id]}
-                        media={config.media.find((m) => m.id === id)!}
-                        resolveMedia={resolveMedia}
-                      />
-                    ))}
-                  </S.Gallery>
-                ) : null}
-              </S.InvitationSection>
-            ))}
-          </S.SectionGrid>
-        </S.InvitationMain>
+                    </S.Gallery>
+                  ) : null}
+                </S.InvitationSection>
+              ))}
+            </S.SectionGrid>
+          </S.InvitationMain>
         )}
         {!focusSection && children && (
           <S.InvitationResponse id="invitation-response">

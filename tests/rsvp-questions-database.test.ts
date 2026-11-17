@@ -202,8 +202,11 @@ test("RSVP questions enforce required checks for guests, clean up removed option
       /REQUIRED_QUESTION_MISSING/,
     );
     assert.equal(
-      (await db.query("select id from public.invitations where id=$1", [selfIid]))
-        .rows.length,
+      (
+        await db.query("select id from public.invitations where id=$1", [
+          selfIid,
+        ])
+      ).rows.length,
       0,
     );
 
@@ -234,7 +237,8 @@ test("RSVP questions enforce required checks for guests, clean up removed option
       0,
     );
     assert.equal(
-      (await db.query("select * from public.rsvp_question_answers")).rows.length,
+      (await db.query("select * from public.rsvp_question_answers")).rows
+        .length,
       0,
     );
     assert.equal(

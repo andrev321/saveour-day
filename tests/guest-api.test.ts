@@ -87,8 +87,7 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       if (table === "sites") {
         assert.equal(url.searchParams.get("deleted_at"), "is.null");
         data = siteDeleted ? null : site;
-      } else if (table === "invitations")
-        data = invitation;
+      } else if (table === "invitations") data = invitation;
       else if (table === "guest_sessions") {
         if (init?.method === "POST")
           storedSession = JSON.parse(String(init.body));
@@ -114,7 +113,10 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
           `in.(${config.events.map((e) => e.id).join(",")})`,
         );
         data = [];
-      } else if (table === "rsvp_questions" || table === "rsvp_question_answers") {
+      } else if (
+        table === "rsvp_questions" ||
+        table === "rsvp_question_answers"
+      ) {
         data = [];
       } else if (table === "consume_access_attempt") {
         buckets.push(JSON.parse(String(init?.body)).attempt_key);
@@ -323,7 +325,9 @@ test("publish and previewEmailCampaign generate canonical /s/<site.id> URLs and 
         version: 1,
         rsvp_revision: 0,
         variant_id: config.defaultVariant,
-        invitation_guests: [{ id: "g1", kind: "named", name: "Jan", position: 0 }],
+        invitation_guests: [
+          { id: "g1", kind: "named", name: "Jan", position: 0 },
+        ],
       },
     ];
     const chain: Record<string, unknown> = {
@@ -488,5 +492,3 @@ test("rsvpSchema accepts optional companionNames and questionAnswers and rejects
     }),
   );
 });
-
-

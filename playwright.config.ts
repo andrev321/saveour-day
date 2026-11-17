@@ -10,7 +10,8 @@ export default defineConfig({
     {
       name: "webkit",
       use: { browserName: "webkit" },
-      testMatch: /.*(guest|workspace|photo-selectors|product-review|motion)\.spec\.ts/,
+      testMatch:
+        /.*(guest|workspace|photo-selectors|product-review|motion)\.spec\.ts/,
     },
   ],
   workers: process.env.CI ? 3 : undefined,

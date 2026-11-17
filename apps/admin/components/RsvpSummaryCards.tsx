@@ -110,8 +110,7 @@ export function RsvpSummaryCards({
                   : ""}{" "}
                 · {labelText("Nie będą", "Declined", "Absagen")}:{" "}
                 {stats.declined} ·{" "}
-                {labelText("Czekamy", "Pending", "Ausstehend")}:{" "}
-                {stats.pending}
+                {labelText("Czekamy", "Pending", "Ausstehend")}: {stats.pending}
               </Text>
             </Group>
           </Card>
@@ -153,8 +152,7 @@ export function RsvpSummaryCards({
                     {qs.type === "number" && (
                       <Badge variant="light" size="sm">
                         {labelText("Suma", "Sum", "Summe")}: {qs.sum} (
-                        {qs.answeredCount}{" "}
-                        {labelText("odp.", "ans.", "Antw.")})
+                        {qs.answeredCount} {labelText("odp.", "ans.", "Antw.")})
                       </Badge>
                     )}
                     {qs.type === "text" && (

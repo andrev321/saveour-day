@@ -26,7 +26,10 @@ export default async function Demo({
     id: "limited",
     slug: "ograniczona",
     eventIds: ["ceremony"],
-    sections: config.variants[0].sections.map(p=>({...p,visible:p.sectionId!=="party"})),
+    sections: config.variants[0].sections.map((p) => ({
+      ...p,
+      visible: p.sectionId !== "party",
+    })),
   });
   const normalizedSlug =
     slug === "main"
@@ -42,4 +45,3 @@ export default async function Demo({
   if (!variant) notFound();
   return <Invitation config={guestContent(config, variant.id)} />;
 }
-

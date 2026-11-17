@@ -1,5 +1,8 @@
 "use client";
-import { maxPhotoFileBytes, preparePhotoUpload } from "../lib/prepare-photo-upload";
+import {
+  maxPhotoFileBytes,
+  preparePhotoUpload,
+} from "../lib/prepare-photo-upload";
 import { ActionButton } from "./ActionButton";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
@@ -140,7 +143,7 @@ export function Editor({
     language === "pl" ? pl : language === "en" ? en : de;
   useEffect(() => {
     let alive = true;
-    Promise.resolve().then(() => {
+    void Promise.resolve().then(() => {
       if (!alive) return;
       try {
         const raw = sessionStorage.getItem(localKey);
@@ -188,7 +191,8 @@ export function Editor({
   useEffect(() => {
     if (!recoveryReady || recovery) return;
     try {
-      if (dirty) sessionStorage.setItem(localKey, createDraftTabSnapshot(config));
+      if (dirty)
+        sessionStorage.setItem(localKey, createDraftTabSnapshot(config));
       else sessionStorage.removeItem(localKey);
     } catch {
       /* Restricted browsers may disable tab storage. */
@@ -484,7 +488,9 @@ export function Editor({
         body: image,
       });
       if (response.status === 413) throw new Error(t("photoPreparationFailed"));
-      const result = response.headers.get("content-type")?.includes("application/json")
+      const result = response.headers
+        .get("content-type")
+        ?.includes("application/json")
         ? await response.json().catch(() => null)
         : null;
       if (!response.ok || !result) {

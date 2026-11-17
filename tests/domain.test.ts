@@ -222,4 +222,3 @@ test("public site and invitation URL helpers format routes and classify UUID vs 
   assert.equal(isSiteUuidKey(siteId), true);
   assert.equal(isSiteUuidKey(`anna-i-jan-${siteId}`), false);
 });
-

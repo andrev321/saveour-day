@@ -179,19 +179,17 @@ test("public site supports guest lookup, collision disambiguation, and info-only
           allowSelfRegistration: false,
           canResetLookup: matched,
           config,
-              invitation: matched
-                ? {
-                    groupName: "Rodzina Kowalskich",
-                    guests: [
-                      { id: "g1", kind: "named", name: "Anna Kowalska" },
-                    ],
-                    revision: 0,
-                    note: "",
-                    answers: [],
-                    questionAnswers: [],
-                  }
-                : null,
-              questions: [],
+          invitation: matched
+            ? {
+                groupName: "Rodzina Kowalskich",
+                guests: [{ id: "g1", kind: "named", name: "Anna Kowalska" }],
+                revision: 0,
+                note: "",
+                answers: [],
+                questionAnswers: [],
+              }
+            : null,
+          questions: [],
         },
       });
     }
@@ -301,7 +299,9 @@ test("public site hides RSVP in info-only mode and supports self-registration af
     page.getByText("Nie znaleźliśmy zaproszenia dla podanych danych."),
   ).toBeVisible();
   await page
-    .getByRole("button", { name: "Nie ma mnie na liście — wypełnij zgłoszenie" })
+    .getByRole("button", {
+      name: "Nie ma mnie na liście — wypełnij zgłoszenie",
+    })
     .click();
   await expect(page.getByLabel("Twoje imię i nazwisko")).toHaveValue(
     "Piotr Zieliński",

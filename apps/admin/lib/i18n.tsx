@@ -221,7 +221,8 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     uploadNeedsSupabase:
       "Upload wymaga połączenia z Supabase. Demonstracja nie wysyła plików.",
     maxPhotoSize: "Maksymalny rozmiar zdjęcia: 10 MB",
-    photoPreparationFailed: "Nie udało się przygotować zdjęcia. Spróbuj wybrać inny plik JPEG, PNG lub WebP.",
+    photoPreparationFailed:
+      "Nie udało się przygotować zdjęcia. Spróbuj wybrać inny plik JPEG, PNG lub WebP.",
     uploadFailed: "Nie udało się przesłać zdjęcia",
     focalDesktopX: "Kadr desktop: poziomo",
     focalDesktopY: "Kadr desktop: pionowo",
@@ -255,7 +256,8 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     uploadNeedsSupabase:
       "Uploading requires a Supabase connection. The demo does not upload files.",
     maxPhotoSize: "Maximum photo size: 10 MB",
-    photoPreparationFailed: "Could not prepare this photo. Try another JPEG, PNG, or WebP file.",
+    photoPreparationFailed:
+      "Could not prepare this photo. Try another JPEG, PNG, or WebP file.",
     uploadFailed: "Upload failed",
     focalDesktopX: "Desktop crop: horizontal",
     focalDesktopY: "Desktop crop: vertical",
@@ -292,7 +294,8 @@ const editorMessages: Record<PanelLanguage, Dictionary> = {
     uploadNeedsSupabase:
       "Der Upload erfordert eine Supabase-Verbindung. Die Demo lädt keine Dateien hoch.",
     maxPhotoSize: "Maximale Fotogröße: 10 MB",
-    photoPreparationFailed: "Das Foto konnte nicht vorbereitet werden. Versuche es mit einer anderen JPEG-, PNG- oder WebP-Datei.",
+    photoPreparationFailed:
+      "Das Foto konnte nicht vorbereitet werden. Versuche es mit einer anderen JPEG-, PNG- oder WebP-Datei.",
     uploadFailed: "Upload fehlgeschlagen",
     focalDesktopX: "Desktop-Ausschnitt: horizontal",
     focalDesktopY: "Desktop-Ausschnitt: vertikal",

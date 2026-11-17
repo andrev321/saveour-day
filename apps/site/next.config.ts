@@ -1,7 +1,11 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   compiler: { styledComponents: true },
-  transpilePackages: ["@invitations/domain", "@invitations/renderer", "@invitations/ui"],
+  transpilePackages: [
+    "@invitations/domain",
+    "@invitations/renderer",
+    "@invitations/ui",
+  ],
   async headers() {
     const developmentEval =
       process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : "";

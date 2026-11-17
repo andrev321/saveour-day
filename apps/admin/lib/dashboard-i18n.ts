@@ -37,13 +37,16 @@ export const dashboardUi = {
     signup: "Utwórz konto",
     passwordHelp: "Nowe konto: hasło musi mieć co najmniej 12 znaków.",
     signupSent: "Wysłaliśmy e-mail z linkiem do potwierdzenia konta.",
-    signupPending: "Konto jest już zarejestrowane. Potwierdź je linkiem z e-maila, a potem się zaloguj.",
-    signupCheckEmail: "Sprawdź skrzynkę. Jeśli konto czeka na potwierdzenie, użyj linku z wcześniejszego e-maila.",
+    signupPending:
+      "Konto jest już zarejestrowane. Potwierdź je linkiem z e-maila, a potem się zaloguj.",
+    signupCheckEmail:
+      "Sprawdź skrzynkę. Jeśli konto czeka na potwierdzenie, użyj linku z wcześniejszego e-maila.",
     continueWithGoogle: "Kontynuuj przez Google",
     orEmail: "lub za pomocą e-maila",
     oauthError: "Logowanie przez Google nie powiodło się. Spróbuj ponownie.",
     oauthCancelled: "Logowanie przez Google zostało przerwane.",
-    linkExpired: "Link wygasł lub został już wykorzystany. Zaloguj się lub wyślij nowy link.",
+    linkExpired:
+      "Link wygasł lub został już wykorzystany. Zaloguj się lub wyślij nowy link.",
     privacyPolicy: "Polityka prywatności",
     termsOfService: "Warunki korzystania",
   },
@@ -85,13 +88,16 @@ export const dashboardUi = {
     signup: "Create account",
     passwordHelp: "New accounts require a password of at least 12 characters.",
     signupSent: "We sent an email with a link to confirm your account.",
-    signupPending: "Your account is registered. Confirm it using the link in your email, then sign in.",
-    signupCheckEmail: "Check your inbox. If your account still needs confirmation, use the link from the earlier email.",
+    signupPending:
+      "Your account is registered. Confirm it using the link in your email, then sign in.",
+    signupCheckEmail:
+      "Check your inbox. If your account still needs confirmation, use the link from the earlier email.",
     continueWithGoogle: "Continue with Google",
     orEmail: "or with email",
     oauthError: "Google sign-in could not be completed. Please try again.",
     oauthCancelled: "Google sign-in was cancelled.",
-    linkExpired: "The link has expired or has already been used. Please sign in or request a new link.",
+    linkExpired:
+      "The link has expired or has already been used. Please sign in or request a new link.",
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service",
   },
@@ -137,13 +143,16 @@ export const dashboardUi = {
       "Neue Konten benötigen ein Passwort mit mindestens 12 Zeichen.",
     signupSent:
       "Wir haben dir eine E-Mail mit einem Link zur Kontobestätigung gesendet.",
-    signupPending: "Dein Konto ist registriert. Bestätige es über den Link in deiner E-Mail und melde dich danach an.",
-    signupCheckEmail: "Prüfe dein Postfach. Falls dein Konto noch bestätigt werden muss, nutze den Link aus der früheren E-Mail.",
+    signupPending:
+      "Dein Konto ist registriert. Bestätige es über den Link in deiner E-Mail und melde dich danach an.",
+    signupCheckEmail:
+      "Prüfe dein Postfach. Falls dein Konto noch bestätigt werden muss, nutze den Link aus der früheren E-Mail.",
     continueWithGoogle: "Weiter mit Google",
     orEmail: "oder mit E-Mail",
     oauthError: "Google-Anmeldung fehlgeschlagen. Bitte erneut versuchen.",
     oauthCancelled: "Google-Anmeldung wurde abgebrochen.",
-    linkExpired: "Der Link ist abgelaufen oder wurde bereits verwendet. Bitte melde dich an oder fordere einen neuen Link an.",
+    linkExpired:
+      "Der Link ist abgelaufen oder wurde bereits verwendet. Bitte melde dich an oder fordere einen neuen Link an.",
     privacyPolicy: "Datenschutzerklärung",
     termsOfService: "Nutzungsbedingungen",
   },

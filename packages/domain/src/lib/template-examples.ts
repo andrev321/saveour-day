@@ -1,4 +1,4 @@
-import type { InvitationLocale } from "./index.ts";
+import type { InvitationLocale } from "../index.ts";
 
 type PersonalExample = { names: string; title: string; body: string };
 // Fictional people; no real contact details are included in starter content.

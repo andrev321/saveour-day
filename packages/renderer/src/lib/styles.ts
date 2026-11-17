@@ -172,7 +172,8 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
     font-size: 12px;
     text-decoration: none;
     padding-block: 8px;
-    background: linear-gradient(currentColor, currentColor) no-repeat left calc(100% - 4px);
+    background: linear-gradient(currentColor, currentColor) no-repeat left
+      calc(100% - 4px);
     background-size: 0 1px;
     transition: background-size 200ms ease;
   }

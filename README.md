@@ -19,10 +19,10 @@ flowchart LR
 
 ## Environments
 
-| Environment | Admin panel | Access |
-| --- | --- | --- |
-| Production | https://saveour-day-admin-production.vercel.app | Public |
-| Staging | Shared privately | On request only |
+| Environment | Admin panel                                     | Access          |
+| ----------- | ----------------------------------------------- | --------------- |
+| Production  | https://saveour-day-admin-production.vercel.app | Public          |
+| Staging     | Shared privately                                | On request only |
 
 Staging is protected by Vercel Authentication. To test there, ask the repository owner for access and provide your email address. The owner grants access per email in Vercel and shares the staging address after approval. See [Staging operations](docs/STAGING-OPERATIONS.md#tester-access).
 
@@ -50,15 +50,15 @@ Without Supabase, try the local admin at `http://127.0.0.1:3000/demo` and guest 
 
 ## Repository map
 
-| Path | Purpose |
-| --- | --- |
-| `apps/admin` | Organizer panel |
-| `apps/site` | Guest invitations, authentication, media, and RSVP |
-| `packages/domain` | Schema v3, validation, templates, themes, and guest projection |
-| `packages/renderer` | Shared invitation renderer |
-| `packages/ui` | Branding and shared UI infrastructure |
-| `supabase/migrations` | Database schema, permissions, and lifecycle operations |
-| `tests` | Unit, integration, browser, and staging checks |
+| Path                  | Purpose                                                        |
+| --------------------- | -------------------------------------------------------------- |
+| `apps/admin`          | Organizer panel                                                |
+| `apps/site`           | Guest invitations, authentication, media, and RSVP             |
+| `packages/domain`     | Schema v3, validation, templates, themes, and guest projection |
+| `packages/renderer`   | Shared invitation renderer                                     |
+| `packages/ui`         | Branding and shared UI infrastructure                          |
+| `supabase/migrations` | Database schema, permissions, and lifecycle operations         |
+| `tests`               | Unit, integration, browser, and staging checks                 |
 
 ## Checks
 

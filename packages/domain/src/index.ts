@@ -1,25 +1,25 @@
 import { z } from "zod";
-import { themeNames, themeDesigns, themes } from "./themes.ts";
-import { contrastRatio } from "./colors.ts";
-import { isSampleMedia } from "./sample-media.ts";
+import { themeNames, themeDesigns, themes } from "./lib/themes.ts";
+import { contrastRatio } from "./lib/colors.ts";
+import { isSampleMedia } from "./lib/sample-media.ts";
 export {
   samplePhotoGroups,
   samplePhotoOptions,
   selectSamplePhoto,
   type SamplePhotoGroup,
-} from "./sample-photo-options.ts";
+} from "./lib/sample-photo-options.ts";
 export {
   samplePhoto,
   samplePhotos,
   isSampleMedia,
   isSampleMediaSource,
-} from "./sample-media.ts";
+} from "./lib/sample-media.ts";
 export {
   contrastRatio,
   colorLuminance,
   isDarkColor,
   textOnColor,
-} from "./colors.ts";
+} from "./lib/colors.ts";
 export {
   themeNames,
   themeDesigns,
@@ -32,7 +32,7 @@ export {
   type ThemeDesign,
   type ThemeAppearance,
   type ThemePalette,
-} from "./themes.ts";
+} from "./lib/themes.ts";
 
 const text = z.string().trim().min(1).max(500);
 const paragraph = z.string().trim().max(6000).default("");
@@ -425,4 +425,3 @@ export function invitationTokenUrl(token: string, baseUrl: string): string {
 export function isSiteUuidKey(key: string): boolean {
   return siteUuidSchema.safeParse(key).success;
 }
-

@@ -32,7 +32,9 @@ test("admin auth confirm handles OAuth code exchange, oauth errors and OTP verif
   // 1. OAuth code exchange success -> redirects to /
   {
     exchangeCodeResult = { error: null };
-    const req = new Request("https://admin.example.com/auth/confirm?code=valid-code-123");
+    const req = new Request(
+      "https://admin.example.com/auth/confirm?code=valid-code-123",
+    );
     const res = await GET(req);
     assert.equal(res.status, 307);
     assert.equal(res.headers.get("location"), "https://admin.example.com/");
@@ -42,37 +44,60 @@ test("admin auth confirm handles OAuth code exchange, oauth errors and OTP verif
   // 2. OAuth code exchange error -> redirects to /?error=oauth_failed
   {
     exchangeCodeResult = { error: new Error("invalid code") };
-    const req = new Request("https://admin.example.com/auth/confirm?code=bad-code");
+    const req = new Request(
+      "https://admin.example.com/auth/confirm?code=bad-code",
+    );
     const res = await GET(req);
     assert.equal(res.status, 307);
-    assert.equal(res.headers.get("location"), "https://admin.example.com/?error=oauth_failed");
+    assert.equal(
+      res.headers.get("location"),
+      "https://admin.example.com/?error=oauth_failed",
+    );
   }
 
   // 3. OAuth provider error param -> redirects with error
   {
-    const req = new Request("https://admin.example.com/auth/confirm?error=access_denied&error_description=User+cancelled");
+    const req = new Request(
+      "https://admin.example.com/auth/confirm?error=access_denied&error_description=User+cancelled",
+    );
     const res = await GET(req);
     assert.equal(res.status, 307);
-    assert.equal(res.headers.get("location"), "https://admin.example.com/?error=access_denied");
+    assert.equal(
+      res.headers.get("location"),
+      "https://admin.example.com/?error=access_denied",
+    );
   }
 
   // 4. OTP signup verification success -> redirects to /?emailConfirmed=1
   {
     verifyOtpResult = { error: null };
-    const req = new Request("https://admin.example.com/auth/confirm?token_hash=token123&type=signup");
+    const req = new Request(
+      "https://admin.example.com/auth/confirm?token_hash=token123&type=signup",
+    );
     const res = await GET(req);
     assert.equal(res.status, 307);
-    assert.equal(res.headers.get("location"), "https://admin.example.com/?emailConfirmed=1");
-    assert.deepEqual(lastVerifiedOtp, { token_hash: "token123", type: "signup" });
+    assert.equal(
+      res.headers.get("location"),
+      "https://admin.example.com/?emailConfirmed=1",
+    );
+    assert.deepEqual(lastVerifiedOtp, {
+      token_hash: "token123",
+      type: "signup",
+    });
   }
 
   // 5. OTP recovery verification success -> redirects to /account
   {
     verifyOtpResult = { error: null };
-    const req = new Request("https://admin.example.com/auth/confirm?token_hash=token456&type=recovery");
+    const req = new Request(
+      "https://admin.example.com/auth/confirm?token_hash=token456&type=recovery",
+    );
     const res = await GET(req);
     assert.equal(res.status, 307);
-    assert.equal(res.headers.get("location"), "https://admin.example.com/account");
+    assert.equal(
+      res.headers.get("location"),
+      "https://admin.example.com/account",
+    );
   }
 
   // 6. Unknown / expired params -> redirects to /?error=expired
@@ -80,6 +105,9 @@ test("admin auth confirm handles OAuth code exchange, oauth errors and OTP verif
     const req = new Request("https://admin.example.com/auth/confirm");
     const res = await GET(req);
     assert.equal(res.status, 307);
-    assert.equal(res.headers.get("location"), "https://admin.example.com/?error=expired");
+    assert.equal(
+      res.headers.get("location"),
+      "https://admin.example.com/?error=expired",
+    );
   }
 });

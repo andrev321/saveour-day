@@ -163,7 +163,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           );
           setDeadline(localDeadline(result.site.rsvp_deadline));
           setRsvpEnabled(result.site.rsvp_enabled ?? true);
-          setAllowSelfRegistration(result.site.allow_self_registration ?? false);
+          setAllowSelfRegistration(
+            result.site.allow_self_registration ?? false,
+          );
         }
       })
       .catch((e) => {
@@ -197,7 +199,12 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       const result = await apiFetch<{
         url?: string;
         shortCode?: string | null;
-        links?: { id?: string; label: string; url: string; shortCode?: string | null }[];
+        links?: {
+          id?: string;
+          label: string;
+          url: string;
+          shortCode?: string | null;
+        }[];
         alreadyImported?: boolean;
       }>(endpoint, {
         method: "POST",
@@ -217,7 +224,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         setLastShortCode(null);
       }
       const refreshed = await apiFetch<Management>(endpoint);
-      if (action === "settings" || action === "rsvp-options" || action === "save-questions") {
+      if (
+        action === "settings" ||
+        action === "rsvp-options" ||
+        action === "save-questions"
+      ) {
         accept(refreshed);
         if (action === "settings") setCode("");
       } else setData(refreshed);
@@ -863,8 +874,12 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   </Text>
                   {lastShortCode && (
                     <Text size="sm" fw={600}>
-                      {labelText("Kod zaproszenia", "Invitation code", "Einladungscode")}:{" "}
-                      {lastShortCode}
+                      {labelText(
+                        "Kod zaproszenia",
+                        "Invitation code",
+                        "Einladungscode",
+                      )}
+                      : {lastShortCode}
                     </Text>
                   )}
                   <TextInput
@@ -1054,7 +1069,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   },
                   {
                     value: "answered",
-                    label: labelText("Odpowiedziały", "Answered", "Beantwortet"),
+                    label: labelText(
+                      "Odpowiedziały",
+                      "Answered",
+                      "Beantwortet",
+                    ),
                   },
                   {
                     value: "pending_match",
@@ -1128,7 +1147,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     ),
                   })
                 }
-                onApprovePending={(id) => void action("approve-pending", { id })}
+                onApprovePending={(id) =>
+                  void action("approve-pending", { id })
+                }
                 onMergePending={(pendingId, targetId, targetGuestId) =>
                   void action("merge-pending", {
                     pendingId,

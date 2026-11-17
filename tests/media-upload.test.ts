@@ -229,7 +229,10 @@ test("consolidated media policy enforces MIME, format, byte and pixel budgets ac
   assert.equal(computeInitialDownscale(4000, 3000), 1);
   const scale = computeInitialDownscale(6000, 4000);
   assert.ok(scale < 1 && scale > 0.9);
-  assert.ok(Math.round(6000 * scale) * Math.round(4000 * scale) <= MEDIA_POLICY.maxInputPixels);
+  assert.ok(
+    Math.round(6000 * scale) * Math.round(4000 * scale) <=
+      MEDIA_POLICY.maxInputPixels,
+  );
 });
 
 test("preparePhotoUpload rejects unsupported MIME, returns within-budget files unchanged, and downscales oversized photos", async () => {
@@ -269,17 +272,19 @@ test("preparePhotoUpload rejects unsupported MIME, returns within-budget files u
         getContext(kind: string) {
           assert.equal(kind, "2d");
           return {
-            drawImage(_bmp: unknown, _x: number, _y: number, w: number, h: number) {
+            drawImage(
+              _bmp: unknown,
+              _x: number,
+              _y: number,
+              w: number,
+              h: number,
+            ) {
               assert.equal(w, canvas.width);
               assert.equal(h, canvas.height);
             },
           };
         },
-        toBlob(
-          cb: (blob: Blob | null) => void,
-          mime: string,
-          quality: number,
-        ) {
+        toBlob(cb: (blob: Blob | null) => void, mime: string, quality: number) {
           assert.equal(mime, "image/webp");
           drawnSizes.push({ w: canvas.width, h: canvas.height, quality });
           // Succeed when quality <= 0.8
@@ -325,5 +330,3 @@ test("preparePhotoUpload rejects unsupported MIME, returns within-budget files u
     (globalThis as Record<string, unknown>).document = origDocument;
   }
 });
-
-

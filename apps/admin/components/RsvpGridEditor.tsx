@@ -180,8 +180,9 @@ export function RsvpGridEditor({
     }
 
     const selectedIds = value && "optionIds" in value ? value.optionIds : [];
-    const otherText = value && "other" in value ? value.other ?? "" : "";
-    const isOther = value && "other" in value && typeof value.other === "string";
+    const otherText = value && "other" in value ? (value.other ?? "") : "";
+    const isOther =
+      value && "other" in value && typeof value.other === "string";
 
     if (q.type === "single") {
       return (
@@ -416,7 +417,12 @@ export function RsvpGridEditor({
           >
             {labelText("Zapisz odpowiedzi", "Save RSVP", "RSVP speichern")}
           </ActionButton>
-          <Button size="xs" variant="default" disabled={busy} onClick={onCancel}>
+          <Button
+            size="xs"
+            variant="default"
+            disabled={busy}
+            onClick={onCancel}
+          >
             {labelText("Anuluj", "Cancel", "Abbrechen")}
           </Button>
         </Group>

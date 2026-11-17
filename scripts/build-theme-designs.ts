@@ -4,7 +4,7 @@ import {
   themes,
   themeNames,
   themePalettes,
-} from "../packages/domain/src/themes.ts";
+} from "../packages/domain/src/index.ts";
 
 // Package real renderer screenshots after running design-examples.spec.ts.
 const output = "assets/theme-designs";
