@@ -13,12 +13,10 @@ import {
   Select,
   Stack,
   Text,
-  Textarea,
   TextInput,
   Title,
   Modal,
   FileButton,
-  Checkbox,
   Accordion,
   Pagination,
   SimpleGrid,
@@ -29,10 +27,13 @@ import { apiFetch } from "./Dashboard";
 import {
   csvFile,
   parseGuestCsv,
-  defaultQuestions,
   type ImportedInvitation,
-  type QuestionSettings,
 } from "@invitations/domain/operations";
+import {
+  invitationDisplayName,
+  summarizeRsvp,
+} from "@invitations/domain/invitation";
+import { summarizeQuestions } from "@invitations/domain/rsvp-questions";
 import {
   detectGuestCollisions,
   formatShareMessage,
@@ -47,6 +48,9 @@ import {
   InvitationEditorModal,
   type InvitationEditorSubmit,
 } from "./InvitationEditorModal";
+import { InvitationTable } from "./InvitationTable";
+import { RsvpQuestionsEditor } from "./RsvpQuestionsEditor";
+import { RsvpSummaryCards } from "./RsvpSummaryCards";
 import { QrCodeCard } from "./QrCodeCard";
 import { FilterGrid } from "./form-layout.styles";
 function localDeadline(iso: string | null) {
@@ -97,8 +101,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [importLinks, setImportLinks] = useState<
     { id?: string; label: string; url: string; shortCode?: string | null }[]
   >([]);
-  const [questions, setQuestions] =
-    useState<QuestionSettings>(defaultQuestions);
   function download(name: string, content: string) {
     const url = URL.createObjectURL(
       new Blob([content], { type: "text/csv;charset=utf-8" }),
@@ -137,10 +139,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [allowSelfRegistration, setAllowSelfRegistration] = useState(false);
   const [link, setLink] = useState("");
   const [lastShortCode, setLastShortCode] = useState<string | null>(null);
-  const [mergeTargets, setMergeTargets] = useState<Record<string, string>>({});
-  const [editing, setEditing] = useState<string | null>(null),
-    [note, setNote] = useState(""),
-    [replies, setReplies] = useState<Record<string, string>>({});
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingInvite, setEditingInvite] = useState<InvitationRow | null>(
     null,
@@ -152,7 +150,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     setDeadline(localDeadline(result.site.rsvp_deadline));
     setRsvpEnabled(result.site.rsvp_enabled ?? true);
     setAllowSelfRegistration(result.site.allow_self_registration ?? false);
-    setQuestions(result.site.rsvp_questions || defaultQuestions);
   }
   useEffect(() => {
     let alive = true;
@@ -160,7 +157,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       .then((result) => {
         if (alive) {
           setData(result);
-          setQuestions(result.site.rsvp_questions || defaultQuestions);
           setMode(result.site.access_mode);
           setVariant(
             result.site.public_variant_id || result.variants[0]?.id || "",
@@ -195,7 +191,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     }
   }
   async function action(action: string, payload: unknown) {
-    if (!start(action)) return;
+    if (!start(action)) return false;
     setMessage("");
     try {
       const result = await apiFetch<{
@@ -216,18 +212,16 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         setImportOpen(false);
         setImportLinks(result.links || []);
       }
-      if (action === "questions") setQuestions(questions);
       if (action === "revoke") {
         setLink("");
         setLastShortCode(null);
       }
       const refreshed = await apiFetch<Management>(endpoint);
-      if (action === "settings" || action === "rsvp-options") {
+      if (action === "settings" || action === "rsvp-options" || action === "save-questions") {
         accept(refreshed);
         if (action === "settings") setCode("");
       } else setData(refreshed);
       setConfirmation(null);
-      setEditing(null);
       setEditorOpen(false);
       setEditingInvite(null);
       setMessage(
@@ -239,23 +233,19 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             )
           : labelText("Zapisano.", "Saved.", "Gespeichert."),
       );
+      return true;
     } catch (e) {
       setMessage((e as Error).message);
+      return false;
     } finally {
       end();
     }
   }
   function handleEditorSubmit(submission: InvitationEditorSubmit) {
-    if (submission.action === "update" && submission.removedGuests) {
-      setEditorOpen(false);
-      setConfirmation({
-        action: "update",
-        payload: submission.payload,
-        description: labelText(
-          "Usunięte osoby nie będą mogły odpowiadać i znikną z aktywnych zestawień. Ich dotychczasowe RSVP pozostanie w historii.",
-          "Removed people will disappear from active totals and cannot respond. Their existing RSVP remains in history.",
-          "Entfernte Personen erscheinen nicht mehr in aktiven Auswertungen. Frühere Antworten bleiben archiviert.",
-        ),
+    if (submission.action === "quick-import") {
+      void action("import", {
+        requestId: crypto.randomUUID(),
+        entries: submission.entries,
       });
       return;
     }
@@ -280,28 +270,32 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       (i) => !i.revoked && i.review_status === "pending_match",
     ) || [];
   const collisions = detectGuestCollisions(active);
-  const approvedMergeOptions = active.map((i) => ({
-    value: i.id,
-    label: `${i.label} (${i.guests.map((g) => g.name).join(", ")})`,
-  }));
   const events = [
     ...new Map(
       active.flatMap((i) => i.events.map((e) => [e.id, e] as const)),
     ).values(),
   ];
-  function invitationStatus(i: InvitationRow) {
-    const values = i.guests.flatMap((g) =>
-      i.events.map((e) => answerMap.get(`${i.id}:${g.id}:${e.id}`)),
-    );
-    return !values.length || values.some((v) => v === undefined)
-      ? "missing"
-      : values.some((v) => v === true)
-        ? "yes"
-        : "no";
-  }
+  const rsvpSummary = summarizeRsvp(active, data?.answers || []);
+  const answeredGuestIds = new Set(
+    (data?.answers || []).map((a) => a.guest_id),
+  );
+  const questionSummaries = summarizeQuestions(
+    data?.questions || [],
+    data?.questionAnswers || [],
+    active.map((inv) => ({
+      id: inv.id,
+      variantId: inv.variant_id,
+      attendingGuestIds: inv.guests
+        .filter((g) => {
+          const st = rsvpSummary.byGuest.get(g.id);
+          return st === "attending" || st === "partial";
+        })
+        .map((g) => g.id),
+    })),
+  );
   const filtered = (data?.invitations || []).filter(
     (i) =>
-      `${i.label} ${i.short_code} ${i.guests.map((g) => g.name).join(" ")} ${i.emails.join(" ")}`
+      `${i.group_name ?? ""} ${i.short_code} ${i.guests.map((g) => g.name ?? "").join(" ")}`
         .toLowerCase()
         .includes(query.toLowerCase()) &&
       (filter === "all"
@@ -312,7 +306,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             ? !i.revoked && i.review_status === "pending_match"
             : !i.revoked &&
               i.review_status !== "pending_match" &&
-              invitationStatus(i) === filter),
+              rsvpSummary.byInvitation.get(i.id) === filter),
   );
   const totalPages = Math.max(1, Math.ceil(filtered.length / 20));
   const visible = filtered.slice(
@@ -400,67 +394,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 )}
               </Alert>
             )}
-            <SimpleGrid cols={{ base: 1, sm: 3 }}>
-              <Card withBorder>
-                <Text>
-                  {labelText("Aktywni goście", "Active guests", "Aktive Gäste")}
-                </Text>
-                <Title order={3}>
-                  {active.reduce((sum, i) => sum + i.guests.length, 0)}
-                </Title>
-              </Card>
-              <Card withBorder>
-                <Text>
-                  {labelText(
-                    "Zaproszenia bez kompletu odpowiedzi",
-                    "Invitations with missing answers",
-                    "Einladungen mit fehlenden Antworten",
-                  )}
-                </Text>
-                <Title order={3}>
-                  {
-                    active.filter((i) => invitationStatus(i) === "missing")
-                      .length
-                  }
-                </Title>
-              </Card>
-              <Card withBorder>
-                <Text>
-                  {labelText(
-                    "Aktywne zaproszenia",
-                    "Active invitations",
-                    "Aktive Einladungen",
-                  )}
-                </Text>
-                <Title order={3}>{active.length}</Title>
-              </Card>
-            </SimpleGrid>
-            {events.map((event) => {
-              const values = active
-                .filter((i) => i.events.some((e) => e.id === event.id))
-                .flatMap((i) =>
-                  i.guests.map((g) =>
-                    answerMap.get(`${i.id}:${g.id}:${event.id}`),
-                  ),
-                );
-              return (
-                <Card withBorder key={event.id}>
-                  <Text fw={600}>{event.title}</Text>
-                  <Text size="sm">
-                    {labelText("Będą", "Attending", "Zusagen")}:{" "}
-                    {values.filter((v) => v === true).length} ·{" "}
-                    {labelText("Nie będą", "Declined", "Absagen")}:{" "}
-                    {values.filter((v) => v === false).length} ·{" "}
-                    {labelText(
-                      "Brak odpowiedzi",
-                      "No response",
-                      "Keine Antwort",
-                    )}
-                    : {values.filter((v) => v === undefined).length}
-                  </Text>
-                </Card>
-              );
-            })}
+            <RsvpSummaryCards
+              summary={rsvpSummary}
+              events={events}
+              questionSummaries={questionSummaries}
+            />
             <Accordion variant="separated" transitionDuration={0}>
               <Accordion.Item value="access">
                 <Accordion.Control>
@@ -729,68 +667,27 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               <Accordion.Item value="questions">
                 <Accordion.Control>
                   {labelText(
-                    "Pytania organizacyjne",
-                    "Planning questions",
-                    "Organisatorische Fragen",
+                    "Pytania do gości",
+                    "Guest questions",
+                    "Fragen an Gäste",
                   )}
                 </Accordion.Control>
                 <Accordion.Panel>
-                  <Stack>
-                    <Text size="sm">
-                      {labelText(
-                        "Goście odpowiedzą osobno za każdą osobę. Zbieraj tylko potrzebne informacje. Wyłączenie pytania ukrywa je gościom, ale zachowuje wcześniejsze odpowiedzi w panelu.",
-                        "Guests answer for each person. Collect only necessary information. Disabling a question hides it from guests and keeps previous answers in the panel.",
-                        "Gäste antworten pro Person. Nur nötige Angaben abfragen. Deaktivierte Fragen bleiben im Panel archiviert.",
-                      )}
-                    </Text>
-                    {(["diet", "lodging", "transport"] as const).map((key) => (
-                      <Checkbox
-                        key={key}
-                        label={
-                          key === "diet"
-                            ? labelText(
-                                "Dieta i alergie",
-                                "Diet and allergies",
-                                "Ernährung und Allergien",
-                              )
-                            : key === "lodging"
-                              ? labelText(
-                                  "Potrzeba noclegu",
-                                  "Accommodation needed",
-                                  "Übernachtung benötigt",
-                                )
-                              : labelText(
-                                  "Potrzeba transportu",
-                                  "Transport needed",
-                                  "Transport benötigt",
-                                )
-                        }
-                        checked={questions[key]}
-                        onChange={(e) =>
-                          setQuestions({
-                            ...questions,
-                            [key]: e.currentTarget.checked,
-                          })
-                        }
-                      />
-                    ))}
-                    <ActionButton
-                      disabled={busy}
-                      loading={operation === "questions"}
-                      onClick={() =>
-                        void action("questions", {
-                          questions,
-                          version: data.site.access_version,
-                        })
-                      }
-                    >
-                      {labelText(
-                        "Zapisz pytania",
-                        "Save questions",
-                        "Fragen speichern",
-                      )}
-                    </ActionButton>
-                  </Stack>
+                  <RsvpQuestionsEditor
+                    key={data.site.access_version}
+                    initialQuestions={data.questions || []}
+                    questionAnswers={data.questionAnswers || []}
+                    variants={options}
+                    locale={data.locale}
+                    busy={busy}
+                    saving={operation === "save-questions"}
+                    onSave={(nextQuestions) =>
+                      void action("save-questions", {
+                        questions: nextQuestions,
+                        version: data.site.access_version,
+                      })
+                    }
+                  />
                 </Accordion.Panel>
               </Accordion.Item>
             </Accordion>
@@ -813,7 +710,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 onClick={() =>
                   download(
                     "odpowiedzi-rsvp.csv",
-                    formatRsvpCsv(data, events, answerMap, labelText),
+                    formatRsvpCsv(data, answerMap, labelText),
                   )
                 }
               >
@@ -868,8 +765,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   download(
                     "goscie-wzor.csv",
                     csvFile([
-                      ["rodzina", "goscie"],
-                      ["Rodzina Kowalskich", "Anna|Jan"],
+                      ["grupa", "osoby", "towarzyszace"],
+                      ["Rodzina Kowalskich", "Anna Kowalska|Jan Kowalski", "1"],
                     ]),
                   )
                 }
@@ -933,10 +830,15 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             <InvitationEditorModal
               opened={editorOpen}
               invitation={editingInvite}
+              answeredGuestIds={answeredGuestIds}
               variants={options}
               defaultVariantId={variant || options[0]?.value || ""}
               busy={busy}
-              saving={operation === "create" || operation === "update"}
+              saving={
+                operation === "create" ||
+                operation === "update" ||
+                operation === "import"
+              }
               onClose={() => {
                 setEditorOpen(false);
                 setEditingInvite(null);
@@ -1111,18 +1013,18 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             {!data.invitations.length && (
               <Text>
                 {labelText(
-                  "Dodaj pierwszą osobę lub rodzinę.",
-                  "Add your first person or family.",
-                  "Erste Person oder Familie hinzufügen.",
+                  "Dodaj pierwszą osobę lub grupę.",
+                  "Add your first person or group.",
+                  "Erste Person oder Gruppe hinzufügen.",
                 )}
               </Text>
             )}
             <FilterGrid>
               <TextInput
                 label={labelText(
-                  "Szukaj gościa, rodziny lub kodu",
-                  "Search guest, family or code",
-                  "Gast, Familie oder Code suchen",
+                  "Szukaj osoby, grupy lub kodu",
+                  "Search person, group or code",
+                  "Person, Gruppe oder Code suchen",
                 )}
                 value={query}
                 onChange={(e) => {
@@ -1143,20 +1045,16 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     label: labelText("Wszystkie", "All", "Alle"),
                   },
                   {
-                    value: "missing",
-                    label: labelText(
-                      "Brak kompletu odpowiedzi",
-                      "Missing answers",
-                      "Fehlende Antworten",
-                    ),
+                    value: "pending",
+                    label: labelText("Czekamy", "Pending", "Offen"),
                   },
                   {
-                    value: "yes",
-                    label: labelText("Będą", "Attending", "Zusagen"),
+                    value: "partial",
+                    label: labelText("Częściowo", "Partial", "Teilweise"),
                   },
                   {
-                    value: "no",
-                    label: labelText("Odmówili", "Declined", "Absagen"),
+                    value: "answered",
+                    label: labelText("Odpowiedziały", "Answered", "Beantwortet"),
                   },
                   {
                     value: "pending_match",
@@ -1182,454 +1080,73 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 )}
               </Text>
             )}
-            {visible.map((i) => {
-              const allActiveGuests = [
-                ...i.guests,
-                ...(i.plus_one ? [i.plus_one] : []),
-              ];
-              const collidingNames = collisions.get(i.id);
-              const isPending = i.review_status === "pending_match" && !i.revoked;
-              return (
-                <Card withBorder key={i.id}>
-                  <Stack gap="sm">
-                    <Group justify="space-between" wrap="wrap">
-                      <Title order={4}>{i.label}</Title>
-                      <Group gap="xs">
-                        {i.short_code && (
-                          <Badge variant="outline" color="dark">
-                            {labelText("Kod", "Code", "Code")}: {i.short_code}
-                          </Badge>
-                        )}
-                        {i.allow_plus_one && (
-                          <Badge variant="light" color="blue">
-                            +1
-                          </Badge>
-                        )}
-                        {isPending && (
-                          <Badge variant="filled" color="orange">
-                            {labelText(
-                              "Do akceptacji",
-                              "Pending review",
-                              "Ausstehend",
-                            )}
-                          </Badge>
-                        )}
-                        {collidingNames && (
-                          <Badge variant="light" color="yellow">
-                            {labelText(
-                              "Kolizja imienia i nazwiska",
-                              "Name collision",
-                              "Namenskollision",
-                            )}
-                          </Badge>
-                        )}
-                        <Badge>
-                          {i.revoked
-                            ? labelText("Cofnięte", "Revoked", "Widerrufen")
-                            : labelText("Aktywne", "Active", "Aktiv")}
-                        </Badge>
-                      </Group>
-                    </Group>
-                    {collidingNames && (
-                      <Alert color="yellow">
-                        <Group justify="space-between" wrap="wrap">
-                          <Text size="sm">
-                            {labelText(
-                              `Powtarzające się dane: ${collidingNames.join(", ")}. Przekaż gościowi link ogólny wraz z kodem weryfikacyjnym ${i.short_code}.`,
-                              `Duplicate name: ${collidingNames.join(", ")}. Share the general link with verification code ${i.short_code}.`,
-                              `Doppelter Name: ${collidingNames.join(", ")}. Allgemeinen Link mit Code ${i.short_code} teilen.`,
-                            )}
-                          </Text>
-                          <Button
-                            size="xs"
-                            variant="light"
-                            onClick={() =>
-                              void copyText(
-                                formatShareMessage({
-                                  locale: data.locale,
-                                  displayName: data.displayName,
-                                  kind: "shared_with_code",
-                                  url: data.url,
-                                  shortCode: i.short_code,
-                                  deadline: data.site.rsvp_deadline
-                                    ? localDeadline(
-                                        data.site.rsvp_deadline,
-                                      ).replace("T", " ")
-                                    : null,
-                                }),
-                                labelText(
-                                  `Skopiowano link + kod (${i.short_code}).`,
-                                  `Copied link + code (${i.short_code}).`,
-                                  `Link + Code kopiert (${i.short_code}).`,
-                                ),
-                              )
-                            }
-                          >
-                            {labelText(
-                              "Kopiuj link + kod",
-                              "Copy link + code",
-                              "Link + Code kopieren",
-                            )}
-                          </Button>
-                        </Group>
-                      </Alert>
-                    )}
-                    {isPending && (
-                      <Alert color="orange">
-                        <Stack gap="xs">
-                          <Text size="sm">
-                            {labelText(
-                              "Gość dopisał się samodzielnie na stronie. Zatwierdź jako nowe zaproszenie lub połącz z istniejącym zaproszeniem.",
-                              "Guest self-registered on the site. Approve as a new invitation or merge into an existing invitation.",
-                              "Gast hat sich selbst registriert. Genehmigen oder mit bestehender Einladung zusammenführen.",
-                            )}
-                          </Text>
-                          <Group align="flex-end" wrap="wrap">
-                            <Button
-                              size="xs"
-                              color="green"
-                              disabled={busy}
-                              onClick={() =>
-                                void action("approve-pending", { id: i.id })
-                              }
-                            >
-                              {labelText(
-                                "Zatwierdź",
-                                "Approve",
-                                "Genehmigen",
-                              )}
-                            </Button>
-                            {approvedMergeOptions.length > 0 && (
-                              <>
-                                <Select
-                                  size="xs"
-                                  placeholder={labelText(
-                                    "Wybierz zaproszenie do połączenia",
-                                    "Select invitation to merge into",
-                                    "Einladung zum Zusammenführen wählen",
-                                  )}
-                                  data={approvedMergeOptions}
-                                  value={mergeTargets[i.id] || null}
-                                  onChange={(v) =>
-                                    setMergeTargets((prev) => ({
-                                      ...prev,
-                                      [i.id]: v || "",
-                                    }))
-                                  }
-                                  searchable
-                                />
-                                <Button
-                                  size="xs"
-                                  variant="light"
-                                  disabled={busy || !mergeTargets[i.id]}
-                                  onClick={() =>
-                                    void action("merge-pending", {
-                                      pendingId: i.id,
-                                      targetId: mergeTargets[i.id],
-                                    })
-                                  }
-                                >
-                                  {labelText(
-                                    "Połącz z istniejącym",
-                                    "Merge with existing",
-                                    "Zusammenführen",
-                                  )}
-                                </Button>
-                              </>
-                            )}
-                          </Group>
-                        </Stack>
-                      </Alert>
-                    )}
-                    {allActiveGuests.map((g) => {
-                      const isPlusOne = i.plus_one?.id === g.id;
-                      return (
-                        <div key={g.id}>
-                          <Group gap="xs">
-                            <Text fw={600}>{g.name}</Text>
-                            {isPlusOne && (
-                              <Badge size="xs" variant="outline">
-                                +1
-                              </Badge>
-                            )}
-                          </Group>
-                          {i.events.map((event) => {
-                            const value = answerMap.get(
-                              `${i.id}:${g.id}:${event.id}`,
-                            );
-                            const a =
-                              value === undefined
-                                ? undefined
-                                : { attending: value };
-                            return (
-                              <Text size="sm" key={event.id}>
-                                {event.title}:{" "}
-                                {a
-                                  ? a.attending
-                                    ? labelText("Tak", "Yes", "Ja")
-                                    : labelText("Nie", "No", "Nein")
-                                  : labelText(
-                                      "Brak odpowiedzi",
-                                      "No response",
-                                      "Keine Antwort",
-                                    )}
-                              </Text>
-                            );
-                          })}
-                        </div>
-                      );
-                    })}
-                    {!!i.archived_guests?.length && (
-                      <Text size="sm">
-                        {labelText(
-                          "Osoby archiwalne",
-                          "Archived people",
-                          "Archivierte Personen",
-                        )}
-                        : {i.archived_guests.map((g) => g.name).join(", ")}
-                      </Text>
-                    )}
-                    {allActiveGuests.map((g) => {
-                      const detail = i.guest_details?.[g.id];
-                      return detail && Object.keys(detail).length ? (
-                        <Text key={`details-${g.id}`} size="sm">
-                          {g.name}
-                          {i.plus_one?.id === g.id ? " (+1)" : ""}:{" "}
-                          {detail.diet
-                            ? `${labelText("dieta", "diet", "Ernährung")}: ${detail.diet} · `
-                            : ""}
-                          {detail.lodging === undefined
-                            ? ""
-                            : `${labelText("nocleg", "accommodation", "Übernachtung")}: ${detail.lodging ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")} · `}
-                          {detail.transport === undefined
-                            ? ""
-                            : `${labelText("transport", "transport", "Transport")}: ${detail.transport ? labelText("tak", "yes", "ja") : labelText("nie", "no", "nein")}`}
-                        </Text>
-                      ) : null;
-                    })}
-                    {i.note && <Text size="sm">Uwagi: {i.note}</Text>}
-                    {data.answers.some(
-                      (a) =>
-                        a.invitation_id === i.id &&
-                        !i.events.some((e) => e.id === a.event_id),
-                    ) && (
-                      <Text size="sm">
-                        {labelText(
-                          "Historia wycofanych wydarzeń",
-                          "Withdrawn event history",
-                          "Historie zurückgezogener Ereignisse",
-                        )}
-                        :{" "}
-                        {data.answers
-                          .filter(
-                            (a) =>
-                              a.invitation_id === i.id &&
-                              !i.events.some((e) => e.id === a.event_id),
-                          )
-                          .map(
-                            (a) =>
-                              `${allActiveGuests.find((g) => g.id === a.guest_id)?.name || "Gość"} / ${a.event_id}: ${a.attending ? "tak" : "nie"}`,
-                          )
-                          .join("; ")}
-                      </Text>
-                    )}
-                    <Group>
-                      {!i.revoked && i.short_code && (
-                        <Button
-                          variant="light"
-                          disabled={busy}
-                          onClick={() =>
-                            void copyText(
-                              formatShareMessage({
-                                locale: data.locale,
-                                displayName: data.displayName,
-                                kind: "shared_with_code",
-                                url: data.url,
-                                shortCode: i.short_code,
-                                deadline: data.site.rsvp_deadline
-                                  ? localDeadline(
-                                      data.site.rsvp_deadline,
-                                    ).replace("T", " ")
-                                  : null,
-                              }),
-                              labelText(
-                                `Skopiowano link + kod (${i.short_code}).`,
-                                `Copied link + code (${i.short_code}).`,
-                                `Link + Code kopiert (${i.short_code}).`,
-                              ),
-                            )
-                          }
-                        >
-                          {labelText(
-                            "Kopiuj link + kod",
-                            "Copy link + code",
-                            "Link + Code kopieren",
-                          )}
-                        </Button>
-                      )}
-                      <Button
-                        variant="light"
-                        disabled={busy}
-                        onClick={() =>
-                          setConfirmation({
-                            action: "rotate",
-                            payload: { id: i.id },
-                            description: labelText(
-                              "Poprzedni link przestanie działać. Nowy link trzeba przekazać rodzinie ponownie.",
-                              "The previous link will stop working. Share the new link with the family.",
-                              "Der bisherige Link wird ungültig. Den neuen Link erneut weitergeben.",
-                            ),
-                          })
-                        }
-                      >
-                        {labelText(
-                          "Wygeneruj nowy link",
-                          "Generate new link",
-                          "Neuen Link erstellen",
-                        )}
-                      </Button>
-                      <Button
-                        variant="subtle"
-                        color="red"
-                        disabled={busy || i.revoked}
-                        onClick={() =>
-                          setConfirmation({
-                            action: "revoke",
-                            payload: { id: i.id },
-                            description: labelText(
-                              "Ta rodzina utraci dostęp do zaproszenia. Jej odpowiedzi zostaną zachowane.",
-                              "This family will lose access. Their answers will be kept.",
-                              "Diese Familie verliert den Zugang. Antworten bleiben erhalten.",
-                            ),
-                          })
-                        }
-                      >
-                        {labelText(
-                          "Cofnij dostęp",
-                          "Revoke access",
-                          "Zugang widerrufen",
-                        )}
-                      </Button>
-                      <Button
-                        variant="subtle"
-                        disabled={busy}
-                        onClick={() => {
-                          setEditingInvite(i);
-                          setEditorOpen(true);
-                        }}
-                      >
-                        {labelText(
-                          "Edytuj zaproszenie",
-                          "Edit invitation",
-                          "Einladung bearbeiten",
-                        )}
-                      </Button>
-                      <Button
-                        variant="subtle"
-                        disabled={
-                          busy ||
-                          !data.site.published_release_id ||
-                          !i.events.length
-                        }
-                        onClick={() => {
-                          setEditing(i.id);
-                          setNote(i.note);
-                          setReplies(
-                            Object.fromEntries(
-                              data.answers
-                                .filter((a) => a.invitation_id === i.id)
-                                .map((a) => [
-                                  `${a.guest_id}:${a.event_id}`,
-                                  String(a.attending),
-                                ]),
-                            ),
-                          );
-                        }}
-                      >
-                        {labelText("Popraw RSVP", "Edit RSVP", "RSVP bearbeiten")}
-                      </Button>
-                    </Group>
-                    {editing === i.id && (
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          void action("rsvp", {
-                            id: i.id,
-                            revision: i.rsvp_revision,
-                            note,
-                            plusOne: i.plus_one ?? null,
-                            answers: allActiveGuests.flatMap((g) =>
-                              i.events.flatMap((event) => {
-                                const v = replies[`${g.id}:${event.id}`];
-                                return v === "true" || v === "false"
-                                  ? [
-                                      {
-                                        guestId: g.id,
-                                        eventId: event.id,
-                                        attending: v === "true",
-                                      },
-                                    ]
-                                  : [];
-                              }),
-                            ),
-                          });
-                        }}
-                      >
-                        <Stack>
-                          {allActiveGuests.flatMap((g) =>
-                            i.events.map((event) => (
-                              <Select
-                                key={`${g.id}:${event.id}`}
-                                label={`${g.name}${i.plus_one?.id === g.id ? " (+1)" : ""} — ${event.title}`}
-                                placeholder={labelText(
-                                  "Brak odpowiedzi",
-                                  "No response",
-                                  "Keine Antwort",
-                                )}
-                                data={[
-                                  {
-                                    value: "true",
-                                    label: labelText("Tak", "Yes", "Ja"),
-                                  },
-                                  {
-                                    value: "false",
-                                    label: labelText("Nie", "No", "Nein"),
-                                  },
-                                ]}
-                                value={replies[`${g.id}:${event.id}`] || null}
-                                onChange={(v) =>
-                                  setReplies({
-                                    ...replies,
-                                    [`${g.id}:${event.id}`]: v || "",
-                                  })
-                                }
-                              />
-                            )),
-                          )}
-                          <Textarea
-                            label={labelText("Uwagi", "Notes", "Anmerkungen")}
-                            value={note}
-                            onChange={(e) => setNote(e.currentTarget.value)}
-                            maxLength={2000}
-                          />
-                        <ActionButton
-                          disabled={busy}
-                          type="submit"
-                          loading={operation === "rsvp"}
-                        >
-                          {labelText(
-                            "Zapisz poprawkę RSVP",
-                            "Save RSVP correction",
-                            "RSVP-Korrektur speichern",
-                          )}
-                        </ActionButton>
-                      </Stack>
-                    </form>
-                  )}
-                </Stack>
-              </Card>
-              );
-            })}
+            {!!filtered.length && (
+              <InvitationTable
+                invitations={visible}
+                allActiveInvitations={active}
+                answerMap={answerMap}
+                byGuest={rsvpSummary.byGuest}
+                byInvitation={rsvpSummary.byInvitation}
+                collisions={collisions}
+                questions={data.questions || []}
+                questionAnswers={data.questionAnswers || []}
+                locale={data.locale}
+                displayName={data.displayName}
+                publicUrl={data.url}
+                deadline={
+                  data.site.rsvp_deadline
+                    ? localDeadline(data.site.rsvp_deadline).replace("T", " ")
+                    : null
+                }
+                publishedReleaseId={data.site.published_release_id}
+                busy={busy}
+                savingRsvp={operation === "rsvp"}
+                onCopy={(text, msg) => void copyText(text, msg)}
+                onEdit={(inv) => {
+                  setEditingInvite(inv);
+                  setEditorOpen(true);
+                }}
+                onRotate={(inv) =>
+                  setConfirmation({
+                    action: "rotate",
+                    payload: { id: inv.id },
+                    description: labelText(
+                      "Poprzedni link przestanie dzia�a�. Nowy link trzeba przekaza� ponownie.",
+                      "The previous link will stop working. Share the new link again.",
+                      "Der bisherige Link wird ung�ltig. Den neuen Link erneut weitergeben.",
+                    ),
+                  })
+                }
+                onRevoke={(inv) =>
+                  setConfirmation({
+                    action: "revoke",
+                    payload: { id: inv.id },
+                    description: labelText(
+                      "To zaproszenie utraci dost�p. Dotychczasowe odpowiedzi zostan� zachowane.",
+                      "This invitation will lose access. Existing answers will be kept.",
+                      "Diese Einladung verliert den Zugang. Antworten bleiben erhalten.",
+                    ),
+                  })
+                }
+                onApprovePending={(id) => void action("approve-pending", { id })}
+                onMergePending={(pendingId, targetId, targetGuestId) =>
+                  void action("merge-pending", {
+                    pendingId,
+                    targetId,
+                    targetGuestId,
+                  })
+                }
+                onConvertCompanion={(inv, guestId, name) =>
+                  void action("convert-companion", {
+                    id: inv.id,
+                    version: inv.version,
+                    guestId,
+                    name,
+                  })
+                }
+                onSaveRsvp={(payload) => action("rsvp", payload)}
+              />
+            )}
             {totalPages > 1 && (
               <Pagination
                 total={totalPages}
@@ -1717,7 +1234,10 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             />
             {imported.slice(0, 10).map((entry, i) => (
               <Text size="sm" key={i}>
-                {entry.label}: {entry.names.join(", ")}
+                {invitationDisplayName({
+                  groupName: entry.groupName,
+                  guests: entry.guests,
+                })}
               </Text>
             ))}
             <Text size="sm">

@@ -1,30 +1,32 @@
 import {
-  csvFile,
-  type GuestDetails,
-  type PlusOneGuest,
-  type QuestionSettings,
-} from "@invitations/domain/operations";
+  guestDisplayName,
+  invitationDisplayName,
+  type InvitationGuest,
+} from "@invitations/domain/invitation";
+import { csvFile } from "@invitations/domain/operations";
+import {
+  formatQuestionValue,
+  indexQuestionAnswers,
+  questionRecordKey,
+  type QuestionAnswerRecord,
+  type RsvpQuestion,
+} from "@invitations/domain/rsvp-questions";
 
-type Guest = { id: string; name: string };
 export type InvitationRow = {
   id: string;
-  label: string;
+  group_name: string | null;
   variant_id: string;
-  emails: string[];
-  guests: Guest[];
+  guests: InvitationGuest[];
   revoked: boolean;
   version: number;
   rsvp_revision: number;
   note: string;
-  archived_guests?: Guest[];
-  guest_details?: GuestDetails;
-  allow_plus_one: boolean;
-  plus_one: PlusOneGuest;
   short_code: string;
   origin: "organizer" | "self_registered";
   review_status: "approved" | "pending_match";
   events: { id: string; title: string }[];
 };
+
 export type Management = {
   variants: { id: string; label: string }[];
   site: {
@@ -35,7 +37,6 @@ export type Management = {
     published_release_id: string | null;
     rsvp_enabled: boolean;
     allow_self_registration: boolean;
-    rsvp_questions?: QuestionSettings;
   };
   locale: string;
   displayName: string;
@@ -47,81 +48,79 @@ export type Management = {
     event_id: string;
     attending: boolean;
   }[];
+  questions: RsvpQuestion[];
+  questionAnswers: QuestionAnswerRecord[];
 };
 
 export function formatRsvpCsv(
   data: Management | null,
-  events: InvitationRow["events"],
   answerMap: ReadonlyMap<string, boolean>,
   labelText: (pl: string, en: string, de: string) => string,
 ) {
+  const questions = data?.questions || [];
+  const qAnswerMap = indexQuestionAnswers(data?.questionAnswers || []);
+
+  const companionLabel = labelText(
+    "Osoba towarzysząca",
+    "Companion",
+    "Begleitperson",
+  );
+  const andLabel = labelText("i", "and", "und");
+  const otherLabel = labelText("Inne", "Other", "Sonstiges");
+
   const rows: unknown[][] = [
     [
-      "Rodzina",
-      "Gość",
-      "+1",
-      "Wydarzenie",
-      "Odpowiedź",
-      "Dieta",
-      "Nocleg",
-      "Transport",
+      labelText("Zaproszenie", "Invitation", "Einladung"),
+      labelText("Osoba", "Guest", "Gast"),
+      labelText("Typ", "Type", "Typ"),
+      labelText("Wydarzenie", "Event", "Ereignis"),
+      labelText("Odpowiedź", "Response", "Antwort"),
+      ...questions.map((q) => q.label),
       labelText("Uwagi", "Notes", "Anmerkungen"),
-      "Status osoby",
+      labelText("Status zaproszenia", "Invitation status", "Status"),
     ],
   ];
-  for (const i of data?.invitations || []) {
-    const allGuests = [
-      ...i.guests,
-      ...(i.plus_one ? [i.plus_one] : []),
-      ...(i.archived_guests || []),
-    ];
-    for (const g of allGuests) {
-      const isPlusOne = i.plus_one?.id === g.id;
-      const archived =
-        !isPlusOne && !i.guests.some((current) => current.id === g.id);
-      const detail = i.guest_details?.[g.id] || {};
-      const relevant = archived
-        ? (data?.answers || [])
-            .filter((a) => a.invitation_id === i.id && a.guest_id === g.id)
-            .map((a) => ({
-              id: a.event_id,
-              title:
-                events.find((e) => e.id === a.event_id)?.title || a.event_id,
-            }))
-        : i.events;
-      for (const event of relevant.length
-        ? relevant
-        : [{ id: "", title: "" }]) {
-        const answer = answerMap.get(`${i.id}:${g.id}:${event.id}`);
+
+  for (const inv of data?.invitations || []) {
+    const invTitle = invitationDisplayName(
+      { groupName: inv.group_name, guests: inv.guests },
+      { companion: companionLabel, and: andLabel },
+    );
+
+    for (const g of inv.guests) {
+      const relevant = inv.events.length
+        ? inv.events
+        : [{ id: "", title: "" }];
+
+      for (const event of relevant) {
+        const answer = event.id
+          ? answerMap.get(`${inv.id}:${g.id}:${event.id}`)
+          : undefined;
+        const questionCols = questions.map((q) => {
+          const val =
+            q.scope === "guest"
+              ? qAnswerMap.get(questionRecordKey(q.id, inv.id, g.id))
+              : qAnswerMap.get(questionRecordKey(q.id, inv.id, null));
+          return formatQuestionValue(q, val, otherLabel);
+        });
+
         rows.push([
-          i.label,
-          g.name,
-          isPlusOne
-            ? labelText("Osoba towarzysząca", "Plus-one", "Begleitperson")
-            : "",
+          invTitle,
+          guestDisplayName(g, { companion: companionLabel }),
+          g.kind === "companion"
+            ? companionLabel
+            : labelText("Imienna", "Named", "Namentlich"),
           event.title,
           answer === undefined
             ? labelText("Brak odpowiedzi", "No response", "Keine Antwort")
             : answer
               ? labelText("Tak", "Yes", "Ja")
               : labelText("Nie", "No", "Nein"),
-          detail.diet,
-          detail.lodging === undefined
-            ? ""
-            : detail.lodging
-              ? labelText("Tak", "Yes", "Ja")
-              : labelText("Nie", "No", "Nein"),
-          detail.transport === undefined
-            ? ""
-            : detail.transport
-              ? labelText("Tak", "Yes", "Ja")
-              : labelText("Nie", "No", "Nein"),
-          i.note,
-          archived
-            ? "Archiwalna"
-            : i.revoked
-              ? "Cofnięte zaproszenie"
-              : "Aktywna",
+          ...questionCols,
+          inv.note,
+          inv.revoked
+            ? labelText("Cofnięte", "Revoked", "Widerrufen")
+            : labelText("Aktywne", "Active", "Aktiv"),
         ]);
       }
     }

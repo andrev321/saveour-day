@@ -164,6 +164,9 @@ export function checkDb(error: { message: string; code?: string } | null) {
     SITE_DELETED: "Realizacja została usunięta. Wróć do listy realizacji.",
     VARIANT_MISSING:
       "Wariant jest używany przez zaproszenia albo nie istnieje w publikacji.",
+    QUESTION_IMMUTABLE:
+      "Nie można zmienić typu ani zakresu pytania, które ma już odpowiedzi.",
+    REQUIRED_QUESTION_MISSING: "Wypełnij wszystkie wymagane pytania.",
     CODE_REQUIRED: "Ustaw kod dostępu.",
     EMAIL_REQUIRED: "Każde aktywne zaproszenie musi mieć adres e-mail.",
     RSVP_CLOSED: "Termin odpowiedzi minął.",
