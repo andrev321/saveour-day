@@ -369,14 +369,6 @@ export function Dashboard({
           {configured && status === "anonymous" && (
             <S.Login>
               <Stack gap="lg">
-                <Text
-                  size="xs"
-                  fw={700}
-                  c="brand"
-                  style={{ letterSpacing: ".15em" }}
-                >
-                  {copy.eyebrow}
-                </Text>
                 <Title>{copy.loginIntro}</Title>
                 <Text size="lg" c="dimmed">
                   {copy.loginHelp}
@@ -533,17 +525,7 @@ export function Dashboard({
             <>
               <S.Hero>
                 <Stack gap="md">
-                  <Group>
-                    <Text
-                      size="xs"
-                      fw={700}
-                      c="brand"
-                      style={{ letterSpacing: ".15em" }}
-                    >
-                      {copy.eyebrow}
-                    </Text>
-                    {admin && <Badge variant="light">{t("admin")}</Badge>}
-                  </Group>
+                  {admin && <Badge variant="light">{t("admin")}</Badge>}
                   <Title>{t("dashboard")}</Title>
                   <Text size="lg" fw={500}>
                     {copy.intro}

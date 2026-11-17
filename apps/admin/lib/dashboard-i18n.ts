@@ -1,6 +1,5 @@
 export const dashboardUi = {
   pl: {
-    eyebrow: "TWOJA PRACOWNIA ZAPROSZEŃ",
     intro: "Ważne chwile zaczynają się tutaj.",
     description:
       "Twórz zaproszenia, dopracowuj szczegóły i zapraszaj do wspólnego świętowania.",
@@ -51,7 +50,6 @@ export const dashboardUi = {
     termsOfService: "Warunki korzystania",
   },
   en: {
-    eyebrow: "YOUR INVITATION STUDIO",
     intro: "Meaningful moments start here.",
     description:
       "Create invitations, refine the details and bring everyone together.",
@@ -102,7 +100,6 @@ export const dashboardUi = {
     termsOfService: "Terms of Service",
   },
   de: {
-    eyebrow: "DEIN EINLADUNGSSTUDIO",
     intro: "Besondere Momente beginnen hier.",
     description:
       "Gestalte Einladungen, verfeinere Details und bringe alle zusammen.",

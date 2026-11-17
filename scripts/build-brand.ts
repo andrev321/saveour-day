@@ -13,7 +13,7 @@ const output = resolve("assets/brand");
 await mkdir(output, { recursive: true });
 for (const tone of ["light", "dark"] as const) {
   const p = brandPalette[tone];
-  for (const variant of ["full", "short", "mark"] as const) {
+  for (const variant of ["full", "mark"] as const) {
     for (const animated of [false, true]) {
       const name = `saveour-day-${variant}-on-${tone}${animated ? "-animated" : ""}`;
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${brandWidths[variant]} 124" width="${brandWidths[variant]}" height="124" role="img" aria-label="saveour.day"${animated ? ' class="sod-animated"' : ""}>
@@ -47,10 +47,10 @@ await copyFile(
   resolve("node_modules/@fontsource/inter/LICENSE"),
   resolve(output, "FONT-LICENSE.txt"),
 );
-const rows = ["full", "short", "mark"]
+const rows = ["full", "mark"]
   .map(
     (variant) =>
-      `<section><h2>${variant === "full" ? "Pełny napis" : variant === "short" ? "Skrócony napis · saveour" : "Sam znak"}</h2><div class="pair">${["light", "dark"].map((tone) => `<div class="tile ${tone}"><img src="saveour-day-${variant}-on-${tone}.svg" alt="saveour.day — ${variant}" style="height:${variant === "mark" ? 100 : 72}px"/><small>Na ${tone === "light" ? "jasne" : "ciemne"} tło</small></div>`).join("")}</div></section>`,
+      `<section><h2>${variant === "full" ? "Pełny napis" : "Sam znak"}</h2><div class="pair">${["light", "dark"].map((tone) => `<div class="tile ${tone}"><img src="saveour-day-${variant}-on-${tone}.svg" alt="saveour.day — ${variant}" style="height:${variant === "mark" ? 100 : 72}px"/><small>Na ${tone === "light" ? "jasne" : "ciemne"} tło</small></div>`).join("")}</div></section>`,
   )
   .join("");
 await writeFile(

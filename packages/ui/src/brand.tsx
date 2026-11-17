@@ -8,7 +8,7 @@ import {
 } from "./brand-art";
 
 type BrandLogoProps = {
-  variant?: "full" | "short" | "mark";
+  variant?: "full" | "mark";
   tone?: "light" | "dark";
   animated?: boolean;
   height?: number;

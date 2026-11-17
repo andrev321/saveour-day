@@ -15,7 +15,6 @@ export const brandPalette = {
 export const brandWordmarks = wordmarks;
 export const brandWidths = {
   full: Math.ceil(140 + wordmarks.full.width + 8),
-  short: Math.ceil(140 + wordmarks.short.width + 8),
   mark: 120,
 };
 export const brandMotion = `

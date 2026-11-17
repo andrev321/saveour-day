@@ -7,13 +7,12 @@ A vector implementation of selected concept 04: a folded invitation in indigo an
 | Variant | Use |
 | --- | --- |
 | `full` | Symbol and **saveour.day** |
-| `short` | Symbol and **saveour**, where the full name is already known |
 | `mark` | Symbol only, for small surfaces/icons |
 | `on-light` | Dark logo on a light background |
 | `on-dark` | Light logo on a dark background, such as `#171C36` |
 | `*-animated.svg` | One-shot assembly animation, 900 ms; static with reduced motion |
 
-Each of the six variant/tone combinations has a static SVG, transparent PNG, and animated SVG. SVG lettering is outlined, requiring no installed font or network connection. Wordmark PNGs are 384 px high; symbol PNGs are 1024 px high. SVGs scale without quality loss.
+Each of the four variant/tone combinations has a static SVG, transparent PNG, and animated SVG. SVG lettering is outlined, requiring no installed font or network connection. Wordmark PNGs are 384 px high; symbol PNGs are 1024 px high. SVGs scale without quality loss.
 
 `saveour-day-icon.svg` has its own light background for browser-tab contrast. Both applications also include 180×180 px Apple icons.
 
@@ -21,7 +20,7 @@ Each of the six variant/tone combinations has a static SVG, transparent PNG, and
 
 Open [index.html](index.html) for light/dark versions and replayable animations; it has no external dependencies.
 
-Keep clear space of at least one quarter of the symbol height. Recommended minimum widths: full 160 px, short 116 px, symbol 24 px. Do not distort proportions, rearrange elements, or substitute arbitrary colors.
+Keep clear space of at least one quarter of the symbol height. Recommended minimum widths: full 160 px, symbol 24 px. Do not distort proportions, rearrange elements, or substitute arbitrary colors.
 
 ## Component
 
@@ -29,7 +28,6 @@ Keep clear space of at least one quarter of the symbol height. Recommended minim
 import { BrandLogo } from "@invitations/ui/brand";
 
 <BrandLogo />
-<BrandLogo variant="short" height={40} />
 <BrandLogo variant="mark" tone="dark" height={32} />
 <BrandLogo animated height={56} />
 ```

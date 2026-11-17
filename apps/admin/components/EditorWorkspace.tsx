@@ -134,8 +134,8 @@ export function EditorWorkspace({
       <S.WorkspaceHeader>
         <S.WorkspaceBrand href="/" aria-label={t("projects")}>
           <BrandLogo
-            variant="short"
-            height={40}
+            variant="full"
+            height={36}
             decorative
             className="brand-lockup"
           />
@@ -322,7 +322,7 @@ export function EditorWorkspace({
       <Drawer
         opened={menu}
         onClose={() => setMenu(false)}
-        title={ui.brand}
+        title={<BrandLogo height={28} />}
         size="min(320px, 90vw)"
         closeButtonProps={{
           "aria-label": label(

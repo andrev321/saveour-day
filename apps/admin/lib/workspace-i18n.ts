@@ -1,6 +1,5 @@
 export const workspaceUi = {
   pl: {
-    brand: "Pracownia zaproszeń",
     menu: "Menu",
     edit: "Edycja",
     preview: "Podgląd",
@@ -21,7 +20,6 @@ export const workspaceUi = {
     actions: "Opcje projektu",
   },
   en: {
-    brand: "Invitation studio",
     menu: "Menu",
     edit: "Edit",
     preview: "Preview",
@@ -42,7 +40,6 @@ export const workspaceUi = {
     actions: "Project options",
   },
   de: {
-    brand: "Einladungsstudio",
     menu: "Menü",
     edit: "Bearbeiten",
     preview: "Vorschau",

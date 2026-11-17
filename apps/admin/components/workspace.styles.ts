@@ -167,7 +167,7 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
       padding: 0;
     }
   }
-  @media (max-width: 1099px) {
+  @media (max-width: 1599px) {
     & .brand-lockup {
       display: none !important;
     }

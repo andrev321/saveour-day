@@ -14,7 +14,7 @@ glyphs = font.getGlyphSet()
 cmap = font.getBestCmap()
 scale = 64 / font["head"].unitsPerEm
 outlines = {}
-for variant, text in [("full", "saveour.day"), ("short", "saveour")]:
+for variant, text in [("full", "saveour.day")]:
     pen = SVGPathPen(glyphs, ntos=lambda value: f"{value:.2f}".rstrip("0").rstrip("."))
     cursor = 0
     for char in text:
