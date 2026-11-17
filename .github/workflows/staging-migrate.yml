@@ -26,4 +26,4 @@ jobs:
         with:
           version: "2.20.5"
       - name: Push pending migrations to staging
-        run: supabase db push --remote="$SUPABASE_DB_URL" --yes
+        run: supabase db push --db-url "$SUPABASE_DB_URL"
