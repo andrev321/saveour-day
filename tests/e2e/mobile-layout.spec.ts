@@ -111,9 +111,9 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     await expect(responses).toHaveValue("Czekamy");
     await expectContained(page);
     await page.screenshot({ path: `test-results/mobile-guests-${width}.png` });
+    await page.getByRole("button", { name: "⋯", exact: true }).first().click();
     await page
-      .getByRole("button", { name: "Edytuj zaproszenie", exact: true })
-      .first()
+      .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
       .click();
     const member = page.getByRole("textbox", { name: "Gość 1", exact: true });
     await expect(member).toHaveValue("Anna Kowalskich");

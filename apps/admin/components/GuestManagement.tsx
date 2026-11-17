@@ -314,7 +314,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     Math.min(page, totalPages) * 20,
   );
   return (
-    <Card withBorder aria-busy={loading}>
+    <div aria-busy={loading}>
       <Stack>
         <Title order={2}>
           {labelText(
@@ -1267,6 +1267,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           </Stack>
         </Modal>
       </Stack>
-    </Card>
+    </div>
   );
 }

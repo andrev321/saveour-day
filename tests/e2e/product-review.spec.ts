@@ -62,11 +62,16 @@ test("guest questions are localized and dirty refresh requires confirmation", as
   config.locale = "en-GB";
   config.events = config.events.slice(0, 1);
   const guest = "40000000-0000-4000-8000-000000000001";
-  let details = {};
+  const questionId = "50000000-0000-4000-8000-000000000001";
+  let questionAnswers: {
+    questionId: string;
+    guestId: string | null;
+    value: { text: string };
+  }[] = [];
   let reads = 0;
   await page.route("**/api/guest/i/questions", async (route) => {
     if (route.request().method() === "POST") {
-      details = route.request().postDataJSON().payload.details;
+      questionAnswers = route.request().postDataJSON().payload.questionAnswers;
       return route.fulfill({ json: { revision: 1 } });
     }
     reads++;
@@ -75,22 +80,36 @@ test("guest questions are localized and dirty refresh requires confirmation", as
         authorized: true,
         mode: "public",
         config,
-        questions: { diet: true, lodging: true, transport: true },
+        questions: [
+          {
+            id: questionId,
+            position: 0,
+            scope: "guest",
+            type: "text",
+            label: "Diet or allergies",
+            help: "",
+            required: false,
+            allowOther: false,
+            options: [],
+            variantIds: [],
+            presetKey: "diet",
+          },
+        ],
         invitation: {
-          label: "Family",
-          guests: [{ id: guest, name: "Maria" }],
+          groupName: "Family",
+          guests: [{ id: guest, kind: "named", name: "Maria" }],
           revision: 0,
           note: "",
           answers: [],
-          details,
+          questionAnswers,
         },
       },
     });
   });
   await page.goto("/i/questions");
-  await expect(page.getByLabel("Diet or allergies (optional)")).toBeVisible();
+  await expect(page.getByLabel("Diet or allergies")).toBeVisible();
   const readsBeforeEdit = reads;
-  await page.getByLabel("Diet or allergies (optional)").fill("Vegan");
+  await page.getByLabel("Diet or allergies").fill("Vegan");
   await page
     .getByRole("button", { name: "Refresh responses", exact: true })
     .click();
@@ -101,17 +120,16 @@ test("guest questions are localized and dirty refresh requires confirmation", as
   ).toBeVisible();
   expect(reads).toBe(readsBeforeEdit);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
-  await expect(page.getByLabel("Diet or allergies (optional)")).toHaveValue(
-    "Vegan",
-  );
+  await expect(page.getByLabel("Diet or allergies")).toHaveValue("Vegan");
   await page
     .getByRole("group", { name: "Maria" })
-    .getByRole("combobox")
-    .first()
-    .selectOption("true");
+    .getByRole("radio", { name: "Attending", exact: true })
+    .check();
   await page
     .getByRole("button", { name: "Save responses", exact: true })
     .click();
-  expect(details).toEqual({ [guest]: { diet: "Vegan" } });
+  expect(questionAnswers).toEqual([
+    { questionId, guestId: guest, value: { text: "Vegan" } },
+  ]);
   await expect(page.getByRole("status")).toContainText("saved");
 });
