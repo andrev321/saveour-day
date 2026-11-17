@@ -113,27 +113,16 @@ export const GuestLink = styled.a.attrs<{ "data-ui"?: string }>({
   }
 `;
 
-export const GuestActions = styled.nav`
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
+export const CalendarLink = styled.a`
+  display: inline-block;
+  margin-top: 12px;
   padding: 10px 16px;
-  background: var(--guest-paper, #faf7f1);
-  border-bottom: 1px solid #ddd;
-  & a {
-    padding: 10px 16px;
-    border-radius: 24px;
-    background: var(--guest-ink, #34322d);
-    color: var(--guest-paper, white);
-    text-decoration: none;
-    font-weight: 600;
-    min-height: 24px;
-  }
-  & a:focus-visible {
+  border-radius: 24px;
+  background: var(--guest-ink, #34322d);
+  color: var(--guest-paper, white);
+  text-decoration: none;
+  font-weight: 600;
+  &:focus-visible {
     outline: 3px solid var(--guest-accent, #6c501b);
     outline-offset: 3px;
   }

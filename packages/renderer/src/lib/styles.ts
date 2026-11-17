@@ -177,9 +177,18 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
     background-size: 0 1px;
     transition: background-size 200ms ease;
   }
+  nav a[data-calendar] {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px;
+    background: none;
+  }
   @media (hover: hover) and (pointer: fine) {
     a:hover {
       background-size: 100% 1px;
+    }
+    nav a[data-calendar]:hover {
+      opacity: 0.72;
     }
   }
   @media (max-width: 47.99em) {
@@ -191,12 +200,12 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
       max-width: 42%;
     }
     nav {
-      gap: 8px 16px;
+      gap: 8px 12px;
     }
     nav a {
       font-size: 11px;
     }
-    nav a:not(:last-child) {
+    nav a:not(:last-child):not([data-calendar]) {
       display: none;
     }
   }

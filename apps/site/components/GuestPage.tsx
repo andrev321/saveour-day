@@ -269,8 +269,6 @@ export function GuestPage({
   } as CSSProperties;
 
   const rsvpEnabled = data.rsvpEnabled !== false;
-  const showRsvpAction =
-    rsvpEnabled && (Boolean(data.invitation) || kind === "s");
 
   const savedAnswers = Object.fromEntries(
     (data.invitation?.answers || []).map((a) => [
@@ -303,20 +301,15 @@ export function GuestPage({
       : []),
   ];
 
+  const calendarHref = data.config?.events.some((e) => e.date)
+    ? `${endpoint}/calendar`
+    : undefined;
+
   return (
     <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
-      {(showRsvpAction || data.config?.events.some((e) => e.date)) && (
-        <S.GuestActions aria-label={copy.invitation}>
-          {showRsvpAction && <a href="#rsvp">{copy.rsvp}</a>}
-          {data.config?.events.some((e) => e.date) && (
-            <a href={`${endpoint}/calendar`} download="invitation.ics">
-              {copy.calendar}
-            </a>
-          )}
-        </S.GuestActions>
-      )}
       <Invitation
         config={data.config!}
+        calendarHref={calendarHref}
         resolveMedia={(src) =>
           `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
         }
@@ -574,6 +567,11 @@ export function GuestPage({
                   <p>
                     {copy.notes}: {data.invitation.note}
                   </p>
+                )}
+                {calendarHref && (
+                  <S.CalendarLink href={calendarHref} download="invitation.ics">
+                    {copy.calendar}
+                  </S.CalendarLink>
                 )}
               </S.ResponseSummary>
             )}

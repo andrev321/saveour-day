@@ -44,6 +44,7 @@ import {
   SparkleIcon,
   DiamondIcon,
   PencilSimpleIcon,
+  CalendarPlusIcon,
 } from "@phosphor-icons/react";
 
 function PreviewEditButton({
@@ -358,6 +359,7 @@ export function Invitation({
   resolveMedia,
   onEditSection,
   focusSection,
+  calendarHref,
   children,
 }: {
   config: SiteConfig;
@@ -365,6 +367,7 @@ export function Invitation({
   onEditSection?: (id: string) => void;
   resolveMedia?: (src: string) => string;
   focusSection?: string;
+  calendarHref?: string;
   children?: ReactNode;
 }) {
   const variant = config.variants.find(
@@ -404,6 +407,7 @@ export function Invitation({
           contact: "Skontaktuj się",
           details: "Zobacz szczegóły",
           navigation: "Nawigacja zaproszenia",
+          calendar: "Dodaj do kalendarza",
         }
       : config.locale === "en-GB"
         ? {
@@ -411,12 +415,14 @@ export function Invitation({
             contact: "Get in touch",
             details: "View details",
             navigation: "Invitation navigation",
+            calendar: "Add to calendar",
           }
         : {
             respond: "Teilnahme bestätigen",
             contact: "Kontakt aufnehmen",
             details: "Details ansehen",
             navigation: "Einladungsnavigation",
+            calendar: "Zum Kalender hinzufügen",
           };
   const response = hasChildren;
   const contact = sections.find(
@@ -482,7 +488,7 @@ export function Invitation({
         {!focusSection && (
           <S.InvitationHeader>
             <span>{config.identity.displayName || config.hero.eyebrow}</span>
-            {navigation.length || actionTarget ? (
+            {navigation.length || actionTarget || calendarHref ? (
               <nav aria-label={labels.navigation}>
                 {navigation
                   .filter((section) => `section-${section.id}` !== actionTarget)
@@ -491,6 +497,17 @@ export function Invitation({
                       {section.title}
                     </a>
                   ))}
+                {calendarHref && (
+                  <a
+                    data-calendar=""
+                    href={calendarHref}
+                    download="invitation.ics"
+                    aria-label={labels.calendar}
+                    title={labels.calendar}
+                  >
+                    <CalendarPlusIcon size={18} aria-hidden="true" />
+                  </a>
+                )}
                 {actionTarget && (
                   <a href={`#${actionTarget}`}>
                     {actionLabel} <span aria-hidden="true">↗</span>
