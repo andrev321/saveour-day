@@ -39,6 +39,7 @@ export default defineConfig({
       url: adminUrl,
       reuseExistingServer: !process.env.CI,
       timeout: 120000,
+      env: { E2E_DEMO: "1" },
     },
   ],
 });

@@ -3,8 +3,14 @@ import { createDemo } from "@invitations/domain/demo";
 import { mediaSchema } from "@invitations/domain";
 import { Editor } from "../../../components/Editor";
 
+export const dynamic = "force-dynamic";
+
 export default function PhotoDemo() {
-  if (process.env.VERCEL || process.env.NODE_ENV === "production") notFound();
+  if (
+    process.env.VERCEL ||
+    (process.env.NODE_ENV === "production" && process.env.E2E_DEMO !== "1")
+  )
+    notFound();
   const config = createDemo();
   const photo = mediaSchema.parse({
     id: "photo",

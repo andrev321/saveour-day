@@ -107,6 +107,10 @@ test("guest questions are localized and dirty refresh requires confirmation", as
     });
   });
   await page.goto("/i/questions");
+  await page
+    .getByRole("group", { name: "Maria" })
+    .getByRole("radio", { name: "Attending", exact: true })
+    .check();
   await expect(page.getByLabel("Diet or allergies")).toBeVisible();
   const readsBeforeEdit = reads;
   await page.getByLabel("Diet or allergies").fill("Vegan");
@@ -121,10 +125,6 @@ test("guest questions are localized and dirty refresh requires confirmation", as
   expect(reads).toBe(readsBeforeEdit);
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(page.getByLabel("Diet or allergies")).toHaveValue("Vegan");
-  await page
-    .getByRole("group", { name: "Maria" })
-    .getByRole("radio", { name: "Attending", exact: true })
-    .check();
   await page
     .getByRole("button", { name: "Save responses", exact: true })
     .click();

@@ -113,7 +113,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     await page
       .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
       .click();
-    const member = page.getByRole("textbox", { name: "Gość 1", exact: true });
+    const member = page.getByRole("textbox", { name: "Osoba 1", exact: true });
     await expect(member).toHaveValue("Anna Kowalskich");
     expect((await member.boundingBox())!.width).toBeGreaterThan(180);
     await expectContained(page);
