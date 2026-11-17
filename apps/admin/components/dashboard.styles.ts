@@ -13,6 +13,8 @@ export const Content = styled(Container)`
   }
 `;
 export const Header = styled.header`
+  position: relative;
+  z-index: 20;
   display: flex;
   justify-content: space-between;
   align-items: center;

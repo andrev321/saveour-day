@@ -69,6 +69,9 @@ export function EditorWorkspace({
     '[role="tabpanel"]:not([hidden])',
   );
   const previewMotion = useViewMotion(view);
+  useEffect(() => {
+    formMotion.current?.scrollTo({ top: 0, behavior: "instant" });
+  }, [active, formMotion]);
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
   const [collapsed, setCollapsed] = useLocalStorage({
@@ -321,15 +324,23 @@ export function EditorWorkspace({
         onClose={() => setMenu(false)}
         title={ui.brand}
         size="min(320px, 90vw)"
+        closeButtonProps={{
+          "aria-label": label(
+            "Zamknij nawigację",
+            "Close navigation",
+            "Navigation schließen",
+          ),
+        }}
       >
         <S.WorkspaceDrawerNav>
-          <Button component="a" href="/" variant="default">
+          <Button component="a" href="/" variant="default" justify="flex-start">
             {t("projects")}
           </Button>
           {[...items, ...tools].map(({ value, label, icon: Icon }) => (
             <Button
               key={value}
               variant={value === active ? "light" : "subtle"}
+              justify="flex-start"
               leftSection={<Icon size={23} weight="duotone" />}
               onClick={() => {
                 onActive(value);

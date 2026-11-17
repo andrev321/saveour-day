@@ -78,6 +78,21 @@ html[data-mantine-color-scheme="dark"] {
 [data-ui="panel-preferences"] {
   min-width: 0;
   max-width: 100%;
+  position: relative;
+  z-index: 30;
+}
+.mantine-Menu-dropdown,
+.mantine-Popover-dropdown,
+.mantine-Select-dropdown,
+.mantine-Combobox-dropdown {
+  background-color: var(--panel-surface) !important;
+  border: 1px solid var(--panel-border) !important;
+  box-shadow:
+    0 12px 28px var(--panel-shadow),
+    0 4px 12px rgba(0, 0, 0, 0.08) !important;
+  opacity: 1 !important;
+  backdrop-filter: none !important;
+  z-index: 400;
 }
 [data-ui="panel-preferences"] > .mantine-Select-root {
   flex: 1;

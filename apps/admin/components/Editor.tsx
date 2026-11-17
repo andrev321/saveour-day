@@ -532,7 +532,7 @@ export function Editor({
       onActive={setActivePanel}
       title={<Title order={1}>{data.site.name}</Title>}
       headerTools={
-        <Group wrap="nowrap" mt="md">
+        <Group wrap="nowrap" mt="xs" mb="sm">
           <VariantManager
             config={config}
             onChange={setConfig}
@@ -590,24 +590,26 @@ export function Editor({
           >
             {demo ? t("simulate") : t("publish")}
           </ActionButton>
-          <Tooltip label={label("Cofnij", "Undo", "Rückgängig")}>
-            <ActionIcon
-              aria-label={label("Cofnij", "Undo", "Rückgängig")}
-              disabled={!canUndo}
-              onClick={undo}
-            >
-              <ArrowCounterClockwiseIcon size={20} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label={label("Ponów", "Redo", "Wiederholen")}>
-            <ActionIcon
-              aria-label={label("Ponów", "Redo", "Wiederholen")}
-              disabled={!canRedo}
-              onClick={redo}
-            >
-              <ArrowClockwiseIcon size={20} />
-            </ActionIcon>
-          </Tooltip>
+          <Group gap="xs" wrap="nowrap">
+            <Tooltip label={label("Cofnij", "Undo", "Rückgängig")}>
+              <ActionIcon
+                aria-label={label("Cofnij", "Undo", "Rückgängig")}
+                disabled={!canUndo}
+                onClick={undo}
+              >
+                <ArrowCounterClockwiseIcon size={20} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label={label("Ponów", "Redo", "Wiederholen")}>
+              <ActionIcon
+                aria-label={label("Ponów", "Redo", "Wiederholen")}
+                disabled={!canRedo}
+                onClick={redo}
+              >
+                <ArrowClockwiseIcon size={20} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
           <PanelPreferences />
         </>
       }
@@ -1143,8 +1145,7 @@ export function Editor({
         </Stack>
       </Tabs.Panel>
 
-      <Tabs.Panel value="history">
-        {" "}
+      <Tabs.Panel value="history" pt="lg">
         <Card withBorder>
           <Title order={2} mb="md">
             {t("history")}
@@ -1159,41 +1160,59 @@ export function Editor({
                     : "Es wurde noch keine Version veröffentlicht."}
               </Text>
             ) : null}
-            {data.releases.map((job) => (
-              <Group key={job.id} justify="space-between">
-                <div>
-                  <Badge>
-                    {demo
-                      ? "simulation"
-                      : job.id === data.site.published_release_id
-                        ? "active"
-                        : "snapshot"}
-                  </Badge>
-                  <Text size="sm">
-                    {job.created_at
-                      ? new Date(job.created_at).toLocaleString("pl-PL")
-                      : job.id}
-                  </Text>
-                </div>
-                <Group>
-                  <Button
-                    variant="subtle"
-                    disabled={busy}
-                    onClick={() => setConfirm(job.id)}
-                  >
-                    {language === "pl"
-                      ? "Przywróć wydanie"
-                      : language === "en"
-                        ? "Restore release"
-                        : "Version wiederherstellen"}
-                  </Button>
+            {data.releases.map((job) => {
+              const isActive =
+                !demo && job.id === data.site.published_release_id;
+              return (
+                <Group key={job.id} justify="space-between">
+                  <div>
+                    <Badge
+                      color={isActive ? "green" : "brand"}
+                      variant={isActive ? "filled" : "light"}
+                    >
+                      {demo
+                        ? label("Symulacja", "Simulation", "Simulation")
+                        : isActive
+                          ? label("Aktywne", "Active", "Aktiv")
+                          : label(
+                              "Wersja archiwalna",
+                              "Snapshot",
+                              "Archiviert",
+                            )}
+                    </Badge>
+                    <Text size="sm" mt={4}>
+                      {job.created_at
+                        ? new Date(job.created_at).toLocaleString(
+                            language === "pl"
+                              ? "pl-PL"
+                              : language === "de"
+                                ? "de-DE"
+                                : "en-GB",
+                          )
+                        : job.id}
+                    </Text>
+                  </div>
+                  <Group>
+                    <Button
+                      variant="light"
+                      size="xs"
+                      disabled={busy || (isActive && !unpublishedChanges)}
+                      onClick={() => setConfirm(job.id)}
+                    >
+                      {language === "pl"
+                        ? "Przywróć wydanie"
+                        : language === "en"
+                          ? "Restore release"
+                          : "Version wiederherstellen"}
+                    </Button>
+                  </Group>
                 </Group>
-              </Group>
-            ))}
+              );
+            })}
           </Stack>
         </Card>
       </Tabs.Panel>
-      <Tabs.Panel value="guests">
+      <Tabs.Panel value="guests" pt="lg">
         {" "}
         {!demo && (
           <GuestManagement

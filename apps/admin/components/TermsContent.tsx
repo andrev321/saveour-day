@@ -15,9 +15,21 @@ import {
 } from "@mantine/core";
 import { BrandLogo } from "@invitations/ui/brand";
 import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
+import { usePanelI18n } from "../lib/i18n";
 
 export function TermsContent({ initialLang = "pl" }: { initialLang?: string }) {
-  const [lang, setLang] = useState<string>(initialLang === "en" ? "en" : "pl");
+  const { language, setLanguage } = usePanelI18n();
+  const [overrideLang, setOverrideLang] = useState<"pl" | "en" | null>(
+    initialLang === "en" ? "en" : null,
+  );
+  const lang = overrideLang ?? (language === "en" ? "en" : "pl");
+
+  const handleLangChange = (next: string) => {
+    if (next === "pl" || next === "en") {
+      setOverrideLang(next);
+      setLanguage(next);
+    }
+  };
 
   return (
     <Container size="md" py={60}>
@@ -28,7 +40,7 @@ export function TermsContent({ initialLang = "pl" }: { initialLang?: string }) {
             <SegmentedControl
               size="xs"
               value={lang}
-              onChange={setLang}
+              onChange={handleLangChange}
               data={[
                 { label: "Polski (PL)", value: "pl" },
                 { label: "English (EN)", value: "en" },

@@ -63,8 +63,8 @@ const Miniature = styled.div<{ $theme: ThemeName; $design: ThemeDesign }>`
     background: ${({ $design: d }) => `linear-gradient(135deg, ${d.accent}55, ${d.accent}18)`};
   }
   .mini-title {
-    font-size: 23px;
-    line-height: 1.1;
+    font-size: 20px;
+    line-height: 1.15;
   }
   .mini-modules {
     display: flex;
@@ -124,7 +124,8 @@ const Miniature = styled.div<{ $theme: ThemeName; $design: ThemeDesign }>`
     display: none;
   }
   .mini-title {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
+    word-break: normal;
     min-width: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;

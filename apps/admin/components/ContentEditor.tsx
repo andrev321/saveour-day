@@ -23,6 +23,7 @@ import {
   DotsSixIcon,
   EyeIcon,
   EyeSlashIcon,
+  PushPinSimpleIcon,
   TrashIcon,
 } from "@phosphor-icons/react";
 import {
@@ -1047,7 +1048,21 @@ function FixedSection({
   return (
     <Card withBorder padding="xs">
       <Group wrap="nowrap" gap="xs">
-        <span aria-hidden="true" style={{ width: 44, flexShrink: 0 }} />
+        <span
+          aria-hidden="true"
+          style={{
+            width: 44,
+            height: 44,
+            flexShrink: 0,
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--panel-muted)",
+            opacity: 0.7,
+          }}
+        >
+          <PushPinSimpleIcon size={18} weight="duotone" />
+        </span>
         <Button
           variant="subtle"
           px="sm"
@@ -1063,7 +1078,7 @@ function FixedSection({
               style={{
                 flex: 1,
                 whiteSpace: "normal",
-                overflowWrap: "anywhere",
+                overflowWrap: "break-word",
               }}
             >
               {label}
@@ -1251,7 +1266,7 @@ export function ContentEditor(props: ContentEditorProps) {
         label={t("Stopka", "Footer", "Fußzeile")}
         onSelect={() => onSelect("footer")}
       />
-      <Button variant="subtle" onClick={() => setResources(true)}>
+      <Button variant="default" onClick={() => setResources(true)}>
         {t(
           "Zarządzaj wspólnymi danymi",
           "Manage shared data",
@@ -1390,24 +1405,54 @@ function Resources({
             setRemoving(null);
           }}
         />
-        {config[kind].map((item) => (
-          <Card key={item.id} withBorder>
-            <Group justify="space-between">
-              <Text>{"title" in item ? item.title : item.name}</Text>
-              <Button
-                variant="subtle"
-                color="red"
-                onClick={() => setRemoving(item.id)}
-              >
-                {t(
-                  "Usuń z projektu",
-                  "Delete from project",
-                  "Aus Projekt löschen",
-                )}
-              </Button>
-            </Group>
-          </Card>
-        ))}
+        {config[kind].map((item) => {
+          const usageCount =
+            kind === "events"
+              ? config.sections.filter(
+                  (s) => s.type === "timeline" && s.eventIds.includes(item.id),
+                ).length +
+                config.variants.filter((v) => v.eventIds.includes(item.id))
+                  .length
+              : kind === "contacts"
+                ? config.sections.filter(
+                    (s) =>
+                      s.type === "contact" && s.contactIds.includes(item.id),
+                  ).length
+                : config.sections.filter(
+                    (s) => s.type === "venue" && s.venueId === item.id,
+                  ).length +
+                  config.events.filter((e) => e.venueId === item.id).length;
+          return (
+            <Card key={item.id} withBorder>
+              <Group justify="space-between" wrap="wrap" gap="xs">
+                <div>
+                  <Text fw={500}>
+                    {"title" in item ? item.title : item.name}
+                  </Text>
+                  <Text size="xs" c="dimmed">
+                    {t(
+                      `Powiązania w szkicu: ${usageCount}`,
+                      `Draft references: ${usageCount}`,
+                      `Entwurfsverweise: ${usageCount}`,
+                    )}
+                  </Text>
+                </div>
+                <Button
+                  variant="subtle"
+                  color="red"
+                  size="xs"
+                  onClick={() => setRemoving(item.id)}
+                >
+                  {t(
+                    "Usuń z projektu",
+                    "Delete from project",
+                    "Aus Projekt löschen",
+                  )}
+                </Button>
+              </Group>
+            </Card>
+          );
+        })}
         {removing && (
           <Alert color="red">
             <Stack>

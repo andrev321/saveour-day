@@ -22,6 +22,7 @@ const theme = createTheme({
     Loader: Loader.extend({ defaultProps: { type: "dots" } }),
     Modal: Modal.extend({
       defaultProps: {
+        closeButtonProps: { "aria-label": "Zamknij" },
         transitionProps: {
           transition: "fade-up",
           duration: 200,
@@ -31,6 +32,7 @@ const theme = createTheme({
     }),
     Drawer: Drawer.extend({
       defaultProps: {
+        closeButtonProps: { "aria-label": "Zamknij" },
         transitionProps: {
           duration: 240,
           timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -40,7 +42,8 @@ const theme = createTheme({
   },
   black: "#242B59",
   primaryColor: "brand",
-  primaryShade: { light: 6, dark: 3 },
+  primaryShade: { light: 6, dark: 5 },
+  luminanceThreshold: 0.35,
   autoContrast: true,
   colors: {
     dark: [
@@ -61,7 +64,7 @@ const theme = createTheme({
       "#CDDAF4",
       "#AABDE5",
       "#819BCF",
-      "#5D78AE",
+      "#465D9C",
       "#3D518B",
       "#304176",
       "#242B59",

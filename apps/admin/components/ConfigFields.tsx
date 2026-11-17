@@ -60,6 +60,7 @@ export function Fields({
               label={labels[key][i]}
               value={String(v)}
               format="hex"
+              eyeDropperButtonProps={{ "aria-label": labels[key][i] }}
               onChange={(color) => onChange({ ...value, [key]: color })}
             />
           ) : key === "description" || key === "footer" ? (

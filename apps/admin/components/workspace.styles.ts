@@ -440,7 +440,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
     scrollbar-gutter: stable;
   }
   & .mantine-Tabs-panel {
-    padding-top: 0;
+    padding-top: 16px;
   }
   & h3 {
     font-size: 18px;
@@ -469,7 +469,7 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   & .mantine-Title-root,
   & .mantine-InputWrapper-label,
   & .mantine-Checkbox-label {
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
   & .mantine-Button-root {
     max-width: 100%;
@@ -695,5 +695,14 @@ export const WorkspaceDrawerNav = styled.div.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Button-root {
     min-height: 48px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+  & .mantine-Button-inner {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  & .mantine-Button-label {
+    text-align: left;
   }
 `;

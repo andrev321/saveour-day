@@ -214,18 +214,30 @@ export function VariantManager({
               </Stack>
             </Alert>
           ) : (
-            <Button
-              variant="subtle"
-              color="red"
-              disabled={config.variants.length === 1}
-              onClick={() => setRemoving(true)}
+            <Group
+              justify="space-between"
+              pt="sm"
+              style={{
+                position: "sticky",
+                bottom: 0,
+                background: "var(--panel-surface)",
+                borderTop: "1px solid var(--panel-border)",
+                zIndex: 2,
+              }}
             >
-              {t("Usuń wariant", "Delete variant", "Variante löschen")}
-            </Button>
+              <Button
+                variant="subtle"
+                color="red"
+                disabled={config.variants.length === 1}
+                onClick={() => setRemoving(true)}
+              >
+                {t("Usuń wariant", "Delete variant", "Variante löschen")}
+              </Button>
+              <Button variant="default" onClick={() => setOpened(false)}>
+                {t("Gotowe", "Done", "Fertig")}
+              </Button>
+            </Group>
           )}
-          <Button variant="default" onClick={() => setOpened(false)}>
-            {t("Gotowe", "Done", "Fertig")}
-          </Button>
         </Stack>
       </Modal>
     </>

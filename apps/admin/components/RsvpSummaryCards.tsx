@@ -39,7 +39,12 @@ export function RsvpSummaryCards({
 
   return (
     <Stack gap="sm">
-      <SimpleGrid cols={{ base: 2, sm: 4 }}>
+      <SimpleGrid
+        cols={{ base: 2, xl: 4 }}
+        style={{
+          gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+        }}
+      >
         <Card withBorder>
           <Text size="sm" c="dimmed">
             {labelText("Zaproszone osoby", "Invited people", "Eingeladene")}
