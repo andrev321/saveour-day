@@ -28,7 +28,7 @@ for (const width of [390, 1440])
     await page
       .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
-    let dialog = page.getByRole("tabpanel").filter({ visible: true });
+    let dialog = page.getByRole("dialog");
     await dialog.getByRole("button", { name: "Komputer", exact: true }).click();
     const focus = dialog.getByRole("group", { name: "Przesuń ramkę kadru" });
     await expect(focus.locator("img")).toHaveJSProperty("naturalWidth", 1200);
@@ -94,6 +94,7 @@ for (const width of [390, 1440])
       "data-position",
       "98% 50%",
     );
+    await page.keyboard.press("Escape");
     await tab("Zdjęcia");
     await page
       .getByRole("button", {

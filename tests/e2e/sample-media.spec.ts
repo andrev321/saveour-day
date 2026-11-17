@@ -69,9 +69,11 @@ test("starter sample loads, can be removed from the project and restored with un
     exact: true,
   });
   await tile.click();
-  await expect(page.getByRole("dialog")).toContainText(
-    "Możesz wykorzystać ją w swoim zaproszeniu",
-  );
+  await expect(
+    page.getByRole("dialog").getByRole("button", {
+      name: /Możesz wykorzystać ją w swoim zaproszeniu/,
+    }),
+  ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Usuń plik z biblioteki", exact: true }),
   ).toHaveCount(0);
@@ -81,6 +83,7 @@ test("starter sample loads, can be removed from the project and restored with un
     .click();
   await expect(tile).toHaveCount(0);
   await expect(photo).toHaveCount(0);
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Cofnij", exact: true }).click();
   await expect(tile).toBeVisible();
   await expect(photo).toBeVisible();

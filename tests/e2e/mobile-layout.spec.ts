@@ -170,6 +170,7 @@ for (const width of [320, 390]) {
         await expect(
           page.getByLabel("Główny napis", { exact: true }),
         ).toBeVisible();
+        await page.keyboard.press("Escape");
       }
       await expectContained(page);
       await page.screenshot({

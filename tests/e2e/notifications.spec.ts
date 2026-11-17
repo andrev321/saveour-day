@@ -7,9 +7,6 @@ test("notices can be dismissed without bypassing validation and return for new e
 }) => {
   await page.goto(`${admin}/demo`);
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
-    .click();
   const close = (text: string) =>
     page
       .getByRole("alert")
@@ -19,17 +16,22 @@ test("notices can be dismissed without bypassing validation and return for new e
   await close("Demonstracja lokalna");
   await expect(page.getByText("Demonstracja lokalna")).not.toBeVisible();
 
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   const heading = page.getByLabel("Główny napis", { exact: true });
   await heading.fill("");
+  await page.keyboard.press("Escape");
   await close("Uzupełnij główny napis");
   await expect(
     page.getByRole("button", { name: "Symuluj publikację" }),
   ).toBeDisabled();
-  await heading.fill("Spotkanie");
-
   await page
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
+  await heading.fill("Spotkanie");
+  await page.keyboard.press("Escape");
+
   await page
     .getByTestId("section-timeline")
     .getByRole("button", { name: /Plan naszego dnia/ })
@@ -37,6 +39,7 @@ test("notices can be dismissed without bypassing validation and return for new e
   await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   const url = page.getByLabel("Link wydarzenia (opcjonalny)", { exact: true });
   await url.fill("f");
+  await page.keyboard.press("Escape");
   await expect(
     page.getByText("Uzupełnij główny napis", { exact: false }),
   ).not.toBeVisible();
@@ -45,10 +48,22 @@ test("notices can be dismissed without bypassing validation and return for new e
   await expect(
     page.getByRole("button", { name: "Zapisz szkic", exact: true }),
   ).toBeDisabled();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   await url.fill("https://example.com");
   await url.fill("f");
+  await page.keyboard.press("Escape");
   await expect(page.getByText("Popraw konfigurację")).toBeVisible();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   await url.fill("https://example.com");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   const notice = page.getByRole("status").filter({
     has: page.getByRole("button", { name: "Zamknij powiadomienie" }),

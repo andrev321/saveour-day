@@ -18,6 +18,7 @@ test("editing an event URL keeps normal and expanded previews usable", async ({
   await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   const url = page.getByLabel("Link wydarzenia (opcjonalny)", { exact: true });
   await url.fill("f");
+  await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Zapisz szkic", exact: true }),
   ).toBeDisabled();
@@ -30,13 +31,25 @@ test("editing an event URL keeps normal and expanded previews usable", async ({
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   await url.fill("https://");
+  await page.keyboard.press("Escape");
   await expect(
     page
       .frameLocator("iframe")
       .getByRole("heading", { name: "Anna & Jan", exact: true }),
   ).toBeVisible();
+  await page
+    .getByTestId("section-timeline")
+    .getByRole("button", { name: /Plan naszego dnia/ })
+    .click();
+  await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   await url.fill("https://example.com/event");
+  await page.keyboard.press("Escape");
   await expect(
     page.frameLocator("iframe").locator('a[href="https://example.com/event"]'),
   ).toBeVisible();

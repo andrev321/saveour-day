@@ -3,9 +3,6 @@ const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 async function openEditor(page: Page) {
   await page.goto(`${admin}/demo`);
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
-    .click();
 }
 
 for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
@@ -17,8 +14,12 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
     await page.setViewportSize({ width, height: 900 });
     await openEditor(page);
     await page
+      .getByRole("button", { name: "Początek zaproszenia", exact: true })
+      .click();
+    await page
       .getByLabel("Główny napis", { exact: true })
       .fill("Spotkanie przyjaciół");
+    await page.keyboard.press("Escape");
     await page
       .getByRole("button", { name: "Zapisz szkic", exact: true })
       .click();
@@ -67,9 +68,13 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
         .getByRole("dialog")
         .getByRole("button", { name: "Treść", exact: true })
         .click();
+      await page
+        .getByRole("button", { name: "Początek zaproszenia", exact: true })
+        .click();
       await expect(
         page.getByLabel("Główny napis", { exact: true }),
       ).toHaveValue("Spotkanie przyjaciół");
+      await page.keyboard.press("Escape");
     }
     await page.screenshot({ path: `test-results/workspace-${width}.png` });
     expect(errors).toEqual([]);
@@ -103,9 +108,6 @@ test("view settings persist, resize is keyboard accessible, and controls remain 
   expect(frame!.width).toBeLessThan(1440);
   await page.reload();
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
-    .click();
   await expect(separator).toHaveAttribute("aria-valuenow", "560");
   await expect(
     page.getByRole("button", { name: "Rozwiń nawigację" }),
@@ -190,7 +192,11 @@ test("mobile project menu publishes saved changes and reduced motion disables pa
     "animation-name",
     "none",
   );
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await page.getByLabel("Główny napis", { exact: true }).fill("Urodziny Oli");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   await page.getByRole("button", { name: "Opcje projektu" }).click();
   await page.getByRole("button", { name: "Symuluj publikację" }).click();

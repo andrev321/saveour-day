@@ -23,6 +23,7 @@ test("all palette controls update actual colors without changing event content",
   await page
     .getByLabel("Główny napis", { exact: true })
     .fill("Spotkanie zespołu");
+  await page.keyboard.press("Escape");
   await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
   const preview = page.frameLocator("iframe");
   for (const theme of themeNames) {
@@ -59,6 +60,9 @@ test("all palette controls update actual colors without changing event content",
   );
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
   await page.getByRole("tab", { name: "Treść", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await expect(page.getByLabel("Główny napis", { exact: true })).toHaveValue(
     "Spotkanie zespołu",
   );
@@ -108,9 +112,6 @@ test("photo frames and galleries remain visible in every theme and hero layout",
   await page.goto(`${admin}/demo`);
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   const preview = page.frameLocator("iframe");
   await expect(preview.locator("h1")).toBeVisible();
@@ -188,6 +189,7 @@ test("theme picker updates preview, preserves content and toggles ornaments and 
   await page
     .getByLabel("Główny napis", { exact: true })
     .fill("Aleksandra & Konstanty");
+  await page.keyboard.press("Escape");
   await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
   await page
     .getByRole("button", { name: "Radosne świętowanie", exact: true })

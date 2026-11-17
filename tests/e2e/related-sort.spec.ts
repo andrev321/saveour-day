@@ -72,44 +72,59 @@ for (const touch of [false, true]) {
       const beforeSections = await sections(page);
       const timeline = page.getByTestId("section-timeline");
       await timeline.getByRole("button", { name: /Plan naszego dnia/ }).click();
+      const dialog = page.getByRole("dialog");
       await expect(
         page.getByRole("button", { name: /Przesuń wyżej|Przesuń niżej/ }),
       ).toHaveCount(0);
-      const handle = page.getByTestId("related-handle-ceremony");
+      const handle = dialog.getByTestId("related-handle-ceremony");
       await expect(handle).toHaveCSS("touch-action", "none");
-      await drag(page, handle, page.getByTestId("related-handle-party"), touch);
+      await drag(
+        page,
+        handle,
+        dialog.getByTestId("related-handle-party"),
+        touch,
+      );
       await expect
-        .poll(() => order(timeline))
+        .poll(() => order(dialog))
         .toEqual(["related-item-party", "related-item-ceremony"]);
       await expect.poll(() => sections(page)).toEqual(beforeSections);
       // Selection remains attached to the same event when its position changes.
-      await timeline
+      await dialog
         .getByTestId("related-item-ceremony")
         .getByRole("button", { name: "Ceremonia", exact: true })
         .click();
-      const title = timeline.getByLabel("Nazwa wydarzenia", { exact: true });
+      const title = dialog.getByLabel("Nazwa wydarzenia", { exact: true });
       await expect(title).toHaveValue("Ceremonia");
-      await drag(page, page.getByTestId("related-handle-party"), handle, touch);
-      await expect
-        .poll(() => order(timeline))
-        .toEqual(["related-item-ceremony", "related-item-party"]);
-      await expect(title).toHaveValue("Ceremonia");
-      const contact = page.getByTestId("section-contact");
-      await contact.getByRole("button", { name: /Dajcie znać/ }).click();
-      await contact.getByRole("button", { name: "Dodaj nowy element" }).click();
-      await contact
-        .getByLabel("Imię / nazwa", { exact: true })
-        .fill("Drugi kontakt");
-      const before = await order(contact);
       await drag(
         page,
-        contact.locator('[data-testid^="related-handle-"]').first(),
-        contact.locator('[data-testid^="related-handle-"]').last(),
+        dialog.getByTestId("related-handle-party"),
+        handle,
         touch,
       );
-      await expect.poll(() => order(contact)).toEqual([...before].reverse());
+      await expect
+        .poll(() => order(dialog))
+        .toEqual(["related-item-ceremony", "related-item-party"]);
+      await expect(title).toHaveValue("Ceremonia");
+      await page.keyboard.press("Escape");
+      const contact = page.getByTestId("section-contact");
+      await contact.getByRole("button", { name: /Dajcie znać/ }).click();
+      await dialog.getByRole("button", { name: "Dodaj nowy element" }).click();
+      await page
+        .getByLabel("Imię / nazwa", { exact: true })
+        .fill("Drugi kontakt");
+      await page
+        .getByRole("button", { name: "Dodaj kontakt", exact: true })
+        .click();
+      const before = await order(dialog);
+      await drag(
+        page,
+        dialog.locator('[data-testid^="related-handle-"]').first(),
+        dialog.locator('[data-testid^="related-handle-"]').last(),
+        touch,
+      );
+      await expect.poll(() => order(dialog)).toEqual([...before].reverse());
       await expect(
-        contact.getByLabel("Imię / nazwa", { exact: true }),
+        dialog.getByLabel("Imię / nazwa", { exact: true }),
       ).toHaveValue("Drugi kontakt");
       await expect.poll(() => sections(page)).toEqual(beforeSections);
     });
@@ -141,11 +156,19 @@ test("gallery items reorder with keyboard and keep photo selection", async ({
   await page.getByRole("tab", { name: "Treść", exact: true }).click();
   const gallery = page.getByTestId("section-gallery");
   await gallery.getByRole("button", { name: /^Galeria/ }).click();
-  await gallery.getByLabel("Dodaj istniejący", { exact: true }).click();
+  const sectionDialog = page.getByRole("dialog");
+  await sectionDialog
+    .getByRole("button", { name: "Dodaj zdjęcie", exact: true })
+    .click();
+  await page.getByLabel("Wybierz zdjęcie", { exact: true }).click();
   await page.getByRole("option", { name: /Zdjęcie z biblioteki/ }).click();
-  await gallery.getByRole("button", { name: "Dodaj", exact: true }).click();
+  await page
+    .getByRole("dialog")
+    .last()
+    .getByRole("button", { name: "Dodaj zdjęcie", exact: true })
+    .click();
   const beforeSections = await sections(page);
-  const handle = page.getByTestId("related-handle-saved");
+  const handle = sectionDialog.getByTestId("related-handle-saved");
   await handle.scrollIntoViewIfNeeded();
   await handle.focus();
   await handle.press("Space", { delay: 100 });
@@ -153,15 +176,16 @@ test("gallery items reorder with keyboard and keep photo selection", async ({
   await handle.press("ArrowUp", { delay: 100 });
   await handle.press("Space", { delay: 100 });
   await expect
-    .poll(() => order(gallery))
+    .poll(() => order(sectionDialog))
     .toEqual(["related-item-saved", "related-item-photo"]);
   await expect.poll(() => sections(page)).toEqual(beforeSections);
   await expect(
-    gallery.getByRole("combobox", {
+    sectionDialog.getByRole("combobox", {
       name: "Zdjęcie dla wybranego urządzenia",
       exact: true,
     }),
   ).toHaveValue("Zdjęcie z biblioteki");
+  await page.keyboard.press("Escape");
   await expect
     .poll(() =>
       page

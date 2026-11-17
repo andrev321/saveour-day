@@ -32,37 +32,36 @@ for (const width of [390, 1440])
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page
-      .getByTestId("section-contact")
-      .getByRole("button", { name: /Dajcie znać/ })
-      .click();
     const contactRow = page.getByTestId("section-contact");
     const contactToggle = contactRow.getByRole("button", {
       name: /Dajcie znać/,
     });
-    await expect(contactToggle).toHaveAttribute("aria-expanded", "true");
+    await contactToggle.click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
     await expect(
-      contactRow.getByLabel("Tytuł sekcji", { exact: true }),
+      dialog.getByLabel("Tytuł sekcji", { exact: true }),
     ).toBeVisible();
     await expect(page.getByTestId("section-timeline")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Początek zaproszenia", exact: true }),
     ).toBeVisible();
-    await contactToggle.press("Enter");
-    await expect(contactToggle).toHaveAttribute("aria-expanded", "false");
-    await expect(
-      contactRow.getByLabel("Tytuł sekcji", { exact: true }),
-    ).toHaveCount(0);
-    await contactToggle.press("Enter");
-    await page.getByRole("button", { name: "Dodaj nowy element" }).click();
+    await page.keyboard.press("Escape");
+    await expect(dialog).toHaveCount(0);
+    await contactToggle.click();
+    await dialog.getByRole("button", { name: "Dodaj nowy element" }).click();
     await page.getByLabel("Imię / nazwa", { exact: true }).fill("Nowa osoba");
     await page
       .getByRole("textbox", { name: "Telefon", exact: true })
       .fill("+48123456789");
+    await page
+      .getByRole("button", { name: "Dodaj kontakt", exact: true })
+      .click();
     await page.screenshot({
       path: testInfo.outputPath(`contextual-open-${width}.png`),
       fullPage: true,
     });
+    await page.keyboard.press("Escape");
     if (width < 1100)
       await page.getByRole("button", { name: "Podgląd", exact: true }).click();
     await expect(
@@ -104,6 +103,7 @@ test("shared section copy isolates titles and unlinking preserves other variants
   await page
     .getByLabel("Tytuł sekcji", { exact: true })
     .fill("Program dla rodziny");
+  await page.keyboard.press("Escape");
   await expect(
     page
       .frameLocator("iframe")
@@ -125,6 +125,7 @@ test("shared section copy isolates titles and unlinking preserves other variants
     .getByRole("alert")
     .getByRole("button", { name: "Usuń", exact: true })
     .click();
+  await page.keyboard.press("Escape");
   await expect(
     page
       .frameLocator("iframe")

@@ -27,20 +27,16 @@ for (const width of [390, 1280]) {
       await expect(toggle).toHaveCSS("translate", "none");
       expect(await toggle.boundingBox()).toEqual(before);
       await page.mouse.up();
-      const input = page.getByLabel("Główny napis", { exact: true });
+      await toggle.click();
+      const dialog = page.getByRole("dialog");
+      await expect(dialog).toBeVisible();
+      const input = dialog.getByLabel("Główny napis", { exact: true });
       await expect(input).toBeVisible();
       await input.fill("Nasze spotkanie");
-      const body = page.locator("#content-hero > div");
-      await expect(body).toHaveCSS("overflow", "visible");
-      await toggle.press("Enter");
-      await expect(input).toHaveCount(0);
-      // Reverse an opening/closing transition before it can finish.
-      await toggle.press("Enter");
-      await toggle.press("Enter");
-      await toggle.press("Enter");
-      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await page.keyboard.press("Escape");
+      await expect(dialog).toHaveCount(0);
+      await toggle.click();
       await expect(input).toHaveValue("Nasze spotkanie");
-      await expect(body).toHaveCSS("overflow", "visible");
       await page.screenshot({
         path: testInfo.outputPath(`studio-${width}-${reducedMotion}.png`),
       });

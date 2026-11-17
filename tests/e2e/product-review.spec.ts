@@ -50,9 +50,17 @@ test("autosave preserves edits made during a request and undo restores the previ
   release();
   await expect.poll(() => stored.identity.displayName).toBe("Second edit");
   await expect(heading).toHaveValue("Second edit");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Cofnij", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await expect(heading).toHaveValue("First edit");
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Ponów", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Początek zaproszenia", exact: true })
+    .click();
   await expect(heading).toHaveValue("Second edit");
 });
 test("guest questions are localized and dirty refresh requires confirmation", async ({
@@ -128,8 +136,8 @@ test("guest questions are localized and dirty refresh requires confirmation", as
   await page
     .getByRole("button", { name: "Save responses", exact: true })
     .click();
+  await expect(page.getByRole("status")).toContainText("saved");
   expect(questionAnswers).toEqual([
     { questionId, guestId: guest, value: { text: "Vegan" } },
   ]);
-  await expect(page.getByRole("status")).toContainText("saved");
 });

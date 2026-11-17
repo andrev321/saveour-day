@@ -47,8 +47,7 @@ for (const width of [390, 1440]) {
       .click();
     for (const device of ["Komputer", "Telefon", "Tablet"]) {
       await page
-        .getByRole("tabpanel")
-        .filter({ visible: true })
+        .getByRole("dialog")
         .getByRole("button", { name: device, exact: true })
         .click();
       const select = page.getByRole("combobox", {
@@ -76,9 +75,7 @@ for (const width of [390, 1440]) {
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page
-      .getByRole("button", { name: "Początek zaproszenia", exact: true })
-      .click();
+    await page.keyboard.press("Escape");
     await page
       .getByTestId("section-gallery")
       .getByRole("button", { name: /Galeria/ })
@@ -94,6 +91,7 @@ for (const width of [390, 1440]) {
       .filter({ hasText: "photo" })
       .getByRole("button", { name: "Usuń z sekcji" })
       .click();
+    await page.keyboard.press("Escape");
     await expect(
       page.frameLocator("iframe").locator('[data-kind="gallery"] img'),
     ).toHaveCount(0);

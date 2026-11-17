@@ -47,6 +47,7 @@ test("admin demo edits and saves before simulated publication", async ({
     page.getByText("Demonstracja lokalna", { exact: true }),
   ).toBeVisible();
   await page.getByLabel("Główny napis", { exact: true }).fill("Zmieniona");
+  await page.keyboard.press("Escape");
   await expect(
     page.getByRole("button", { name: "Symuluj publikację" }),
   ).toBeDisabled();
@@ -72,9 +73,6 @@ test("admin demo forwards custom color tokens to the preview", async ({
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
-    .click();
   await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
   await page.getByLabel("Kolor akcentu", { exact: true }).fill("#123456");
   await expect(
@@ -90,9 +88,6 @@ test("panel language preserves the untouched invitation template", async ({
   await page.goto(`${adminUrl}/demo`);
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "English", exact: true }).click();
@@ -117,6 +112,7 @@ test("panel language preserves a customized invitation template", async ({
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   await page.getByLabel("Główny napis", { exact: true }).fill("Kasia");
+  await page.keyboard.press("Escape");
   await page.getByRole("combobox", { name: "Język panelu" }).click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
   await expect(
@@ -169,6 +165,7 @@ test("new typed sections appear in preview", async ({ page }) => {
     .getByRole("button", { name: "Tekst", exact: true })
     .click();
   await page.getByLabel("Tytuł sekcji", { exact: true }).fill("Nasza historia");
+  await page.keyboard.press("Escape");
   await expect(
     page
       .frameLocator("iframe")
@@ -217,14 +214,18 @@ test("program edits events and places without leaving the section", async ({
   await page.getByRole("button", { name: "Ceremonia", exact: true }).click();
   await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Powitanie");
   await page.getByLabel("Nazwa miejsca", { exact: true }).fill("Ogród");
+  await page.getByRole("button", { name: "Dodaj nowy element" }).click();
+  await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Toast");
+  await page
+    .getByRole("button", { name: "Dodaj wydarzenie", exact: true })
+    .click();
+  await page.keyboard.press("Escape");
   await expect(
     page.frameLocator("iframe").getByText("Powitanie", { exact: true }),
   ).toBeVisible();
   await expect(
     page.frameLocator("iframe").getByText("Ogród", { exact: true }).first(),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Dodaj nowy element" }).click();
-  await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Toast");
   await expect(
     page.frameLocator("iframe").getByText("Toast", { exact: true }),
   ).toBeVisible();
@@ -256,6 +257,7 @@ test("preview selection opens the corresponding section editor", async ({
     .getByRole("button", { name: "Kontakt do organizatorów", exact: true })
     .click();
   await page.getByLabel("Imię / nazwa", { exact: true }).fill("Organizator");
+  await page.keyboard.press("Escape");
   await expect(
     page.frameLocator("iframe").getByText("Organizator", { exact: true }),
   ).toBeVisible();
@@ -269,9 +271,6 @@ test("editor opens the current invitation in a full-screen preview", async ({
   await page.goto(`${adminUrl}/demo`);
   await page
     .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
   await page.getByRole("button", { name: "Powiększ podgląd" }).click();
   const dialog = page.getByRole("dialog");
