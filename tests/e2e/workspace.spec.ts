@@ -5,6 +5,14 @@ async function openEditor(page: Page) {
   await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
 }
 
+async function fillHeading(page: Page, value: string) {
+  const headingInput = page.getByLabel("Główny napis", { exact: true });
+  await expect(async () => {
+    await headingInput.fill(value);
+    await expect(headingInput).toHaveValue(value);
+  }).toPass({ timeout: 5000 });
+}
+
 for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
   test(`workspace edits and previews without overflow at ${width}px`, async ({
     page,
@@ -16,9 +24,7 @@ for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
     await page
       .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
-    const headingInput = page.getByLabel("Główny napis", { exact: true });
-    await headingInput.fill("Spotkanie przyjaciół");
-    await expect(headingInput).toHaveValue("Spotkanie przyjaciół");
+    await fillHeading(page, "Spotkanie przyjaciół");
     await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).not.toBeVisible();
     await page
@@ -196,9 +202,7 @@ test("mobile project menu publishes saved changes and reduced motion disables pa
   await page
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
-  const headingInput = page.getByLabel("Główny napis", { exact: true });
-  await headingInput.fill("Urodziny Oli");
-  await expect(headingInput).toHaveValue("Urodziny Oli");
+  await fillHeading(page, "Urodziny Oli");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
