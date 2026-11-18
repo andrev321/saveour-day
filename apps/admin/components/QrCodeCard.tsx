@@ -7,20 +7,13 @@ import { useEffect, useRef, useState } from "react";
 
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
+import { toast } from "@invitations/ui/toast";
 import { usePanelI18n } from "../lib/i18n";
 
 const foreground = "#302F2B";
 const background = "#FFFFFF";
 
-export function QrCodeCard({
-  url,
-  onMessage,
-  title,
-}: {
-  url: string;
-  onMessage: (message: string) => void;
-  title?: string;
-}) {
+export function QrCodeCard({ url, title }: { url: string; title?: string }) {
   const { language } = usePanelI18n();
   const { busy, start, end } = useOperation();
   const [attempt, setAttempt] = useState(0);
@@ -74,9 +67,9 @@ export function QrCodeCard({
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": png.blob }),
       ]);
-      onMessage("Skopiowano kod QR jako obraz PNG.");
+      toast.success("Skopiowano kod QR jako obraz PNG.");
     } catch {
-      onMessage(
+      toast.error(
         "Przeglądarka nie pozwoliła skopiować obrazu. Spróbuj w Chrome lub Edge i zezwól na dostęp do schowka.",
       );
     } finally {

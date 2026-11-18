@@ -7,6 +7,7 @@ import {
   createTheme,
 } from "@mantine/core";
 import { IconContext } from "@phosphor-icons/react";
+import { ToastViewport } from "@invitations/ui/toast";
 import type { ReactNode } from "react";
 
 const theme = createTheme({
@@ -79,6 +80,7 @@ const icons = { weight: "duotone" as const };
 export function PanelTheme({ children }: { children: ReactNode }) {
   return (
     <MantineProvider theme={theme} defaultColorScheme="light">
+      <ToastViewport />
       <IconContext.Provider value={icons}>{children}</IconContext.Provider>
     </MantineProvider>
   );

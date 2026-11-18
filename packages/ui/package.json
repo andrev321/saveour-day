@@ -11,7 +11,8 @@
     "./loading-copy": "./src/loading-copy.ts",
     "./motion": "./src/motion.ts",
     "./motion-styles": "./src/motion-styles.ts",
-    "./motion-components": "./src/motion-components.tsx"
+    "./motion-components": "./src/motion-components.tsx",
+    "./toast": "./src/toast.tsx"
   },
   "peerDependencies": {
     "react": "^19.0.0",

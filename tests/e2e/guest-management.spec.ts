@@ -132,12 +132,22 @@ test("organizer creates group links, edits recipients and changes access setting
     .click();
   await page.getByLabel("Osoba 2").fill("Adam");
   await page.getByRole("button", { name: "Utwórz zaproszenie i link" }).click();
-  await expect(page.getByLabel("Wygenerowany link")).toHaveValue(
-    "https://example.test/i/family-token",
-  );
+  const shareDialog = page.getByRole("dialog", {
+    name: "Zaproszenie utworzone",
+  });
+  await expect(shareDialog).toBeVisible();
+  await expect(
+    shareDialog.getByText("https://example.test/i/family-token"),
+  ).toBeVisible();
+  await expect(shareDialog.getByText("Rodzina Kowalskich")).toBeVisible();
+  await shareDialog
+    .getByRole("button", { name: "Zamknij", exact: true })
+    .last()
+    .click();
+  await expect(shareDialog).not.toBeVisible();
   await expect(page.getByText("Rodzina Kowalskich")).toBeVisible();
 
-  await page.getByRole("button", { name: "⋯", exact: true }).click();
+  await page.getByRole("button", { name: "Akcje", exact: true }).click();
   await page
     .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
     .click();
@@ -167,7 +177,7 @@ test("organizer creates group links, edits recipients and changes access setting
     fullPage: true,
   });
 
-  await page.getByRole("button", { name: "⋯", exact: true }).click();
+  await page.getByRole("button", { name: "Akcje", exact: true }).click();
   await page
     .getByRole("menuitem", { name: "Cofnij dostęp", exact: true })
     .click();
@@ -264,7 +274,7 @@ test("organizer adds a companion slot in invitation editor", async ({
     `${process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000"}/sites/${id}`,
   );
   await page.getByRole("tab", { name: "Goście", exact: true }).click();
-  await page.getByRole("button", { name: "⋯", exact: true }).click();
+  await page.getByRole("button", { name: "Akcje", exact: true }).click();
   await page
     .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
     .click();

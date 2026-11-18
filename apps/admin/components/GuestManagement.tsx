@@ -3,9 +3,9 @@ import { ActionButton } from "./ActionButton";
 import { NoticePopover } from "./NoticePopover";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
+import { toast } from "@invitations/ui/toast";
 import { useEffect, useState } from "react";
 import {
-  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -17,7 +17,6 @@ import {
   Text,
   TextInput,
   Title,
-  Tooltip,
   Modal,
   FileButton,
   Accordion,
@@ -26,7 +25,6 @@ import {
   Skeleton,
   Switch,
 } from "@mantine/core";
-import { ArrowSquareOutIcon, CheckIcon, CopyIcon } from "@phosphor-icons/react";
 import { apiFetch } from "./Dashboard";
 import {
   csvFile,
@@ -38,20 +36,23 @@ import {
   summarizeRsvp,
 } from "@invitations/domain/invitation";
 import { summarizeQuestions } from "@invitations/domain/rsvp-questions";
-import {
-  detectGuestCollisions,
-  formatShareMessage,
-} from "@invitations/domain/hybrid-rsvp";
+import { detectGuestCollisions } from "@invitations/domain/hybrid-rsvp";
 import {
   formatRsvpCsv,
   type InvitationRow,
   type Management,
 } from "../lib/guest-management";
 import { usePanelI18n } from "../lib/i18n";
+import { copyToClipboard } from "../lib/clipboard";
 import {
   InvitationEditorModal,
   type InvitationEditorSubmit,
 } from "./InvitationEditorModal";
+import {
+  InvitationShareModal,
+  type ShareInvitationTarget,
+} from "./InvitationShareModal";
+import { CopyableLinkRow } from "./CopyableLinkRow";
 import { InvitationTable } from "./InvitationTable";
 import { RsvpQuestionsEditor } from "./RsvpQuestionsEditor";
 import { RsvpSummaryCards } from "./RsvpSummaryCards";
@@ -118,9 +119,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const endpoint = `/api/sites/${siteId}/guests`;
   const [loading, setLoading] = useState(true);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [data, setData] = useState<Management | null>(null),
-    [message, setMessage] = useState("");
-  const [urlCopied, setUrlCopied] = useState(false);
+  const [data, setData] = useState<Management | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const { operation, busy, start, end } = useOperation();
   const operationMessage = loadingText(
     language,
@@ -142,12 +142,29 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     [deadline, setDeadline] = useState("");
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [allowSelfRegistration, setAllowSelfRegistration] = useState(false);
-  const [link, setLink] = useState("");
-  const [lastShortCode, setLastShortCode] = useState<string | null>(null);
+  const [shareModal, setShareModal] = useState<ShareInvitationTarget | null>(
+    null,
+  );
+  const [sessionLinks, setSessionLinks] = useState<Record<string, string>>({});
   const [editorOpen, setEditorOpen] = useState(false);
   const [editingInvite, setEditingInvite] = useState<InvitationRow | null>(
     null,
   );
+  function openShareModal(
+    params: Omit<ShareInvitationTarget, "variantLabel"> & { variantId: string },
+    variants: { id: string; label: string }[],
+  ) {
+    const variantLabel = variants.find((v) => v.id === params.variantId)?.label;
+    setShareModal({
+      groupName: params.groupName,
+      guests: params.guests,
+      variantLabel,
+      url: params.url,
+      shortCode: params.shortCode,
+      isPersonalUrl: params.isPersonalUrl,
+      justCreated: params.justCreated,
+    });
+  }
   function accept(result: Management) {
     setData(result);
     setMode(result.site.access_mode);
@@ -174,7 +191,10 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         }
       })
       .catch((e) => {
-        if (alive) setMessage(e.message);
+        if (alive) {
+          setLoadFailed(true);
+          toast.error(e.message);
+        }
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -183,23 +203,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
       alive = false;
     };
   }, [endpoint, loadAttempt]);
-  async function copyText(text: string, successText: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setMessage(successText);
-    } catch {
-      setMessage(
-        labelText(
-          "Nie udało się skopiować automatycznie. Skopiuj ręcznie.",
-          "Could not copy automatically. Please copy manually.",
-          "Automatisches Kopieren fehlgeschlagen. Bitte manuell kopieren.",
-        ),
-      );
-    }
+  function copyText(text: string, successText: string) {
+    return copyToClipboard(text, successText, language);
   }
   async function action(action: string, payload: unknown) {
     if (!start(action)) return false;
-    setMessage("");
     try {
       const result = await apiFetch<{
         url?: string;
@@ -215,18 +223,10 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         method: "POST",
         body: JSON.stringify({ action, payload }),
       });
-      if (result.url) {
-        setLink(result.url);
-        setLastShortCode(result.shortCode ?? null);
-      }
       if (action === "import") {
         setImported([]);
         setImportOpen(false);
         setImportLinks(result.links || []);
-      }
-      if (action === "revoke") {
-        setLink("");
-        setLastShortCode(null);
       }
       const refreshed = await apiFetch<Management>(endpoint);
       if (
@@ -237,21 +237,51 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         accept(refreshed);
         if (action === "settings") setCode("");
       } else setData(refreshed);
+      if (action === "create" && result.url) {
+        const createdPayload = payload as ImportedInvitation;
+        const matched = refreshed.invitations.find(
+          (i) => i.short_code && i.short_code === result.shortCode,
+        );
+        if (matched) {
+          setSessionLinks((old) => ({ ...old, [matched.id]: result.url! }));
+        }
+        openShareModal(
+          {
+            groupName: createdPayload.groupName ?? null,
+            guests: createdPayload.guests,
+            variantId: createdPayload.variantId,
+            url: result.url,
+            shortCode: result.shortCode ?? null,
+            isPersonalUrl: true,
+            justCreated: true,
+          },
+          refreshed.variants,
+        );
+      }
+      if (action === "rotate" && result.url) {
+        const rotatePayload = payload as { id: string };
+        setSessionLinks((old) => ({
+          ...old,
+          [rotatePayload.id]: result.url!,
+        }));
+      }
       setConfirmation(null);
       setEditorOpen(false);
       setEditingInvite(null);
-      setMessage(
-        result.alreadyImported
-          ? labelText(
-              "Ten import został już zapisany. Nie utworzono duplikatów.",
-              "This import was already saved. No duplicates created.",
-              "Dieser Import wurde bereits gespeichert. Keine Duplikate erstellt.",
-            )
-          : labelText("Zapisano.", "Saved.", "Gespeichert."),
-      );
+      if (result.alreadyImported) {
+        toast.info(
+          labelText(
+            "Ten import został już zapisany. Nie utworzono duplikatów.",
+            "This import was already saved. No duplicates created.",
+            "Dieser Import wurde bereits gespeichert. Keine Duplikate erstellt.",
+          ),
+        );
+      } else {
+        toast.success(labelText("Zapisano.", "Saved.", "Gespeichert."));
+      }
       return true;
     } catch (e) {
-      setMessage((e as Error).message);
+      toast.error((e as Error).message);
       return false;
     } finally {
       end();
@@ -339,7 +369,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             "Gäste und Antworten",
           )}
         </Title>
-        {message && <Alert role="status">{message}</Alert>}
         {busy && (
           <LoadingState
             compact
@@ -380,11 +409,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             </Stack>
           </Stack>
         )}
-        {!loading && !data && message && (
+        {!loading && !data && loadFailed && (
           <Button
             variant="light"
             onClick={() => {
-              setMessage("");
+              setLoadFailed(false);
               setLoading(true);
               setLoadAttempt((attempt) => attempt + 1);
             }}
@@ -507,103 +536,34 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                         </Button>
                       )}
                     </Group>
-                    <Group
-                      data-ui="publication-url-wrapper"
-                      justify="space-between"
-                      align="center"
-                      gap="xs"
-                      wrap="nowrap"
-                      style={{
-                        padding: "6px 8px 6px 12px",
-                        borderRadius: "var(--mantine-radius-md)",
-                        border: "1px solid var(--panel-border)",
-                        background: "var(--panel-surface)",
-                        minWidth: 0,
-                      }}
-                    >
-                      <Text
-                        size="xs"
-                        ff="monospace"
-                        title={data.url}
-                        style={{
-                          minWidth: 0,
-                          flex: 1,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          userSelect: "all",
-                        }}
-                      >
-                        {data.url}
-                      </Text>
-                      <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
-                        <Tooltip
-                          label={labelText(
-                            "Kopiuj adres strony",
-                            "Copy general link",
-                            "Allgemeinen Link kopieren",
-                          )}
-                        >
-                          <ActionIcon
-                            variant="subtle"
-                            color={urlCopied ? "green" : "gray"}
-                            aria-label={labelText(
-                              "Kopiuj adres strony",
-                              "Copy general link",
-                              "Allgemeinen Link kopieren",
-                            )}
-                            onClick={() => {
-                              void navigator.clipboard
-                                .writeText(data.url)
-                                .then(() => {
-                                  setUrlCopied(true);
-                                  setTimeout(() => setUrlCopied(false), 2000);
-                                  setMessage(
-                                    labelText(
-                                      "Skopiowano adres strony.",
-                                      "General invitation link copied.",
-                                      "Allgemeiner Einladungslink kopiert.",
-                                    ),
-                                  );
-                                })
-                                .catch(() => setMessage(data.url));
-                            }}
-                          >
-                            {urlCopied ? (
-                              <CheckIcon size={16} />
-                            ) : (
-                              <CopyIcon size={16} />
-                            )}
-                          </ActionIcon>
-                        </Tooltip>
-                        {data.site.published_release_id && (
-                          <Tooltip
-                            label={labelText(
-                              "Otwórz stronę",
-                              "Open invitation",
-                              "Einladung öffnen",
-                            )}
-                          >
-                            <ActionIcon
-                              component="a"
-                              href={data.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              variant="subtle"
-                              color="gray"
-                              aria-label={labelText(
-                                "Otwórz stronę",
-                                "Open invitation",
-                                "Einladung öffnen",
-                              )}
-                            >
-                              <ArrowSquareOutIcon size={16} />
-                            </ActionIcon>
-                          </Tooltip>
+                    <div data-ui="publication-url-wrapper">
+                      <CopyableLinkRow
+                        value={data.url}
+                        copyLabel={labelText(
+                          "Kopiuj adres strony",
+                          "Copy general link",
+                          "Allgemeinen Link kopieren",
                         )}
-                      </Group>
-                    </Group>
-                    <QrCodeCard url={data.url} onMessage={setMessage} />
+                        copiedMessage={labelText(
+                          "Skopiowano adres strony.",
+                          "General invitation link copied.",
+                          "Allgemeiner Einladungslink kopiert.",
+                        )}
+                        openAction={
+                          data.site.published_release_id
+                            ? {
+                                label: labelText(
+                                  "Otwórz stronę",
+                                  "Open invitation",
+                                  "Einladung öffnen",
+                                ),
+                                href: data.url,
+                              }
+                            : undefined
+                        }
+                      />
+                    </div>
+                    <QrCodeCard url={data.url} />
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
@@ -616,7 +576,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                             version: data.site.access_version,
                           });
                         } catch (error) {
-                          setMessage((error as Error).message);
+                          toast.error((error as Error).message);
                         }
                       }}
                     >
@@ -828,7 +788,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 onChange={(file) => {
                   if (!file) return;
                   if (file.size > 200_000) {
-                    setMessage(
+                    toast.error(
                       labelText(
                         "Plik CSV jest za duży (maks. 200 kB).",
                         "CSV file is too large (max. 200 kB).",
@@ -849,7 +809,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                       setImportId(crypto.randomUUID());
                       setImportOpen(true);
                     })
-                    .catch((e) => setMessage(e.message));
+                    .catch((e) => toast.error(e.message));
                 }}
               >
                 {(props) => (
@@ -911,7 +871,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                       download(
                         "linki-zaproszen.csv",
                         csvFile([
-                          ["Rodzina", "Kod", "Link"],
+                          ["Zaproszenie", "Kod", "Link"],
                           ...importLinks.map((i) => [
                             i.label,
                             i.shortCode || "",
@@ -948,133 +908,15 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               }}
               onSubmit={handleEditorSubmit}
             />
-            {link && (
-              <Alert
-                title={labelText(
-                  "Link do przekazania odbiorcy",
-                  "Family link to share with the recipient",
-                  "Familienlink für den Empfänger",
-                )}
-              >
-                <Stack gap="xs">
-                  <Text size="sm">
-                    {labelText(
-                      "To link rodzinny — umożliwia odpowiedzi za wskazane osoby. Przekaż go tylko odbiorcom.",
-                      "This family link allows responses for the invited people. Share it only with recipients.",
-                      "Dieser Familienlink erlaubt Antworten für eingeladene Personen. Nur an Empfänger weitergeben.",
-                    )}
-                  </Text>
-                  {lastShortCode && (
-                    <Text size="sm" fw={600}>
-                      {labelText(
-                        "Kod zaproszenia",
-                        "Invitation code",
-                        "Einladungscode",
-                      )}
-                      : {lastShortCode}
-                    </Text>
-                  )}
-                  <TextInput
-                    aria-label={labelText(
-                      "Wygenerowany link",
-                      "Generated link",
-                      "Erstellter Link",
-                    )}
-                    readOnly
-                    value={link}
-                  />
-                  <Group>
-                    <Button
-                      onClick={() =>
-                        void copyText(
-                          link,
-                          labelText(
-                            "Skopiowano link.",
-                            "Link copied.",
-                            "Link kopiert.",
-                          ),
-                        )
-                      }
-                    >
-                      {labelText("Kopiuj link", "Copy link", "Link kopieren")}
-                    </Button>
-                    <Button
-                      variant="light"
-                      onClick={() =>
-                        void copyText(
-                          formatShareMessage({
-                            locale: data.locale,
-                            displayName: data.displayName,
-                            kind: "personal",
-                            url: link,
-                            deadline: data.site.rsvp_deadline
-                              ? localDeadline(data.site.rsvp_deadline).replace(
-                                  "T",
-                                  " ",
-                                )
-                              : null,
-                          }),
-                          labelText(
-                            "Skopiowano wiadomość z linkiem osobistym.",
-                            "Personal link message copied.",
-                            "Nachricht mit persönlichem Link kopiert.",
-                          ),
-                        )
-                      }
-                    >
-                      {labelText(
-                        "Kopiuj link osobisty",
-                        "Copy personal link",
-                        "Persönlichen Link kopieren",
-                      )}
-                    </Button>
-                    {lastShortCode && (
-                      <Button
-                        variant="light"
-                        onClick={() =>
-                          void copyText(
-                            formatShareMessage({
-                              locale: data.locale,
-                              displayName: data.displayName,
-                              kind: "shared_with_code",
-                              url: data.url,
-                              shortCode: lastShortCode,
-                              deadline: data.site.rsvp_deadline
-                                ? localDeadline(
-                                    data.site.rsvp_deadline,
-                                  ).replace("T", " ")
-                                : null,
-                            }),
-                            labelText(
-                              "Skopiowano link ogólny + kod.",
-                              "General link + code copied.",
-                              "Allgemeiner Link + Code kopiert.",
-                            ),
-                          )
-                        }
-                      >
-                        {labelText(
-                          "Kopiuj link + kod",
-                          "Copy link + code",
-                          "Link + Code kopieren",
-                        )}
-                      </Button>
-                    )}
-                  </Group>
-                </Stack>
-              </Alert>
-            )}
-            {link && (
-              <QrCodeCard
-                url={link}
-                onMessage={setMessage}
-                title={labelText(
-                  "QR zaproszenia rodzinnego",
-                  "Family invitation QR",
-                  "QR der Familieneinladung",
-                )}
-              />
-            )}
+            <InvitationShareModal
+              target={shareModal}
+              onClose={() => setShareModal(null)}
+              onAddAnother={() => {
+                setShareModal(null);
+                setEditingInvite(null);
+                setEditorOpen(true);
+              }}
+            />
             <Title order={3}>
               {labelText(
                 "Lista zaproszeń i RSVP",
@@ -1201,18 +1043,26 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 collisions={collisions}
                 questions={data.questions || []}
                 questionAnswers={data.questionAnswers || []}
-                locale={data.locale}
-                displayName={data.displayName}
                 publicUrl={data.url}
-                deadline={
-                  data.site.rsvp_deadline
-                    ? localDeadline(data.site.rsvp_deadline).replace("T", " ")
-                    : null
-                }
                 publishedReleaseId={data.site.published_release_id}
                 busy={busy}
                 savingRsvp={operation === "rsvp"}
+                sessionLinks={sessionLinks}
                 onCopy={(text, msg) => void copyText(text, msg)}
+                onShowShare={(inv) => {
+                  const personal = sessionLinks[inv.id];
+                  openShareModal(
+                    {
+                      groupName: inv.group_name,
+                      guests: inv.guests,
+                      variantId: inv.variant_id,
+                      url: personal ?? data.url,
+                      shortCode: inv.short_code,
+                      isPersonalUrl: Boolean(personal),
+                    },
+                    data.variants,
+                  );
+                }}
                 onEdit={(inv) => {
                   setEditingInvite(inv);
                   setEditorOpen(true);
@@ -1279,11 +1129,6 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           )}
         >
           <Stack>
-            {message && (
-              <Alert role="alert" color="red">
-                {message}
-              </Alert>
-            )}
             <Text>{confirmation?.description}</Text>
             <Group>
               <Button
@@ -1355,12 +1200,11 @@ export function GuestManagement({ siteId }: { siteId: string }) {
             ))}
             <Text size="sm">
               {labelText(
-                "Istniejące zaproszenia nie zostaną nadpisane. Przed importem sprawdź, czy rodziny nie występują już na liście.",
-                "Existing invitations will not be overwritten. Check whether these families are already on your list.",
-                "Bestehende Einladungen werden nicht überschrieben. Prüfen, ob die Familien bereits vorhanden sind.",
+                "Istniejące zaproszenia nie zostaną nadpisane. Przed importem sprawdź, czy zaproszenia nie występują już na liście.",
+                "Existing invitations will not be overwritten. Check whether these invitations are already on your list.",
+                "Bestehende Einladungen werden nicht überschrieben. Prüfen, ob die Einladungen bereits vorhanden sind.",
               )}
             </Text>
-            {message && <Alert>{message}</Alert>}
             <ActionButton
               loading={operation === "import"}
               pendingLabel={loadingText(language, "import")}

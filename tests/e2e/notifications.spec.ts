@@ -65,9 +65,14 @@ test("notices can be dismissed without bypassing validation and return for new e
   await url.fill("https://example.com");
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Zapisz szkic", exact: true }).click();
-  const notice = page.getByRole("status").filter({
-    has: page.getByRole("button", { name: "Zamknij powiadomienie" }),
-  });
-  await notice.getByRole("button", { name: "Zamknij powiadomienie" }).click();
-  await expect(notice).not.toBeVisible();
+  const toastMessage = page.getByText(
+    "Szkic zapisany. Publikacja wymaga osobnego zatwierdzenia.",
+  );
+  await expect(toastMessage).toBeVisible();
+  await page
+    .locator(".mantine-Notification-root")
+    .filter({ has: toastMessage })
+    .locator(".mantine-Notification-closeButton")
+    .click();
+  await expect(toastMessage).not.toBeVisible();
 });

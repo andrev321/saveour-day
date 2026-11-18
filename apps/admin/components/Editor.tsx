@@ -6,6 +6,7 @@ import {
 import { ActionButton } from "./ActionButton";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
+import { toast } from "@invitations/ui/toast";
 import {
   publishedConfigSchema,
   siteConfigSchema,
@@ -165,8 +166,7 @@ export function Editor({
       alive = false;
     };
   }, [localKey, initial]);
-  const [message, setMessage] = useState(""),
-    [variant, setVariant] = useState(config.defaultVariant),
+  const [variant, setVariant] = useState(config.defaultVariant),
     [previewOpen, setPreviewOpen] = useState(false);
   const { operation, busy, start, end } = useOperation();
   const [uploadName, setUploadName] = useState("");
@@ -277,7 +277,6 @@ export function Editor({
     setSnapshotId(null);
     setTemplateId(null);
     setTemplateLocale(config.locale);
-    setMessage("");
     setTemplateConfirm(true);
   }
   async function replaceDraft() {
@@ -327,7 +326,7 @@ export function Editor({
       setSaved(JSON.stringify(result.config));
       setVariant(result.config.defaultVariant);
       setTemplateConfirm(false);
-      setMessage(tt.saved);
+      toast.success(tt.saved);
     });
   }
   async function action<T = unknown>(action: string, payload: unknown) {
@@ -342,11 +341,10 @@ export function Editor({
   }
   async function task(name: string, fn: () => Promise<void>) {
     if (saving.current || !start(name)) return;
-    setMessage("");
     try {
       await fn();
     } catch (e) {
-      setMessage((e as Error).message);
+      toast.error((e as Error).message);
     } finally {
       end();
     }
@@ -370,7 +368,7 @@ export function Editor({
       setSaved(JSON.stringify(sent));
       setData((previous) => ({ ...previous, draft: serverDraft.current }));
       if (!automatic)
-        setMessage(
+        toast.success(
           label(
             "Szkic zapisany. Publikacja wymaga osobnego zatwierdzenia.",
             "Draft saved. Publish separately to update the invitation.",
@@ -430,7 +428,7 @@ export function Editor({
   ]);
   async function publish() {
     if (dirty || saving.current) {
-      setMessage(
+      toast.warning(
         label(
           "Poczekaj na zapis szkicu przed publikacją.",
           "Wait for the draft to save before publishing.",
@@ -459,7 +457,7 @@ export function Editor({
             ...data.releases,
           ],
         });
-        setMessage(t("simulationDone"));
+        toast.success(t("simulationDone"));
         return;
       }
       await action(
@@ -469,7 +467,7 @@ export function Editor({
           : { releaseId: requested },
       );
       await reload();
-      setMessage(
+      toast.success(
         "Opublikowano. Stały adres strony jest gotowy do udostępnienia.",
       );
     });
@@ -668,15 +666,6 @@ export function Editor({
               slowLabel={loadingText(language, "slow")}
             />
           )}
-          {message ? (
-            <DismissibleAlert
-              key={message}
-              role="status"
-              onClose={() => setMessage("")}
-            >
-              {message}
-            </DismissibleAlert>
-          ) : null}
           {!validation.success ? (
             <DismissibleAlert
               key={JSON.stringify(
@@ -873,7 +862,6 @@ export function Editor({
             onSubmit={() => void replaceDraft()}
             submitLabel={tt.replace}
             busy={busy}
-            error={message}
             reset
           />
           <Modal
@@ -882,11 +870,6 @@ export function Editor({
             title={tt.restore}
           >
             <Stack>
-              {message && (
-                <Alert color="red" role="status">
-                  {message}
-                </Alert>
-              )}
               <Text>{tt.warning}</Text>
               <Text>{tt.retained}</Text>
               <Group>
@@ -1130,7 +1113,6 @@ export function Editor({
                         variant="subtle"
                         disabled={!snapshotId || busy}
                         onClick={() => {
-                          setMessage("");
                           setTemplateConfirm(true);
                         }}
                       >

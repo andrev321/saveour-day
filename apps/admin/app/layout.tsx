@@ -1,6 +1,7 @@
 import { StyledRegistry } from "@invitations/ui/registry";
 import { AdminGlobalStyles } from "../components/workspace.styles";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import "./panel-colors.css";
 import "@fontsource/cormorant-garamond/latin-ext-400.css";
 import "@fontsource/cormorant-garamond/latin-400.css";

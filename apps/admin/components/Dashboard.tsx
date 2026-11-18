@@ -2,6 +2,7 @@
 import { ActionButton } from "./ActionButton";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
+import { toast } from "@invitations/ui/toast";
 import { useEffect, useRef, useState } from "react";
 import {
   ActionIcon,
@@ -138,7 +139,6 @@ export function Dashboard({
   const [deleting, setDeleting] = useState<Site | null>(null);
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
-  const [notice, setNotice] = useState("");
   const logged = status === "ready";
   useEffect(() => {
     if (!authError) return;
@@ -207,7 +207,7 @@ export function Dashboard({
       await apiFetch(`/api/sites/${deleting.id}`, { method: "DELETE" });
       setSites((current) => current.filter((site) => site.id !== deleting.id));
       setDeleting(null);
-      setNotice(copy.removed);
+      toast.success(copy.removed);
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : copy.deleteError);
     } finally {
@@ -566,17 +566,6 @@ export function Dashboard({
                   }}
                 />
               </Group>
-              {notice && (
-                <Alert
-                  mb="lg"
-                  color="teal"
-                  role="status"
-                  withCloseButton
-                  onClose={() => setNotice("")}
-                >
-                  {notice}
-                </Alert>
-              )}
               <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="lg">
                 {visible.map((site) => (
                   <S.ProjectCard key={site.id} component="article">

@@ -109,7 +109,10 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
     await expect(responses).toHaveValue("Czekamy");
     await expectContained(page);
     await page.screenshot({ path: `test-results/mobile-guests-${width}.png` });
-    await page.getByRole("button", { name: "⋯", exact: true }).first().click();
+    await page
+      .getByRole("button", { name: "Akcje", exact: true })
+      .first()
+      .click();
     await page
       .getByRole("menuitem", { name: "Edytuj zaproszenie", exact: true })
       .click();
