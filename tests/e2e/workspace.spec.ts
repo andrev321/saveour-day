@@ -9,8 +9,8 @@ async function fillHeading(page: Page, value: string) {
   const headingInput = page.getByLabel("Główny napis", { exact: true });
   await expect(async () => {
     await headingInput.fill(value);
-    await expect(headingInput).toHaveValue(value);
-  }).toPass({ timeout: 5000 });
+    await expect(headingInput).toHaveValue(value, { timeout: 300 });
+  }).toPass({ timeout: 10000 });
 }
 
 for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
