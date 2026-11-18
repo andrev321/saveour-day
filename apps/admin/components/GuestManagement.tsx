@@ -4,13 +4,15 @@ import { NoticePopover } from "./NoticePopover";
 import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import { toast } from "@invitations/ui/toast";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
   Card,
   Group,
+  Menu,
   PasswordInput,
   Select,
   Stack,
@@ -18,13 +20,18 @@ import {
   TextInput,
   Title,
   Modal,
-  FileButton,
   Accordion,
   Pagination,
   SimpleGrid,
   Skeleton,
   Switch,
 } from "@mantine/core";
+import {
+  DotsThreeVerticalIcon,
+  DownloadSimpleIcon,
+  FileCsvIcon,
+  UploadSimpleIcon,
+} from "@phosphor-icons/react";
 import { apiFetch } from "./Dashboard";
 import {
   csvFile,
@@ -150,6 +157,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [editingInvite, setEditingInvite] = useState<InvitationRow | null>(
     null,
   );
+  const csvInputRef = useRef<HTMLInputElement>(null);
   function openShareModal(
     params: Omit<ShareInvitationTarget, "variantLabel"> & { variantId: string },
     variants: { id: string; label: string }[],
@@ -754,7 +762,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Accordion.Panel>
               </Accordion.Item>
             </Accordion>
-            <Group>
+            <Group gap="xs">
               <Button
                 disabled={busy}
                 onClick={() => {
@@ -768,24 +776,84 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                   "Neue Einladung",
                 )}
               </Button>
-              <Button
-                variant="light"
-                onClick={() =>
-                  download(
-                    "odpowiedzi-rsvp.csv",
-                    formatRsvpCsv(data, answerMap, labelText),
-                  )
-                }
-              >
-                {labelText(
-                  "Eksport RSVP do CSV",
-                  "Export RSVP to CSV",
-                  "RSVP als CSV exportieren",
-                )}
-              </Button>
-              <FileButton
+              <Menu position="bottom-start" shadow="md">
+                <Menu.Target>
+                  <ActionIcon
+                    variant="light"
+                    size="lg"
+                    aria-label={labelText(
+                      "Więcej opcji CSV",
+                      "More CSV options",
+                      "Weitere CSV-Optionen",
+                    )}
+                    title={labelText(
+                      "Import i eksport CSV",
+                      "CSV import and export",
+                      "CSV-Import und -Export",
+                    )}
+                  >
+                    <DotsThreeVerticalIcon size={20} weight="bold" />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    leftSection={<DownloadSimpleIcon size={16} />}
+                    onClick={() =>
+                      download(
+                        "odpowiedzi-rsvp.csv",
+                        formatRsvpCsv(data, answerMap, labelText),
+                      )
+                    }
+                  >
+                    {labelText(
+                      "Eksport RSVP do CSV",
+                      "Export RSVP to CSV",
+                      "RSVP als CSV exportieren",
+                    )}
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<UploadSimpleIcon size={16} />}
+                    disabled={busy}
+                    onClick={() => csvInputRef.current?.click()}
+                  >
+                    {labelText(
+                      "Importuj gości z CSV",
+                      "Import guests from CSV",
+                      "Gäste aus CSV importieren",
+                    )}
+                  </Menu.Item>
+                  <Menu.Item
+                    leftSection={<FileCsvIcon size={16} />}
+                    onClick={() =>
+                      download(
+                        "goscie-wzor.csv",
+                        csvFile([
+                          ["grupa", "osoby", "towarzyszace"],
+                          [
+                            "Rodzina Kowalskich",
+                            "Anna Kowalska|Jan Kowalski",
+                            "1",
+                          ],
+                        ]),
+                      )
+                    }
+                  >
+                    {labelText(
+                      "Pobierz wzór CSV",
+                      "Download CSV template",
+                      "CSV-Vorlage herunterladen",
+                    )}
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+              <input
+                ref={csvInputRef}
+                type="file"
                 accept=".csv,text/csv"
-                onChange={(file) => {
+                style={{ display: "none" }}
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = "";
                   if (!file) return;
                   if (file.size > 200_000) {
                     toast.error(
@@ -811,35 +879,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     })
                     .catch((e) => toast.error(e.message));
                 }}
-              >
-                {(props) => (
-                  <Button {...props} disabled={busy}>
-                    {labelText(
-                      "Importuj gości z CSV",
-                      "Import guests from CSV",
-                      "Gäste aus CSV importieren",
-                    )}
-                  </Button>
-                )}
-              </FileButton>
-              <Button
-                variant="subtle"
-                onClick={() =>
-                  download(
-                    "goscie-wzor.csv",
-                    csvFile([
-                      ["grupa", "osoby", "towarzyszace"],
-                      ["Rodzina Kowalskich", "Anna Kowalska|Jan Kowalski", "1"],
-                    ]),
-                  )
-                }
-              >
-                {labelText(
-                  "Pobierz wzór CSV",
-                  "Download CSV template",
-                  "CSV-Vorlage herunterladen",
-                )}
-              </Button>
+              />
             </Group>
             {!!importLinks.length && (
               <Alert
