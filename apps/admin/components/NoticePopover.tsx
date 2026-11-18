@@ -64,6 +64,7 @@ export function NoticePopover({
     >
       <Popover.Target>
         <ActionIcon
+          data-notice-trigger=""
           variant="light"
           color={color}
           size="sm"
@@ -74,7 +75,7 @@ export function NoticePopover({
           onMouseLeave={closeHover}
           onClick={() => setPinned((p) => !p)}
         >
-          <WarningIcon size={15} />
+          <WarningIcon size={14} />
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown onMouseEnter={openHover} onMouseLeave={closeHover}>

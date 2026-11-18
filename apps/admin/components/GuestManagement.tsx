@@ -5,6 +5,7 @@ import { LoadingState, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import { useEffect, useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -16,6 +17,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
   Modal,
   FileButton,
   Accordion,
@@ -24,6 +26,7 @@ import {
   Skeleton,
   Switch,
 } from "@mantine/core";
+import { ArrowSquareOutIcon, CheckIcon, CopyIcon } from "@phosphor-icons/react";
 import { apiFetch } from "./Dashboard";
 import {
   csvFile,
@@ -117,6 +120,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [data, setData] = useState<Management | null>(null),
     [message, setMessage] = useState("");
+  const [urlCopied, setUrlCopied] = useState(false);
   const { operation, busy, start, end } = useOperation();
   const operationMessage = loadingText(
     language,
@@ -436,82 +440,52 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 </Accordion.Control>
                 <Accordion.Panel>
                   <Stack gap="md">
-                    <Group gap="xs" wrap="wrap">
-                      <Badge
-                        color={
-                          data.site.published_release_id ? "green" : "gray"
-                        }
-                      >
-                        {data.site.published_release_id
-                          ? labelText(
-                              "Opublikowana",
-                              "Published",
-                              "Veröffentlicht",
-                            )
-                          : labelText(
-                              "Nieopublikowana",
-                              "Unpublished",
-                              "Nicht veröffentlicht",
+                    <Group
+                      justify="space-between"
+                      align="center"
+                      gap="xs"
+                      wrap="wrap"
+                    >
+                      <Group gap="xs" align="center">
+                        <Badge
+                          color={
+                            data.site.published_release_id ? "green" : "gray"
+                          }
+                        >
+                          {data.site.published_release_id
+                            ? labelText(
+                                "Opublikowana",
+                                "Published",
+                                "Veröffentlicht",
+                              )
+                            : labelText(
+                                "Nieopublikowana",
+                                "Unpublished",
+                                "Nicht veröffentlicht",
+                              )}
+                        </Badge>
+                        {!data.site.published_release_id && (
+                          <NoticePopover
+                            color="yellow"
+                            label={labelText(
+                              "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
+                              "This site is not published yet — the link and QR code will start working only after publishing.",
+                              "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
                             )}
-                      </Badge>
-                      {!data.site.published_release_id && (
-                        <NoticePopover
-                          color="yellow"
-                          label={labelText(
-                            "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
-                            "This site is not published yet — the link and QR code will start working only after publishing.",
-                            "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
-                          )}
-                        >
-                          {labelText(
-                            "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
-                            "This site is not published yet — the link and QR code will start working only after publishing.",
-                            "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
-                          )}
-                        </NoticePopover>
-                      )}
-                      {data.site.published_release_id && (
-                        <Button
-                          component="a"
-                          href={data.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          variant="subtle"
-                        >
-                          {labelText(
-                            "Otwórz stronę",
-                            "Open invitation",
-                            "Einladung öffnen",
-                          )}
-                        </Button>
-                      )}
-                      <Button
-                        variant="light"
-                        onClick={() => {
-                          void navigator.clipboard
-                            .writeText(data.url)
-                            .then(() =>
-                              setMessage(
-                                labelText(
-                                  "Skopiowano adres strony.",
-                                  "General invitation link copied.",
-                                  "Allgemeiner Einladungslink kopiert.",
-                                ),
-                              ),
-                            )
-                            .catch(() => setMessage(data.url));
-                        }}
-                      >
-                        {labelText(
-                          "Kopiuj adres strony",
-                          "Copy general link",
-                          "Allgemeinen Link kopieren",
+                          >
+                            {labelText(
+                              "Strona nie jest jeszcze opublikowana — link i kod QR zaczną działać dopiero po opublikowaniu.",
+                              "This site is not published yet — the link and QR code will start working only after publishing.",
+                              "Diese Seite ist noch nicht veröffentlicht — Link und QR-Code funktionieren erst nach der Veröffentlichung.",
+                            )}
+                          </NoticePopover>
                         )}
-                      </Button>
+                      </Group>
                       {data.site.published_release_id && (
                         <Button
                           color="red"
                           variant="subtle"
+                          size="xs"
                           disabled={busy}
                           onClick={() =>
                             setConfirmation({
@@ -532,6 +506,102 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                           )}
                         </Button>
                       )}
+                    </Group>
+                    <Group
+                      data-ui="publication-url-wrapper"
+                      justify="space-between"
+                      align="center"
+                      gap="xs"
+                      wrap="nowrap"
+                      style={{
+                        padding: "6px 8px 6px 12px",
+                        borderRadius: "var(--mantine-radius-md)",
+                        border: "1px solid var(--panel-border)",
+                        background: "var(--panel-surface)",
+                        minWidth: 0,
+                      }}
+                    >
+                      <Text
+                        size="xs"
+                        ff="monospace"
+                        title={data.url}
+                        style={{
+                          minWidth: 0,
+                          flex: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          userSelect: "all",
+                        }}
+                      >
+                        {data.url}
+                      </Text>
+                      <Group gap={4} wrap="nowrap" style={{ flexShrink: 0 }}>
+                        <Tooltip
+                          label={labelText(
+                            "Kopiuj adres strony",
+                            "Copy general link",
+                            "Allgemeinen Link kopieren",
+                          )}
+                        >
+                          <ActionIcon
+                            variant="subtle"
+                            color={urlCopied ? "green" : "gray"}
+                            aria-label={labelText(
+                              "Kopiuj adres strony",
+                              "Copy general link",
+                              "Allgemeinen Link kopieren",
+                            )}
+                            onClick={() => {
+                              void navigator.clipboard
+                                .writeText(data.url)
+                                .then(() => {
+                                  setUrlCopied(true);
+                                  setTimeout(() => setUrlCopied(false), 2000);
+                                  setMessage(
+                                    labelText(
+                                      "Skopiowano adres strony.",
+                                      "General invitation link copied.",
+                                      "Allgemeiner Einladungslink kopiert.",
+                                    ),
+                                  );
+                                })
+                                .catch(() => setMessage(data.url));
+                            }}
+                          >
+                            {urlCopied ? (
+                              <CheckIcon size={16} />
+                            ) : (
+                              <CopyIcon size={16} />
+                            )}
+                          </ActionIcon>
+                        </Tooltip>
+                        {data.site.published_release_id && (
+                          <Tooltip
+                            label={labelText(
+                              "Otwórz stronę",
+                              "Open invitation",
+                              "Einladung öffnen",
+                            )}
+                          >
+                            <ActionIcon
+                              component="a"
+                              href={data.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              variant="subtle"
+                              color="gray"
+                              aria-label={labelText(
+                                "Otwórz stronę",
+                                "Open invitation",
+                                "Einladung öffnen",
+                              )}
+                            >
+                              <ArrowSquareOutIcon size={16} />
+                            </ActionIcon>
+                          </Tooltip>
+                        )}
+                      </Group>
                     </Group>
                     <QrCodeCard url={data.url} onMessage={setMessage} />
                     <form

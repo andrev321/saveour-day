@@ -15,7 +15,27 @@ html { scroll-behavior: smooth; }
 @media (pointer: coarse) {
   .mantine-Input-input { min-height: 44px; font-size: 16px; }
   .mantine-Button-root { min-height: 44px; }
-  .mantine-ActionIcon-root { min-width: 44px; min-height: 44px; }
+  .mantine-ActionIcon-root:not([data-notice-trigger]) { min-width: 44px; min-height: 44px; }
+}
+[data-notice-trigger] {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+[data-notice-trigger]::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+}
+[data-notice-trigger] svg {
+  transform: translateY(-0.5px);
 }
 @media (max-width: 767px) {
   .mantine-Modal-body .mantine-Button-root {
@@ -691,6 +711,8 @@ export const WorkspaceDrawerNav = styled.div.attrs<{ "data-ui"?: string }>({
   & {
     display: flex;
     flex-direction: column;
+    flex: 1;
+    min-height: 100%;
     gap: 8px;
   }
   & .mantine-Button-root {
@@ -704,5 +726,18 @@ export const WorkspaceDrawerNav = styled.div.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Button-label {
     text-align: left;
+  }
+`;
+
+export const WorkspaceDrawerFooter = styled.div.attrs<{ "data-ui"?: string }>({
+  "data-ui": "workspace-drawer-footer",
+})`
+  & {
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 `;

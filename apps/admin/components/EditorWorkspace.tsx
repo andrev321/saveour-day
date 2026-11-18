@@ -324,6 +324,10 @@ export function EditorWorkspace({
         onClose={() => setMenu(false)}
         title={<BrandLogo height={28} />}
         size="min(320px, 90vw)"
+        styles={{
+          content: { display: "flex", flexDirection: "column" },
+          body: { flex: 1, display: "flex", flexDirection: "column" },
+        }}
         closeButtonProps={{
           "aria-label": label(
             "Zamknij nawigację",
@@ -336,7 +340,7 @@ export function EditorWorkspace({
           <Button component="a" href="/" variant="default" justify="flex-start">
             {t("projects")}
           </Button>
-          {[...items, ...tools].map(({ value, label, icon: Icon }) => (
+          {items.map(({ value, label, icon: Icon }) => (
             <Button
               key={value}
               variant={value === active ? "light" : "subtle"}
@@ -351,6 +355,23 @@ export function EditorWorkspace({
               {label}
             </Button>
           ))}
+          <S.WorkspaceDrawerFooter>
+            {tools.map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={value === active ? "light" : "subtle"}
+                justify="flex-start"
+                leftSection={<Icon size={23} weight="duotone" />}
+                onClick={() => {
+                  onActive(value);
+                  setView("edit");
+                  setMenu(false);
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </S.WorkspaceDrawerFooter>
         </S.WorkspaceDrawerNav>
       </Drawer>
       {dialogs}
