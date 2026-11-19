@@ -26,7 +26,7 @@ const copy = {
   },
 };
 
-export function PanelPreferences() {
+export function PanelPreferences({ compact = false }: { compact?: boolean }) {
   const { language } = usePanelI18n();
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const text = copy[language];
@@ -34,16 +34,17 @@ export function PanelPreferences() {
     <Group
       gap="xs"
       wrap="nowrap"
-      align="end"
+      align={compact ? "center" : "end"}
       data-ui="panel-preferences"
+      data-compact={compact ? "true" : undefined}
       onClick={(event) => event.stopPropagation()}
     >
-      <LanguageSelect />
+      <LanguageSelect showLabel={!compact} />
       <Menu position="bottom-end" withinPortal={false}>
         <Menu.Target>
           <ActionIcon
-            variant="subtle"
-            size="md"
+            variant={compact ? "default" : "subtle"}
+            size={compact ? 36 : "md"}
             aria-label={text.appearance}
             title={text.appearance}
           >

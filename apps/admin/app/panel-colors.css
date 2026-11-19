@@ -34,6 +34,23 @@
   --panel-choice-selected: #f0f3fb;
   --panel-canvas: #dfe7f1;
   --panel-toolbar: #dce5f1;
+  --panel-glow-primary: rgba(144, 205, 218, 0.22);
+  --panel-glow-secondary: rgba(61, 81, 139, 0.08);
+  --panel-dot-grid: rgba(61, 81, 139, 0.065);
+  --panel-card-shadow:
+    0 1px 2px rgba(36, 43, 89, 0.04), 0 6px 18px rgba(36, 43, 89, 0.04);
+  --panel-card-shadow-hover:
+    0 4px 12px rgba(36, 43, 89, 0.07), 0 14px 32px rgba(36, 43, 89, 0.08);
+  --panel-top-bar: linear-gradient(
+    90deg,
+    #3d518b 0%,
+    #5c8db8 52%,
+    #90cdda 100%
+  );
+  --panel-status-live: #12b886;
+  --panel-status-draft: #9baac9;
+  --panel-motif-card: rgba(61, 81, 139, 0.06);
+  --panel-motif-card-front: rgba(144, 205, 218, 0.16);
 }
 
 html[data-mantine-color-scheme="dark"] {
@@ -73,6 +90,23 @@ html[data-mantine-color-scheme="dark"] {
   --panel-choice-selected: #273449;
   --panel-canvas: #101724;
   --panel-toolbar: #273449;
+  --panel-glow-primary: rgba(144, 205, 218, 0.11);
+  --panel-glow-secondary: rgba(142, 159, 229, 0.12);
+  --panel-dot-grid: rgba(170, 189, 229, 0.06);
+  --panel-card-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.22), 0 8px 24px rgba(0, 0, 0, 0.16);
+  --panel-card-shadow-hover:
+    0 6px 16px rgba(0, 0, 0, 0.32), 0 16px 36px rgba(0, 0, 0, 0.24);
+  --panel-top-bar: linear-gradient(
+    90deg,
+    #8e9fe5 0%,
+    #76b6d2 55%,
+    #90cdda 100%
+  );
+  --panel-status-live: #20c997;
+  --panel-status-draft: #52627b;
+  --panel-motif-card: rgba(170, 189, 229, 0.07);
+  --panel-motif-card-front: rgba(144, 205, 218, 0.1);
 }
 
 [data-ui="panel-preferences"] {
@@ -98,9 +132,15 @@ html[data-mantine-color-scheme="dark"] {
   flex: 1;
   min-width: 100px;
 }
+[data-ui="panel-preferences"][data-compact="true"] > .mantine-Select-root {
+  flex: 0 0 auto;
+}
 [data-ui="panel-preferences"] > .mantine-ActionIcon-root {
   flex-shrink: 0;
   margin-bottom: 4px;
+}
+[data-ui="panel-preferences"][data-compact="true"] > .mantine-ActionIcon-root {
+  margin-bottom: 0;
 }
 @media (pointer: coarse) {
   [data-ui="panel-preferences"] > .mantine-ActionIcon-root {

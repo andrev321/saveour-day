@@ -155,3 +155,44 @@ for (const width of [390, 1440])
       page.getByRole("heading", { name: "Urodziny Zofii" }),
     ).toBeVisible();
   });
+
+test("clicking a project tile opens it and the delete button is the only button on the tile", async ({
+  page,
+}) => {
+  await page.route("**/api/sites", (route) =>
+    route.fulfill({
+      json: {
+        sites: [
+          site,
+          {
+            ...site,
+            id: "readonly-site",
+            name: "Projekt tylko do odczytu",
+            canDelete: false,
+          },
+        ],
+        admin: false,
+      },
+    }),
+  );
+  await page.goto(`${admin}/demo/projects`);
+  const cards = page.getByRole("article");
+  await expect(cards).toHaveCount(2);
+  await expect(cards.nth(0).getByRole("button")).toHaveCount(1);
+  await expect(
+    cards
+      .nth(0)
+      .getByRole("button", { name: `Usuń ${site.name}`, exact: true }),
+  ).toBeVisible();
+  await expect(cards.nth(1).getByRole("button")).toHaveCount(0);
+
+  await page.route(`**/sites/${site.id}`, (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "text/html",
+      body: "<html><body>Site Editor</body></html>",
+    }),
+  );
+  await cards.nth(0).click({ position: { x: 24, y: 24 } });
+  await expect(page).toHaveURL(new RegExp(`/sites/${site.id}$`));
+});
