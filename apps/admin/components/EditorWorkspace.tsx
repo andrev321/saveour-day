@@ -158,6 +158,14 @@ export function EditorWorkspace({
             opened={projectOptions}
             onChange={setProjectOptions}
             trapFocus
+            middlewares={{ flip: true, shift: { padding: 12 } }}
+            styles={{
+              dropdown: {
+                width: "min(300px, calc(100vw - 24px))",
+                maxWidth: "calc(100vw - 24px)",
+                padding: 0,
+              },
+            }}
           >
             <Popover.Target>
               <S.MobileProjectActions
@@ -295,7 +303,10 @@ export function EditorWorkspace({
       <S.WorkspaceMobileNav aria-label={ui.view}>
         <Button
           variant="subtle"
-          onClick={() => setMenu(true)}
+          onClick={() => {
+            setProjectOptions(false);
+            setMenu(true);
+          }}
           leftSection={<ListIcon size={22} weight="duotone" />}
         >
           {ui.menu}
@@ -337,9 +348,6 @@ export function EditorWorkspace({
         }}
       >
         <S.WorkspaceDrawerNav>
-          <Button component="a" href="/" variant="default" justify="flex-start">
-            {t("projects")}
-          </Button>
           {items.map(({ value, label, icon: Icon }) => (
             <Button
               key={value}
@@ -371,6 +379,14 @@ export function EditorWorkspace({
                 {label}
               </Button>
             ))}
+            <Button
+              component="a"
+              href="/"
+              variant="default"
+              justify="flex-start"
+            >
+              {t("projects")}
+            </Button>
           </S.WorkspaceDrawerFooter>
         </S.WorkspaceDrawerNav>
       </Drawer>

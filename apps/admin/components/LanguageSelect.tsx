@@ -10,7 +10,12 @@ export function LanguageSelect({ showLabel = true }: { showLabel?: boolean }) {
     <Select
       aria-label={t("language")}
       label={showLabel ? t("language") : undefined}
-      w={showLabel ? undefined : 136}
+      miw={0}
+      style={
+        showLabel
+          ? undefined
+          : { flex: "0 1 136px", width: 136, maxWidth: "100%" }
+      }
       data={[
         { value: "pl", label: "Polski" },
         { value: "en", label: "English" },

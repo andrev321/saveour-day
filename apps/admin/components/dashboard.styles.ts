@@ -79,6 +79,27 @@ export const Header = styled.header`
     gap: 12px;
   }
 `;
+export const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  max-width: 100%;
+  @media (max-width: 40em) {
+    width: 100%;
+    flex-wrap: wrap;
+    & [data-ui="panel-preferences"] {
+      flex: 1 1 160px;
+      min-width: 0;
+    }
+    & > .mantine-Button-root {
+      min-width: 0;
+      max-width: 100%;
+      padding-inline: 12px;
+    }
+  }
+`;
 export const Hero = styled.section`
   margin-block: 28px 20px;
   display: flex;

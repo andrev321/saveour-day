@@ -275,7 +275,7 @@ export function Dashboard({
         </Modal>
         <S.Header>
           <BrandLogo animated height={38} />
-          <Group gap="xs" align="center" wrap="nowrap">
+          <S.HeaderActions>
             <PanelPreferences compact />
             {logged && (
               <ActionButton
@@ -303,7 +303,7 @@ export function Dashboard({
                 {t("logout")}
               </ActionButton>
             )}
-          </Group>
+          </S.HeaderActions>
         </S.Header>
         <main aria-busy={status === "loading"}>
           {!configured && (

@@ -317,6 +317,32 @@ export const ProjectActionsMenu = styled.div.attrs<{ "data-ui"?: string }>({
     flex-direction: column;
     gap: 12px;
     padding: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  & .mantine-Button-root {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 44px;
+    padding-block: 8px;
+  }
+  & .mantine-Button-label {
+    white-space: normal;
+    line-height: 1.3;
+    overflow: visible;
+  }
+  & [data-ui="panel-preferences"] {
+    width: 100%;
+    min-width: 0;
+  }
+  & [data-ui="panel-preferences"] .mantine-Select-root {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  & [data-ui="panel-preferences"] .mantine-ActionIcon-root {
+    flex-shrink: 0;
   }
 `;
 

@@ -37,6 +37,7 @@ export function PanelPreferences({ compact = false }: { compact?: boolean }) {
       align={compact ? "center" : "end"}
       data-ui="panel-preferences"
       data-compact={compact ? "true" : undefined}
+      style={{ maxWidth: "100%", minWidth: 0 }}
       onClick={(event) => event.stopPropagation()}
     >
       <LanguageSelect showLabel={!compact} />
@@ -45,6 +46,7 @@ export function PanelPreferences({ compact = false }: { compact?: boolean }) {
           <ActionIcon
             variant={compact ? "default" : "subtle"}
             size={compact ? 36 : "md"}
+            style={{ flexShrink: 0 }}
             aria-label={text.appearance}
             title={text.appearance}
           >
