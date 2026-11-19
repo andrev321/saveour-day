@@ -217,7 +217,8 @@ test("program edits events and places without leaving the section", async ({
   await page.getByLabel("Nazwa wydarzenia", { exact: true }).fill("Powitanie");
   await page.getByLabel("Nazwa miejsca", { exact: true }).fill("Ogród");
   await page.getByRole("button", { name: "Dodaj nowy element" }).click();
-  const eventModal = page.getByRole("dialog").last();
+  const eventModal = page.getByRole("dialog", { name: "Nowe wydarzenie" });
+  await expect(eventModal).toBeVisible();
   await eventModal.getByLabel(/Nazwa wydarzenia/).fill("Toast");
   await eventModal
     .getByRole("button", { name: "Dodaj wydarzenie", exact: true })
