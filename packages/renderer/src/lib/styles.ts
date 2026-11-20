@@ -37,13 +37,52 @@ export const InvitationPhotoFallback = styled(Box).attrs<{
   min-height: 240px;
   background: linear-gradient(135deg, var(--surface), var(--paper));
 `;
-export const PhotoFrame = styled.picture`
+export const PhotoFrame = styled.div`
   display: block;
   position: relative;
+  isolation: isolate;
   width: 100%;
   height: 100%;
   border-radius: inherit;
   overflow: hidden;
+  background: color-mix(
+    in srgb,
+    var(--ink, currentColor) 6%,
+    var(--paper, transparent)
+  );
+`;
+export const PhotoPicture = styled.picture`
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+`;
+export const PhotoPlaceholder = styled.span`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--blur, none);
+  background-size: cover;
+  background-position: var(--focal, 50% 50%);
+  filter: blur(18px);
+  transform: scale(1.08);
+  opacity: 1;
+  transition: opacity 280ms ease-out;
+  &[data-loaded="true"] {
+    opacity: 0;
+  }
+  @media (min-width: 48em) and (max-width: 63.99em) {
+    background-image: var(--tablet-blur, var(--blur, none));
+    background-position: var(--tablet-focal, 50% 50%);
+  }
+  @media (max-width: 47.99em) {
+    background-image: var(--mobile-blur, var(--blur, none));
+    background-position: var(--mobile-focal, 50% 50%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 `;
 export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation-photo",
@@ -57,6 +96,11 @@ export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
     z-index: 1;
     object-position: var(--focal, 50% 50%);
     border-radius: inherit;
+    opacity: 0;
+    transition: opacity 280ms ease-out;
+  }
+  &[data-loaded="true"] {
+    opacity: 1;
   }
   @media (min-width: 48em) and (max-width: 63.99em) {
     & {
@@ -66,6 +110,9 @@ export const InvitationPhoto = styled.img.attrs<{ "data-ui"?: string }>({
 
   @media (max-width: 47.99em) {
     object-position: var(--mobile-focal, 50% 50%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
   }
 `;
 export const InvitationProse = styled(Text).attrs<{ "data-ui"?: string }>({
@@ -300,7 +347,7 @@ export const InvitationHeroPhoto = styled.div.attrs<{ "data-ui"?: string }>({
   height: 100%;
   min-height: 560px;
   overflow: hidden;
-  & picture {
+  & ${PhotoFrame} {
     position: absolute;
     inset: 0;
   }
@@ -499,7 +546,7 @@ export const Gallery = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 24px;
-  & picture {
+  & ${PhotoFrame} {
     display: block;
     aspect-ratio: 4 / 5;
     min-width: 0;

@@ -124,9 +124,28 @@ test("admin media API returns scoped bytes, bounds uploads and cuts access after
     const response = await GET(request());
     assert.equal(response.status, 200);
     assert.equal(await response.text(), "image");
-    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    assert.equal(response.headers.get("cache-control"), "private, no-cache");
+    assert.equal(response.headers.get("vary"), "Cookie");
+    const etag = response.headers.get("etag");
+    assert.ok(etag);
+    const revalidated = await GET(
+      new Request(`https://test/api/sites/${sid}/media/${aid}/640.webp`, {
+        headers: { "If-None-Match": etag },
+      }),
+    );
+    assert.equal(revalidated.status, 304);
+    assert.equal(downloads, 1);
     foreign = true;
-    assert.equal((await GET(request())).status, 404);
+    assert.equal(
+      (
+        await GET(
+          new Request(`https://test/api/sites/${sid}/media/${aid}/640.webp`, {
+            headers: { "If-None-Match": etag },
+          }),
+        )
+      ).status,
+      404,
+    );
     assert.equal(downloads, 1);
     foreign = false;
     ready = false;

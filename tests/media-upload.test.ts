@@ -87,7 +87,12 @@ test("server uploads reserve once, preserve retry metadata on Storage failure an
       .toBuffer();
     const media = await uploadMedia(sid, "owner", image, uploadDb as never);
     assert.equal(media.id, id);
-    assert.equal(paths.length, 3);
+    assert.equal(paths.length, 4);
+    assert.deepEqual(
+      media.variants.map((v) => v.width),
+      [320, 640, 1280, 1920],
+    );
+    assert.match(media.blurDataUrl || "", /^data:image\/webp;base64,/);
     assert.equal(calls.filter((c) => c === "reserve_media_upload").length, 1);
     assert.equal(calls.at(-1), "complete_media_upload");
     assert.equal(

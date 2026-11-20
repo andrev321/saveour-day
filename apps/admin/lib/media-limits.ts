@@ -23,9 +23,13 @@ export const MEDIA_POLICY = Object.freeze({
   /** Allowed decoded Sharp image formats. */
   allowedFormats: ["jpeg", "png", "webp"] as const,
   /** Responsive WebP variant target widths generated on upload. */
-  responsiveWidths: [640, 1280, 1920] as const,
+  responsiveWidths: [320, 640, 1280, 1920] as const,
   /** WebP encoding quality for server-side variants. */
   webpQuality: 82,
+  /** Target width (px) for inline LQIP blur preview WebP stored in manifest. */
+  blurPreviewWidth: 24,
+  /** WebP encoding quality for inline LQIP blur preview. */
+  blurPreviewQuality: 40,
 });
 
 // Backward-compatible named exports for existing callers.

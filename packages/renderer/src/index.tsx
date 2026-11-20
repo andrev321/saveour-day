@@ -157,6 +157,7 @@ function Photo({
   tablet,
   resolveMedia,
   hero = false,
+  heroLayout,
   crops = {},
 }: {
   media: MediaAsset;
@@ -164,21 +165,37 @@ function Photo({
   tablet?: MediaAsset;
   resolveMedia?: (src: string) => string;
   hero?: boolean;
+  heroLayout?: SiteConfig["hero"]["layout"];
   crops?: DeviceCrops;
 }) {
   const resolve = (src: string) =>
     isSampleMediaSource(src) ? src : (resolveMedia?.(src) ?? src);
+  const buildSrcSet = (asset: MediaAsset) =>
+    asset.variants.length
+      ? asset.variants.map((v) => `${resolve(v.src)} ${v.width}w`).join(", ")
+      : undefined;
   const src = resolve(media.src);
-  const mobileSrc = mobile ? resolve(mobile.src) : undefined;
-  const srcSet = media.variants.length
-    ? media.variants.map((v) => `${resolve(v.src)} ${v.width}w`).join(", ")
+  const srcSet = buildSrcSet(media);
+  const mobileVariantSrcSet = mobile ? buildSrcSet(mobile) : undefined;
+  const mobileSrcSet = mobile
+    ? (mobileVariantSrcSet ?? resolve(mobile.src))
     : undefined;
-  const tabletSrc = tablet ? resolve(tablet.src) : undefined;
+  const tabletVariantSrcSet = tablet ? buildSrcSet(tablet) : undefined;
+  const tabletSrcSet = tablet
+    ? (tabletVariantSrcSet ?? resolve(tablet.src))
+    : undefined;
+  const isOverlayHero = hero && heroLayout === "overlay";
+  const effectiveSizes = isOverlayHero
+    ? "100vw"
+    : hero
+      ? "(max-width: 48em) 100vw, (max-width: 64em) 65vw, 55vw"
+      : "(max-width: 30em) 100vw, (max-width: 64em) 50vw, 480px";
+  const tabletSizes = isOverlayHero ? "100vw" : "65vw";
   const sourceKey = JSON.stringify([
     media.id,
     src,
-    mobileSrc,
-    tabletSrc,
+    mobileSrcSet,
+    tabletSrcSet,
     srcSet,
   ]);
   const image = useRef<HTMLImageElement>(null);
@@ -188,6 +205,32 @@ function Photo({
       setLoadedSource(sourceKey);
   }, [sourceKey]);
   const [failedSource, setFailedSource] = useState<string | null>(null);
+  const loaded = loadedSource === sourceKey;
+  const focalStyle = {
+    "--focal": `${crops.desktop?.x ?? 50}% ${crops.desktop?.y ?? 50}%`,
+    "--tablet-focal": `${crops.tablet?.x ?? crops.desktop?.x ?? 50}% ${crops.tablet?.y ?? crops.desktop?.y ?? 50}%`,
+    "--mobile-focal": `${crops.mobile?.x ?? crops.desktop?.x ?? 50}% ${crops.mobile?.y ?? crops.desktop?.y ?? 50}%`,
+  } as CSSProperties;
+  const hasBlur = Boolean(
+    media.blurDataUrl || tablet?.blurDataUrl || mobile?.blurDataUrl,
+  );
+  const desktopBlur = media.blurDataUrl ? `url(${media.blurDataUrl})` : "none";
+  const tabletBlur = tablet
+    ? tablet.blurDataUrl
+      ? `url(${tablet.blurDataUrl})`
+      : "none"
+    : desktopBlur;
+  const mobileBlur = mobile
+    ? mobile.blurDataUrl
+      ? `url(${mobile.blurDataUrl})`
+      : "none"
+    : desktopBlur;
+  const placeholderStyle = {
+    ...focalStyle,
+    "--blur": desktopBlur,
+    "--tablet-blur": tabletBlur,
+    "--mobile-blur": mobileBlur,
+  } as CSSProperties;
   // Signed URLs can arrive after the first render or be refreshed later.
   // A failure belongs to that request, not permanently to the photo component.
   if (failedSource === sourceKey)
@@ -198,51 +241,61 @@ function Photo({
       />
     );
   return (
-    <S.PhotoFrame aria-busy={loadedSource !== sourceKey}>
-      {loadedSource !== sourceKey && (
-        <LoadingSkeleton
+    <S.PhotoFrame aria-busy={!loaded}>
+      {hasBlur ? (
+        <S.PhotoPlaceholder
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            borderRadius: "inherit",
-            pointerEvents: "none",
-          }}
+          data-loaded={loaded}
+          style={placeholderStyle}
         />
+      ) : (
+        !loaded && (
+          <LoadingSkeleton
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "inherit",
+              pointerEvents: "none",
+            }}
+          />
+        )
       )}
-      {mobile ? (
-        <source media="(max-width: 47.99em)" srcSet={mobileSrc} />
-      ) : null}
-      {tablet ? (
-        <source
-          media="(min-width: 48em) and (max-width: 63.99em)"
-          srcSet={tabletSrc}
+      <S.PhotoPicture>
+        {mobile ? (
+          <source
+            media="(max-width: 47.99em)"
+            srcSet={mobileSrcSet}
+            sizes={mobileVariantSrcSet ? "100vw" : undefined}
+          />
+        ) : null}
+        {tablet ? (
+          <source
+            media="(min-width: 48em) and (max-width: 63.99em)"
+            srcSet={tabletSrcSet}
+            sizes={tabletVariantSrcSet ? tabletSizes : undefined}
+          />
+        ) : null}
+        <S.InvitationPhoto
+          ref={image}
+          data-loaded={loaded}
+          src={src}
+          srcSet={srcSet}
+          sizes={srcSet ? effectiveSizes : undefined}
+          alt={media.alt}
+          width={media.width}
+          height={media.height}
+          loading={hero ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={hero ? "high" : "auto"}
+          onError={() => setFailedSource(sourceKey)}
+          onLoad={() => {
+            setFailedSource(null);
+            setLoadedSource(sourceKey);
+          }}
+          style={focalStyle}
         />
-      ) : null}
-      <S.InvitationPhoto
-        ref={image}
-        data-loaded={loadedSource === sourceKey}
-        src={src}
-        srcSet={srcSet}
-        sizes="(max-width: 48em) 100vw, 60vw"
-        alt={media.alt}
-        width={media.width}
-        height={media.height}
-        loading={hero ? "eager" : "lazy"}
-        fetchPriority={hero ? "high" : "auto"}
-        onError={() => setFailedSource(sourceKey)}
-        onLoad={() => {
-          setFailedSource(null);
-          setLoadedSource(sourceKey);
-        }}
-        style={
-          {
-            "--focal": `${crops.desktop?.x ?? 50}% ${crops.desktop?.y ?? 50}%`,
-            "--tablet-focal": `${crops.tablet?.x ?? crops.desktop?.x ?? 50}% ${crops.tablet?.y ?? crops.desktop?.y ?? 50}%`,
-            "--mobile-focal": `${crops.mobile?.x ?? crops.desktop?.x ?? 50}% ${crops.mobile?.y ?? crops.desktop?.y ?? 50}%`,
-          } as CSSProperties
-        }
-      />
+      </S.PhotoPicture>
     </S.PhotoFrame>
   );
 }
@@ -638,6 +691,7 @@ export function Invitation({
                   mobile={mobile}
                   resolveMedia={resolveMedia}
                   hero
+                  heroLayout={config.hero.layout}
                 />
               </S.InvitationHeroPhoto>
             )}

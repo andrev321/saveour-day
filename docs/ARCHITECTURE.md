@@ -90,7 +90,7 @@ Codes use scrypt with a random salt. Guest sessions use random tokens in HttpOnl
 
 Changing site access, editing an invitation, rotating its link, or revoking it invalidates the relevant sessions. Code attempts and guest lookup attempts have database and IP rate limits. Mutations validate the request origin.
 
-Guest APIs use a server-only privileged key, so handlers must enforce authorization themselves. SQL also checks site, invitation, guest, event, and session when saving RSVP. Guest content and private media use `private, no-store`; pages use `noindex`. Revocation blocks future requests but cannot erase copies already downloaded.
+Guest APIs use a server-only privileged key, so handlers must enforce authorization themselves. SQL also checks site, invitation, guest, event, and session when saving RSVP. Guest content uses `private, no-store`, private media uses `private, no-cache` with server-revalidated `ETag` (`304 Not Modified` only after passing authorization checks), and pages use `noindex`. Revocation blocks future requests immediately but cannot erase copies already downloaded.
 
 ## Media
 

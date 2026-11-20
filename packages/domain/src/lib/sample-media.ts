@@ -6,6 +6,7 @@ type SampleMediaManifest = {
   height: number;
   alt: string;
   variants: { src: string; width: number }[];
+  blurDataUrl?: string;
 };
 
 // Public, versioned illustrations shipped with both apps. Never use this prefix
@@ -55,6 +56,7 @@ export const samplePhotos: Record<SamplePhotoKey, SampleMediaManifest> =
   ) as Record<SamplePhotoKey, SampleMediaManifest>;
 
 export function isSampleMedia(media: SampleMediaManifest) {
+  if (media.blurDataUrl !== undefined) return false;
   return Object.values(samplePhotos).some(
     (sample) =>
       media.id === sample.id &&

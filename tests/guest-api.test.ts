@@ -187,7 +187,16 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     );
     assert.equal(photo.status, 200);
     assert.equal(await photo.text(), "private-image");
-    assert.equal(photo.headers.get("cache-control"), "private, no-store");
+    assert.equal(photo.headers.get("cache-control"), "private, no-cache");
+    assert.equal(photo.headers.get("vary"), "Cookie");
+    const photoEtag = photo.headers.get("etag");
+    assert.ok(photoEtag);
+    const revalidatedPhoto = await media.GET(
+      new Request(`${process.env.SITE_URL}/api/media/i/token/photo/main.webp`, {
+        headers: { "If-None-Match": photoEtag },
+      }),
+    );
+    assert.equal(revalidatedPhoto.status, 304);
     assert.equal(
       (
         await media.GET(
@@ -199,6 +208,17 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
       404,
     );
     site.access_version++;
+    assert.equal(
+      (
+        await media.GET(
+          new Request(
+            `${process.env.SITE_URL}/api/media/i/token/photo/main.webp`,
+            { headers: { "If-None-Match": photoEtag } },
+          ),
+        )
+      ).status,
+      401,
+    );
     assert.equal(
       (await (await GET(new Request(url))).json()).authorized,
       false,

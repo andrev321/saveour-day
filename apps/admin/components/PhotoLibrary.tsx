@@ -29,6 +29,7 @@ import { CheckIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import { templateCatalog } from "@invitations/domain/templates";
+import { photoSrcSet } from "./PhotoReference";
 import * as S from "./PhotoLibrary.styles";
 import { ModalStickyFooter } from "./modal-layout.styles";
 
@@ -149,6 +150,8 @@ export function PhotoLibrary({
             >
               <LoadingImage
                 src={item.variants[0].src}
+                srcSet={photoSrcSet(item, {})}
+                sizes="(max-width: 48em) 50vw, 240px"
                 alt=""
                 loading="lazy"
                 style={{ aspectRatio: "4 / 3" }}
@@ -199,6 +202,9 @@ export function PhotoLibrary({
                 style={{ aspectRatio: "4 / 3" }}
                 unavailable={loadingText(language, "unavailable")}
                 src={urls[item.variants[0]?.src || item.src] || item.src}
+                srcSet={photoSrcSet(item, urls)}
+                sizes="(max-width: 48em) 50vw, 240px"
+                blurDataUrl={item.blurDataUrl}
                 alt=""
                 loading="lazy"
               />

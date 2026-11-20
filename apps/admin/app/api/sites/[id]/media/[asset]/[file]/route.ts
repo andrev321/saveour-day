@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { mediaSchema } from "@invitations/domain";
 import {
@@ -8,6 +9,18 @@ import {
   serviceDb,
 } from "../../../../../../../lib/server";
 import { mediaStoragePath } from "../../../../../../../lib/media";
+
+function mediaEtag(storagePath: string) {
+  return `"${createHash("sha256").update(storagePath).digest("base64url").slice(0, 27)}"`;
+}
+
+function matchesIfNoneMatch(header: string | null, etag: string) {
+  if (!header) return false;
+  return header
+    .split(",")
+    .map((token) => token.trim())
+    .some((token) => token === "*" || token === etag || token === `W/${etag}`);
+}
 
 export const GET = api(async (request) => {
   const parts = new URL(request.url).pathname.split("/");
@@ -32,6 +45,17 @@ export const GET = api(async (request) => {
   if (![manifest.src, ...manifest.variants.map((v) => v.src)].includes(source))
     throw new HttpError(404, "Nie znaleziono zdjęcia");
   const path = mediaStoragePath(site.id, parts[5], data.original_path, source);
+  const etag = mediaEtag(path);
+  if (matchesIfNoneMatch(request.headers.get("if-none-match"), etag)) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "Cache-Control": "private, no-cache",
+        Vary: "Cookie",
+      },
+    });
+  }
   const { data: image, error: storageError } = await client.storage
     .from("site-media")
     .download(path);
@@ -51,7 +75,9 @@ export const GET = api(async (request) => {
   return new Response(image, {
     headers: {
       "Content-Type": "image/webp",
-      "Cache-Control": "private, no-store",
+      "Cache-Control": "private, no-cache",
+      ETag: etag,
+      Vary: "Cookie",
       "X-Content-Type-Options": "nosniff",
     },
   });

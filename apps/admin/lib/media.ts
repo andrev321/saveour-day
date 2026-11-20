@@ -115,12 +115,24 @@ export async function uploadMedia(
       width = output.info.width;
       height = output.info.height;
     }
+    const blurBuffer = await sharp(buffer, {
+      limitInputPixels: MEDIA_POLICY.maxInputPixels,
+    })
+      .rotate()
+      .resize({
+        width: MEDIA_POLICY.blurPreviewWidth,
+        withoutEnlargement: true,
+      })
+      .webp({ quality: MEDIA_POLICY.blurPreviewQuality })
+      .toBuffer();
+    const blurDataUrl = `data:image/webp;base64,${blurBuffer.toString("base64")}`;
     const manifest = mediaSchema.parse({
       id: assetId,
       src: variants.at(-1)!.src,
       width,
       height,
       variants,
+      blurDataUrl,
     });
     const { error: completeError } = await db.rpc("complete_media_upload", {
       ...args,
@@ -172,6 +184,7 @@ export async function validateMedia(siteId: string, config: SiteConfig) {
       media.src !== official.src ||
       media.width !== official.width ||
       media.height !== official.height ||
+      media.blurDataUrl !== official.blurDataUrl ||
       JSON.stringify(media.variants) !== JSON.stringify(official.variants)
     )
       throw new HttpError(400, "Nieprawidłowy manifest zdjęcia");

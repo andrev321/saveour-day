@@ -2,10 +2,12 @@
 import { useRef, type PointerEvent } from "react";
 import { Button, Stack, Text } from "@mantine/core";
 import type { MediaAsset, DeviceCrops } from "@invitations/domain";
+import { LoadingImage } from "@invitations/ui/loading";
 import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import { cropFrame, cropPosition } from "../lib/crop";
 import { DeviceSelector, type PhotoDevice } from "./DeviceSelector";
+import { photoSrcSet } from "./PhotoReference";
 import * as S from "./PhotoLibrary.styles";
 
 export function PhotoCropEditor({
@@ -160,12 +162,20 @@ export function PhotoCropEditor({
           });
         }}
       >
-        <img
+        <LoadingImage
           src={urls[photo.src] || photo.src}
+          srcSet={photoSrcSet(photo, urls)}
+          sizes="(max-width: 48em) 100vw, 480px"
+          blurDataUrl={photo.blurDataUrl}
           alt={photo.alt}
           draggable={false}
           width={photo.width}
           height={photo.height}
+          style={{
+            width: "100%",
+            aspectRatio: `${photo.width} / ${photo.height}`,
+            pointerEvents: "none",
+          }}
         />
         <S.CropFrame
           data-ui="photo-crop-frame"

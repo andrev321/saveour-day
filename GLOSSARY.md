@@ -123,7 +123,7 @@ A versioned, 7-day `HttpOnly` cookie session issued after successful **Site Code
 
 ### Media Asset
 
-A photo uploaded by an **Organizer** to a **Site**'s library (max 100 assets per site, max 30 referenced in configuration). Uploaded via a single authenticated request, validated (max 8 MiB server / 4 MiB transport, 20 MP), and converted by Sharp into responsive WebP variants (`640w`, `1280w`, `1920w`). Served exclusively through authorized API routes—never via public or signed Storage URLs.
+A photo uploaded by an **Organizer** to a **Site**'s library (max 100 assets per site, max 30 referenced in configuration). Uploaded via a single authenticated request, validated (max 8 MiB server / 4 MiB transport, 20 MP), and converted by Sharp into responsive WebP variants (`320w`, `640w`, `1280w`, `1920w`) plus an inline LQIP `blurDataUrl` preview. Served exclusively through authorized API routes—never via public or signed Storage URLs.
 
 ### Sample Media
 

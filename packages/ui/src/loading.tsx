@@ -150,16 +150,19 @@ export const LoadingSkeleton = styled.div`
 const ImageFrame = styled.span`
   display: block;
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   background: color-mix(in srgb, currentColor 6%, transparent);
   img {
     display: block;
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: opacity 180ms;
+    transition: opacity 240ms ease-out;
   }
-  &[data-state="pending"]::after {
+  &[data-state="pending"]:not([data-blur="true"])::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -175,30 +178,62 @@ const ImageFrame = styled.span`
     }
   }
 `;
+const BlurBackdrop = styled.span`
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-size: cover;
+  background-position: center;
+  filter: blur(14px);
+  transform: scale(1.08);
+  transition: opacity 240ms ease-out;
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
 export function LoadingImage({
   src,
+  srcSet,
   alt = "",
   style,
   unavailable = "—",
+  blurDataUrl,
+  decoding = "async",
   ...props
-}: ImgHTMLAttributes<HTMLImageElement> & { unavailable?: string }) {
+}: ImgHTMLAttributes<HTMLImageElement> & {
+  unavailable?: string;
+  blurDataUrl?: string;
+}) {
+  const sourceKey = `${typeof src === "string" ? src : ""}|${srcSet ?? ""}`;
   const [result, setResult] = useState<{
-    src: ImgHTMLAttributes<HTMLImageElement>["src"];
+    sourceKey: string;
     state: "ready" | "error";
   } | null>(null);
-  const state = result && result.src === src ? result.state : "pending";
+  const state =
+    result && result.sourceKey === sourceKey ? result.state : "pending";
   const ref = useRef<HTMLImageElement>(null);
   useEffect(() => {
     const img = ref.current;
     if (img?.complete)
-      setResult({ src, state: img.naturalWidth ? "ready" : "error" });
-  }, [src]);
+      setResult({ sourceKey, state: img.naturalWidth ? "ready" : "error" });
+  }, [sourceKey]);
   return (
     <ImageFrame
       data-state={state}
+      data-blur={blurDataUrl ? "true" : undefined}
       style={style as CSSProperties}
       aria-busy={state === "pending"}
     >
+      {blurDataUrl && state !== "error" ? (
+        <BlurBackdrop
+          aria-hidden="true"
+          style={{
+            backgroundImage: `url(${blurDataUrl})`,
+            opacity: state === "ready" ? 0 : 1,
+          }}
+        />
+      ) : null}
       {state === "error" ? (
         <span
           role="img"
@@ -217,14 +252,16 @@ export function LoadingImage({
           {...props}
           ref={ref}
           src={src}
+          srcSet={srcSet}
           alt={alt}
+          decoding={decoding}
           style={{ opacity: state === "ready" ? 1 : 0 }}
           onLoad={(e) => {
-            setResult({ src, state: "ready" });
+            setResult({ sourceKey, state: "ready" });
             props.onLoad?.(e);
           }}
           onError={(e) => {
-            setResult({ src, state: "error" });
+            setResult({ sourceKey, state: "error" });
             props.onError?.(e);
           }}
         />

@@ -46,6 +46,66 @@ test("tablet hero photo survives guest projection and renders independent respon
   config.hero.tabletMediaId = "unknown-photo";
   assert.throws(() => parseSiteConfig(config), /tabletMediaId/);
 });
+test("renders responsive variant srcSet on device sources, tighter gallery sizes, and LQIP blur placeholder", () => {
+  const config = createDemo();
+  const blurDataUrl =
+    "data:image/webp;base64,UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA=";
+  config.media = [
+    mediaSchema.parse({
+      id: "hero-desktop",
+      src: "/media/hero-desktop/1920.webp",
+      width: 1920,
+      height: 1280,
+      variants: [
+        { src: "/media/hero-desktop/320.webp", width: 320 },
+        { src: "/media/hero-desktop/640.webp", width: 640 },
+        { src: "/media/hero-desktop/1920.webp", width: 1920 },
+      ],
+      blurDataUrl,
+    }),
+    mediaSchema.parse({
+      id: "hero-mobile",
+      src: "/media/hero-mobile/1280.webp",
+      width: 1280,
+      height: 1600,
+      variants: [
+        { src: "/media/hero-mobile/320.webp", width: 320 },
+        { src: "/media/hero-mobile/640.webp", width: 640 },
+        { src: "/media/hero-mobile/1280.webp", width: 1280 },
+      ],
+    }),
+  ];
+  config.hero.mediaId = "hero-desktop";
+  config.hero.mobileMediaId = "hero-mobile";
+  config.sections.push({
+    id: "gallery-1",
+    type: "gallery",
+    title: "Galeria",
+    body: "",
+    mediaIds: ["hero-desktop"],
+    crops: {},
+  });
+  config.variants[0].sections.push({ sectionId: "gallery-1", visible: true });
+  const html = renderToStaticMarkup(createElement(Invitation, { config }));
+  assert.match(
+    html,
+    /media="\(max-width: 47.99em\)" srcSet="\/media\/hero-mobile\/320\.webp 320w, \/media\/hero-mobile\/640\.webp 640w, \/media\/hero-mobile\/1280\.webp 1280w" sizes="100vw"/,
+  );
+  assert.match(
+    html,
+    /sizes="\(max-width: 30em\) 100vw, \(max-width: 64em\) 50vw, 480px"/,
+  );
+  assert.match(html, /decoding="async"/);
+  assert.ok(html.includes(`--blur:url(${blurDataUrl})`));
+  assert.ok(html.includes("--mobile-blur:none"));
+  assert.doesNotMatch(html, /<picture[^>]*><span/);
+
+  config.hero.layout = "overlay";
+  const overlayHtml = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.match(overlayHtml, /sizes="100vw"/);
+});
 test("render descriptions, contacts and optional-map reception for every theme", () => {
   for (const theme of themeNames) {
     const config = {

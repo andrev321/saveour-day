@@ -98,6 +98,13 @@ const date = z
       parsed.toISOString().slice(0, 10) === value
     );
   }, "Nieprawidłowa data");
+const blurDataUrlSchema = z
+  .string()
+  .max(4096)
+  .refine(
+    (value) => /^data:image\/webp;base64,[A-Za-z0-9+/]+=*$/.test(value),
+    "Nieprawidłowy podgląd zdjęcia",
+  );
 export const mediaSchema = z
   .object({
     id: idSchema,
@@ -113,6 +120,7 @@ export const mediaSchema = z
       )
       .max(8)
       .default([]),
+    blurDataUrl: blurDataUrlSchema.optional(),
   })
   .strict()
   .refine((media) => {
