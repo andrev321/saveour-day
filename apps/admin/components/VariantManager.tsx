@@ -125,9 +125,9 @@ export function VariantManager({
           </Text>
           <Text c="dimmed" size="sm">
             {t(
-              "To określa zaproszenie i RSVP. Kolejność programu i widoczność sekcji ustawisz w Treści.",
-              "This controls invitations and RSVP. Set programme order and section visibility in Content.",
-              "Dies steuert Einladung und RSVP. Programmreihenfolge und Sichtbarkeit werden unter Inhalt eingestellt.",
+              "Określa, które punkty programu widzą goście tego wariantu. O tym, czy w RSVP pytamy o całe wydarzenie czy wybrane punkty, decydujesz w zakładce Goście.",
+              "Controls which schedule events guests of this variant see. Choose whether RSVP asks about the whole event or selected events in the Guests tab.",
+              "Legt fest, welche Programmpunkte Gäste dieser Variante sehen. Ob RSVP nach der gesamten Veranstaltung oder ausgewählten Punkten fragt, stellst du unter Gäste ein.",
             )}
           </Text>
           {config.events.map((e) => (

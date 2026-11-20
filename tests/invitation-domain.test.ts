@@ -1,10 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  OVERALL_EVENT_ID,
   guestDisplayName,
   invitationDisplayName,
   invitationGuestsSchema,
+  overallEventLabel,
   parseQuickAdd,
+  resolveRsvpEvents,
+  rsvpAttendanceConfigSchema,
   summarizeRsvp,
 } from "../packages/domain/src/invitation.ts";
 
@@ -163,4 +167,87 @@ test("parseQuickAdd parses commas, +N and optional Group: prefix", () => {
   if (!bad.ok) {
     assert.equal(bad.errors.length, 2);
   }
+});
+
+test("resolveRsvpEvents handles overall mode, selected events, and empty-intersection fallback", () => {
+  const variantEvents = [
+    { id: "ceremony", title: "Ceremonia" },
+    { id: "dinner", title: "Obiad" },
+    { id: "cake", title: "Tort" },
+    { id: "afterparty", title: "Poprawiny" },
+  ];
+
+  assert.deepEqual(
+    resolveRsvpEvents(
+      variantEvents,
+      { mode: "overall", eventIds: ["ceremony", "afterparty"] },
+      overallEventLabel("pl-PL"),
+    ),
+    [{ id: OVERALL_EVENT_ID, title: "Całe wydarzenie" }],
+  );
+
+  assert.deepEqual(
+    resolveRsvpEvents(
+      [],
+      { mode: "overall", eventIds: [] },
+      overallEventLabel("en-GB"),
+    ),
+    [{ id: OVERALL_EVENT_ID, title: "Whole event" }],
+  );
+
+  assert.deepEqual(
+    resolveRsvpEvents(
+      variantEvents,
+      { mode: "events", eventIds: ["afterparty", "ceremony"] },
+      overallEventLabel("pl-PL"),
+    ),
+    [
+      { id: "ceremony", title: "Ceremonia" },
+      { id: "afterparty", title: "Poprawiny" },
+    ],
+  );
+
+  // Variant without any of the selected events falls back to whole-event attendance.
+  assert.deepEqual(
+    resolveRsvpEvents(
+      [{ id: "ceremony", title: "Ceremonia" }],
+      { mode: "events", eventIds: ["dinner", "afterparty"] },
+      overallEventLabel("de-DE"),
+    ),
+    [{ id: OVERALL_EVENT_ID, title: "Gesamte Veranstaltung" }],
+  );
+});
+
+test("rsvpAttendanceConfigSchema validates mode, uniqueness and non-empty events mode", () => {
+  assert.equal(
+    rsvpAttendanceConfigSchema.safeParse({ mode: "overall", eventIds: [] })
+      .success,
+    true,
+  );
+  assert.equal(
+    rsvpAttendanceConfigSchema.safeParse({ mode: "events", eventIds: [] })
+      .success,
+    false,
+  );
+  assert.equal(
+    rsvpAttendanceConfigSchema.safeParse({
+      mode: "events",
+      eventIds: ["ceremony", "ceremony"],
+    }).success,
+    false,
+  );
+  assert.equal(
+    rsvpAttendanceConfigSchema.safeParse({
+      mode: "events",
+      eventIds: ["__overall__"],
+    }).success,
+    false,
+  );
+  assert.equal(
+    rsvpAttendanceConfigSchema.safeParse({
+      mode: "events",
+      eventIds: ["ceremony", "afterparty"],
+    }).success,
+    true,
+  );
 });

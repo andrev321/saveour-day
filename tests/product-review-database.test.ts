@@ -89,7 +89,7 @@ test("member edits cascade answers, RSVP questions enforce immutability and vali
     ]);
 
     const answer = [
-      { guestId: guest, eventId: config.events[0].id, attending: true },
+      { guestId: guest, eventId: "__overall__", attending: true },
     ];
     await db.query(
       "select public.save_guest_rsvp($1,$2,0,$3,'note','{}'::jsonb,$4,null,$5)",

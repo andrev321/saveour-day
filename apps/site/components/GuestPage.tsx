@@ -9,12 +9,14 @@ import {
   useSyncExternalStore,
   type CSSProperties,
 } from "react";
-import { Invitation } from "@invitations/renderer";
+import { CalendarMenu, Invitation } from "@invitations/renderer";
 import type { GuestContent } from "@invitations/domain/guest";
 import {
+  OVERALL_EVENT_ID,
   guestDisplayName,
   invitationDisplayName,
   type InvitationGuest,
+  type RsvpAttendanceMode,
 } from "@invitations/domain/invitation";
 import {
   formatQuestionValue,
@@ -33,6 +35,8 @@ type Reply = {
   authorized: boolean;
   mode: string;
   rsvpEnabled?: boolean;
+  rsvpAttendanceMode?: RsvpAttendanceMode;
+  rsvpEvents?: { id: string; title: string }[];
   allowSelfRegistration?: boolean;
   canResetLookup?: boolean;
   locale?: InvitationLocale;
@@ -58,9 +62,11 @@ type Reply = {
 export function GuestPage({
   kind,
   accessKey,
+  adminUrl,
 }: {
   kind: string;
   accessKey: string;
+  adminUrl?: string;
 }) {
   const endpoint = `/api/guest/${kind}/${encodeURIComponent(accessKey)}`;
   const [data, setData] = useState<Reply | null>(null);
@@ -269,6 +275,7 @@ export function GuestPage({
   } as CSSProperties;
 
   const rsvpEnabled = data.rsvpEnabled !== false;
+  const rsvpEvents = data.rsvpEvents ?? data.config?.events ?? [];
 
   const savedAnswers = Object.fromEntries(
     (data.invitation?.answers || []).map((a) => [
@@ -301,7 +308,7 @@ export function GuestPage({
       : []),
   ];
 
-  const calendarHref = data.config?.events.some((e) => e.date)
+  const calendarHref = data.config?.events.some((e) => e.date && e.time)
     ? `${endpoint}/calendar`
     : undefined;
 
@@ -310,6 +317,7 @@ export function GuestPage({
       <Invitation
         config={data.config!}
         calendarHref={calendarHref}
+        createHref={adminUrl}
         resolveMedia={(src) =>
           `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
         }
@@ -382,32 +390,33 @@ export function GuestPage({
                   <p role="status">{copy.lookupNotFound}</p>
                 )}
 
-                <button disabled={busy} aria-busy={busy || undefined}>
-                  <BusyLabel
-                    busy={operation === "lookup"}
-                    label={loadingText(language, "verify")}
-                  >
-                    {lookupState === "locked"
-                      ? copy.lookupUnlockAction
-                      : lookupState === "ambiguous"
-                        ? copy.lookupConfirm
-                        : copy.lookupAction}
-                  </BusyLabel>
-                </button>
+                <S.RsvpActions>
+                  <button disabled={busy} aria-busy={busy || undefined}>
+                    <BusyLabel
+                      busy={operation === "lookup"}
+                      label={loadingText(language, "verify")}
+                    >
+                      {lookupState === "locked"
+                        ? copy.lookupUnlockAction
+                        : lookupState === "ambiguous"
+                          ? copy.lookupConfirm
+                          : copy.lookupAction}
+                    </BusyLabel>
+                  </button>
+                  {data.allowSelfRegistration && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setSelfRegOpen(true);
+                        setSelfRegName(lookupQuery);
+                      }}
+                    >
+                      {copy.selfRegisterOpen}
+                    </button>
+                  )}
+                </S.RsvpActions>
               </form>
-            )}
-
-            {data.allowSelfRegistration && !selfRegOpen && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => {
-                  setSelfRegOpen(true);
-                  setSelfRegName(lookupQuery);
-                }}
-              >
-                {copy.selfRegisterOpen}
-              </button>
             )}
 
             {data.allowSelfRegistration && selfRegOpen && (
@@ -421,18 +430,18 @@ export function GuestPage({
                     maxLength={200}
                   />
                 </label>
-                <label>
+                <S.RsvpCheckboxLabel>
                   <input
                     type="checkbox"
                     checked={selfRegWithCompanion}
                     onChange={(e) => setSelfRegWithCompanion(e.target.checked)}
-                  />{" "}
+                  />
                   {copy.withCompanionCheckbox}
-                </label>
+                </S.RsvpCheckboxLabel>
                 <RsvpForm
                   key={`self-${selfRegWithCompanion}`}
                   guests={selfRegGuests}
-                  events={data.config?.events || []}
+                  events={rsvpEvents}
                   questions={questions}
                   variantId={data.config?.defaultVariant || ""}
                   initialAnswers={{}}
@@ -463,13 +472,15 @@ export function GuestPage({
                     });
                   }}
                 />
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setSelfRegOpen(false)}
-                >
-                  {copy.cancel}
-                </button>
+                <S.RsvpActions>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setSelfRegOpen(false)}
+                  >
+                    {copy.cancel}
+                  </button>
+                </S.RsvpActions>
               </div>
             )}
             {error && <p role="alert">{guestError(error, copy)}</p>}
@@ -479,26 +490,28 @@ export function GuestPage({
         {rsvpEnabled && data.invitation && (
           <div id="rsvp">
             <h2>{copy.rsvp}</h2>
-            <p>
-              {invitationDisplayName(
-                {
-                  groupName: data.invitation.groupName,
-                  guests: data.invitation.guests,
-                },
-                { companion: copy.companion, and: copy.and },
-              )}{" "}
+            <S.RsvpMetaRow>
+              <S.RsvpMetaName>
+                {invitationDisplayName(
+                  {
+                    groupName: data.invitation.groupName,
+                    guests: data.invitation.guests,
+                  },
+                  { companion: copy.companion, and: copy.and },
+                )}
+              </S.RsvpMetaName>
               {data.canResetLookup && (
-                <button
+                <S.RsvpCompactButton
                   type="button"
                   disabled={busy}
                   onClick={() => void action("lookup-reset", {})}
                 >
                   {copy.lookupChange}
-                </button>
+                </S.RsvpCompactButton>
               )}
-            </p>
+            </S.RsvpMetaRow>
             {data.deadline && (
-              <p>
+              <S.RsvpDeadline>
                 {copy.deadline}:{" "}
                 {new Intl.DateTimeFormat(locale, {
                   dateStyle: "long",
@@ -506,49 +519,72 @@ export function GuestPage({
                   timeZone: "Europe/Warsaw",
                 }).format(new Date(data.deadline))}{" "}
                 ({copy.timezone})
-              </p>
+              </S.RsvpDeadline>
             )}
             {data.closed && <p role="status">{copy.closed}</p>}
             {success && (
               <S.ResponseSummary role="status" data-testid="saved-summary">
                 <h3>{copy.saved}</h3>
                 <p>{copy.summary}</p>
-                {data.invitation.guests.map((g) => (
-                  <div key={g.id}>
-                    <strong>
-                      {guestDisplayName(g, { companion: copy.companion })}
-                    </strong>
-                    <ul>
-                      {data.config!.events.map((e) => {
-                        const value = savedAnswers[`${g.id}:${e.id}`];
-                        return (
-                          <li key={e.id}>
-                            {e.title}:{" "}
-                            {value === "true"
-                              ? copy.yes
-                              : value === "false"
-                                ? copy.no
-                                : copy.missing}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                    {questions
-                      .filter((q) => q.scope === "guest")
-                      .map((q) => {
-                        const qa = data.invitation!.questionAnswers.find(
-                          (a) => a.questionId === q.id && a.guestId === g.id,
-                        );
-                        if (!qa) return null;
-                        return (
-                          <p key={q.id}>
-                            {q.label}:{" "}
-                            {formatQuestionValue(q, qa.value, copy.otherOption)}
-                          </p>
-                        );
-                      })}
-                  </div>
-                ))}
+                {data.invitation.guests.map((g) => {
+                  const isSingleOverall =
+                    rsvpEvents.length === 1 &&
+                    rsvpEvents[0]?.id === OVERALL_EVENT_ID;
+                  const overallValue = isSingleOverall
+                    ? savedAnswers[`${g.id}:${OVERALL_EVENT_ID}`]
+                    : undefined;
+                  return (
+                    <div key={g.id}>
+                      <strong>
+                        {guestDisplayName(g, { companion: copy.companion })}
+                      </strong>
+                      {isSingleOverall ? (
+                        <>
+                          :{" "}
+                          {overallValue === "true"
+                            ? copy.yes
+                            : overallValue === "false"
+                              ? copy.no
+                              : copy.missing}
+                        </>
+                      ) : (
+                        <ul>
+                          {rsvpEvents.map((e) => {
+                            const value = savedAnswers[`${g.id}:${e.id}`];
+                            return (
+                              <li key={e.id}>
+                                {e.title}:{" "}
+                                {value === "true"
+                                  ? copy.yes
+                                  : value === "false"
+                                    ? copy.no
+                                    : copy.missing}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                      {questions
+                        .filter((q) => q.scope === "guest")
+                        .map((q) => {
+                          const qa = data.invitation!.questionAnswers.find(
+                            (a) => a.questionId === q.id && a.guestId === g.id,
+                          );
+                          if (!qa) return null;
+                          return (
+                            <p key={q.id}>
+                              {q.label}:{" "}
+                              {formatQuestionValue(
+                                q,
+                                qa.value,
+                                copy.otherOption,
+                              )}
+                            </p>
+                          );
+                        })}
+                    </div>
+                  );
+                })}
                 {questions
                   .filter((q) => q.scope === "invitation")
                   .map((q) => {
@@ -569,17 +605,23 @@ export function GuestPage({
                   </p>
                 )}
                 {calendarHref && (
-                  <S.CalendarLink href={calendarHref} download="invitation.ics">
-                    {copy.calendar}
-                  </S.CalendarLink>
+                  <CalendarMenu
+                    config={data.config!}
+                    icsHref={calendarHref}
+                    position="bottom-start"
+                  >
+                    <S.CalendarButton type="button">
+                      {copy.calendar}
+                    </S.CalendarButton>
+                  </CalendarMenu>
                 )}
               </S.ResponseSummary>
             )}
 
             <RsvpForm
-              key={`${data.invitation.revision}-${data.invitation.guests.map((g) => g.id).join(",")}`}
+              key={`${data.invitation.revision}-${data.invitation.guests.map((g) => g.id).join(",")}-${rsvpEvents.map((e) => e.id).join(",")}`}
               guests={data.invitation.guests}
-              events={data.config?.events || []}
+              events={rsvpEvents}
               questions={questions}
               variantId={data.config?.defaultVariant || ""}
               initialAnswers={savedAnswers}
@@ -612,25 +654,30 @@ export function GuestPage({
             />
 
             {refreshConfirm && (
-              <div role="alert">
+              <S.RsvpAlert role="alert">
                 <p>{copy.refreshWarning}</p>
-                <button
-                  type="button"
-                  disabled={busy}
-                  aria-busy={busy || undefined}
-                  onClick={() => void refresh()}
-                >
-                  <BusyLabel
-                    busy={operation === "refresh"}
-                    label={loadingText(language, "refresh")}
+                <S.RsvpActions>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    aria-busy={busy || undefined}
+                    onClick={() => void refresh()}
                   >
-                    {copy.discard}
-                  </BusyLabel>
-                </button>
-                <button type="button" onClick={() => setRefreshConfirm(false)}>
-                  {copy.cancel}
-                </button>
-              </div>
+                    <BusyLabel
+                      busy={operation === "refresh"}
+                      label={loadingText(language, "refresh")}
+                    >
+                      {copy.discard}
+                    </BusyLabel>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRefreshConfirm(false)}
+                  >
+                    {copy.cancel}
+                  </button>
+                </S.RsvpActions>
+              </S.RsvpAlert>
             )}
             {error && <p role="alert">{guestError(error, copy)}</p>}
           </div>

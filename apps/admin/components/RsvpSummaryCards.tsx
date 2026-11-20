@@ -10,7 +10,10 @@ import {
   Text,
   Title,
 } from "@mantine/core";
-import type { RsvpSummary } from "@invitations/domain/invitation";
+import {
+  OVERALL_EVENT_ID,
+  type RsvpSummary,
+} from "@invitations/domain/invitation";
 import type { QuestionSummary } from "@invitations/domain/rsvp-questions";
 import { usePanelI18n } from "../lib/i18n";
 
@@ -95,32 +98,35 @@ export function RsvpSummaryCards({
         </Card>
       </SimpleGrid>
 
-      {events.map((event) => {
-        const stats = summary.byEvent[event.id] || {
-          attending: 0,
-          declined: 0,
-          pending: 0,
-          companionsAttending: 0,
-        };
-        return (
-          <Card withBorder key={event.id} py="xs">
-            <Group justify="space-between" wrap="wrap">
-              <Text fw={600} size="sm">
-                {event.title}
-              </Text>
-              <Text size="sm">
-                {labelText("Będą", "Attending", "Zusagen")}: {stats.attending}
-                {stats.companionsAttending > 0
-                  ? ` (${labelText("w tym", "incl.", "davon")} ${stats.companionsAttending} ${labelText("tow.", "comp.", "Begl.")})`
-                  : ""}{" "}
-                · {labelText("Nie będą", "Declined", "Absagen")}:{" "}
-                {stats.declined} ·{" "}
-                {labelText("Czekamy", "Pending", "Ausstehend")}: {stats.pending}
-              </Text>
-            </Group>
-          </Card>
-        );
-      })}
+      {events
+        .filter((event) => event.id !== OVERALL_EVENT_ID)
+        .map((event) => {
+          const stats = summary.byEvent[event.id] || {
+            attending: 0,
+            declined: 0,
+            pending: 0,
+            companionsAttending: 0,
+          };
+          return (
+            <Card withBorder key={event.id} py="xs">
+              <Group justify="space-between" wrap="wrap">
+                <Text fw={600} size="sm">
+                  {event.title}
+                </Text>
+                <Text size="sm">
+                  {labelText("Będą", "Attending", "Zusagen")}: {stats.attending}
+                  {stats.companionsAttending > 0
+                    ? ` (${labelText("w tym", "incl.", "davon")} ${stats.companionsAttending} ${labelText("tow.", "comp.", "Begl.")})`
+                    : ""}{" "}
+                  · {labelText("Nie będą", "Declined", "Absagen")}:{" "}
+                  {stats.declined} ·{" "}
+                  {labelText("Czekamy", "Pending", "Ausstehend")}:{" "}
+                  {stats.pending}
+                </Text>
+              </Group>
+            </Card>
+          );
+        })}
 
       {questionSummaries.length > 0 && (
         <Card withBorder>

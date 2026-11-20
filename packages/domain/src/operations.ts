@@ -185,3 +185,121 @@ export function calendarFile(config: SiteConfig, now = new Date()) {
       .join("\r\n") + "\r\n"
   );
 }
+
+export type CalendarLinks = {
+  google: string;
+  outlook: string;
+};
+
+function addHours(dateStr: string, timeStr: string, hours: number) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const next = new Date(Date.UTC(y, m - 1, d, hh + hours, mm));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return {
+    date: `${next.getUTCFullYear()}-${pad(next.getUTCMonth() + 1)}-${pad(next.getUTCDate())}`,
+    time: `${pad(next.getUTCHours())}:${pad(next.getUTCMinutes())}`,
+  };
+}
+
+function timeZoneOffsetMs(utcMs: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).formatToParts(new Date(utcMs));
+  const part = (type: string) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const asUtc = Date.UTC(
+    part("year"),
+    part("month") - 1,
+    part("day"),
+    part("hour"),
+    part("minute"),
+  );
+  return asUtc - utcMs;
+}
+
+function localToUtcIso(dateStr: string, timeStr: string, timeZone: string) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const [hh, mm] = timeStr.split(":").map(Number);
+  const wallUtc = Date.UTC(y, m - 1, d, hh, mm);
+  const firstOffset = timeZoneOffsetMs(wallUtc, timeZone);
+  const adjusted = wallUtc - firstOffset;
+  const finalOffset = timeZoneOffsetMs(adjusted, timeZone);
+  return new Date(wallUtc - finalOffset)
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z");
+}
+
+function compactDateTime(point: { date: string; time: string }) {
+  return `${point.date.replaceAll("-", "")}T${point.time.replace(":", "")}00`;
+}
+
+export function calendarLinks(config: SiteConfig): CalendarLinks | null {
+  const scheduled = config.events
+    .filter((event): event is SiteConfig["events"][number] & { date: string } =>
+      Boolean(event.date && event.time),
+    )
+    .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`));
+  if (!scheduled.length) return null;
+
+  const first = scheduled[0];
+  const last = scheduled[scheduled.length - 1];
+  const start = { date: first.date, time: first.time };
+  const end = addHours(last.date, last.time, 2);
+
+  const venueLabel = (event: SiteConfig["events"][number]) => {
+    const venue = config.venues.find((v) => v.id === event.venueId);
+    return venue ? [venue.name, venue.address].filter(Boolean).join(", ") : "";
+  };
+
+  let title: string;
+  let location: string;
+  let description: string;
+
+  if (scheduled.length === 1) {
+    title = first.title;
+    location = venueLabel(first);
+    description = config.identity.displayName;
+  } else {
+    title = config.identity.displayName || config.hero.title || first.title;
+    location = scheduled.map(venueLabel).find(Boolean) ?? "";
+    const multiDay = scheduled.some((e) => e.date !== first.date);
+    description = scheduled
+      .map((e) => {
+        const loc = venueLabel(e);
+        const prefix = multiDay ? `${e.date} ${e.time}` : e.time;
+        return `${prefix} — ${e.title}${loc ? ` (${loc})` : ""}`;
+      })
+      .join("\n");
+  }
+
+  const googleParams = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${compactDateTime(start)}/${compactDateTime(end)}`,
+    ctz: config.timeZone,
+  });
+  if (description) googleParams.set("details", description);
+  if (location) googleParams.set("location", location);
+
+  const outlookParams = new URLSearchParams({
+    rru: "addevent",
+    path: "/calendar/action/compose",
+    subject: title,
+    startdt: localToUtcIso(start.date, start.time, config.timeZone),
+    enddt: localToUtcIso(end.date, end.time, config.timeZone),
+  });
+  if (description) outlookParams.set("body", description);
+  if (location) outlookParams.set("location", location);
+
+  return {
+    google: `https://calendar.google.com/calendar/render?${googleParams.toString()}`,
+    outlook: `https://outlook.live.com/calendar/0/action/compose?${outlookParams.toString()}`,
+  };
+}

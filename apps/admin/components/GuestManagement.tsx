@@ -11,9 +11,11 @@ import {
   Badge,
   Button,
   Card,
+  Checkbox,
   Group,
   Menu,
   PasswordInput,
+  Radio,
   Select,
   Stack,
   Text,
@@ -41,6 +43,7 @@ import {
 import {
   invitationDisplayName,
   summarizeRsvp,
+  type RsvpAttendanceMode,
 } from "@invitations/domain/invitation";
 import { summarizeQuestions } from "@invitations/domain/rsvp-questions";
 import { detectGuestCollisions } from "@invitations/domain/hybrid-rsvp";
@@ -150,6 +153,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     [deadline, setDeadline] = useState("");
   const [rsvpEnabled, setRsvpEnabled] = useState(true);
   const [allowSelfRegistration, setAllowSelfRegistration] = useState(false);
+  const [attendanceMode, setAttendanceMode] =
+    useState<RsvpAttendanceMode>("overall");
+  const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [shareModal, setShareModal] = useState<ShareInvitationTarget | null>(
     null,
   );
@@ -181,6 +187,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
     setDeadline(localDeadline(result.site.rsvp_deadline));
     setRsvpEnabled(result.site.rsvp_enabled ?? true);
     setAllowSelfRegistration(result.site.allow_self_registration ?? false);
+    setAttendanceMode(result.site.rsvp_attendance_mode ?? "overall");
+    setSelectedEventIds(result.site.rsvp_event_ids ?? []);
   }
   useEffect(() => {
     let alive = true;
@@ -197,6 +205,8 @@ export function GuestManagement({ siteId }: { siteId: string }) {
           setAllowSelfRegistration(
             result.site.allow_self_registration ?? false,
           );
+          setAttendanceMode(result.site.rsvp_attendance_mode ?? "overall");
+          setSelectedEventIds(result.site.rsvp_event_ids ?? []);
         }
       })
       .catch((e) => {
@@ -713,14 +723,189 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                             setAllowSelfRegistration(e.currentTarget.checked)
                           }
                         />
+                        {rsvpEnabled &&
+                          (() => {
+                            const availableEvents = data.availableEvents || [];
+                            const savedMode =
+                              data.site.rsvp_attendance_mode ?? "overall";
+                            const savedEventIds =
+                              data.site.rsvp_event_ids ?? [];
+                            const fallbackVariants =
+                              attendanceMode === "events" &&
+                              selectedEventIds.length > 0
+                                ? data.variants.filter(
+                                    (v) =>
+                                      !availableEvents.some(
+                                        (ev) =>
+                                          selectedEventIds.includes(ev.id) &&
+                                          ev.variantIds.includes(v.id),
+                                      ),
+                                  )
+                                : [];
+                            const modeChanged = attendanceMode !== savedMode;
+                            const removedAnsweredEvent =
+                              attendanceMode === "events" &&
+                              savedMode === "events" &&
+                              savedEventIds.some(
+                                (id) =>
+                                  !selectedEventIds.includes(id) &&
+                                  data.answers.some((a) => a.event_id === id),
+                              );
+                            const hasExistingAnswers = data.answers.length > 0;
+                            const showChangeWarning =
+                              hasExistingAnswers &&
+                              (modeChanged || removedAnsweredEvent);
+
+                            return (
+                              <Stack gap="xs" pt="xs">
+                                <Radio.Group
+                                  label={labelText(
+                                    "O co pytamy w RSVP",
+                                    "What RSVP asks about",
+                                    "Wonach im RSVP gefragt wird",
+                                  )}
+                                  value={attendanceMode}
+                                  onChange={(val) => {
+                                    const next = val as RsvpAttendanceMode;
+                                    setAttendanceMode(next);
+                                    if (
+                                      next === "events" &&
+                                      selectedEventIds.length === 0 &&
+                                      availableEvents.length > 0
+                                    ) {
+                                      setSelectedEventIds(
+                                        availableEvents.map((e) => e.id),
+                                      );
+                                    }
+                                  }}
+                                >
+                                  <Stack gap="xs" mt={4}>
+                                    <Radio
+                                      value="overall"
+                                      label={labelText(
+                                        "Całe wydarzenie jako jedno",
+                                        "Whole event as one",
+                                        "Gesamte Veranstaltung als Ganzes",
+                                      )}
+                                      description={labelText(
+                                        "Jedno pytanie „Tak / Nie” dla każdej osoby (niezależnie od liczby punktów w programie).",
+                                        "One Yes / No question per guest, regardless of schedule items.",
+                                        "Eine Ja/Nein-Frage pro Gast, unabhängig von den Programmpunkten.",
+                                      )}
+                                    />
+                                    <Radio
+                                      value="events"
+                                      label={labelText(
+                                        "Wybrane punkty z programu",
+                                        "Selected schedule events",
+                                        "Ausgewählte Programmpunkte",
+                                      )}
+                                      description={labelText(
+                                        "Osobne pytanie o obecność dla każdego zaznaczonego punktu harmonogramu.",
+                                        "Separate attendance question for each selected schedule event.",
+                                        "Separate Teilnahmefrage für jeden ausgewählten Programmpunkt.",
+                                      )}
+                                    />
+                                  </Stack>
+                                </Radio.Group>
+
+                                {attendanceMode === "events" && (
+                                  <Stack gap={6} pl="md">
+                                    {availableEvents.length === 0 ? (
+                                      <Text size="xs" c="dimmed">
+                                        {labelText(
+                                          "Brak punktów programu w konfiguracji. Dodaj wydarzenia w Treści lub użyj opcji „Całe wydarzenie jako jedno”.",
+                                          "No schedule events configured yet. Add events in Content or use “Whole event as one”.",
+                                          "Keine Programmpunkte vorhanden. Füge Programmpunkte unter Inhalt hinzu oder wähle „Gesamte Veranstaltung als Ganzes“.",
+                                        )}
+                                      </Text>
+                                    ) : (
+                                      <>
+                                        {availableEvents.map((ev) => (
+                                          <Checkbox
+                                            key={ev.id}
+                                            size="sm"
+                                            label={ev.title}
+                                            checked={selectedEventIds.includes(
+                                              ev.id,
+                                            )}
+                                            onChange={(e) => {
+                                              const checked =
+                                                e.currentTarget.checked;
+                                              setSelectedEventIds((old) =>
+                                                checked
+                                                  ? old.includes(ev.id)
+                                                    ? old
+                                                    : [...old, ev.id]
+                                                  : old.filter(
+                                                      (id) => id !== ev.id,
+                                                    ),
+                                              );
+                                            }}
+                                          />
+                                        ))}
+                                        {selectedEventIds.length === 0 && (
+                                          <Text size="xs" c="red">
+                                            {labelText(
+                                              "Zaznacz co najmniej jeden punkt z programu.",
+                                              "Select at least one schedule event.",
+                                              "Wähle mindestens einen Programmpunkt aus.",
+                                            )}
+                                          </Text>
+                                        )}
+                                      </>
+                                    )}
+                                    {fallbackVariants.length > 0 && (
+                                      <Alert
+                                        color="blue"
+                                        variant="light"
+                                        py="xs"
+                                      >
+                                        <Text size="xs">
+                                          {labelText(
+                                            `Warianty bez żadnego z wybranych punktów (${fallbackVariants.map((v) => v.label).join(", ")}): goście tych wariantów zostaną zapytani o obecność na całym wydarzeniu.`,
+                                            `Variants with none of the selected events (${fallbackVariants.map((v) => v.label).join(", ")}): guests in these variants will be asked about the whole event.`,
+                                            `Varianten ohne ausgewählten Programmpunkt (${fallbackVariants.map((v) => v.label).join(", ")}): Gäste dieser Varianten werden nach der gesamten Veranstaltung gefragt.`,
+                                          )}
+                                        </Text>
+                                      </Alert>
+                                    )}
+                                  </Stack>
+                                )}
+
+                                {showChangeWarning && (
+                                  <Alert color="yellow" variant="light" py="xs">
+                                    <Text size="xs">
+                                      {labelText(
+                                        "Część gości już odpowiedziała. Zmiana trybu lub odznaczenie punktu sprawi, że dotychczasowe odpowiedzi nie będą widoczne w nowym układzie (nie zostaną usunięte).",
+                                        "Some guests have already responded. Changing the mode or unchecking an event will hide previous answers in the new layout (they will not be deleted).",
+                                        "Einige Gäste haben bereits geantwortet. Durch das Ändern des Modus oder Abwählen eines Punktes werden bisherige Antworten im neuen Layout nicht angezeigt (nicht gelöscht).",
+                                      )}
+                                    </Text>
+                                  </Alert>
+                                )}
+                              </Stack>
+                            );
+                          })()}
                         <ActionButton
-                          disabled={busy}
+                          disabled={
+                            busy ||
+                            (rsvpEnabled &&
+                              attendanceMode === "events" &&
+                              selectedEventIds.length === 0)
+                          }
                           loading={operation === "rsvp-options"}
                           onClick={() =>
                             void action("rsvp-options", {
                               rsvpEnabled,
                               allowSelfRegistration:
                                 rsvpEnabled && allowSelfRegistration,
+                              attendance: rsvpEnabled
+                                ? {
+                                    mode: attendanceMode,
+                                    eventIds: selectedEventIds,
+                                  }
+                                : undefined,
                               version: data.site.access_version,
                             })
                           }

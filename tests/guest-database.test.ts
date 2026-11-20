@@ -100,12 +100,10 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       "insert into public.guest_sessions values('session',$1,$2,1,1,null,now()+interval '1 day')",
       [sid, iid],
     );
-    const answer = [
-      { guestId: guest, eventId: config.events[0].id, attending: true },
-    ];
+    // Default mode is 'overall': rejects individual event IDs, accepts '__overall__'.
     const save = (
       revision: number,
-      values: unknown = answer,
+      values: unknown,
       token = "session",
       admin: string | null = null,
     ) =>
@@ -113,49 +111,115 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
         "select public.save_guest_rsvp($1,$2,$3,$4,'note','{}'::jsonb,'[]'::jsonb,$5,$6) revision",
         [sid, iid, revision, JSON.stringify(values), token, admin],
       );
-    assert.equal((await save(0)).rows[0].revision, 1);
-    await assert.rejects(save(0), /REVISION_CONFLICT/);
     await assert.rejects(
-      save(1, [{ ...answer[0], guestId: other }]),
+      save(0, [
+        { guestId: guest, eventId: config.events[0].id, attending: true },
+      ]),
       /INVALID_ANSWERS/,
     );
+    assert.equal(
+      (
+        await save(0, [
+          { guestId: guest, eventId: "__overall__", attending: true },
+        ])
+      ).rows[0].revision,
+      1,
+    );
+
+    // Reject 'events' mode with empty event_ids.
     await assert.rejects(
-      save(1, [{ ...answer[0], eventId: config.events[1].id }]),
+      db.query(
+        "select public.configure_rsvp_options($1,$2,true,false,1,'events',$3)",
+        [sid, actor, []],
+      ),
       /INVALID_ANSWERS/,
     );
-    await assert.rejects(save(1, [answer[0], answer[0]]), /INVALID_ANSWERS/);
-    await assert.rejects(save(1, answer, "missing"), /FORBIDDEN/);
-    await assert.rejects(save(1, answer, "missing", other), /FORBIDDEN/);
-    await db.query<Record<string, unknown>>(
-      "select public.configure_access($1,$2,'code','salt:hash',$3,null,1)",
-      [sid, actor, config.defaultVariant],
+    // Switch to 'events' mode with all site events; variant still restricts to events[0].
+    await db.query(
+      "select public.configure_rsvp_options($1,$2,true,false,1,'events',$3)",
+      [sid, actor, config.events.map((e) => e.id)],
     );
-    await assert.rejects(save(1), /FORBIDDEN/);
     await db.query(
       "update public.guest_sessions set access_version=2 where token_hash='session'",
     );
-    assert.equal((await save(1)).rows[0].revision, 2);
+
+    const answer = [
+      { guestId: guest, eventId: config.events[0].id, attending: true },
+    ];
+    assert.equal((await save(1, answer)).rows[0].revision, 2);
+    await assert.rejects(save(1, answer), /REVISION_CONFLICT/);
+    await assert.rejects(
+      save(2, [{ ...answer[0], guestId: other }]),
+      /INVALID_ANSWERS/,
+    );
+    await assert.rejects(
+      save(2, [{ ...answer[0], eventId: config.events[1].id }]),
+      /INVALID_ANSWERS/,
+    );
+    await assert.rejects(
+      save(2, [{ ...answer[0], eventId: "__overall__" }]),
+      /INVALID_ANSWERS/,
+    );
+    await assert.rejects(save(2, [answer[0], answer[0]]), /INVALID_ANSWERS/);
+    await assert.rejects(save(2, answer, "missing"), /FORBIDDEN/);
+    await assert.rejects(save(2, answer, "missing", other), /FORBIDDEN/);
+
+    // When selected RSVP events don't intersect the variant's events, SQL falls back to '__overall__'.
+    await db.query(
+      "select public.configure_rsvp_options($1,$2,true,false,2,'events',$3)",
+      [sid, actor, [config.events[1].id]],
+    );
+    await db.query(
+      "update public.guest_sessions set access_version=3 where token_hash='session'",
+    );
+    await assert.rejects(save(2, answer), /INVALID_ANSWERS/);
+    assert.equal(
+      (
+        await save(2, [
+          { guestId: guest, eventId: "__overall__", attending: false },
+        ])
+      ).rows[0].revision,
+      3,
+    );
+    // Restore 'events' mode with events[0] for subsequent access-version assertions.
+    await db.query(
+      "select public.configure_rsvp_options($1,$2,true,false,3,'events',$3)",
+      [sid, actor, [config.events[0].id]],
+    );
+    await db.query(
+      "update public.guest_sessions set access_version=4 where token_hash='session'",
+    );
+
+    await db.query<Record<string, unknown>>(
+      "select public.configure_access($1,$2,'code','salt:hash',$3,null,4)",
+      [sid, actor, config.defaultVariant],
+    );
+    await assert.rejects(save(3, answer), /FORBIDDEN/);
+    await db.query(
+      "update public.guest_sessions set access_version=5 where token_hash='session'",
+    );
+    assert.equal((await save(3, answer)).rows[0].revision, 4);
     await assert.rejects(
       db.query<Record<string, unknown>>(
-        "select public.configure_access($1,$2,'email',null,$3,now()-interval '1 minute',2)",
+        "select public.configure_access($1,$2,'email',null,$3,now()-interval '1 minute',5)",
         [sid, actor, config.defaultVariant],
       ),
       /INVALID_MODE/,
     );
     await db.query<Record<string, unknown>>(
-      "select public.configure_access($1,$2,'code','hash1',$3,now()-interval '1 minute',2)",
+      "select public.configure_access($1,$2,'code','hash1',$3,now()-interval '1 minute',5)",
       [sid, actor, config.defaultVariant],
     );
     await db.query(
-      "update public.guest_sessions set access_version=3 where token_hash='session'",
+      "update public.guest_sessions set access_version=6 where token_hash='session'",
     );
-    await assert.rejects(save(2), /RSVP_CLOSED/);
-    assert.equal((await save(2, answer, "missing", actor)).rows[0].revision, 3);
+    await assert.rejects(save(4, answer), /RSVP_CLOSED/);
+    assert.equal((await save(4, answer, "missing", actor)).rows[0].revision, 5);
     await db.query<Record<string, unknown>>(
       "select public.manage_invitation($1,$2,'revoke',$3,'{}')",
       [sid, actor, iid],
     );
-    await assert.rejects(save(3), /FORBIDDEN/);
+    await assert.rejects(save(5, answer), /FORBIDDEN/);
     await db.query<Record<string, unknown>>(
       "select public.manage_invitation($1,$2,'rotate',$3,'{\"tokenHash\":\"token2\"}')",
       [sid, actor, iid],
@@ -189,7 +253,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
       "select public.unpublish_content($1,$2)",
       [sid, actor],
     );
-    await assert.rejects(save(4, answer, "missing", actor), /UNPUBLISHED/);
+    await assert.rejects(save(5, answer, "missing", actor), /UNPUBLISHED/);
     await db.query<Record<string, unknown>>(
       "select public.publish_content($1,$2,0,$3,'{}',$4)",
       [sid, actor, JSON.stringify(config), release],
@@ -200,7 +264,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
           "select count(*)::int n from public.attendances",
         )
       ).rows[0].n,
-      1,
+      2,
     );
     assert.equal(
       (
@@ -209,7 +273,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
           [iid],
         )
       ).rows[0].rsvp_revision,
-      4,
+      6,
     );
     await db.query(
       "update public.sites set vercel_project_id='legacy' where id=$1",
@@ -217,7 +281,7 @@ test("publication, RLS, guest sessions and RSVP enforce tenant and invitation bo
     );
     await assert.rejects(
       db.query(
-        "select public.configure_access($1,$2,'code','hash',$3,null,4)",
+        "select public.configure_access($1,$2,'code','hash',$3,null,7)",
         [sid, actor, config.defaultVariant],
       ),
       /LEGACY_PUBLICATION_ACTIVE/,

@@ -15,6 +15,18 @@ export class GuestError extends Error {
     super(message);
   }
 }
+const DEFAULT_ADMIN_URL = "https://saveour-day-admin-production.vercel.app";
+
+export function adminPanelUrl(): string {
+  const configured = process.env.APP_URL?.trim();
+  if (configured && /^https?:\/\//.test(configured)) {
+    return configured.replace(/\/+$/, "");
+  }
+  return process.env.NODE_ENV === "production"
+    ? DEFAULT_ADMIN_URL
+    : "http://127.0.0.1:3000";
+}
+
 export function required(name: string) {
   const value = process.env[name];
   if (!value) throw new GuestError(503, "Usługa jest chwilowo niedostępna");
@@ -86,6 +98,8 @@ export type SiteRecord = {
   rsvp_deadline: string | null;
   rsvp_enabled: boolean;
   allow_self_registration: boolean;
+  rsvp_attendance_mode: "overall" | "events";
+  rsvp_event_ids: string[];
 };
 const lookupCookieName = (siteId: string) => `guest_inv_${siteId}`;
 export async function setLookupInvitationCookie(
@@ -148,7 +162,7 @@ export async function context(kind: string, key: string) {
     const result = await client
       .from("sites")
       .select(
-        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_enabled,allow_self_registration",
+        "id,published_release_id,access_mode,access_code_hash,access_version,public_variant_id,rsvp_deadline,rsvp_enabled,allow_self_registration,rsvp_attendance_mode,rsvp_event_ids",
       )
       .eq(field, value)
       .is("deleted_at", null)

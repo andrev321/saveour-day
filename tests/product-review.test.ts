@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import {
   calendarFile,
+  calendarLinks,
   csvFile,
   parseGuestCsv,
 } from "../packages/domain/src/operations.ts";
@@ -54,6 +55,47 @@ test("calendar exports only supplied events with stable identifiers and safe fol
     assert.ok(Buffer.byteLength(line) <= 75);
   config.events[0].time = "";
   assert.ok(!calendarFile(config).includes("BEGIN:VEVENT"));
+});
+test("calendarLinks builds Google and Outlook URLs for single and combined events", () => {
+  const single = createDemo();
+  single.events = single.events.slice(0, 1);
+  single.events[0].date = "2027-06-12";
+  single.events[0].time = "15:30";
+  single.events[0].title = "Ceremonia";
+  const one = calendarLinks(single);
+  assert.ok(one);
+  const g1 = new URL(one.google);
+  assert.equal(g1.origin, "https://calendar.google.com");
+  assert.equal(g1.searchParams.get("text"), "Ceremonia");
+  assert.equal(g1.searchParams.get("dates"), "20270612T153000/20270612T173000");
+  assert.equal(g1.searchParams.get("ctz"), "Europe/Warsaw");
+  const o1 = new URL(one.outlook);
+  assert.equal(o1.origin, "https://outlook.live.com");
+  assert.equal(o1.searchParams.get("subject"), "Ceremonia");
+  assert.equal(o1.searchParams.get("startdt"), "2027-06-12T13:30:00Z");
+  assert.equal(o1.searchParams.get("enddt"), "2027-06-12T15:30:00Z");
+
+  const multi = createDemo();
+  multi.events = multi.events.slice(0, 2);
+  multi.events[0].date = "2027-01-15";
+  multi.events[0].time = "16:00";
+  multi.events[0].title = "Ceremonia";
+  multi.events[1].date = "2027-01-15";
+  multi.events[1].time = "23:00";
+  multi.events[1].title = "Wesele";
+  const combined = calendarLinks(multi);
+  assert.ok(combined);
+  const g2 = new URL(combined.google);
+  assert.equal(g2.searchParams.get("text"), multi.identity.displayName);
+  assert.equal(g2.searchParams.get("dates"), "20270115T160000/20270116T010000");
+  assert.match(g2.searchParams.get("details") ?? "", /16:00 — Ceremonia/);
+  assert.match(g2.searchParams.get("details") ?? "", /23:00 — Wesele/);
+  const o2 = new URL(combined.outlook);
+  assert.equal(o2.searchParams.get("startdt"), "2027-01-15T15:00:00Z");
+  assert.equal(o2.searchParams.get("enddt"), "2027-01-16T00:00:00Z");
+
+  single.events[0].date = undefined;
+  assert.equal(calendarLinks(single), null);
 });
 test("three-way draft merge keeps independent changes and reports overlapping changes", () => {
   const base = createDemo(),

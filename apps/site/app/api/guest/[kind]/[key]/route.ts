@@ -1,3 +1,7 @@
+import {
+  overallEventLabel,
+  resolveRsvpEvents,
+} from "@invitations/domain/invitation";
 import type { RsvpQuestion } from "@invitations/domain/rsvp-questions";
 import { z } from "zod";
 import { executeGuestAction } from "../../../../../lib/guest-actions";
@@ -32,17 +36,26 @@ export const GET = endpoint(async (request) => {
     activeInvitation?.variant_id ||
     ctx.site.public_variant_id ||
     result.config.defaultVariant;
-  const eventIds = result.config.events.map((e) => e.id);
+  const rsvpAttendanceMode = ctx.site.rsvp_attendance_mode ?? "overall";
+  const rsvpEvents = resolveRsvpEvents(
+    result.config.events.map((e) => ({ id: e.id, title: e.title })),
+    {
+      mode: rsvpAttendanceMode,
+      eventIds: ctx.site.rsvp_event_ids ?? [],
+    },
+    overallEventLabel(result.config.locale),
+  );
+  const rsvpEventIds = rsvpEvents.map((e) => e.id);
 
   const client = db();
   const [answersRes, questionsRes, qAnswersRes] = await Promise.all([
-    activeInvitation && eventIds.length
+    activeInvitation && rsvpEventIds.length
       ? client
           .from("attendances")
           .select("guest_id,event_id,attending")
           .eq("site_id", ctx.site.id)
           .eq("invitation_id", activeInvitation.id)
-          .in("event_id", eventIds)
+          .in("event_id", rsvpEventIds)
       : Promise.resolve({ data: [], error: null }),
     rsvpEnabled
       ? client
@@ -97,6 +110,8 @@ export const GET = endpoint(async (request) => {
     authorized: true,
     mode: ctx.site.access_mode,
     rsvpEnabled,
+    rsvpAttendanceMode,
+    rsvpEvents,
     allowSelfRegistration: Boolean(ctx.site.allow_self_registration),
     canResetLookup:
       new URL(request.url).pathname.split("/")[3] === "s" &&

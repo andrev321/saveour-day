@@ -15,6 +15,7 @@ import {
 import { loadingText } from "@invitations/ui/loading-copy";
 import {
   INVITATION_POLICY,
+  OVERALL_EVENT_ID,
   applyNamedDeclineCascade,
   attendanceKey,
   guestDisplayName,
@@ -334,7 +335,7 @@ export function RsvpGridEditor({
                   const val = effectiveAttendance(g, ev.id);
                   return (
                     <Group key={ev.id} gap="xs">
-                      {invitation.events.length > 1 && (
+                      {ev.id !== OVERALL_EVENT_ID && (
                         <Text size="xs">{ev.title}:</Text>
                       )}
                       <SegmentedControl

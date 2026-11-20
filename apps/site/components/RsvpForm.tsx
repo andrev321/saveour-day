@@ -4,6 +4,7 @@ import { BusyLabel } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import {
   INVITATION_POLICY,
+  OVERALL_EVENT_ID,
   applyNamedDeclineCascade,
   attendanceKey,
   guestDisplayName,
@@ -20,6 +21,7 @@ import {
   type RsvpQuestion,
 } from "@invitations/domain/rsvp-questions";
 import { QuestionField } from "./QuestionField";
+import * as S from "./styles";
 
 export interface RsvpFormCopy {
   noEvents: string;
@@ -191,27 +193,20 @@ export function RsvpForm({
     <form onSubmit={handleSubmit}>
       {!events.length && <p>{copy.noEvents}</p>}
       {!!events.length && (
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <p style={{ margin: 0 }}>
+        <S.RsvpToolbar>
+          <S.RsvpPending>
             {copy.pending}: {missingCount}
-          </p>
+          </S.RsvpPending>
           {namedGuests.length > 0 && !closed && (
-            <button
+            <S.RsvpCompactButton
               type="button"
               disabled={busy || closed}
               onClick={markAllNamedAttending}
             >
               {copy.allNamedAttending}
-            </button>
+            </S.RsvpCompactButton>
           )}
-        </div>
+        </S.RsvpToolbar>
       )}
 
       {!!events.length &&
@@ -221,55 +216,53 @@ export function RsvpForm({
           const guestQuestions = visibleQs.byGuest.get(g.id) || [];
 
           return (
-            <fieldset key={g.id} disabled={busy || closed}>
+            <S.RsvpGuestCard key={g.id} disabled={busy || closed}>
               <legend>
                 {guestDisplayName(g, { companion: copy.companion })}
               </legend>
 
-              {events.map((ev) => {
-                const value = effectiveAnswer(g, ev.id);
-                const yesAllowed = !isCompanion || companionAllowedFor(ev.id);
-                return (
-                  <div
-                    key={ev.id}
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "center",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    {events.length > 1 && <span>{ev.title}</span>}
-                    <label>
-                      <input
-                        type="radio"
-                        name={`att-${g.id}-${ev.id}`}
-                        disabled={busy || closed || !yesAllowed}
-                        checked={value === "true"}
-                        onChange={() =>
-                          setGuestEventAnswer(g.id, ev.id, "true")
-                        }
-                      />{" "}
-                      {copy.yes}
-                    </label>
-                    <label>
-                      <input
-                        type="radio"
-                        name={`att-${g.id}-${ev.id}`}
-                        disabled={busy || closed}
-                        checked={value === "false"}
-                        onChange={() =>
-                          setGuestEventAnswer(g.id, ev.id, "false")
-                        }
-                      />{" "}
-                      {copy.no}
-                    </label>
-                  </div>
-                );
-              })}
+              <S.RsvpEventList>
+                {events.map((ev) => {
+                  const value = effectiveAnswer(g, ev.id);
+                  const yesAllowed = !isCompanion || companionAllowedFor(ev.id);
+                  return (
+                    <S.RsvpEventRow key={ev.id}>
+                      {ev.id !== OVERALL_EVENT_ID && (
+                        <S.RsvpEventTitle>{ev.title}</S.RsvpEventTitle>
+                      )}
+                      <S.RsvpChoiceGroup>
+                        <S.RsvpChoicePill data-choice="yes">
+                          <input
+                            type="radio"
+                            name={`att-${g.id}-${ev.id}`}
+                            disabled={busy || closed || !yesAllowed}
+                            checked={value === "true"}
+                            onChange={() =>
+                              setGuestEventAnswer(g.id, ev.id, "true")
+                            }
+                          />
+                          {copy.yes}
+                        </S.RsvpChoicePill>
+                        <S.RsvpChoicePill data-choice="no">
+                          <input
+                            type="radio"
+                            name={`att-${g.id}-${ev.id}`}
+                            disabled={busy || closed}
+                            checked={value === "false"}
+                            onChange={() =>
+                              setGuestEventAnswer(g.id, ev.id, "false")
+                            }
+                          />
+                          {copy.no}
+                        </S.RsvpChoicePill>
+                      </S.RsvpChoiceGroup>
+                    </S.RsvpEventRow>
+                  );
+                })}
+              </S.RsvpEventList>
 
               {isCompanion && isGuestAttending && (
-                <label>
+                <S.RsvpCompanionField>
                   {copy.companionNameOptional}
                   <input
                     type="text"
@@ -281,7 +274,7 @@ export function RsvpForm({
                       onDirtyChange?.();
                     }}
                   />
-                </label>
+                </S.RsvpCompanionField>
               )}
 
               {guestQuestions.map((q) => (
@@ -308,12 +301,12 @@ export function RsvpForm({
                   }}
                 />
               ))}
-            </fieldset>
+            </S.RsvpGuestCard>
           );
         })}
 
       {visibleQs.invitation.length > 0 && (
-        <fieldset disabled={busy || closed}>
+        <S.RsvpGuestCard disabled={busy || closed}>
           <legend>{copy.questionsSection}</legend>
           {visibleQs.invitation.map((q) => (
             <QuestionField
@@ -339,12 +332,14 @@ export function RsvpForm({
               }}
             />
           ))}
-        </fieldset>
+        </S.RsvpGuestCard>
       )}
 
-      {questions.length > 0 && <p>{copy.privateInfo}</p>}
+      {questions.length > 0 && (
+        <S.RsvpPrivacyNote>{copy.privateInfo}</S.RsvpPrivacyNote>
+      )}
 
-      <label>
+      <S.RsvpNotesField>
         {copy.notes}
         <textarea
           maxLength={2000}
@@ -355,11 +350,11 @@ export function RsvpForm({
             onDirtyChange?.();
           }}
         />
-      </label>
+      </S.RsvpNotesField>
 
       {validationError && <p role="alert">{validationError}</p>}
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+      <S.RsvpActions>
         <button disabled={busy || closed} aria-busy={busy || undefined}>
           <BusyLabel busy={saving} label={loadingText(language, "save")}>
             {submitLabel || copy.save}
@@ -370,7 +365,7 @@ export function RsvpForm({
             {copy.refresh}
           </button>
         )}
-      </div>
+      </S.RsvpActions>
     </form>
   );
 }

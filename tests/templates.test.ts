@@ -196,7 +196,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
         sid,
         iid,
         JSON.stringify([
-          { guestId: guest, eventId: old.events[0].id, attending: true },
+          { guestId: guest, eventId: "__overall__", attending: true },
         ]),
         actor,
       ],
@@ -284,7 +284,7 @@ test("schema migration and template reset preserve releases, RSVP and tenant bou
       (
         await db.query<{ n: number }>(
           "select count(*)::int n from public.attendances where event_id=$1",
-          [old.events[0].id],
+          ["__overall__"],
         )
       ).rows[0].n,
       1,

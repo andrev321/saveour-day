@@ -15,7 +15,7 @@ export const GET = endpoint(async (request) => {
   return new Response(calendarFile(result.config), {
     headers: {
       "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": "attachment; filename=invitation.ics",
+      "Content-Disposition": 'inline; filename="invitation.ics"',
       "Cache-Control": "private, no-store",
       "X-Robots-Tag": "noindex, nofollow",
     },

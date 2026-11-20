@@ -86,7 +86,7 @@ test("RSVP questions enforce required checks for guests, clean up removed option
       [sid, iid],
     );
 
-    const eventId = config.events[0]!.id;
+    const eventId = "__overall__";
     const att = JSON.stringify([{ guestId, eventId, attending: true }]);
 
     // Missing required question fails for guest.

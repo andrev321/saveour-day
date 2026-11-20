@@ -23,6 +23,7 @@ import {
   DotsThreeIcon,
 } from "@phosphor-icons/react";
 import {
+  OVERALL_EVENT_ID,
   guestDisplayName,
   invitationDisplayName,
   type InvitationStatus,
@@ -631,7 +632,14 @@ export function InvitationTable({
                             );
                             return (
                               <Text size="xs" key={ev.id}>
-                                {ev.title}:{" "}
+                                {ev.id === OVERALL_EVENT_ID
+                                  ? labelText(
+                                      "Obecność",
+                                      "Attendance",
+                                      "Teilnahme",
+                                    )
+                                  : ev.title}
+                                :{" "}
                                 {v === undefined
                                   ? labelText(
                                       "Brak odpowiedzi",

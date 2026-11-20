@@ -6,6 +6,59 @@ export const INVITATION_POLICY = {
   maxNameLength: 200,
 } as const;
 
+export const OVERALL_EVENT_ID = "__overall__" as const;
+
+export const rsvpAttendanceModeSchema = z.enum(["overall", "events"]);
+export type RsvpAttendanceMode = z.infer<typeof rsvpAttendanceModeSchema>;
+
+const rsvpEventIdSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]{0,63}$/, "Nieprawidłowy identyfikator wydarzenia");
+
+export const rsvpAttendanceConfigSchema = z
+  .object({
+    mode: rsvpAttendanceModeSchema,
+    eventIds: z
+      .array(rsvpEventIdSchema)
+      .max(50)
+      .refine((ids) => new Set(ids).size === ids.length, {
+        message: "Powtórzone wydarzenie.",
+      }),
+  })
+  .refine((cfg) => cfg.mode === "overall" || cfg.eventIds.length > 0, {
+    message: "Wybierz co najmniej jeden punkt z programu.",
+    path: ["eventIds"],
+  });
+
+export type RsvpAttendanceConfig = z.infer<typeof rsvpAttendanceConfigSchema>;
+
+export interface RsvpEventTarget {
+  id: string;
+  title: string;
+}
+
+export function overallEventLabel(locale: string): string {
+  if (locale.startsWith("en")) return "Whole event";
+  if (locale.startsWith("de")) return "Gesamte Veranstaltung";
+  return "Całe wydarzenie";
+}
+
+export function resolveRsvpEvents(
+  variantEvents: RsvpEventTarget[],
+  config: RsvpAttendanceConfig,
+  overallLabel = "Całe wydarzenie",
+): RsvpEventTarget[] {
+  if (config.mode === "overall") {
+    return [{ id: OVERALL_EVENT_ID, title: overallLabel }];
+  }
+  const selected = new Set(config.eventIds);
+  const matched = variantEvents.filter((e) => selected.has(e.id));
+  if (matched.length === 0) {
+    return [{ id: OVERALL_EVENT_ID, title: overallLabel }];
+  }
+  return matched;
+}
+
 export type GuestKind = "named" | "companion";
 
 export interface InvitationGuest {

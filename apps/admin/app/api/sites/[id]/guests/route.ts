@@ -9,6 +9,10 @@ import { guestContent, rsvpSchema } from "@invitations/domain/guest";
 import {
   invitationDisplayName,
   invitationInputSchema,
+  overallEventLabel,
+  resolveRsvpEvents,
+  rsvpAttendanceConfigSchema,
+  type RsvpAttendanceMode,
 } from "@invitations/domain/invitation";
 import {
   rsvpQuestionsListSchema,
@@ -115,9 +119,34 @@ export const GET = api(async (request) => {
     presetKey: (q.preset_key as RsvpQuestion["presetKey"]) ?? null,
   }));
 
+  const attendanceMode: RsvpAttendanceMode =
+    site.rsvp_attendance_mode === "events" ? "events" : "overall";
+  const attendanceEventIds = Array.isArray(site.rsvp_event_ids)
+    ? (site.rsvp_event_ids as string[])
+    : [];
+  const attendanceConfig = {
+    mode: attendanceMode,
+    eventIds: attendanceEventIds,
+  };
+  const overallLabel = overallEventLabel(config?.locale || "pl-PL");
+  const availableEvents = (config?.events || []).map((e) => ({
+    id: e.id,
+    title: e.title,
+    variantIds: (config?.variants || [])
+      .filter((v) => v.eventIds.includes(e.id))
+      .map((v) => v.id),
+  }));
+
   return {
-    site,
+    site: {
+      ...site,
+      rsvp_enabled: site.rsvp_enabled ?? true,
+      allow_self_registration: site.allow_self_registration ?? false,
+      rsvp_attendance_mode: attendanceMode,
+      rsvp_event_ids: attendanceEventIds,
+    },
     variants,
+    availableEvents,
     locale: config?.locale || "pl-PL",
     displayName: config?.identity.displayName || site.name,
     url: publicSiteUrl(site.id, required("SITE_URL")),
@@ -140,10 +169,14 @@ export const GET = api(async (request) => {
           site.published_release_id &&
           config &&
           config.variants.some((v) => v.id === rest.variant_id)
-            ? guestContent(config, rest.variant_id).events.map((e) => ({
-                id: e.id,
-                title: e.title,
-              }))
+            ? resolveRsvpEvents(
+                guestContent(config, rest.variant_id).events.map((e) => ({
+                  id: e.id,
+                  title: e.title,
+                })),
+                attendanceConfig,
+                overallLabel,
+              )
             : [],
       };
     }),
@@ -204,6 +237,7 @@ export const POST = api(async (request) => {
       .object({
         rsvpEnabled: z.boolean(),
         allowSelfRegistration: z.boolean(),
+        attendance: rsvpAttendanceConfigSchema.optional(),
         version: z.number().int().positive(),
       })
       .parse(body.payload);
@@ -213,6 +247,8 @@ export const POST = api(async (request) => {
       rsvp_on: p.rsvpEnabled,
       self_reg: p.allowSelfRegistration,
       expected_version: p.version,
+      attendance_mode: p.attendance?.mode ?? null,
+      event_ids: p.attendance?.eventIds ?? null,
     });
     checkDb(error);
     return { saved: true };

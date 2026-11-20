@@ -64,7 +64,7 @@ A **Guest** whose identity the **Organizer** does not know in advance (PL: "osob
 
 ### Event
 
-A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** an **Invitation** can RSVP to, independently of whether the timeline **Section** is visible.
+A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** an **Invitation** sees in the schedule and calendar (and which **Events** are eligible for per-event **RSVP**).
 
 ### RSVP
 
@@ -72,7 +72,7 @@ The whole response of an **Invitation**: the **Attendance** of each **Guest**, t
 
 ### Attendance
 
-Whether a **Guest** will attend a given **Event**: attending, declined, or no response yet. The **Invitation**'s response status depends on **Attendance** only.
+Whether a **Guest** will attend the occasion as a whole (`overall` mode, default) or each selected **Event** from the schedule (`events` mode, intersected with the **Invitation**'s **Variant**): attending, declined, or no response yet. The **Invitation**'s response status depends on **Attendance** only.
 
 - _Avoid_: "RSVP Answer", "answer" (ambiguous with **Question Answer**).
 

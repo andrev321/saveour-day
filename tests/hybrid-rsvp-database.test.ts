@@ -41,7 +41,7 @@ test("hybrid RSVP migration supports short_code, Polish lookup, companion rules,
     const config = createDemo();
     config.id = sid;
     const defaultVariant = config.defaultVariant;
-    const eventId = config.events[0]!.id;
+    const eventId = "__overall__";
 
     await db.query(
       "select public.create_owned_site($1,'Wedding','wedding',$2,$3)",

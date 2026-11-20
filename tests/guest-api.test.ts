@@ -45,6 +45,8 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
     rsvp_deadline: null,
     rsvp_enabled: true,
     allow_self_registration: false,
+    rsvp_attendance_mode: "overall" as "overall" | "events",
+    rsvp_event_ids: [] as string[],
   };
   const invitation = {
     id: "30000000-0000-4000-8000-000000000001",
@@ -108,9 +110,13 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
           headers: { "Content-Type": "image/webp" },
         });
       } else if (table === "attendances") {
+        const expectedEventIds =
+          site.rsvp_attendance_mode === "events"
+            ? site.rsvp_event_ids
+            : ["__overall__"];
         assert.equal(
           url.searchParams.get("event_id"),
-          `in.(${config.events.map((e) => e.id).join(",")})`,
+          `in.(${expectedEventIds.join(",")})`,
         );
         data = [];
       } else if (
@@ -235,8 +241,24 @@ test("real guest handlers gate content, scope sessions, filter RSVP and reject f
 
     const sharedAfterLookup = await (await GET(new Request(sharedUrl))).json();
     assert.equal(sharedAfterLookup.rsvpEnabled, true);
+    assert.equal(sharedAfterLookup.rsvpAttendanceMode, "overall");
+    assert.deepEqual(
+      sharedAfterLookup.rsvpEvents.map((e: { id: string }) => e.id),
+      ["__overall__"],
+    );
     assert.equal(sharedAfterLookup.canResetLookup, true);
     assert.equal(sharedAfterLookup.invitation.guests.length, 2);
+
+    site.rsvp_attendance_mode = "events";
+    site.rsvp_event_ids = [config.events[0]!.id];
+    const perEventReply = await (await GET(new Request(sharedUrl))).json();
+    assert.equal(perEventReply.rsvpAttendanceMode, "events");
+    assert.deepEqual(
+      perEventReply.rsvpEvents.map((e: { id: string }) => e.id),
+      [config.events[0]!.id],
+    );
+    site.rsvp_attendance_mode = "overall";
+    site.rsvp_event_ids = [];
 
     site.rsvp_enabled = false;
     const infoOnly = await (await GET(new Request(sharedUrl))).json();

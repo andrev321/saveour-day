@@ -2,6 +2,7 @@ import {
   guestDisplayName,
   invitationDisplayName,
   type InvitationGuest,
+  type RsvpAttendanceMode,
 } from "@invitations/domain/invitation";
 import { csvFile } from "@invitations/domain/operations";
 import {
@@ -29,6 +30,7 @@ export type InvitationRow = {
 
 export type Management = {
   variants: { id: string; label: string }[];
+  availableEvents: { id: string; title: string; variantIds: string[] }[];
   site: {
     access_mode: string;
     public_variant_id: string | null;
@@ -37,6 +39,8 @@ export type Management = {
     published_release_id: string | null;
     rsvp_enabled: boolean;
     allow_self_registration: boolean;
+    rsvp_attendance_mode: RsvpAttendanceMode;
+    rsvp_event_ids: string[];
   };
   locale: string;
   displayName: string;
