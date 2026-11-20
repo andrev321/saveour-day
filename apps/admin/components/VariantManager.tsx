@@ -14,6 +14,7 @@ import {
 import type { SiteConfig } from "@invitations/domain";
 import { newId } from "@invitations/domain/editor";
 import { usePanelI18n } from "../lib/i18n";
+import { ModalStickyFooter } from "./modal-layout.styles";
 export function VariantManager({
   config,
   onChange,
@@ -214,17 +215,7 @@ export function VariantManager({
               </Stack>
             </Alert>
           ) : (
-            <Group
-              justify="space-between"
-              pt="sm"
-              style={{
-                position: "sticky",
-                bottom: 0,
-                background: "var(--panel-surface)",
-                borderTop: "1px solid var(--panel-border)",
-                zIndex: 2,
-              }}
-            >
+            <ModalStickyFooter justify="space-between">
               <Button
                 variant="subtle"
                 color="red"
@@ -236,7 +227,7 @@ export function VariantManager({
               <Button variant="default" onClick={() => setOpened(false)}>
                 {t("Gotowe", "Done", "Fertig")}
               </Button>
-            </Group>
+            </ModalStickyFooter>
           )}
         </Stack>
       </Modal>

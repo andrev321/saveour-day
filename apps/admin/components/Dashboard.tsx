@@ -22,6 +22,7 @@ import {
   Title,
   Tooltip,
 } from "@mantine/core";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 function GoogleIcon() {
   return (
@@ -227,9 +228,11 @@ export function Dashboard({
         >
           <Stack>
             <Text>{t("emailConfirmedBody")}</Text>
-            <Button onClick={dismissConfirmation}>
-              {t("emailConfirmedContinue")}
-            </Button>
+            <ModalStickyFooter justify="flex-end">
+              <Button onClick={dismissConfirmation}>
+                {t("emailConfirmedContinue")}
+              </Button>
+            </ModalStickyFooter>
           </Stack>
         </Modal>
         <Modal
@@ -254,7 +257,7 @@ export function Dashboard({
                 {deleteError}
               </Alert>
             )}
-            <Group justify="flex-end">
+            <ModalStickyFooter justify="flex-end">
               <Button
                 variant="default"
                 disabled={deleteBusy}
@@ -270,7 +273,7 @@ export function Dashboard({
               >
                 {copy.confirm}
               </ActionButton>
-            </Group>
+            </ModalStickyFooter>
           </Stack>
         </Modal>
         <S.Header>

@@ -2,12 +2,13 @@
 import { loadingText } from "@invitations/ui/loading-copy";
 import { ActionButton } from "./ActionButton";
 import type { ReactNode } from "react";
-import { Alert, Button, Group, Modal, Stack, Text } from "@mantine/core";
+import { Alert, Button, Modal, Stack, Text } from "@mantine/core";
 import type { InvitationLocale } from "@invitations/domain";
 import type { TemplateId } from "@invitations/domain/templates";
 import { TemplatePicker } from "./TemplatePicker";
 import { usePanelI18n } from "../lib/i18n";
 import { templateUi } from "../lib/template-i18n";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 export function TemplateDialog({
   opened,
@@ -83,7 +84,7 @@ export function TemplateDialog({
               {error}
             </Alert>
           )}
-          <Group justify="flex-end">
+          <ModalStickyFooter justify="flex-end">
             <Button variant="default" disabled={busy} onClick={onClose}>
               {tt.cancel}
             </Button>
@@ -99,7 +100,7 @@ export function TemplateDialog({
             >
               {submitLabel}
             </ActionButton>
-          </Group>
+          </ModalStickyFooter>
         </Stack>
       </form>
     </Modal>

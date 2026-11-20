@@ -30,6 +30,7 @@ import { usePanelI18n } from "../lib/i18n";
 import { mediaUi } from "../lib/media-i18n";
 import { templateCatalog } from "@invitations/domain/templates";
 import * as S from "./PhotoLibrary.styles";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 export function PhotoLibrary({
   config,
@@ -449,11 +450,11 @@ export function PhotoLibrary({
             <Text size="sm" c="dimmed">
               {copy.changes}
             </Text>
-            <Group justify="flex-end">
+            <ModalStickyFooter justify="flex-end">
               <Button disabled={deleting} onClick={() => setSelected(null)}>
                 {copy.done}
               </Button>
-            </Group>
+            </ModalStickyFooter>
           </Stack>
         )}
       </Modal>

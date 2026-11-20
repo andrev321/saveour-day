@@ -30,6 +30,25 @@ const theme = createTheme({
           timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
         },
       },
+      styles: (_theme, props) =>
+        props.fullScreen
+          ? {}
+          : {
+              content: {
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              },
+              header: {
+                flexShrink: 0,
+              },
+              body: {
+                flex: "1 1 auto",
+                minHeight: 0,
+                overflowY: "auto",
+                overflowX: "hidden",
+              },
+            },
     }),
     Drawer: Drawer.extend({
       defaultProps: {

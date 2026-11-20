@@ -21,6 +21,7 @@ import {
 } from "@invitations/domain/invitation";
 import { ActionButton } from "./ActionButton";
 import { FormRow } from "./form-layout.styles";
+import { ModalStickyFooter, ModalStickyTop } from "./modal-layout.styles";
 import { type InvitationRow } from "../lib/guest-management";
 import { usePanelI18n } from "../lib/i18n";
 
@@ -232,14 +233,16 @@ function InvitationEditorForm({
   return (
     <form onSubmit={handleFormSubmit}>
       <Stack>
-        <SegmentedControl
-          value={mode}
-          onChange={(v) => {
-            setMode(v as "single" | "group" | "quick");
-            setConfirmRemove(false);
-          }}
-          data={modeOptions}
-        />
+        <ModalStickyTop>
+          <SegmentedControl
+            value={mode}
+            onChange={(v) => {
+              setMode(v as "single" | "group" | "quick");
+              setConfirmRemove(false);
+            }}
+            data={modeOptions}
+          />
+        </ModalStickyTop>
 
         {mode === "single" && (
           <>
@@ -429,7 +432,7 @@ function InvitationEditorForm({
           </Alert>
         )}
 
-        <Group justify="flex-end">
+        <ModalStickyFooter justify="flex-end">
           <Button variant="default" disabled={busy} onClick={onClose}>
             {labelText("Anuluj", "Cancel", "Abbrechen")}
           </Button>
@@ -461,7 +464,7 @@ function InvitationEditorForm({
                     "Einladung und Link erstellen",
                   )}
           </ActionButton>
-        </Group>
+        </ModalStickyFooter>
       </Stack>
     </form>
   );

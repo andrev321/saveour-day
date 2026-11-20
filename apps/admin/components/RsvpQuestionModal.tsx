@@ -22,6 +22,7 @@ import {
   type RsvpQuestion,
 } from "@invitations/domain/rsvp-questions";
 import { usePanelI18n } from "../lib/i18n";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 export type EditableQuestion = RsvpQuestion & { isNew?: boolean };
 
@@ -416,7 +417,7 @@ function RsvpQuestionForm({
             </Text>
           </Stack>
         </Card>
-        <Group justify="flex-end" pt="xs">
+        <ModalStickyFooter justify="flex-end">
           <Button variant="default" onClick={onClose}>
             {labelText("Anuluj", "Cancel", "Abbrechen")}
           </Button>
@@ -425,7 +426,7 @@ function RsvpQuestionForm({
               ? labelText("Dodaj pytanie", "Add question", "Frage hinzufügen")
               : labelText("Zapisz zmiany", "Save changes", "Speichern")}
           </Button>
-        </Group>
+        </ModalStickyFooter>
       </Stack>
     </form>
   );

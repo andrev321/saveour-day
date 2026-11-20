@@ -70,6 +70,7 @@ import { deviceWidths } from "./DeviceSelector";
 import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
+import { ModalStickyFooter } from "./modal-layout.styles";
 type RevisionResponse = { revision: number };
 const draftFieldLabelKeys: Partial<Record<keyof SiteConfig, string>> = {
   identity: "identity",
@@ -761,35 +762,37 @@ export function Editor({
                   "Dieser Tab enthält Änderungen aus einer früheren Sitzung. Wiederherstellen oder Serverversion behalten.",
                 )}
               </Text>
-              <Button
-                onClick={() => {
-                  if (recovery) setConfig(recovery);
-                  setRecovery(null);
-                }}
-              >
-                {label(
-                  "Odzyskaj szkic",
-                  "Recover draft",
-                  "Entwurf wiederherstellen",
-                )}
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => {
-                  try {
-                    sessionStorage.removeItem(localKey);
-                  } catch {
-                    /* Optional storage. */
-                  }
-                  setRecovery(null);
-                }}
-              >
-                {label(
-                  "Zachowaj wersję serwera",
-                  "Keep server version",
-                  "Serverversion behalten",
-                )}
-              </Button>
+              <ModalStickyFooter justify="flex-end">
+                <Button
+                  variant="default"
+                  onClick={() => {
+                    try {
+                      sessionStorage.removeItem(localKey);
+                    } catch {
+                      /* Optional storage. */
+                    }
+                    setRecovery(null);
+                  }}
+                >
+                  {label(
+                    "Zachowaj wersję serwera",
+                    "Keep server version",
+                    "Serverversion behalten",
+                  )}
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (recovery) setConfig(recovery);
+                    setRecovery(null);
+                  }}
+                >
+                  {label(
+                    "Odzyskaj szkic",
+                    "Recover draft",
+                    "Entwurf wiederherstellen",
+                  )}
+                </Button>
+              </ModalStickyFooter>
             </Stack>
           </Modal>
           <Modal
@@ -826,29 +829,31 @@ export function Editor({
                   }
                 />
               ))}
-              <Button
-                onClick={() => {
-                  if (!conflict) return;
-                  const merged = { ...conflict.merged };
-                  for (const key of remoteFields)
-                    Object.assign(merged, {
-                      [key]:
-                        conflict.remote.draft.config[key as keyof SiteConfig],
-                    });
-                  serverDraft.current = conflict.remote.draft;
-                  setData(conflict.remote);
-                  setSaved(JSON.stringify(conflict.remote.draft.config));
-                  setConfig(merged);
-                  setConflict(null);
-                  setSaveError("");
-                }}
-              >
-                {label(
-                  "Zastosuj połączenie",
-                  "Apply merge",
-                  "Zusammenführung übernehmen",
-                )}
-              </Button>
+              <ModalStickyFooter justify="flex-end">
+                <Button
+                  onClick={() => {
+                    if (!conflict) return;
+                    const merged = { ...conflict.merged };
+                    for (const key of remoteFields)
+                      Object.assign(merged, {
+                        [key]:
+                          conflict.remote.draft.config[key as keyof SiteConfig],
+                      });
+                    serverDraft.current = conflict.remote.draft;
+                    setData(conflict.remote);
+                    setSaved(JSON.stringify(conflict.remote.draft.config));
+                    setConfig(merged);
+                    setConflict(null);
+                    setSaveError("");
+                  }}
+                >
+                  {label(
+                    "Zastosuj połączenie",
+                    "Apply merge",
+                    "Zusammenführung übernehmen",
+                  )}
+                </Button>
+              </ModalStickyFooter>
             </Stack>
           </Modal>
           <TemplateDialog
@@ -872,7 +877,7 @@ export function Editor({
             <Stack>
               <Text>{tt.warning}</Text>
               <Text>{tt.retained}</Text>
-              <Group>
+              <ModalStickyFooter justify="flex-end">
                 <Button
                   variant="default"
                   disabled={busy}
@@ -888,7 +893,7 @@ export function Editor({
                 >
                   {tt.replace}
                 </ActionButton>
-              </Group>
+              </ModalStickyFooter>
             </Stack>
           </Modal>
           <Modal
@@ -946,9 +951,11 @@ export function Editor({
                 </>
               )}
 
-              <Button onClick={publish} disabled={dirty || busy}>
-                {demo ? t("startSimulation") : t("confirmPublish")}
-              </Button>
+              <ModalStickyFooter justify="flex-end">
+                <Button onClick={publish} disabled={dirty || busy}>
+                  {demo ? t("startSimulation") : t("confirmPublish")}
+                </Button>
+              </ModalStickyFooter>
             </Stack>
           </Modal>
 

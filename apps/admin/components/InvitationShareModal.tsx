@@ -9,6 +9,7 @@ import {
 import { usePanelI18n } from "../lib/i18n";
 import { CopyableLinkRow } from "./CopyableLinkRow";
 import { QrCodeCard } from "./QrCodeCard";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 export type ShareInvitationTarget = {
   groupName: string | null;
@@ -173,7 +174,7 @@ export function InvitationShareModal({
             )}
           />
 
-          <Group justify="flex-end" mt="xs">
+          <ModalStickyFooter justify="flex-end">
             {target.justCreated && onAddAnother && (
               <Button variant="light" onClick={onAddAnother}>
                 {labelText(
@@ -186,7 +187,7 @@ export function InvitationShareModal({
             <Button onClick={onClose}>
               {labelText("Zamknij", "Close", "Schließen")}
             </Button>
-          </Group>
+          </ModalStickyFooter>
         </Stack>
       )}
     </Modal>

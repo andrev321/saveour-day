@@ -64,6 +64,7 @@ import {
   VenueCreateModal,
   VenueFormFields,
 } from "./ContentEntityModals";
+import { ModalStickyFooter, ModalStickyTop } from "./modal-layout.styles";
 type Change = Dispatch<SetStateAction<SiteConfig>>;
 function useText() {
   const { language } = usePanelI18n();
@@ -1123,14 +1124,19 @@ function SectionModalBody(
         </Box>
       ) : (
         <>
-          <SegmentedControl
-            value={modalTab}
-            onChange={(v) => setModalTab(v as "edit" | "preview")}
-            data={[
-              { value: "edit", label: t("Edycja", "Edit", "Bearbeiten") },
-              { value: "preview", label: t("Podgląd", "Preview", "Vorschau") },
-            ]}
-          />
+          <ModalStickyTop>
+            <SegmentedControl
+              value={modalTab}
+              onChange={(v) => setModalTab(v as "edit" | "preview")}
+              data={[
+                { value: "edit", label: t("Edycja", "Edit", "Bearbeiten") },
+                {
+                  value: "preview",
+                  label: t("Podgląd", "Preview", "Vorschau"),
+                },
+              ]}
+            />
+          </ModalStickyTop>
           {modalTab === "edit" ? (
             <SectionDetails {...props} />
           ) : (
@@ -1143,11 +1149,11 @@ function SectionModalBody(
           )}
         </>
       )}
-      <Group justify="flex-end">
+      <ModalStickyFooter justify="flex-end">
         <Button variant="default" onClick={() => onSelect(null)}>
           {t("Gotowe", "Done", "Fertig")}
         </Button>
-      </Group>
+      </ModalStickyFooter>
     </Stack>
   );
 }
@@ -1388,23 +1394,28 @@ function Resources({
       )}
     >
       <Stack>
-        <Select
-          allowDeselect={false}
-          aria-label={t("Rodzaj danych", "Data type", "Datentyp")}
-          value={kind}
-          data={[
-            {
-              value: "events",
-              label: t("Wydarzenia", "Events", "Veranstaltungen"),
-            },
-            { value: "contacts", label: t("Kontakty", "Contacts", "Kontakte") },
-            { value: "venues", label: t("Miejsca", "Venues", "Orte") },
-          ]}
-          onChange={(v) => {
-            setKind(v as typeof kind);
-            setRemoving(null);
-          }}
-        />
+        <ModalStickyTop>
+          <Select
+            allowDeselect={false}
+            aria-label={t("Rodzaj danych", "Data type", "Datentyp")}
+            value={kind}
+            data={[
+              {
+                value: "events",
+                label: t("Wydarzenia", "Events", "Veranstaltungen"),
+              },
+              {
+                value: "contacts",
+                label: t("Kontakty", "Contacts", "Kontakte"),
+              },
+              { value: "venues", label: t("Miejsca", "Venues", "Orte") },
+            ]}
+            onChange={(v) => {
+              setKind(v as typeof kind);
+              setRemoving(null);
+            }}
+          />
+        </ModalStickyTop>
         {config[kind].map((item) => {
           const usageCount =
             kind === "events"

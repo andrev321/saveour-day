@@ -65,6 +65,7 @@ import { RsvpQuestionsEditor } from "./RsvpQuestionsEditor";
 import { RsvpSummaryCards } from "./RsvpSummaryCards";
 import { QrCodeCard } from "./QrCodeCard";
 import { FilterGrid } from "./form-layout.styles";
+import { ModalStickyFooter } from "./modal-layout.styles";
 function localDeadline(iso: string | null) {
   if (!iso) return "";
   const p = Object.fromEntries(
@@ -1170,7 +1171,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
         >
           <Stack>
             <Text>{confirmation?.description}</Text>
-            <Group>
+            <ModalStickyFooter justify="flex-end">
               <Button
                 variant="default"
                 disabled={busy}
@@ -1195,7 +1196,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               >
                 {labelText("Potwierdź", "Confirm", "Bestätigen")}
               </ActionButton>
-            </Group>
+            </ModalStickyFooter>
           </Stack>
         </Modal>
         <Modal
@@ -1245,22 +1246,24 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                 "Bestehende Einladungen werden nicht überschrieben. Prüfen, ob die Einladungen bereits vorhanden sind.",
               )}
             </Text>
-            <ActionButton
-              loading={operation === "import"}
-              pendingLabel={loadingText(language, "import")}
-              onClick={() =>
-                void action("import", {
-                  requestId: importId,
-                  entries: imported,
-                })
-              }
-            >
-              {labelText(
-                "Zatwierdź import",
-                "Confirm import",
-                "Import bestätigen",
-              )}
-            </ActionButton>
+            <ModalStickyFooter justify="flex-end">
+              <ActionButton
+                loading={operation === "import"}
+                pendingLabel={loadingText(language, "import")}
+                onClick={() =>
+                  void action("import", {
+                    requestId: importId,
+                    entries: imported,
+                  })
+                }
+              >
+                {labelText(
+                  "Zatwierdź import",
+                  "Confirm import",
+                  "Import bestätigen",
+                )}
+              </ActionButton>
+            </ModalStickyFooter>
           </Stack>
         </Modal>
       </Stack>

@@ -15,6 +15,7 @@ import type { SiteConfig } from "@invitations/domain";
 import { newId } from "@invitations/domain/editor";
 import { usePanelI18n } from "../lib/i18n";
 import { PhotoReference, photoName } from "./PhotoReference";
+import { ModalStickyFooter } from "./modal-layout.styles";
 
 export type VenueInput = Omit<SiteConfig["venues"][number], "id">;
 export type EventInput = Omit<SiteConfig["events"][number], "id">;
@@ -54,14 +55,14 @@ function CreateEntityModal({
       >
         <Stack>
           {children}
-          <Group justify="flex-end">
+          <ModalStickyFooter justify="flex-end">
             <Button variant="default" onClick={onClose}>
               {t("Anuluj", "Cancel", "Abbrechen")}
             </Button>
             <Button type="submit" disabled={!canSubmit}>
               {submitLabel}
             </Button>
-          </Group>
+          </ModalStickyFooter>
         </Stack>
       </form>
     </Modal>
@@ -438,7 +439,7 @@ export function GalleryPhotoModal({
             onChange={setChosenId}
           />
         )}
-        <Group justify="flex-end">
+        <ModalStickyFooter justify="flex-end">
           <Button variant="default" onClick={handleClose}>
             {t("Anuluj", "Cancel", "Abbrechen")}
           </Button>
@@ -453,7 +454,7 @@ export function GalleryPhotoModal({
           >
             {t("Dodaj zdjęcie", "Add photo", "Foto hinzufügen")}
           </Button>
-        </Group>
+        </ModalStickyFooter>
       </Stack>
     </Modal>
   );
