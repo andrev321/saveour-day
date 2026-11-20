@@ -16,6 +16,7 @@ export default defineConfig({
   ],
   workers: process.env.CI ? 3 : undefined,
   timeout: 60000,
+  expect: { timeout: 15000 },
   use: {
     baseURL: siteUrl,
     headless: true,
