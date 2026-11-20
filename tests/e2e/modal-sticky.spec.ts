@@ -13,6 +13,24 @@ async function assertStickyInModal(dialog: Locator) {
   await expect(topBar).toBeVisible();
   await expect(footer).toBeVisible();
 
+  // Wait for Mantine modal open transition to finish before measuring positions.
+  await dialog.evaluate(async (el) => {
+    const root = el.closest(".mantine-Modal-root") ?? el;
+    await Promise.allSettled(
+      root.getAnimations({ subtree: true }).map((a) => a.finished),
+    );
+  });
+  await expect
+    .poll(async () => {
+      const a = await topBar.boundingBox();
+      await dialog
+        .page()
+        .evaluate(() => new Promise((r) => requestAnimationFrame(r)));
+      const b = await topBar.boundingBox();
+      return a && b ? Math.abs(a.y - b.y) : Infinity;
+    })
+    .toBeLessThan(0.5);
+
   const metrics = await body.evaluate((el) => ({
     scrollHeight: el.scrollHeight,
     clientHeight: el.clientHeight,

@@ -33,10 +33,13 @@ for (const width of [390, 1440]) {
         exact: true,
       })
       .click();
-    await page
+    const altInput = page
       .getByRole("dialog")
-      .getByRole("textbox", { name: "Opis zdjęcia", exact: true })
-      .fill("");
+      .getByRole("textbox", { name: "Opis zdjęcia", exact: true });
+    await expect(async () => {
+      await altInput.fill("");
+      await expect(altInput).toHaveValue("", { timeout: 300 });
+    }).toPass({ timeout: 10000 });
     await page
       .getByRole("dialog")
       .getByRole("button", { name: "Gotowe", exact: true })
@@ -45,16 +48,33 @@ for (const width of [390, 1440]) {
     await page
       .getByRole("button", { name: "Początek zaproszenia", exact: true })
       .click();
+    const heroDialog = page.getByRole("dialog", {
+      name: "Początek zaproszenia",
+    });
+    await expect(heroDialog).toBeVisible();
+    await heroDialog.evaluate(async (el) => {
+      const root = el.closest(".mantine-Modal-root") ?? el;
+      await Promise.allSettled(
+        root.getAnimations({ subtree: true }).map((a) => a.finished),
+      );
+    });
     for (const device of ["Komputer", "Telefon", "Tablet"]) {
-      await page
-        .getByRole("dialog")
+      await heroDialog
         .getByRole("button", { name: device, exact: true })
         .click();
-      const select = page.getByRole("combobox", {
+      const select = heroDialog.getByRole("combobox", {
         name: "Zdjęcie dla wybranego urządzenia",
         exact: true,
       });
-      await select.click();
+      await expect(async () => {
+        await select.scrollIntoViewIfNeeded();
+        if ((await select.getAttribute("aria-expanded")) !== "true") {
+          await select.click();
+        }
+        await expect(select).toHaveAttribute("aria-expanded", "true", {
+          timeout: 1500,
+        });
+      }).toPass({ timeout: 10000 });
       const option = page.getByRole("option", { name: "photo", exact: true });
       await expect(
         option.locator('[data-ui="photo-reference-thumbnail"]'),
