@@ -445,6 +445,7 @@ export function Invitation({
     sections.find((section) => section.type === "timeline"),
     sections.find((section) => section.type === "venue"),
   ].filter((section) => section !== undefined);
+  const colorScheme = isDarkColor(config.design.paper) ? "dark" : "light";
   const heading = config.identity.displayName || config.hero.title;
   const dateLabel = variant.dateLabel || config.hero.dateLabel;
   if (
@@ -463,6 +464,7 @@ export function Invitation({
           ref={motionRef}
           p="xl"
           data-theme={config.theme}
+          data-color-scheme={colorScheme}
           data-decorations={config.appearance.decorations}
           style={colors}
         >
@@ -482,6 +484,7 @@ export function Invitation({
       <S.ThemedInvitation
         ref={motionRef}
         data-theme={config.theme}
+        data-color-scheme={colorScheme}
         data-decorations={config.appearance.decorations}
         style={colors}
       >

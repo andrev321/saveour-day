@@ -247,7 +247,11 @@ export const InvitationHero = styled.section.attrs<{ "data-ui"?: string }>({
   &[data-layout="overlay"][data-has-photo="true"] {
     display: flex;
     align-items: flex-end;
-    max-width: none;
+    max-width: 1680px;
+    padding-inline: max(
+      var(--gutter),
+      calc((100% - 1440px) / 2 + var(--gutter))
+    );
     min-height: 760px;
     background: #141b21;
     color: #fffaf2;
@@ -562,68 +566,107 @@ export const InvitationFooter = styled.footer`
 export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation-response",
 })`
-  max-width: 950px;
+  max-width: 720px;
   margin: 0 auto;
-  padding: 48px var(--gutter) 76px;
+  padding: 36px var(--gutter) 56px;
+  border-top: 1px solid var(--line);
   scroll-margin-top: 24px;
   & h2 {
-    font: 400 clamp(2rem, 4vw, 3rem)/1.15 var(--mantine-font-family-headings);
+    font: 400 clamp(1.65rem, 3vw, 2.35rem)/1.15
+      var(--mantine-font-family-headings);
+    margin: 0 0 12px;
   }
   & label {
     display: block;
-    margin: 16px 0;
-    font-size: 15px;
+    margin: 12px 0;
+    font-size: 14px;
   }
   & p {
-    line-height: 1.7;
+    line-height: 1.55;
+    margin: 0 0 10px;
   }
-  & input,
+  & input:not([type="radio"]):not([type="checkbox"]),
   & select,
   & textarea {
     display: block;
     width: 100%;
-    padding: 12px;
-    margin-top: 8px;
+    padding: 9px 12px;
+    margin-top: 6px;
     border: 1px solid var(--line);
-    border-radius: 2px;
+    border-radius: 5px;
     color: var(--ink);
     background: var(--surface);
     font: inherit;
+    font-size: 14px;
+  }
+  & input[type="radio"],
+  & input[type="checkbox"] {
+    width: auto;
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    accent-color: var(--accent);
   }
   & textarea {
-    min-height: 100px;
+    min-height: 76px;
+    resize: vertical;
   }
   & fieldset {
     border: 1px solid var(--line);
-    margin: 24px 0;
-    padding: 20px;
+    border-radius: 8px;
+    margin: 14px 0;
+    padding: 14px 16px;
     min-width: 0;
+    background: var(--surface);
   }
   & legend {
-    padding-inline: 8px;
+    padding-inline: 6px;
+    font-weight: 600;
+    font-size: 14px;
   }
   & button {
-    min-height: 46px;
-    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 18px;
     font: inherit;
     font-size: 14px;
+    font-weight: 500;
     background: var(--ink);
     color: var(--paper);
     border: 1px solid var(--ink);
-    margin: 0 12px 12px 0;
+    border-radius: 5px;
+    margin: 0;
     cursor: pointer;
+    transition:
+      opacity 140ms ease,
+      background-color 140ms ease,
+      border-color 140ms ease;
   }
   & button[type="button"] {
     color: var(--ink);
     background: transparent;
+    border-color: var(--line);
+  }
+  & button[type="button"]:hover:not(:disabled) {
+    border-color: var(--ink);
+    background: color-mix(in srgb, var(--ink) 6%, transparent);
+  }
+  & button:not([type="button"]):hover:not(:disabled) {
+    opacity: 0.9;
   }
   & button:disabled {
-    opacity: 0.55;
+    opacity: 0.45;
     cursor: default;
   }
   & :is(input, select, textarea):focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 2px;
+  }
+  @media (max-width: 47.99em) {
+    padding-block: 28px 44px;
   }
 `;
 
@@ -804,6 +847,51 @@ export const ThemedInvitation = styled(Invitation)`
   }
   &[data-decorations="full"] ${InvitationSection} {
     border-top: 2px solid var(--accent);
+  }
+
+  @media (min-width: 1681px) {
+    &[data-color-scheme="dark"]
+      ${InvitationHero}[data-layout="overlay"][data-has-photo="true"] {
+      background: transparent;
+    }
+    &[data-color-scheme="dark"]
+      ${InvitationHero}[data-layout="overlay"][data-has-photo="true"]::after,
+    &[data-color-scheme="dark"]
+      ${InvitationHero}[data-layout="overlay"][data-has-photo="true"]
+      ${InvitationHeroPhoto} {
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 140px,
+        #000 calc(100% - 140px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 140px,
+        #000 calc(100% - 140px),
+        transparent 100%
+      );
+    }
+    &[data-color-scheme="light"]
+      ${InvitationHero}[data-layout="overlay"][data-has-photo="true"]
+      ${InvitationHeroPhoto} {
+      -webkit-mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 96px,
+        #000 calc(100% - 96px),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        90deg,
+        transparent 0%,
+        #000 96px,
+        #000 calc(100% - 96px),
+        transparent 100%
+      );
+    }
   }
 
   @media (max-width: 47.99em) {
