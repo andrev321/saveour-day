@@ -4,6 +4,7 @@ import {
   type QuestionValue,
   type RsvpQuestion,
 } from "@invitations/domain/rsvp-questions";
+import * as S from "./styles";
 
 export function QuestionField({
   question,
@@ -30,9 +31,9 @@ export function QuestionField({
   if (question.type === "text") {
     const text = value && "text" in value ? value.text : "";
     return (
-      <label>
+      <S.QuestionTextLabel>
         <span>{title}</span>
-        {question.help && <small>{question.help}</small>}
+        {question.help && <S.QuestionHelp>{question.help}</S.QuestionHelp>}
         <textarea
           rows={2}
           maxLength={QUESTION_POLICY.maxTextAnswerLength}
@@ -43,7 +44,7 @@ export function QuestionField({
             onChange(v.trim().length > 0 ? { text: v } : undefined);
           }}
         />
-      </label>
+      </S.QuestionTextLabel>
     );
   }
 
@@ -51,10 +52,12 @@ export function QuestionField({
     const num = value && "number" in value ? value.number : "";
     const current = typeof num === "number" ? num : 0;
     return (
-      <div>
-        <span>{title}</span>
-        {question.help && <small>{question.help}</small>}
-        <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
+      <S.QuestionNumberRow>
+        <div>
+          <span>{title}</span>
+          {question.help && <S.QuestionHelp>{question.help}</S.QuestionHelp>}
+        </div>
+        <S.QuestionStepper>
           <button
             type="button"
             disabled={disabled || current <= 0}
@@ -105,8 +108,8 @@ export function QuestionField({
           >
             +
           </button>
-        </div>
-      </div>
+        </S.QuestionStepper>
+      </S.QuestionNumberRow>
     );
   }
 
@@ -119,48 +122,47 @@ export function QuestionField({
     const selectedId = selectedIds[0] ?? "";
     if (question.options.length === 2 && !question.allowOther) {
       return (
-        <fieldset disabled={disabled}>
+        <S.QuestionGroup disabled={disabled}>
           <legend>{title}</legend>
-          {question.help && <small>{question.help}</small>}
-          <div role="radiogroup" style={{ display: "inline-flex", gap: 6 }}>
+          {question.help && <S.QuestionHelp>{question.help}</S.QuestionHelp>}
+          <S.QuestionOptions role="radiogroup">
             {question.options.map((opt) => {
               const active = selectedId === opt.id;
               return (
-                <button
+                <S.QuestionPillButton
                   key={opt.id}
                   type="button"
                   role="radio"
                   aria-checked={active}
                   disabled={disabled}
                   onClick={() => onChange({ optionIds: [opt.id] })}
-                  style={{ fontWeight: active ? 700 : 400 }}
                 >
                   {opt.label}
-                </button>
+                </S.QuestionPillButton>
               );
             })}
-          </div>
-        </fieldset>
+          </S.QuestionOptions>
+        </S.QuestionGroup>
       );
     }
     return (
-      <fieldset disabled={disabled}>
+      <S.QuestionGroup disabled={disabled}>
         <legend>{title}</legend>
-        {question.help && <small>{question.help}</small>}
-        {question.options.map((opt) => (
-          <label key={opt.id}>
-            <input
-              type="radio"
-              name={`${namePrefix}-${question.id}`}
-              checked={!isOtherActive && selectedId === opt.id}
-              onChange={() => onChange({ optionIds: [opt.id] })}
-            />{" "}
-            {opt.label}
-          </label>
-        ))}
-        {question.allowOther && (
-          <div>
-            <label>
+        {question.help && <S.QuestionHelp>{question.help}</S.QuestionHelp>}
+        <S.QuestionOptions>
+          {question.options.map((opt) => (
+            <S.QuestionOptionLabel key={opt.id}>
+              <input
+                type="radio"
+                name={`${namePrefix}-${question.id}`}
+                checked={!isOtherActive && selectedId === opt.id}
+                onChange={() => onChange({ optionIds: [opt.id] })}
+              />
+              {opt.label}
+            </S.QuestionOptionLabel>
+          ))}
+          {question.allowOther && (
+            <S.QuestionOptionLabel>
               <input
                 type="radio"
                 name={`${namePrefix}-${question.id}`}
@@ -168,59 +170,57 @@ export function QuestionField({
                 onChange={() =>
                   onChange({ optionIds: [], other: otherText || "" })
                 }
-              />{" "}
-              {copy.otherOption}
-            </label>
-            {isOtherActive && (
-              <input
-                type="text"
-                maxLength={QUESTION_POLICY.maxOtherLength}
-                placeholder={copy.otherPlaceholder}
-                value={otherText}
-                onChange={(e) =>
-                  onChange({ optionIds: [], other: e.target.value })
-                }
               />
-            )}
-          </div>
+              {copy.otherOption}
+            </S.QuestionOptionLabel>
+          )}
+        </S.QuestionOptions>
+        {question.allowOther && isOtherActive && (
+          <input
+            type="text"
+            maxLength={QUESTION_POLICY.maxOtherLength}
+            placeholder={copy.otherPlaceholder}
+            value={otherText}
+            onChange={(e) => onChange({ optionIds: [], other: e.target.value })}
+          />
         )}
-      </fieldset>
+      </S.QuestionGroup>
     );
   }
 
   // multi
   return (
-    <fieldset disabled={disabled}>
+    <S.QuestionGroup disabled={disabled}>
       <legend>{title}</legend>
-      {question.help && <small>{question.help}</small>}
-      {question.options.map((opt) => {
-        const checked = selectedIds.includes(opt.id);
-        return (
-          <label key={opt.id}>
-            <input
-              type="checkbox"
-              checked={checked}
-              onChange={(e) => {
-                const nextIds = e.target.checked
-                  ? [...selectedIds, opt.id]
-                  : selectedIds.filter((id) => id !== opt.id);
-                if (nextIds.length === 0 && !isOtherActive) {
-                  onChange(undefined);
-                } else {
-                  onChange({
-                    optionIds: nextIds,
-                    ...(isOtherActive ? { other: otherText } : {}),
-                  });
-                }
-              }}
-            />{" "}
-            {opt.label}
-          </label>
-        );
-      })}
-      {question.allowOther && (
-        <div>
-          <label>
+      {question.help && <S.QuestionHelp>{question.help}</S.QuestionHelp>}
+      <S.QuestionOptions>
+        {question.options.map((opt) => {
+          const checked = selectedIds.includes(opt.id);
+          return (
+            <S.QuestionOptionLabel key={opt.id}>
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={(e) => {
+                  const nextIds = e.target.checked
+                    ? [...selectedIds, opt.id]
+                    : selectedIds.filter((id) => id !== opt.id);
+                  if (nextIds.length === 0 && !isOtherActive) {
+                    onChange(undefined);
+                  } else {
+                    onChange({
+                      optionIds: nextIds,
+                      ...(isOtherActive ? { other: otherText } : {}),
+                    });
+                  }
+                }}
+              />
+              {opt.label}
+            </S.QuestionOptionLabel>
+          );
+        })}
+        {question.allowOther && (
+          <S.QuestionOptionLabel>
             <input
               type="checkbox"
               checked={Boolean(isOtherActive)}
@@ -233,22 +233,22 @@ export function QuestionField({
                   onChange({ optionIds: selectedIds });
                 }
               }}
-            />{" "}
-            {copy.otherOption}
-          </label>
-          {isOtherActive && (
-            <input
-              type="text"
-              maxLength={QUESTION_POLICY.maxOtherLength}
-              placeholder={copy.otherPlaceholder}
-              value={otherText}
-              onChange={(e) =>
-                onChange({ optionIds: selectedIds, other: e.target.value })
-              }
             />
-          )}
-        </div>
+            {copy.otherOption}
+          </S.QuestionOptionLabel>
+        )}
+      </S.QuestionOptions>
+      {question.allowOther && isOtherActive && (
+        <input
+          type="text"
+          maxLength={QUESTION_POLICY.maxOtherLength}
+          placeholder={copy.otherPlaceholder}
+          value={otherText}
+          onChange={(e) =>
+            onChange({ optionIds: selectedIds, other: e.target.value })
+          }
+        />
       )}
-    </fieldset>
+    </S.QuestionGroup>
   );
 }

@@ -3,6 +3,7 @@ import { Invitation } from "@invitations/renderer";
 import { createDemo } from "@invitations/domain/demo";
 import { guestContent } from "@invitations/domain/guest";
 import { themes, themeNames } from "@invitations/domain";
+import { adminPanelUrl } from "../../../lib/server";
 export default async function Demo({
   params,
   searchParams,
@@ -43,5 +44,10 @@ export default async function Demo({
     (v) => v.slug === normalizedSlug || v.slug === slug || v.id === slug,
   );
   if (!variant) notFound();
-  return <Invitation config={guestContent(config, variant.id)} />;
+  return (
+    <Invitation
+      config={guestContent(config, variant.id)}
+      createHref={adminPanelUrl()}
+    />
+  );
 }

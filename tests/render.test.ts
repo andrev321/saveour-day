@@ -100,3 +100,52 @@ test("React escapes user text and does not render excluded variant sections", ()
   assert.doesNotMatch(html, /<script>alert/);
   assert.doesNotMatch(html, /Przykładowe miejsce przyjęcia/);
 });
+test("renders subtle admin promo link in footer when createHref is provided", () => {
+  const config = createDemo();
+  const withoutPromo = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.doesNotMatch(withoutPromo, /invitation-footer-promo/);
+
+  const withPromo = renderToStaticMarkup(
+    createElement(Invitation, {
+      config,
+      createHref: "https://admin.saveour.day",
+    }),
+  );
+  assert.match(withPromo, /data-ui="invitation-footer-promo"/);
+  assert.match(
+    withPromo,
+    /href="https:\/\/admin\.saveour\.day"[^>]*>Stwórz swoje zaproszenie<\/a>/,
+  );
+
+  const emptyFooterConfig = {
+    ...createDemo(),
+    copy: { ...config.copy, footer: "" },
+  };
+  const emptyFooterHtml = renderToStaticMarkup(
+    createElement(Invitation, {
+      config: emptyFooterConfig,
+      createHref: "https://admin.saveour.day",
+    }),
+  );
+  assert.match(emptyFooterHtml, /Stwórz swoje zaproszenie/);
+
+  const enConfig = { ...createDemo("demo", "en-GB") };
+  const enHtml = renderToStaticMarkup(
+    createElement(Invitation, {
+      config: enConfig,
+      createHref: "https://admin.saveour.day",
+    }),
+  );
+  assert.match(enHtml, /Create your invitation/);
+
+  const focusedFooterHtml = renderToStaticMarkup(
+    createElement(Invitation, {
+      config: emptyFooterConfig,
+      focusSection: "footer",
+      createHref: "https://admin.saveour.day",
+    }),
+  );
+  assert.doesNotMatch(focusedFooterHtml, /invitation-footer-promo/);
+});

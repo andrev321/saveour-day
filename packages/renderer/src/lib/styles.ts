@@ -167,7 +167,7 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
     gap: 8px 24px;
     min-width: 0;
   }
-  a {
+  nav > a {
     color: inherit;
     font-size: 12px;
     text-decoration: none;
@@ -177,17 +177,20 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
     background-size: 0 1px;
     transition: background-size 200ms ease;
   }
-  nav a[data-calendar] {
+  nav > button[data-calendar] {
     display: inline-flex;
     align-items: center;
     padding: 6px;
+    border: 0;
     background: none;
+    color: inherit;
+    cursor: pointer;
   }
   @media (hover: hover) and (pointer: fine) {
-    a:hover {
+    nav > a:hover {
       background-size: 100% 1px;
     }
-    nav a[data-calendar]:hover {
+    nav > button[data-calendar]:hover {
       opacity: 0.72;
     }
   }
@@ -202,10 +205,10 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
     nav {
       gap: 8px 12px;
     }
-    nav a {
+    nav > a {
       font-size: 11px;
     }
-    nav a:not(:last-child):not([data-calendar]) {
+    nav > a:not(:last-of-type) {
       display: none;
     }
   }
@@ -563,6 +566,33 @@ export const InvitationFooter = styled.footer`
   font-size: 14px;
   border-top: 1px solid var(--line);
 `;
+export const InvitationFooterPromo = styled.a.attrs<{ "data-ui"?: string }>({
+  "data-ui": "invitation-footer-promo",
+})`
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  opacity: 0.45;
+  text-decoration: none;
+  transition: opacity 160ms ease;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.8;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+`;
 export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation-response",
 })`
@@ -629,10 +659,10 @@ export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
     align-items: center;
     justify-content: center;
     gap: 6px;
-    min-height: 40px;
-    padding: 8px 18px;
+    min-height: 38px;
+    padding: 8px 14px;
     font: inherit;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 500;
     background: var(--ink);
     color: var(--paper);

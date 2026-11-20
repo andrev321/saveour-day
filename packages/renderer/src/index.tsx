@@ -10,12 +10,14 @@ import {
   type MediaAsset,
   type SiteConfig,
 } from "@invitations/domain";
+import { calendarLinks } from "@invitations/domain/operations";
 import {
   Anchor,
   ActionIcon,
   Button,
   Group,
   MantineProvider,
+  Menu,
   Stack,
   Text,
   Title,
@@ -353,6 +355,61 @@ function Contact({
     </Stack>
   );
 }
+export function CalendarMenu({
+  config,
+  icsHref,
+  position = "bottom-end",
+  children,
+}: {
+  config: SiteConfig;
+  icsHref: string;
+  position?: "bottom-end" | "bottom-start";
+  children: ReactNode;
+}) {
+  const links = calendarLinks(config);
+  const items =
+    config.locale === "de-DE"
+      ? {
+          google: "Google Kalender",
+          outlook: "Outlook",
+          apple: "Apple Kalender (.ics)",
+        }
+      : {
+          google: "Google Calendar",
+          outlook: "Outlook",
+          apple: "Apple Calendar (.ics)",
+        };
+  return (
+    <Menu position={position} shadow="md" withinPortal={false}>
+      <Menu.Target>{children}</Menu.Target>
+      <Menu.Dropdown>
+        {links && (
+          <>
+            <Menu.Item
+              component="a"
+              href={links.google}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {items.google}
+            </Menu.Item>
+            <Menu.Item
+              component="a"
+              href={links.outlook}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {items.outlook}
+            </Menu.Item>
+          </>
+        )}
+        <Menu.Item component="a" href={icsHref}>
+          {items.apple}
+        </Menu.Item>
+      </Menu.Dropdown>
+    </Menu>
+  );
+}
 export function Invitation({
   config,
   variantId,
@@ -360,6 +417,7 @@ export function Invitation({
   onEditSection,
   focusSection,
   calendarHref,
+  createHref,
   children,
 }: {
   config: SiteConfig;
@@ -368,6 +426,7 @@ export function Invitation({
   resolveMedia?: (src: string) => string;
   focusSection?: string;
   calendarHref?: string;
+  createHref?: string;
   children?: ReactNode;
 }) {
   const variant = config.variants.find(
@@ -381,7 +440,8 @@ export function Invitation({
   const showMain =
     !focusSection || (focusSection !== "hero" && focusSection !== "footer");
   const showFooter =
-    (!focusSection || focusSection === "footer") && Boolean(config.copy.footer);
+    (!focusSection || focusSection === "footer") &&
+    Boolean(config.copy.footer || (!focusSection && createHref));
   const renderedSections =
     focusSection && showMain
       ? config.sections.filter((section) => section.id === focusSection)
@@ -408,6 +468,7 @@ export function Invitation({
           details: "Zobacz szczegóły",
           navigation: "Nawigacja zaproszenia",
           calendar: "Dodaj do kalendarza",
+          createOwn: "Stwórz swoje zaproszenie",
         }
       : config.locale === "en-GB"
         ? {
@@ -416,6 +477,7 @@ export function Invitation({
             details: "View details",
             navigation: "Invitation navigation",
             calendar: "Add to calendar",
+            createOwn: "Create your invitation",
           }
         : {
             respond: "Teilnahme bestätigen",
@@ -423,6 +485,7 @@ export function Invitation({
             details: "Details ansehen",
             navigation: "Einladungsnavigation",
             calendar: "Zum Kalender hinzufügen",
+            createOwn: "Eigene Einladung erstellen",
           };
   const response = hasChildren;
   const contact = sections.find(
@@ -501,15 +564,16 @@ export function Invitation({
                     </a>
                   ))}
                 {calendarHref && (
-                  <a
-                    data-calendar=""
-                    href={calendarHref}
-                    download="invitation.ics"
-                    aria-label={labels.calendar}
-                    title={labels.calendar}
-                  >
-                    <CalendarPlusIcon size={18} aria-hidden="true" />
-                  </a>
+                  <CalendarMenu config={config} icsHref={calendarHref}>
+                    <button
+                      type="button"
+                      data-calendar=""
+                      aria-label={labels.calendar}
+                      title={labels.calendar}
+                    >
+                      <CalendarPlusIcon size={18} aria-hidden="true" />
+                    </button>
+                  </CalendarMenu>
                 )}
                 {actionTarget && (
                   <a href={`#${actionTarget}`}>
@@ -706,7 +770,16 @@ export function Invitation({
         )}
         {showFooter ? (
           <S.InvitationFooter>
-            <Text>{config.copy.footer}</Text>
+            {config.copy.footer ? <Text>{config.copy.footer}</Text> : null}
+            {!focusSection && createHref ? (
+              <S.InvitationFooterPromo
+                href={createHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {labels.createOwn}
+              </S.InvitationFooterPromo>
+            ) : null}
           </S.InvitationFooter>
         ) : focusSection === "footer" ? (
           <S.InvitationFooter>
