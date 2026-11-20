@@ -253,7 +253,7 @@ export const InvitationHero = styled.section.attrs<{ "data-ui"?: string }>({
     max-width: 1680px;
     padding-inline: max(
       var(--gutter),
-      calc((100% - 1440px) / 2 + var(--gutter))
+      calc((min(100%, 1680px) - 1440px) / 2 + var(--gutter))
     );
     min-height: 760px;
     background: #141b21;
