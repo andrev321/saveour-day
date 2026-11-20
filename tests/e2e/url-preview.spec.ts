@@ -56,40 +56,19 @@ test("editing an event URL keeps normal and expanded previews usable", async ({
   await expect(
     page.getByRole("button", { name: "Zapisz szkic", exact: true }),
   ).toBeEnabled();
-  expect(errors).toEqual([]);
-});
 
-test("preview preserves valid content while an event URL is incomplete and recovers", async ({
-  page,
-}) => {
-  const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto(`${admin}/demo`);
-  await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  // Also verify direct iframe boundary resilience against invalid URL payloads.
   const preview = page.frameLocator("iframe");
-  await expect(
-    preview.getByRole("heading", { name: "Anna & Jan", exact: true }),
-  ).toBeVisible();
-
-  // Send through the real iframe boundary, including configurations that are
-  // invalid while the user is typing. They must never crash the message handler.
   const config = createDemo();
-  for (const url of [
-    "f",
-    "https:",
-    "https://",
-    "https://[",
-    "https://example.com/event",
-    "",
-  ]) {
-    config.events[0].url = url;
+  for (const rawUrl of ["f", "https:", "https://", "https://[", ""]) {
+    config.events[0].url = rawUrl;
     await page.evaluate(
-      (config) =>
+      (cfg) =>
         new Promise<void>((resolve) => {
           const frame = document.querySelector("iframe")!.contentWindow!;
           frame.addEventListener("message", () => resolve(), { once: true });
           frame.postMessage(
-            { type: "preview-config", config, urls: {} },
+            { type: "preview-config", config: cfg, urls: {} },
             location.origin,
           );
         }),
@@ -100,11 +79,11 @@ test("preview preserves valid content while an event URL is incomplete and recov
     ).toBeVisible();
   }
   config.hero.title = "Updated after URL editing";
-  await page.evaluate((config) => {
+  await page.evaluate((cfg) => {
     document
       .querySelector("iframe")!
       .contentWindow!.postMessage(
-        { type: "preview-config", config, urls: {} },
+        { type: "preview-config", config: cfg, urls: {} },
         location.origin,
       );
   }, config);

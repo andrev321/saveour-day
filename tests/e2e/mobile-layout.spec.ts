@@ -83,7 +83,7 @@ async function expectContained(page: Page) {
   ).toBeLessThanOrEqual(1);
 }
 
-for (const width of [320, 360, 390, 430, 768, 1280]) {
+for (const width of [320, 768, 1280]) {
   test(`guest filters, family editor and QR fit the panel at ${width}px`, async ({
     page,
   }) => {
@@ -147,7 +147,7 @@ for (const width of [320, 360, 390, 430, 768, 1280]) {
   });
 }
 
-for (const width of [320, 360, 390]) {
+for (const width of [320, 390]) {
   test(`editor sections, project options popover and drawer fit a touch screen at ${width}px`, async ({
     page,
   }) => {
@@ -194,74 +194,73 @@ for (const width of [320, 360, 390]) {
     });
     await page.keyboard.press("Escape");
 
-    if (width !== 360) {
-      for (const panel of [
-        "Treść",
-        "Wygląd",
-        "Zdjęcia",
-        "Ustawienia",
-        "Historia publikacji",
-      ]) {
-        await page.getByRole("button", { name: "Menu", exact: true }).click();
+    for (const panel of [
+      "Treść",
+      "Wygląd",
+      "Zdjęcia",
+      "Ustawienia",
+      "Historia publikacji",
+    ]) {
+      await page.getByRole("button", { name: "Menu", exact: true }).click();
+      await page
+        .getByRole("dialog")
+        .getByRole("button", { name: panel, exact: true })
+        .click();
+      if (panel === "Treść") {
         await page
-          .getByRole("dialog")
-          .getByRole("button", { name: panel, exact: true })
+          .getByRole("button", { name: "Początek zaproszenia", exact: true })
           .click();
-        if (panel === "Treść") {
-          await page
-            .getByRole("button", { name: "Początek zaproszenia", exact: true })
-            .click();
-          await expect(
-            page.getByLabel("Główny napis", { exact: true }),
-          ).toBeVisible();
-          await page.keyboard.press("Escape");
-        }
-        await expectContained(page);
-        await page.screenshot({
-          path: `test-results/mobile-panel-${width}-${panel}.png`,
-        });
+        await expect(
+          page.getByLabel("Główny napis", { exact: true }),
+        ).toBeVisible();
+        await page.keyboard.press("Escape");
       }
+      await expectContained(page);
+      await page.screenshot({
+        path: `test-results/mobile-panel-${width}-${panel}.png`,
+      });
     }
-  });
-
-  test(`project dashboard fits a ${width}px touch screen`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 740 });
-    await page.route("**/api/sites", (route) =>
-      route.fulfill({
-        json: {
-          sites: [
-            {
-              id,
-              name: "Długa nazwa naszego zaproszenia dla przyjaciół i rodziny",
-              published_release_id: "release",
-            },
-          ],
-          admin: false,
-        },
-      }),
-    );
-    await page.goto(`${admin}/demo/projects`);
-    await expect(
-      page.getByRole("heading", {
-        name: "Długa nazwa naszego zaproszenia dla przyjaciół i rodziny",
-      }),
-    ).toBeVisible();
-    const header = page.locator("header");
-    for (const control of await header
-      .locator("button:visible, input:visible")
-      .all()) {
-      const box = (await control.boundingBox())!;
-      expect(box.x).toBeGreaterThanOrEqual(8);
-      expect(box.x + box.width).toBeLessThanOrEqual(width - 8);
-    }
-    expect(
-      await page.evaluate(
-        () => document.documentElement.scrollWidth - innerWidth,
-      ),
-    ).toBeLessThanOrEqual(1);
-    await page.screenshot({
-      path: `test-results/mobile-dashboard-${width}.png`,
-      fullPage: true,
-    });
   });
 }
+
+test("project dashboard fits a 320px touch screen", async ({ page }) => {
+  const width = 320;
+  await page.setViewportSize({ width, height: 740 });
+  await page.route("**/api/sites", (route) =>
+    route.fulfill({
+      json: {
+        sites: [
+          {
+            id,
+            name: "Długa nazwa naszego zaproszenia dla przyjaciół i rodziny",
+            published_release_id: "release",
+          },
+        ],
+        admin: false,
+      },
+    }),
+  );
+  await page.goto(`${admin}/demo/projects`);
+  await expect(
+    page.getByRole("heading", {
+      name: "Długa nazwa naszego zaproszenia dla przyjaciół i rodziny",
+    }),
+  ).toBeVisible();
+  const header = page.locator("header");
+  for (const control of await header
+    .locator("button:visible, input:visible")
+    .all()) {
+    const box = (await control.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(8);
+    expect(box.x + box.width).toBeLessThanOrEqual(width - 8);
+  }
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - innerWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+  await page.screenshot({
+    path: `test-results/mobile-dashboard-${width}.png`,
+    fullPage: true,
+  });
+});

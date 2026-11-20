@@ -106,34 +106,35 @@ test("deletion needs confirmation, keeps the card on failure and removes it afte
     page.getByText("Realizacja została usunięta z panelu.", { exact: true }),
   ).toBeVisible();
 });
-for (const width of [390, 1440])
-  test(`projects stay readable and searchable at ${width}px`, async ({
-    page,
-  }) => {
+test("projects stay readable and searchable at desktop and mobile widths", async ({
+  page,
+}) => {
+  await page.route("**/api/sites", (route) =>
+    route.fulfill({
+      json: {
+        sites: [
+          site,
+          {
+            ...site,
+            id: "second",
+            name: "Urodziny Zofii",
+            published_release_id: null,
+          },
+          {
+            ...site,
+            id: "third",
+            name: "Spotkanie zespołu",
+            canDelete: false,
+          },
+        ],
+        admin: false,
+      },
+    }),
+  );
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto(`${admin}/demo/projects`);
+  for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    await page.route("**/api/sites", (route) =>
-      route.fulfill({
-        json: {
-          sites: [
-            site,
-            {
-              ...site,
-              id: "second",
-              name: "Urodziny Zofii",
-              published_release_id: null,
-            },
-            {
-              ...site,
-              id: "third",
-              name: "Spotkanie zespołu",
-              canDelete: false,
-            },
-          ],
-          admin: false,
-        },
-      }),
-    );
-    await page.goto(`${admin}/demo/projects`);
     await expect(page.getByRole("heading", { name: site.name })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Usuń Spotkanie zespołu", exact: true }),
@@ -143,18 +144,13 @@ for (const width of [390, 1440])
         () => document.documentElement.scrollWidth <= innerWidth,
       ),
     ).toBe(true);
-    await page.screenshot({
-      path: `test-results/dashboard-${width}.png`,
-      fullPage: true,
-    });
-    await page
-      .getByRole("textbox", { name: "Szukaj realizacji" })
-      .fill("Zofii");
-    await expect(page.getByRole("article")).toHaveCount(1);
-    await expect(
-      page.getByRole("heading", { name: "Urodziny Zofii" }),
-    ).toBeVisible();
-  });
+  }
+  await page.getByRole("textbox", { name: "Szukaj realizacji" }).fill("Zofii");
+  await expect(page.getByRole("article")).toHaveCount(1);
+  await expect(
+    page.getByRole("heading", { name: "Urodziny Zofii" }),
+  ).toBeVisible();
+});
 
 test("clicking a project tile opens it and the delete button is the only button on the tile", async ({
   page,

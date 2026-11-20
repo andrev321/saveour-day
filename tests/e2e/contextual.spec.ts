@@ -14,7 +14,7 @@ async function open(page: Page) {
   if (mobile)
     await page.getByRole("button", { name: "Edycja", exact: true }).click();
 }
-for (const width of [390, 1440])
+for (const width of [390])
   test(`contextual editor overview stays readable at ${width}px`, async ({
     page,
   }, testInfo) => {

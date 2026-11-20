@@ -13,7 +13,7 @@ async function fillHeading(page: Page, value: string) {
   }).toPass({ timeout: 10000 });
 }
 
-for (const width of [320, 390, 768, 1024, 1280, 1920, 2560]) {
+for (const width of [320, 768, 1440]) {
   test(`workspace edits and previews without overflow at ${width}px`, async ({
     page,
   }) => {

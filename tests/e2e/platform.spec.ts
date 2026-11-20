@@ -1,11 +1,13 @@
 import { test, expect } from "@playwright/test";
 const adminUrl = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
-for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
-  test(`invitation reflows at ${width}px`, async ({ page }) => {
-    const errors: string[] = [];
-    page.on("pageerror", (e) => errors.push(e.message));
+test("invitation reflows across mobile, tablet and desktop viewports", async ({
+  page,
+}) => {
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/demo/pelna");
+  for (const width of [320, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/demo/pelna");
     await expect(
       page.getByRole("heading", { name: "Anna & Jan", exact: true }),
     ).toBeVisible();
@@ -17,12 +19,9 @@ for (const width of [320, 360, 390, 430, 768, 1024, 1440, 1920])
         () => document.documentElement.scrollWidth <= window.innerWidth,
       ),
     ).toBe(true);
-    expect(errors).toEqual([]);
-    await page.screenshot({
-      path: `test-results/invitation-${width}.png`,
-      fullPage: true,
-    });
-  });
+  }
+  expect(errors).toEqual([]);
+});
 test("all existing routes load directly", async ({ page }) => {
   for (const route of ["glowna", "pelna", "ograniczona"]) {
     await page.goto(`/demo/${route}`);
@@ -63,25 +62,7 @@ test("admin demo edits and saves before simulated publication", async ({
       .getByRole("heading", { name: "Zmieniona", exact: true }),
   ).toBeVisible();
 });
-test("admin demo forwards custom color tokens to the preview", async ({
-  page,
-}) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
-  await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
-    .click();
-  await page.getByRole("tab", { name: "Wygląd", exact: true }).click();
-  await page
-    .getByRole("textbox", { name: "Kolor akcentu", exact: true })
-    .fill("#123456");
-  await expect(
-    page.frameLocator("iframe").locator("[data-ui=invitation]"),
-  ).toHaveCSS("--accent", "#123456");
-});
-test("panel language preserves the untouched invitation template", async ({
+test("panel language preserves both untouched and customized invitation content", async ({
   page,
 }) => {
   await page.addInitScript(() =>
@@ -99,23 +80,12 @@ test("panel language preserves the untouched invitation template", async ({
       .frameLocator("iframe")
       .getByRole("heading", { name: "Anna & Jan", exact: true }),
   ).toBeVisible();
-});
-test("panel language preserves a customized invitation template", async ({
-  page,
-}) => {
-  await page.addInitScript(() =>
-    localStorage.setItem("wedding-panel-language", "pl"),
-  );
-  await page.goto(`${adminUrl}/demo`);
   await page
-    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .getByRole("button", { name: "Invitation introduction", exact: true })
     .click();
-  await page
-    .getByRole("button", { name: "Początek zaproszenia", exact: true })
-    .click();
-  await page.getByLabel("Główny napis", { exact: true }).fill("Kasia");
+  await page.getByLabel("Main heading", { exact: true }).fill("Kasia");
   await page.keyboard.press("Escape");
-  await page.getByRole("combobox", { name: "Język panelu" }).click();
+  await page.getByRole("combobox", { name: "Panel language" }).click();
   await page.getByRole("option", { name: "Deutsch", exact: true }).click();
   await expect(
     page

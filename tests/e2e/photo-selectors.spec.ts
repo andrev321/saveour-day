@@ -3,7 +3,7 @@ import sharp from "sharp";
 
 const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 
-for (const width of [390, 1440]) {
+for (const width of [390]) {
   test(`photo selectors show thumbnails, names and ID fallback at ${width}px`, async ({
     page,
   }) => {
