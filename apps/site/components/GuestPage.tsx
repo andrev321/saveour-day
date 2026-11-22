@@ -4,6 +4,7 @@ import { LoadingState, BusyLabel, useOperation } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./styles";
 import {
+  useCallback,
   useEffect,
   useState,
   useSyncExternalStore,
@@ -26,6 +27,10 @@ import {
 import type { InvitationLocale } from "@invitations/domain";
 import { BrandLogo } from "@invitations/ui/brand";
 import { guestCopy, guestError } from "../lib/guest-copy";
+import {
+  preloadHeroMedia,
+  scheduleIdleMediaPreload,
+} from "../lib/preload-media";
 import { RsvpForm } from "./RsvpForm";
 
 const SELF_REG_NAMED_ID = "00000000-0000-4000-8000-000000000001";
@@ -105,6 +110,12 @@ export function GuestPage({
   const language = locale.slice(0, 2);
   const copy = guestCopy[locale];
 
+  const resolveMedia = useCallback(
+    (src: string) =>
+      `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`,
+    [kind, accessKey],
+  );
+
   function accept(next: Reply) {
     setData(next);
     setDirty(false);
@@ -119,13 +130,21 @@ export function GuestPage({
       .then(async (r) => {
         const result = await r.json();
         if (!r.ok) throw new Error(result.error);
-        accept(result);
+        if (result.authorized && result.config) {
+          await preloadHeroMedia(result.config, resolveMedia);
+        }
+        if (!controller.signal.aborted) accept(result);
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
       });
     return () => controller.abort();
-  }, [endpoint]);
+  }, [endpoint, resolveMedia]);
+
+  useEffect(() => {
+    if (!data?.authorized || !data.config) return;
+    return scheduleIdleMediaPreload(data.config, resolveMedia);
+  }, [data?.authorized, data?.config, resolveMedia]);
 
   async function reload() {
     const r = await fetch(endpoint, { cache: "no-store" });
@@ -133,6 +152,9 @@ export function GuestPage({
     if (!r.ok) {
       if ([401, 403, 404].includes(r.status)) setData(null);
       throw new Error(result.error);
+    }
+    if (!data?.authorized && result.authorized && result.config) {
+      await preloadHeroMedia(result.config, resolveMedia);
     }
     accept(result);
     setError("");
@@ -324,9 +346,7 @@ export function GuestPage({
           config={data.config!}
           calendarHref={calendarHref}
           createHref={adminUrl}
-          resolveMedia={(src) =>
-            `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
-          }
+          resolveMedia={resolveMedia}
         >
           {rsvpEnabled && !data.invitation && kind === "s" && (
             <div id="rsvp">
