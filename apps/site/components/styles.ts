@@ -1,5 +1,5 @@
 "use client";
-import { createGlobalStyle, styled } from "styled-components";
+import { createGlobalStyle, keyframes, styled } from "styled-components";
 import { subtleControls } from "@invitations/ui/motion-styles";
 export const SiteGlobalStyles = createGlobalStyle`body {margin: 0;
 background: #faf7f1;
@@ -10,6 +10,80 @@ html { scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
 }
+`;
+
+const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+const paperRise = keyframes`
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0% 0 0 0);
+  }
+`;
+
+const riseReveal = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+export const SiteLoadingScreen = styled.main.attrs<{ "data-ui"?: string }>({
+  "data-ui": "site-loading",
+})`
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+  background: #faf7f1;
+  color: #34322d;
+`;
+
+export const SiteStage = styled.div`
+  position: relative;
+  min-height: 100dvh;
+`;
+
+export const SitePaperCurtain = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--guest-paper, #faf7f1);
+  animation: ${paperRise} 360ms ${EASE} both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    clip-path: none;
+  }
+`;
+
+export const SiteRevealContent = styled.div`
+  position: relative;
+  z-index: 1;
+  animation: ${riseReveal} 380ms ${EASE} 340ms both;
+
+  [data-ui="invitation-hero"]
+    :is(
+      [data-ui="invitation-photo-fallback"],
+      picture,
+      [data-ui="invitation-action"]
+    ) {
+    animation: ${riseReveal} 380ms ${EASE} 430ms both;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    [data-ui="invitation-hero"] * {
+      animation: none;
+    }
+  }
 `;
 
 export const GuestCard = styled.main.attrs<{ "data-ui"?: string }>({

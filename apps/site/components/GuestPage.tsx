@@ -206,18 +206,22 @@ export function GuestPage({
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
 
+  if (!data && !error)
+    return (
+      <S.SiteLoadingScreen lang={locale.slice(0, 2)}>
+        <LoadingState
+          label={copy.loading}
+          slowLabel={loadingText(language, "slow")}
+        />
+      </S.SiteLoadingScreen>
+    );
+
   if (!data?.authorized)
     return (
       <S.GuestCard ref={viewMotion} lang={locale.slice(0, 2)}>
         <BrandLogo animated height={52} />
         <h1>{copy.invitation}</h1>
         {error && <p role="alert">{guestError(error, copy)}</p>}
-        {!data && !error && (
-          <LoadingState
-            label={copy.loading}
-            slowLabel={loadingText(language, "slow")}
-          />
-        )}
         {!data && error && (
           <button
             disabled={busy}
@@ -313,376 +317,385 @@ export function GuestPage({
     : undefined;
 
   return (
-    <div ref={viewMotion} lang={locale.slice(0, 2)} style={styles}>
-      <Invitation
-        config={data.config!}
-        calendarHref={calendarHref}
-        createHref={adminUrl}
-        resolveMedia={(src) =>
-          `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
-        }
-      >
-        {rsvpEnabled && !data.invitation && kind === "s" && (
-          <div id="rsvp">
-            <h2>{copy.findInvitation}</h2>
-            {!selfRegOpen && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const nextQuery =
-                    lookupState === "locked" && lookupUnlockCode.trim()
-                      ? lookupUnlockCode
-                      : lookupQuery;
-                  void action("lookup", {
-                    query: nextQuery,
-                    disambiguator:
-                      lookupState === "ambiguous" && lookupDisambiguator.trim()
-                        ? lookupDisambiguator
-                        : undefined,
-                  });
-                }}
-              >
-                <label>
-                  {copy.lookupLabel}
-                  <input
-                    value={lookupQuery}
-                    onChange={(e) => {
-                      setLookupQuery(e.target.value);
-                      setLookupState("idle");
-                      setLookupDisambiguator("");
+    <S.SiteStage lang={locale.slice(0, 2)} style={styles}>
+      <S.SitePaperCurtain aria-hidden="true" />
+      <S.SiteRevealContent>
+        <Invitation
+          config={data.config!}
+          calendarHref={calendarHref}
+          createHref={adminUrl}
+          resolveMedia={(src) =>
+            `/api/media/${kind}/${encodeURIComponent(accessKey)}/${src.slice("/media/".length)}`
+          }
+        >
+          {rsvpEnabled && !data.invitation && kind === "s" && (
+            <div id="rsvp">
+              <h2>{copy.findInvitation}</h2>
+              {!selfRegOpen && (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const nextQuery =
+                      lookupState === "locked" && lookupUnlockCode.trim()
+                        ? lookupUnlockCode
+                        : lookupQuery;
+                    void action("lookup", {
+                      query: nextQuery,
+                      disambiguator:
+                        lookupState === "ambiguous" &&
+                        lookupDisambiguator.trim()
+                          ? lookupDisambiguator
+                          : undefined,
+                    });
+                  }}
+                >
+                  <label>
+                    {copy.lookupLabel}
+                    <input
+                      value={lookupQuery}
+                      onChange={(e) => {
+                        setLookupQuery(e.target.value);
+                        setLookupState("idle");
+                        setLookupDisambiguator("");
+                      }}
+                      required
+                      maxLength={200}
+                    />
+                  </label>
+
+                  {lookupState === "ambiguous" && (
+                    <>
+                      <p role="status">{copy.lookupAmbiguous}</p>
+                      <label>
+                        {copy.lookupDisambiguator}
+                        <input
+                          value={lookupDisambiguator}
+                          onChange={(e) =>
+                            setLookupDisambiguator(e.target.value)
+                          }
+                          required
+                          maxLength={200}
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {lookupState === "locked" && (
+                    <>
+                      <p role="status">{copy.lookupLocked}</p>
+                      <label>
+                        {copy.lookupUnlockCode}
+                        <input
+                          value={lookupUnlockCode}
+                          onChange={(e) => setLookupUnlockCode(e.target.value)}
+                          required
+                          maxLength={24}
+                        />
+                      </label>
+                    </>
+                  )}
+
+                  {lookupState === "not_found" && (
+                    <p role="status">{copy.lookupNotFound}</p>
+                  )}
+
+                  <S.RsvpActions>
+                    <button disabled={busy} aria-busy={busy || undefined}>
+                      <BusyLabel
+                        busy={operation === "lookup"}
+                        label={loadingText(language, "verify")}
+                      >
+                        {lookupState === "locked"
+                          ? copy.lookupUnlockAction
+                          : lookupState === "ambiguous"
+                            ? copy.lookupConfirm
+                            : copy.lookupAction}
+                      </BusyLabel>
+                    </button>
+                    {data.allowSelfRegistration && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => {
+                          setSelfRegOpen(true);
+                          setSelfRegName(lookupQuery);
+                        }}
+                      >
+                        {copy.selfRegisterOpen}
+                      </button>
+                    )}
+                  </S.RsvpActions>
+                </form>
+              )}
+
+              {data.allowSelfRegistration && selfRegOpen && (
+                <div>
+                  <label>
+                    {copy.selfRegisterName}
+                    <input
+                      value={selfRegName}
+                      onChange={(e) => setSelfRegName(e.target.value)}
+                      required
+                      maxLength={200}
+                    />
+                  </label>
+                  <S.RsvpCheckboxLabel>
+                    <input
+                      type="checkbox"
+                      checked={selfRegWithCompanion}
+                      onChange={(e) =>
+                        setSelfRegWithCompanion(e.target.checked)
+                      }
+                    />
+                    {copy.withCompanionCheckbox}
+                  </S.RsvpCheckboxLabel>
+                  <RsvpForm
+                    key={`self-${selfRegWithCompanion}`}
+                    guests={selfRegGuests}
+                    events={rsvpEvents}
+                    questions={questions}
+                    variantId={data.config?.defaultVariant || ""}
+                    initialAnswers={{}}
+                    initialNote=""
+                    busy={busy}
+                    saving={operation === "self-register"}
+                    closed={Boolean(data.closed)}
+                    language={language}
+                    copy={copy}
+                    submitLabel={copy.selfRegisterSubmit}
+                    onSubmit={(payload) => {
+                      if (!selfRegName.trim()) {
+                        setError("Nieprawidłowe dane");
+                        return;
+                      }
+                      void action("self-register", {
+                        name: selfRegName.trim(),
+                        withCompanion: selfRegWithCompanion,
+                        companionName: selfRegWithCompanion
+                          ? (payload.companionNames[SELF_REG_COMP_ID] ?? null)
+                          : null,
+                        rsvp: {
+                          revision: 0,
+                          note: payload.note,
+                          answers: payload.answers,
+                          questionAnswers: payload.questionAnswers,
+                        },
+                      });
                     }}
-                    required
-                    maxLength={200}
                   />
-                </label>
-
-                {lookupState === "ambiguous" && (
-                  <>
-                    <p role="status">{copy.lookupAmbiguous}</p>
-                    <label>
-                      {copy.lookupDisambiguator}
-                      <input
-                        value={lookupDisambiguator}
-                        onChange={(e) => setLookupDisambiguator(e.target.value)}
-                        required
-                        maxLength={200}
-                      />
-                    </label>
-                  </>
-                )}
-
-                {lookupState === "locked" && (
-                  <>
-                    <p role="status">{copy.lookupLocked}</p>
-                    <label>
-                      {copy.lookupUnlockCode}
-                      <input
-                        value={lookupUnlockCode}
-                        onChange={(e) => setLookupUnlockCode(e.target.value)}
-                        required
-                        maxLength={24}
-                      />
-                    </label>
-                  </>
-                )}
-
-                {lookupState === "not_found" && (
-                  <p role="status">{copy.lookupNotFound}</p>
-                )}
-
-                <S.RsvpActions>
-                  <button disabled={busy} aria-busy={busy || undefined}>
-                    <BusyLabel
-                      busy={operation === "lookup"}
-                      label={loadingText(language, "verify")}
-                    >
-                      {lookupState === "locked"
-                        ? copy.lookupUnlockAction
-                        : lookupState === "ambiguous"
-                          ? copy.lookupConfirm
-                          : copy.lookupAction}
-                    </BusyLabel>
-                  </button>
-                  {data.allowSelfRegistration && (
+                  <S.RsvpActions>
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => {
-                        setSelfRegOpen(true);
-                        setSelfRegName(lookupQuery);
-                      }}
+                      onClick={() => setSelfRegOpen(false)}
                     >
-                      {copy.selfRegisterOpen}
+                      {copy.cancel}
                     </button>
-                  )}
-                </S.RsvpActions>
-              </form>
-            )}
+                  </S.RsvpActions>
+                </div>
+              )}
+              {error && <p role="alert">{guestError(error, copy)}</p>}
+            </div>
+          )}
 
-            {data.allowSelfRegistration && selfRegOpen && (
-              <div>
-                <label>
-                  {copy.selfRegisterName}
-                  <input
-                    value={selfRegName}
-                    onChange={(e) => setSelfRegName(e.target.value)}
-                    required
-                    maxLength={200}
-                  />
-                </label>
-                <S.RsvpCheckboxLabel>
-                  <input
-                    type="checkbox"
-                    checked={selfRegWithCompanion}
-                    onChange={(e) => setSelfRegWithCompanion(e.target.checked)}
-                  />
-                  {copy.withCompanionCheckbox}
-                </S.RsvpCheckboxLabel>
-                <RsvpForm
-                  key={`self-${selfRegWithCompanion}`}
-                  guests={selfRegGuests}
-                  events={rsvpEvents}
-                  questions={questions}
-                  variantId={data.config?.defaultVariant || ""}
-                  initialAnswers={{}}
-                  initialNote=""
-                  busy={busy}
-                  saving={operation === "self-register"}
-                  closed={Boolean(data.closed)}
-                  language={language}
-                  copy={copy}
-                  submitLabel={copy.selfRegisterSubmit}
-                  onSubmit={(payload) => {
-                    if (!selfRegName.trim()) {
-                      setError("Nieprawidłowe dane");
-                      return;
-                    }
-                    void action("self-register", {
-                      name: selfRegName.trim(),
-                      withCompanion: selfRegWithCompanion,
-                      companionName: selfRegWithCompanion
-                        ? (payload.companionNames[SELF_REG_COMP_ID] ?? null)
-                        : null,
-                      rsvp: {
-                        revision: 0,
-                        note: payload.note,
-                        answers: payload.answers,
-                        questionAnswers: payload.questionAnswers,
-                      },
-                    });
-                  }}
-                />
-                <S.RsvpActions>
-                  <button
+          {rsvpEnabled && data.invitation && (
+            <div id="rsvp">
+              <h2>{copy.rsvp}</h2>
+              <S.RsvpMetaRow>
+                <S.RsvpMetaName>
+                  {invitationDisplayName(
+                    {
+                      groupName: data.invitation.groupName,
+                      guests: data.invitation.guests,
+                    },
+                    { companion: copy.companion, and: copy.and },
+                  )}
+                </S.RsvpMetaName>
+                {data.canResetLookup && (
+                  <S.RsvpCompactButton
                     type="button"
                     disabled={busy}
-                    onClick={() => setSelfRegOpen(false)}
+                    onClick={() => void action("lookup-reset", {})}
                   >
-                    {copy.cancel}
-                  </button>
-                </S.RsvpActions>
-              </div>
-            )}
-            {error && <p role="alert">{guestError(error, copy)}</p>}
-          </div>
-        )}
-
-        {rsvpEnabled && data.invitation && (
-          <div id="rsvp">
-            <h2>{copy.rsvp}</h2>
-            <S.RsvpMetaRow>
-              <S.RsvpMetaName>
-                {invitationDisplayName(
-                  {
-                    groupName: data.invitation.groupName,
-                    guests: data.invitation.guests,
-                  },
-                  { companion: copy.companion, and: copy.and },
+                    {copy.lookupChange}
+                  </S.RsvpCompactButton>
                 )}
-              </S.RsvpMetaName>
-              {data.canResetLookup && (
-                <S.RsvpCompactButton
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void action("lookup-reset", {})}
-                >
-                  {copy.lookupChange}
-                </S.RsvpCompactButton>
+              </S.RsvpMetaRow>
+              {data.deadline && (
+                <S.RsvpDeadline>
+                  {copy.deadline}:{" "}
+                  {new Intl.DateTimeFormat(locale, {
+                    dateStyle: "long",
+                    timeStyle: "short",
+                    timeZone: "Europe/Warsaw",
+                  }).format(new Date(data.deadline))}{" "}
+                  ({copy.timezone})
+                </S.RsvpDeadline>
               )}
-            </S.RsvpMetaRow>
-            {data.deadline && (
-              <S.RsvpDeadline>
-                {copy.deadline}:{" "}
-                {new Intl.DateTimeFormat(locale, {
-                  dateStyle: "long",
-                  timeStyle: "short",
-                  timeZone: "Europe/Warsaw",
-                }).format(new Date(data.deadline))}{" "}
-                ({copy.timezone})
-              </S.RsvpDeadline>
-            )}
-            {data.closed && <p role="status">{copy.closed}</p>}
-            {success && (
-              <S.ResponseSummary role="status" data-testid="saved-summary">
-                <h3>{copy.saved}</h3>
-                <p>{copy.summary}</p>
-                {data.invitation.guests.map((g) => {
-                  const isSingleOverall =
-                    rsvpEvents.length === 1 &&
-                    rsvpEvents[0]?.id === OVERALL_EVENT_ID;
-                  const overallValue = isSingleOverall
-                    ? savedAnswers[`${g.id}:${OVERALL_EVENT_ID}`]
-                    : undefined;
-                  return (
-                    <div key={g.id}>
-                      <strong>
-                        {guestDisplayName(g, { companion: copy.companion })}
-                      </strong>
-                      {isSingleOverall ? (
-                        <>
-                          :{" "}
-                          {overallValue === "true"
-                            ? copy.yes
-                            : overallValue === "false"
-                              ? copy.no
-                              : copy.missing}
-                        </>
-                      ) : (
-                        <ul>
-                          {rsvpEvents.map((e) => {
-                            const value = savedAnswers[`${g.id}:${e.id}`];
+              {data.closed && <p role="status">{copy.closed}</p>}
+              {success && (
+                <S.ResponseSummary role="status" data-testid="saved-summary">
+                  <h3>{copy.saved}</h3>
+                  <p>{copy.summary}</p>
+                  {data.invitation.guests.map((g) => {
+                    const isSingleOverall =
+                      rsvpEvents.length === 1 &&
+                      rsvpEvents[0]?.id === OVERALL_EVENT_ID;
+                    const overallValue = isSingleOverall
+                      ? savedAnswers[`${g.id}:${OVERALL_EVENT_ID}`]
+                      : undefined;
+                    return (
+                      <div key={g.id}>
+                        <strong>
+                          {guestDisplayName(g, { companion: copy.companion })}
+                        </strong>
+                        {isSingleOverall ? (
+                          <>
+                            :{" "}
+                            {overallValue === "true"
+                              ? copy.yes
+                              : overallValue === "false"
+                                ? copy.no
+                                : copy.missing}
+                          </>
+                        ) : (
+                          <ul>
+                            {rsvpEvents.map((e) => {
+                              const value = savedAnswers[`${g.id}:${e.id}`];
+                              return (
+                                <li key={e.id}>
+                                  {e.title}:{" "}
+                                  {value === "true"
+                                    ? copy.yes
+                                    : value === "false"
+                                      ? copy.no
+                                      : copy.missing}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        )}
+                        {questions
+                          .filter((q) => q.scope === "guest")
+                          .map((q) => {
+                            const qa = data.invitation!.questionAnswers.find(
+                              (a) =>
+                                a.questionId === q.id && a.guestId === g.id,
+                            );
+                            if (!qa) return null;
                             return (
-                              <li key={e.id}>
-                                {e.title}:{" "}
-                                {value === "true"
-                                  ? copy.yes
-                                  : value === "false"
-                                    ? copy.no
-                                    : copy.missing}
-                              </li>
+                              <p key={q.id}>
+                                {q.label}:{" "}
+                                {formatQuestionValue(
+                                  q,
+                                  qa.value,
+                                  copy.otherOption,
+                                )}
+                              </p>
                             );
                           })}
-                        </ul>
-                      )}
-                      {questions
-                        .filter((q) => q.scope === "guest")
-                        .map((q) => {
-                          const qa = data.invitation!.questionAnswers.find(
-                            (a) => a.questionId === q.id && a.guestId === g.id,
-                          );
-                          if (!qa) return null;
-                          return (
-                            <p key={q.id}>
-                              {q.label}:{" "}
-                              {formatQuestionValue(
-                                q,
-                                qa.value,
-                                copy.otherOption,
-                              )}
-                            </p>
-                          );
-                        })}
-                    </div>
-                  );
-                })}
-                {questions
-                  .filter((q) => q.scope === "invitation")
-                  .map((q) => {
-                    const qa = data.invitation!.questionAnswers.find(
-                      (a) => a.questionId === q.id && a.guestId === null,
-                    );
-                    if (!qa) return null;
-                    return (
-                      <p key={q.id}>
-                        {q.label}:{" "}
-                        {formatQuestionValue(q, qa.value, copy.otherOption)}
-                      </p>
+                      </div>
                     );
                   })}
-                {data.invitation.note && (
-                  <p>
-                    {copy.notes}: {data.invitation.note}
-                  </p>
-                )}
-                {calendarHref && (
-                  <CalendarMenu
-                    config={data.config!}
-                    icsHref={calendarHref}
-                    position="bottom-start"
-                  >
-                    <S.CalendarButton type="button">
-                      {copy.calendar}
-                    </S.CalendarButton>
-                  </CalendarMenu>
-                )}
-              </S.ResponseSummary>
-            )}
-
-            <RsvpForm
-              key={`${data.invitation.revision}-${data.invitation.guests.map((g) => g.id).join(",")}-${rsvpEvents.map((e) => e.id).join(",")}`}
-              guests={data.invitation.guests}
-              events={rsvpEvents}
-              questions={questions}
-              variantId={data.config?.defaultVariant || ""}
-              initialAnswers={savedAnswers}
-              initialCompanionNames={initialCompanionNames}
-              initialQuestionAnswers={initialQuestionAnswers}
-              initialNote={data.invitation.note}
-              busy={busy}
-              saving={operation === "rsvp"}
-              closed={Boolean(data.closed)}
-              dirty={dirty}
-              language={language}
-              copy={copy}
-              onDirtyChange={() => {
-                setDirty(true);
-                setSuccess(false);
-              }}
-              onRefresh={() => {
-                if (dirty) setRefreshConfirm(true);
-                else void refresh();
-              }}
-              onSubmit={(payload) => {
-                void action("rsvp", {
-                  revision: data.invitation!.revision,
-                  note: payload.note,
-                  answers: payload.answers,
-                  companionNames: payload.companionNames,
-                  questionAnswers: payload.questionAnswers,
-                });
-              }}
-            />
-
-            {refreshConfirm && (
-              <S.RsvpAlert role="alert">
-                <p>{copy.refreshWarning}</p>
-                <S.RsvpActions>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    aria-busy={busy || undefined}
-                    onClick={() => void refresh()}
-                  >
-                    <BusyLabel
-                      busy={operation === "refresh"}
-                      label={loadingText(language, "refresh")}
+                  {questions
+                    .filter((q) => q.scope === "invitation")
+                    .map((q) => {
+                      const qa = data.invitation!.questionAnswers.find(
+                        (a) => a.questionId === q.id && a.guestId === null,
+                      );
+                      if (!qa) return null;
+                      return (
+                        <p key={q.id}>
+                          {q.label}:{" "}
+                          {formatQuestionValue(q, qa.value, copy.otherOption)}
+                        </p>
+                      );
+                    })}
+                  {data.invitation.note && (
+                    <p>
+                      {copy.notes}: {data.invitation.note}
+                    </p>
+                  )}
+                  {calendarHref && (
+                    <CalendarMenu
+                      config={data.config!}
+                      icsHref={calendarHref}
+                      position="bottom-start"
                     >
-                      {copy.discard}
-                    </BusyLabel>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRefreshConfirm(false)}
-                  >
-                    {copy.cancel}
-                  </button>
-                </S.RsvpActions>
-              </S.RsvpAlert>
-            )}
-            {error && <p role="alert">{guestError(error, copy)}</p>}
-          </div>
-        )}
-      </Invitation>
-    </div>
+                      <S.CalendarButton type="button">
+                        {copy.calendar}
+                      </S.CalendarButton>
+                    </CalendarMenu>
+                  )}
+                </S.ResponseSummary>
+              )}
+
+              <RsvpForm
+                key={`${data.invitation.revision}-${data.invitation.guests.map((g) => g.id).join(",")}-${rsvpEvents.map((e) => e.id).join(",")}`}
+                guests={data.invitation.guests}
+                events={rsvpEvents}
+                questions={questions}
+                variantId={data.config?.defaultVariant || ""}
+                initialAnswers={savedAnswers}
+                initialCompanionNames={initialCompanionNames}
+                initialQuestionAnswers={initialQuestionAnswers}
+                initialNote={data.invitation.note}
+                busy={busy}
+                saving={operation === "rsvp"}
+                closed={Boolean(data.closed)}
+                dirty={dirty}
+                language={language}
+                copy={copy}
+                onDirtyChange={() => {
+                  setDirty(true);
+                  setSuccess(false);
+                }}
+                onRefresh={() => {
+                  if (dirty) setRefreshConfirm(true);
+                  else void refresh();
+                }}
+                onSubmit={(payload) => {
+                  void action("rsvp", {
+                    revision: data.invitation!.revision,
+                    note: payload.note,
+                    answers: payload.answers,
+                    companionNames: payload.companionNames,
+                    questionAnswers: payload.questionAnswers,
+                  });
+                }}
+              />
+
+              {refreshConfirm && (
+                <S.RsvpAlert role="alert">
+                  <p>{copy.refreshWarning}</p>
+                  <S.RsvpActions>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      aria-busy={busy || undefined}
+                      onClick={() => void refresh()}
+                    >
+                      <BusyLabel
+                        busy={operation === "refresh"}
+                        label={loadingText(language, "refresh")}
+                      >
+                        {copy.discard}
+                      </BusyLabel>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRefreshConfirm(false)}
+                    >
+                      {copy.cancel}
+                    </button>
+                  </S.RsvpActions>
+                </S.RsvpAlert>
+              )}
+              {error && <p role="alert">{guestError(error, copy)}</p>}
+            </div>
+          )}
+        </Invitation>
+      </S.SiteRevealContent>
+    </S.SiteStage>
   );
 }

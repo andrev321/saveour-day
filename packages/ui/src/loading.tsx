@@ -13,8 +13,10 @@ import { BrandLogo } from "./brand";
 
 const breathe = keyframes`0%,100%{opacity:.45}50%{opacity:1}`;
 const reveal = keyframes`from{opacity:0}to{opacity:1}`;
-const back = keyframes`0%,100%{transform:translate(0,0)}45%,60%{transform:translate(4px,-4px)}`;
-const front = keyframes`0%,100%{transform:translate(0,0)}45%,60%{transform:translate(-4px,4px)}`;
+const progressSlide = keyframes`
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+`;
 const Status = styled.div`
   display: flex;
   flex-direction: column;
@@ -32,18 +34,30 @@ const Status = styled.div`
     text-align: left;
     gap: 10px;
   }
-  .sod-back {
-    animation: ${back} 2.4s ease-in-out infinite;
-  }
-  .sod-front {
-    animation: ${front} 2.4s ease-in-out infinite;
-  }
   @media (prefers-reduced-motion: reduce) {
     animation: none;
-    .sod-back,
-    .sod-front {
-      animation: none;
-    }
+  }
+`;
+const ProgressTrack = styled.div`
+  width: 72px;
+  height: 1.5px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+  &[data-compact="true"] {
+    display: none;
+  }
+`;
+const ProgressBar = styled.div`
+  width: 50%;
+  height: 100%;
+  border-radius: inherit;
+  background: color-mix(in srgb, currentColor 68%, transparent);
+  animation: ${progressSlide} 1.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  @media (prefers-reduced-motion: reduce) {
+    width: 100%;
+    opacity: 0.45;
+    animation: none;
   }
 `;
 const Dots = styled.span`
@@ -126,9 +140,21 @@ export function LoadingState({
       aria-live="polite"
       data-compact={compact}
     >
-      <BrandLogo variant="mark" height={compact ? 26 : 48} decorative />
+      <BrandLogo variant="mark" height={compact ? 26 : 38} decorative />
+      <ProgressTrack data-compact={compact} aria-hidden="true">
+        <ProgressBar />
+      </ProgressTrack>
       <div>
-        <div style={{ fontWeight: 500 }}>{label}</div>
+        <div
+          style={{
+            fontWeight: compact ? 500 : 400,
+            fontSize: compact ? undefined : "13px",
+            letterSpacing: compact ? undefined : "0.01em",
+            opacity: compact ? 1 : 0.72,
+          }}
+        >
+          {label}
+        </div>
         {slow && slowLabel && (
           <small style={{ display: "block", marginTop: 8, opacity: 0.75 }}>
             {slowLabel}
