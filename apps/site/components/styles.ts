@@ -16,83 +16,133 @@ export const GuestCard = styled.main.attrs<{ "data-ui"?: string }>({
   "data-ui": "guest-card",
 })`
   & {
-    max-width: 680px;
-    margin: 40px auto;
-    padding: 28px;
-    background: var(--guest-surface, white);
+    box-sizing: border-box;
+    max-width: 480px;
+    margin: clamp(40px, 12vh, 110px) auto;
+    padding: clamp(28px, 5vw, 44px);
+    background: var(--guest-surface, #fffdf9);
     color: var(--guest-ink, #34322d);
     scroll-margin-top: 90px;
-    border: 1px solid #e5dfd3;
-    border-radius: 18px;
+    border: 1px solid
+      color-mix(in srgb, var(--guest-ink, #34322d) 14%, transparent);
+    border-radius: 12px;
+    box-shadow:
+      0 20px 50px -28px rgba(40, 32, 24, 0.22),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    overflow-wrap: break-word;
   }
-  & h1 {
-    font-family: "Playfair Display", Georgia, serif;
+  & svg[data-brand] {
+    height: auto;
   }
+  & h1,
   & h2 {
-    font-family: "Playfair Display", Georgia, serif;
+    font-family: "Bodoni Moda", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin: 18px 0 10px;
+  }
+  & p {
+    margin: 0 0 14px;
+    line-height: 1.55;
+    color: color-mix(in srgb, var(--guest-ink, #34322d) 78%, transparent);
+  }
+  & p[role="alert"] {
+    color: #8c2d23;
+    background: color-mix(in srgb, #8c2d23 7%, var(--guest-paper, #faf7f1));
+    border: 1px solid color-mix(in srgb, #8c2d23 20%, transparent);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 14px;
   }
   & label {
     display: block;
-    margin: 14px 0;
+    margin: 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: color-mix(in srgb, var(--guest-ink, #34322d) 84%, transparent);
   }
-  & input {
-    box-sizing: border-box;
-    display: block;
-    width: 100%;
-    font: inherit;
-    margin-top: 6px;
-    padding: 12px;
-    border: 1px solid #aaa;
-    border-radius: 8px;
-  }
-  & textarea {
-    box-sizing: border-box;
-    display: block;
-    width: 100%;
-    font: inherit;
-    margin-top: 6px;
-    padding: 12px;
-    border: 1px solid #aaa;
-    border-radius: 8px;
-  }
+  & input,
+  & textarea,
   & select {
     box-sizing: border-box;
     display: block;
     width: 100%;
     font: inherit;
-    margin-top: 6px;
-    padding: 12px;
-    border: 1px solid #aaa;
-    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--guest-ink, #34322d);
+    margin-top: 8px;
+    padding: 12px 14px;
+    background: var(--guest-paper, #faf7f1);
+    border: 1px solid
+      color-mix(in srgb, var(--guest-ink, #34322d) 24%, transparent);
+    border-radius: 6px;
+    transition:
+      border-color 160ms ease,
+      box-shadow 160ms ease;
+  }
+  & input:hover:not(:disabled),
+  & textarea:hover:not(:disabled),
+  & select:hover:not(:disabled) {
+    border-color: color-mix(
+      in srgb,
+      var(--guest-ink, #34322d) 42%,
+      transparent
+    );
+  }
+  & input:focus-visible,
+  & textarea:focus-visible,
+  & select:focus-visible {
+    border-color: var(--guest-accent, #6c501b);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--guest-accent, #6c501b) 16%, transparent);
   }
   & button {
-    display: inline-block;
-    margin: 8px 8px 8px 0;
-    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    margin: 10px 8px 0 0;
+    padding: 12px 24px;
+    min-height: 46px;
     background: var(--guest-ink, #34322d);
-    color: var(--guest-paper, white);
-    border: 0;
-    border-radius: 24px;
+    color: var(--guest-paper, #faf7f1);
+    border: 1px solid transparent;
+    border-radius: 6px;
     font: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     cursor: pointer;
+  }
+  & button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--guest-ink, #34322d) 88%, #000000);
   }
   & button:disabled {
     opacity: 0.5;
     cursor: default;
   }
   & fieldset {
-    border: 1px solid #ddd;
+    border: 1px solid
+      color-mix(in srgb, var(--guest-ink, #34322d) 14%, transparent);
     margin: 18px 0;
-    border-radius: 10px;
+    border-radius: 8px;
   }
   & :focus-visible {
     outline: 3px solid var(--guest-accent, #6c501b);
     outline-offset: 3px;
   }
-  @media (max-width: 720px) {
+  @media (prefers-reduced-motion: reduce) {
+    & input,
+    & textarea,
+    & select {
+      transition: none;
+    }
+  }
+  @media (max-width: 512px) {
     & {
-      margin: 16px;
-      padding: 20px;
+      margin: 24px 16px;
     }
   }
 `;
@@ -101,14 +151,18 @@ export const GuestLink = styled.a.attrs<{ "data-ui"?: string }>({
   "data-ui": "guest-link",
 })`
   ${GuestCard} & {
-    display: inline-block;
-    margin: 8px 8px 8px 0;
-    padding: 12px 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 10px 8px 0 0;
+    padding: 12px 24px;
+    min-height: 46px;
     background: var(--guest-ink, #34322d);
-    color: var(--guest-paper, white);
+    color: var(--guest-paper, #faf7f1);
     border: 0;
-    border-radius: 24px;
+    border-radius: 6px;
     font: inherit;
+    font-weight: 500;
     cursor: pointer;
   }
 `;
@@ -119,13 +173,15 @@ export const CalendarButton = styled.button`
   margin-top: 10px;
   padding: 8px 14px;
   border: 0;
-  border-radius: 5px;
   background: var(--ink, var(--guest-ink, #34322d));
   color: var(--paper, var(--guest-paper, white));
   font: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  && {
+    border-radius: var(--inv-radius, 5px);
+  }
   &:focus-visible {
     outline: 2px solid var(--ink, var(--guest-accent, #6c501b));
     outline-offset: 2px;
@@ -135,7 +191,7 @@ export const CalendarButton = styled.button`
 export const ResponseSummary = styled.div`
   border: 1px solid var(--accent, var(--guest-accent, #6c501b));
   background: var(--surface, var(--guest-surface, white));
-  border-radius: 8px;
+  border-radius: var(--inv-card-radius, 8px);
   padding: 14px 16px;
   margin: 14px 0;
   font-size: 14px;
@@ -201,6 +257,7 @@ export const RsvpCompactButton = styled.button`
   && {
     min-height: 30px;
     padding: 4px 11px;
+    border-radius: var(--inv-radius, 5px);
     font-size: 12.5px;
     font-weight: 500;
   }
@@ -210,10 +267,22 @@ export const RsvpGuestCard = styled.fieldset`
   && {
     background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 12px 16px 12px;
+    border-left: 3px solid var(--line);
+    border-radius: var(--inv-card-radius, 8px);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
+    padding: 12px 16px 12px 17px;
     margin: 0 0 12px;
     min-width: 0;
+    transition: border-left-color 180ms ease;
+  }
+  &&[data-confirmed="true"],
+  &&:has([data-choice="yes"] input:checked) {
+    border-left-color: var(--accent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    && {
+      transition: none;
+    }
   }
   && > legend {
     float: left;
@@ -277,7 +346,7 @@ export const RsvpChoicePill = styled.label`
     min-height: 30px;
     min-width: 68px;
     border: 1px solid var(--line);
-    border-radius: 5px;
+    border-radius: var(--inv-pill-radius, 5px);
     font-size: 13px;
     font-weight: 400;
     line-height: 1.2;
@@ -289,7 +358,13 @@ export const RsvpChoicePill = styled.label`
     transition:
       background-color 140ms ease,
       border-color 140ms ease,
-      color 140ms ease;
+      color 140ms ease,
+      box-shadow 160ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    && {
+      transition: none;
+    }
   }
   && input[type="radio"] {
     position: absolute;
@@ -311,6 +386,14 @@ export const RsvpChoicePill = styled.label`
     background: var(--ink);
     border-color: var(--ink);
     color: var(--paper);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--ink) 18%, transparent);
+  }
+  &&[data-choice="yes"]:has(input:checked)::before {
+    content: "✓";
+    display: inline-block;
+    margin-right: 4px;
+    font-size: 11px;
+    line-height: 1;
   }
   &&[data-choice="no"]:has(input:checked) {
     background: color-mix(in srgb, var(--ink) 14%, var(--surface));
@@ -322,7 +405,7 @@ export const RsvpChoicePill = styled.label`
     outline-offset: 2px;
   }
   &&:has(input:disabled) {
-    opacity: 0.4;
+    opacity: 0.55;
     cursor: default;
   }
   && input[type="radio"]:disabled {
@@ -382,7 +465,7 @@ export const RsvpActions = styled.div`
 
 export const RsvpAlert = styled.div`
   padding: 10px 14px;
-  border-radius: 6px;
+  border-radius: var(--inv-card-radius, 8px);
   border: 1px solid var(--line);
   background: var(--surface);
   font-size: 13.5px;
@@ -406,8 +489,10 @@ export const RsvpCheckboxLabel = styled.label`
 export const QuestionGroup = styled.fieldset`
   && {
     border: 0;
+    border-left: 0;
     border-radius: 0;
     background: transparent;
+    box-shadow: none;
     padding: 10px 0 0;
     margin: 10px 0 0;
     border-top: 1px solid color-mix(in srgb, var(--line) 45%, transparent);
@@ -501,8 +586,19 @@ export const QuestionPillButton = styled.button`
   && {
     min-height: 32px;
     padding: 5px 13px;
+    border-radius: var(--inv-pill-radius, 5px);
     font-size: 13px;
     font-weight: 400;
+    transition:
+      background-color 140ms ease,
+      border-color 140ms ease,
+      color 140ms ease,
+      box-shadow 160ms ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    && {
+      transition: none;
+    }
   }
   &&[aria-checked="true"] {
     background: var(--ink);

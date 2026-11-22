@@ -110,14 +110,18 @@ export function useInvitationMotion(contentKey: string) {
       '[data-ui="invitation-header"]',
     );
     const navTargets = header
-      ? Array.from(header.querySelectorAll<HTMLAnchorElement>('nav a[href^="#"]'))
+      ? Array.from(
+          header.querySelectorAll<HTMLAnchorElement>('nav a[href^="#"]'),
+        )
           .map((link) => {
             const id = link.getAttribute("href")?.slice(1);
             const target = id ? document.getElementById(id) : null;
             return target && root.contains(target) ? { link, target } : null;
           })
           .filter(
-            (entry): entry is { link: HTMLAnchorElement; target: HTMLElement } =>
+            (
+              entry,
+            ): entry is { link: HTMLAnchorElement; target: HTMLElement } =>
               entry !== null,
           )
       : [];
@@ -141,7 +145,10 @@ export function useInvitationMotion(contentKey: string) {
 
       if (navTargets.length > 0) {
         const headerHeight = header ? header.getBoundingClientRect().height : 0;
-        const threshold = Math.max(headerHeight + 48, window.innerHeight * 0.33);
+        const threshold = Math.max(
+          headerHeight + 48,
+          window.innerHeight * 0.33,
+        );
         const atBottom = scrollable > 48 && window.scrollY >= scrollable - 2;
         let activeLink: HTMLAnchorElement | null = null;
         let bestTop = -Infinity;

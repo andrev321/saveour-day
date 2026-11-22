@@ -216,7 +216,11 @@ export function RsvpForm({
           const guestQuestions = visibleQs.byGuest.get(g.id) || [];
 
           return (
-            <S.RsvpGuestCard key={g.id} disabled={busy || closed}>
+            <S.RsvpGuestCard
+              key={g.id}
+              disabled={busy || closed}
+              data-confirmed={isGuestAttending ? "true" : undefined}
+            >
               <legend>
                 {guestDisplayName(g, { companion: copy.companion })}
               </legend>
