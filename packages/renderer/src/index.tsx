@@ -33,7 +33,7 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { LoadingSkeleton, LoadingState } from "@invitations/ui/loading";
+import { LoadingState } from "@invitations/ui/loading";
 import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./lib/styles";
 import { useInvitationMotion } from "@invitations/ui/motion";
@@ -151,6 +151,21 @@ export function InvitationProvider({
     </MantineProvider>
   );
 }
+function resolveMediaSrc(src: string, resolveMedia?: (src: string) => string) {
+  return isSampleMediaSource(src) ? src : (resolveMedia?.(src) ?? src);
+}
+
+function buildMediaSrcSet(
+  asset: MediaAsset,
+  resolveMedia?: (src: string) => string,
+) {
+  return asset.variants.length
+    ? asset.variants
+        .map((v) => `${resolveMediaSrc(v.src, resolveMedia)} ${v.width}w`)
+        .join(", ")
+    : undefined;
+}
+
 function Photo({
   media,
   mobile,
@@ -168,12 +183,9 @@ function Photo({
   heroLayout?: SiteConfig["hero"]["layout"];
   crops?: DeviceCrops;
 }) {
-  const resolve = (src: string) =>
-    isSampleMediaSource(src) ? src : (resolveMedia?.(src) ?? src);
+  const resolve = (src: string) => resolveMediaSrc(src, resolveMedia);
   const buildSrcSet = (asset: MediaAsset) =>
-    asset.variants.length
-      ? asset.variants.map((v) => `${resolve(v.src)} ${v.width}w`).join(", ")
-      : undefined;
+    buildMediaSrcSet(asset, resolveMedia);
   const src = resolve(media.src);
   const srcSet = buildSrcSet(media);
   const mobileVariantSrcSet = mobile ? buildSrcSet(mobile) : undefined;
@@ -248,19 +260,7 @@ function Photo({
           data-loaded={loaded}
           style={placeholderStyle}
         />
-      ) : (
-        !loaded && (
-          <LoadingSkeleton
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              borderRadius: "inherit",
-              pointerEvents: "none",
-            }}
-          />
-        )
-      )}
+      ) : null}
       <S.PhotoPicture>
         {mobile ? (
           <source
@@ -279,6 +279,7 @@ function Photo({
         <S.InvitationPhoto
           ref={image}
           data-loaded={loaded}
+          data-has-blur={hasBlur}
           src={src}
           srcSet={srcSet}
           sizes={srcSet ? effectiveSizes : undefined}
@@ -382,6 +383,29 @@ function Venue({
     </Stack>
   );
 }
+function formatPhoneDisplay(phone: string): string {
+  const trimmed = phone.trim();
+  if (/[\s()-]/.test(trimmed)) return trimmed;
+  if (/^\+1\d{10}$/.test(trimmed)) {
+    return `+1 ${trimmed.slice(2, 5)} ${trimmed.slice(5, 8)} ${trimmed.slice(8)}`;
+  }
+  if (/^\+\d{11}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6, 9)} ${trimmed.slice(9)}`;
+  }
+  if (/^\+\d{12}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6, 9)} ${trimmed.slice(9)}`;
+  }
+  if (/^\+\d{7,15}$/.test(trimmed)) {
+    const cc = trimmed.slice(0, 3);
+    const rest = trimmed.slice(3).replace(/(\d{3})(?=\d)/g, "$1 ");
+    return `${cc} ${rest}`;
+  }
+  if (/^\d{9}$/.test(trimmed)) {
+    return `${trimmed.slice(0, 3)} ${trimmed.slice(3, 6)} ${trimmed.slice(6)}`;
+  }
+  return trimmed;
+}
+
 function Contact({
   contact,
   copy,
@@ -393,7 +417,9 @@ function Contact({
   return (
     <Stack gap="sm">
       <Text fw={600}>{contact.name}</Text>
-      <Anchor href={`tel:${contact.phone}`}>{contact.phone}</Anchor>
+      <Anchor href={`tel:${contact.phone}`}>
+        {formatPhoneDisplay(contact.phone)}
+      </Anchor>
       <Group>
         <Button component="a" href={`tel:${contact.phone}`}>
           {copy.call}
@@ -406,6 +432,201 @@ function Contact({
         </Button>
       </Group>
     </Stack>
+  );
+}
+
+function GallerySection({
+  section,
+  config,
+  resolveMedia,
+  interactive,
+}: {
+  section: Extract<SiteConfig["sections"][number], { type: "gallery" }>;
+  config: SiteConfig;
+  resolveMedia?: (src: string) => string;
+  interactive: boolean;
+}) {
+  const items = section.mediaIds
+    .map((id) => ({
+      id,
+      media: config.media.find((m) => m.id === id),
+      crops: section.crops[id],
+    }))
+    .filter(
+      (
+        entry,
+      ): entry is {
+        id: string;
+        media: MediaAsset;
+        crops: DeviceCrops;
+      } => Boolean(entry.media),
+    );
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const openerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (activeIndex === null) return;
+    closeButtonRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveIndex(null);
+        openerRef.current?.focus();
+      } else if (event.key === "ArrowLeft" && items.length > 1) {
+        setActiveIndex((current) =>
+          current === null ? null : (current - 1 + items.length) % items.length,
+        );
+      } else if (event.key === "ArrowRight" && items.length > 1) {
+        setActiveIndex((current) =>
+          current === null ? null : (current + 1) % items.length,
+        );
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [activeIndex, items.length]);
+
+  const closeLightbox = () => {
+    setActiveIndex(null);
+    openerRef.current?.focus();
+  };
+
+  const lightboxLabels =
+    config.locale === "pl-PL"
+      ? {
+          dialog: section.title || "Galeria zdjęć",
+          close: "Zamknij podgląd",
+          prev: "Poprzednie zdjęcie",
+          next: "Następne zdjęcie",
+          open: (index: number, alt: string) =>
+            alt ? `Powiększ zdjęcie: ${alt}` : `Powiększ zdjęcie ${index + 1}`,
+        }
+      : config.locale === "en-GB"
+        ? {
+            dialog: section.title || "Photo gallery",
+            close: "Close preview",
+            prev: "Previous photo",
+            next: "Next photo",
+            open: (index: number, alt: string) =>
+              alt ? `Open photo: ${alt}` : `Open photo ${index + 1}`,
+          }
+        : {
+            dialog: section.title || "Fotogalerie",
+            close: "Vorschau schließen",
+            prev: "Vorheriges Foto",
+            next: "Nächstes Foto",
+            open: (index: number, alt: string) =>
+              alt ? `Foto öffnen: ${alt}` : `Foto ${index + 1} öffnen`,
+          };
+
+  const activeItem =
+    interactive && activeIndex !== null ? items[activeIndex] : undefined;
+
+  return (
+    <>
+      <S.Gallery
+        data-count={items.length}
+        data-odd-many={
+          items.length >= 5 && items.length % 2 === 1 ? "true" : undefined
+        }
+      >
+        {items.map((item, index) =>
+          interactive ? (
+            <S.GalleryButton
+              key={item.id}
+              type="button"
+              aria-label={lightboxLabels.open(index, item.media.alt)}
+              onClick={(event) => {
+                openerRef.current = event.currentTarget;
+                setActiveIndex(index);
+              }}
+            >
+              <Photo
+                crops={item.crops}
+                media={item.media}
+                resolveMedia={resolveMedia}
+              />
+            </S.GalleryButton>
+          ) : (
+            <Photo
+              key={item.id}
+              crops={item.crops}
+              media={item.media}
+              resolveMedia={resolveMedia}
+            />
+          ),
+        )}
+      </S.Gallery>
+      {activeItem && activeIndex !== null ? (
+        <S.Lightbox
+          role="dialog"
+          aria-modal="true"
+          aria-label={lightboxLabels.dialog}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) closeLightbox();
+          }}
+        >
+          <button
+            ref={closeButtonRef}
+            type="button"
+            className="lightbox-close"
+            aria-label={lightboxLabels.close}
+            onClick={closeLightbox}
+          >
+            ×
+          </button>
+          <div className="lightbox-stage">
+            <figure className="lightbox-figure">
+              <img
+                src={resolveMediaSrc(activeItem.media.src, resolveMedia)}
+                srcSet={buildMediaSrcSet(activeItem.media, resolveMedia)}
+                sizes="90vw"
+                alt={activeItem.media.alt}
+                width={activeItem.media.width}
+                height={activeItem.media.height}
+                decoding="async"
+              />
+            </figure>
+            <div className="lightbox-meta">
+              {items.length > 1 ? (
+                <div className="lightbox-controls">
+                  <button
+                    type="button"
+                    aria-label={lightboxLabels.prev}
+                    onClick={() =>
+                      setActiveIndex(
+                        (activeIndex - 1 + items.length) % items.length,
+                      )
+                    }
+                  >
+                    ←
+                  </button>
+                  <span>
+                    {activeIndex + 1} / {items.length}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label={lightboxLabels.next}
+                    onClick={() =>
+                      setActiveIndex((activeIndex + 1) % items.length)
+                    }
+                  >
+                    →
+                  </button>
+                </div>
+              ) : (
+                <span>
+                  {activeIndex + 1} / {items.length}
+                </span>
+              )}
+              {activeItem.media.alt ? (
+                <span>{activeItem.media.alt}</span>
+              ) : null}
+            </div>
+          </div>
+        </S.Lightbox>
+      ) : null}
+    </>
   );
 }
 export function CalendarMenu({
@@ -499,6 +720,24 @@ export function Invitation({
     focusSection && showMain
       ? config.sections.filter((section) => section.id === focusSection)
       : sections;
+  const orphanVenueIds = new Set<string>();
+  for (let i = 0; i < renderedSections.length;) {
+    if (renderedSections[i].type !== "venue") {
+      i += 1;
+      continue;
+    }
+    let end = i;
+    while (
+      end < renderedSections.length &&
+      renderedSections[end].type === "venue"
+    ) {
+      end += 1;
+    }
+    if ((end - i) % 2 === 1) {
+      orphanVenueIds.add(renderedSections[end - 1].id);
+    }
+    i = end;
+  }
   const events = variant.eventIds
     .map((id) => config.events.find((e) => e.id === id)!)
     .filter(Boolean);
@@ -604,6 +843,7 @@ export function Invitation({
         data-decorations={config.appearance.decorations}
         style={colors}
       >
+        {!focusSection && <S.ReadingProgress aria-hidden="true" />}
         {!focusSection && (
           <S.InvitationHeader>
             <span>{config.identity.displayName || config.hero.eyebrow}</span>
@@ -709,6 +949,9 @@ export function Invitation({
                   key={section.id}
                   id={`section-${section.id}`}
                   data-kind={section.type}
+                  data-span={
+                    orphanVenueIds.has(section.id) ? "full" : undefined
+                  }
                 >
                   {onEditSection && (
                     <PreviewEditButton
@@ -716,9 +959,13 @@ export function Invitation({
                       onClick={() => onEditSection(section.id)}
                     />
                   )}
-                  <S.SectionHeading>
+                  <S.SectionHeading
+                    data-has-icon={config.appearance.icons || undefined}
+                  >
                     <span aria-hidden="true">
-                      {String(index + 1).padStart(2, "0")} /
+                      {config.theme === "editorial"
+                        ? `[${String(index + 1).padStart(2, "0")}]`
+                        : `${String(index + 1).padStart(2, "0")} /`}
                     </span>
                     {config.appearance.icons && (
                       <SectionIcon kind={section.type} theme={config.theme} />
@@ -787,7 +1034,7 @@ export function Invitation({
                     />
                   ) : null}
                   {section.type === "contact" ? (
-                    <Stack gap="xl">
+                    <S.ContactGrid>
                       {section.contactIds
                         .map((id) => config.contacts.find((c) => c.id === id)!)
                         .filter(Boolean)
@@ -798,19 +1045,15 @@ export function Invitation({
                             copy={config.copy}
                           />
                         ))}
-                    </Stack>
+                    </S.ContactGrid>
                   ) : null}
                   {section.type === "gallery" ? (
-                    <S.Gallery>
-                      {section.mediaIds.map((id) => (
-                        <Photo
-                          key={id}
-                          crops={section.crops[id]}
-                          media={config.media.find((m) => m.id === id)!}
-                          resolveMedia={resolveMedia}
-                        />
-                      ))}
-                    </S.Gallery>
+                    <GallerySection
+                      section={section}
+                      config={config}
+                      resolveMedia={resolveMedia}
+                      interactive={!onEditSection}
+                    />
                   ) : null}
                 </S.InvitationSection>
               ))}
