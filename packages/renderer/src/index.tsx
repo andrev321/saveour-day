@@ -1060,7 +1060,7 @@ export function Invitation({
             </S.SectionGrid>
           </S.InvitationMain>
         )}
-        {!focusSection && children && (
+        {!focusSection && hasChildren && (
           <S.InvitationResponse id="invitation-response">
             {children}
           </S.InvitationResponse>

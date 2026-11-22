@@ -34,6 +34,15 @@ const eveningKenBurns = keyframes`
   }
 `;
 
+const hairlineReveal = keyframes`
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+`;
+
 export const ReadingProgress = styled.div.attrs<{ "data-ui"?: string }>({
   "data-ui": "reading-progress",
 })`
@@ -1488,9 +1497,8 @@ export const ThemedInvitation = styled(Invitation)`
       right: 0;
       height: 1px;
       background: var(--line);
-      transform: scaleX(0);
+      transform: scaleX(1);
       transform-origin: left;
-      transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
       pointer-events: none;
     }
     &[data-motion-ready="true"]
@@ -1499,7 +1507,7 @@ export const ThemedInvitation = styled(Invitation)`
     }
     &[data-motion-ready="true"]
       ${InvitationSection}:not([data-kind="contact"])[data-in-view="true"]::before {
-      transform: scaleX(1);
+      animation: ${hairlineReveal} 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
     }
     &[data-motion-ready="true"][data-decorations="full"]
       ${InvitationSection}:not([data-kind="contact"])::before {
