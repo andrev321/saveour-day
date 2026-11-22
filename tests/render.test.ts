@@ -124,6 +124,24 @@ test("render descriptions, contacts and optional-map reception for every theme",
     assert.ok(html.includes(`data-theme="${theme}"`));
   }
 });
+test("venue map preview button follows address and showMap toggle", () => {
+  const config = createDemo();
+  config.venues[0].showMap = true;
+  config.venues[0].address = "ul. Przykładowa 1, Warszawa";
+  config.venues[1].showMap = false;
+  config.venues[1].address = "ul. Druga 2, Warszawa";
+  const withMapHtml = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.match(withMapHtml, /Pokaż mapę/);
+
+  config.venues[0].showMap = false;
+  const withoutMapHtml = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.doesNotMatch(withoutMapHtml, /Pokaż mapę/);
+  assert.match(withoutMapHtml, /maps\/search\/\?api=1&amp;query=/);
+});
 test("decorations and section icons can be disabled independently", () => {
   const config = createDemo();
   config.appearance = { icons: false, decorations: "none" };

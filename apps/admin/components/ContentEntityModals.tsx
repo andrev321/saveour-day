@@ -7,6 +7,7 @@ import {
   Modal,
   Select,
   Stack,
+  Switch,
   Text,
   TextInput,
   Textarea,
@@ -98,23 +99,14 @@ export function VenueFormFields({
         value={value.description}
         onChange={(e) => onPatch({ description: e.currentTarget.value })}
       />
-      <TextInput
+      <Switch
         label={t(
-          "Link nawigacji (opcjonalny)",
-          "Navigation link (optional)",
-          "Navigationslink (optional)",
+          "Pokaż podgląd mapy",
+          "Show map preview",
+          "Kartenvorschau anzeigen",
         )}
-        value={value.navigationUrl}
-        onChange={(e) => onPatch({ navigationUrl: e.currentTarget.value })}
-      />
-      <TextInput
-        label={t(
-          "Mapa Google — adres osadzania (opcjonalny)",
-          "Google Maps embed URL (optional)",
-          "Google Maps Einbettung (optional)",
-        )}
-        value={value.mapUrl}
-        onChange={(e) => onPatch({ mapUrl: e.currentTarget.value })}
+        checked={value.showMap}
+        onChange={(e) => onPatch({ showMap: e.currentTarget.checked })}
       />
     </Stack>
   );
@@ -134,8 +126,7 @@ export function VenueCreateModal({
     name: "",
     address: "",
     description: "",
-    mapUrl: "",
-    navigationUrl: "",
+    showMap: true,
   });
   const [form, setForm] = useState<VenueInput>(empty);
 

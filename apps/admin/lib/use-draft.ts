@@ -24,8 +24,6 @@ const RECOVERY_REPLACEMENTS: Readonly<Record<string, string>> = Object.freeze({
   address: "Draft",
   description: "",
   url: "",
-  mapUrl: "",
-  navigationUrl: "",
   phone: "+48111222333",
   date: "2030-01-01",
   time: "12:00",

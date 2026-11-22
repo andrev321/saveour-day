@@ -1306,8 +1306,7 @@ export function ContentEditor(props: ContentEditorProps) {
                     name: t("Nowe miejsce", "New venue", "Neuer Ort"),
                     address: "",
                     description: "",
-                    mapUrl: "",
-                    navigationUrl: "",
+                    showMap: true,
                   };
                   if (!config.venues.length)
                     onChange((c) => ({ ...c, venues: [venue] }));

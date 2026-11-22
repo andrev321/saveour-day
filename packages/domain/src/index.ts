@@ -66,19 +66,6 @@ const designSchema = z
     accent: hexColor,
   })
   .strict();
-const mapUrl = optionalUrl.refine((value) => {
-  if (!value) return true;
-  try {
-    const u = new URL(value);
-    return (
-      ["www.google.com", "maps.google.com"].includes(u.hostname) &&
-      (u.pathname.startsWith("/maps/embed") ||
-        u.searchParams.get("output") === "embed")
-    );
-  } catch {
-    return false;
-  }
-}, "Mapa musi być adresem osadzania Google Maps");
 const imageSource = z
   .string()
   .max(2048)
@@ -137,8 +124,7 @@ const venueSchema = z
     name: text,
     address: z.string().max(500).default(""),
     description: paragraph,
-    mapUrl,
-    navigationUrl: optionalUrl,
+    showMap: z.boolean().default(true),
   })
   .strict();
 const eventSchema = z
@@ -390,11 +376,22 @@ export function parseSiteConfig(input: unknown): SiteConfig {
     );
   return result.data;
 }
+function venueQuery(venue: SiteConfig["venues"][number]): string {
+  return [venue.name, venue.address]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function navigationUrl(venue: SiteConfig["venues"][number]): string {
-  return (
-    venue.navigationUrl ||
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([venue.name, venue.address].filter(Boolean).join(", "))}`
-  );
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venueQuery(venue))}`;
+}
+
+export function mapEmbedUrl(
+  venue: SiteConfig["venues"][number],
+): string | null {
+  if (!venue.showMap || !venue.address.trim()) return null;
+  return `https://www.google.com/maps?q=${encodeURIComponent(venueQuery(venue))}&output=embed`;
 }
 
 export function visibleSections(

@@ -1,5 +1,6 @@
 "use client";
 import {
+  mapEmbedUrl,
   navigationUrl,
   visibleSections,
   type DeviceCrops,
@@ -307,15 +308,16 @@ function Venue({
   venue: SiteConfig["venues"][number];
   config: SiteConfig;
 }) {
-  const [showMap, setShowMap] = useState(false);
+  const embedUrl = mapEmbedUrl(venue);
+  const [mapOpen, setMapOpen] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapSlow, setMapSlow] = useState(false);
   const [mapAttempt, setMapAttempt] = useState(0);
   useEffect(() => {
-    if (!showMap || mapReady) return;
+    if (!mapOpen || mapReady) return;
     const timer = setTimeout(() => setMapSlow(true), 20000);
     return () => clearTimeout(timer);
-  }, [showMap, mapReady, mapAttempt]);
+  }, [mapOpen, mapReady, mapAttempt]);
   return (
     <Stack gap="md">
       <Title order={3} size="h2">
@@ -335,13 +337,13 @@ function Venue({
         >
           {config.copy.navigate}
         </Button>
-        {venue.mapUrl && !showMap ? (
-          <Button variant="subtle" onClick={() => setShowMap(true)}>
+        {embedUrl && !mapOpen ? (
+          <Button variant="subtle" onClick={() => setMapOpen(true)}>
             {config.copy.showMap}
           </Button>
         ) : null}
       </Group>
-      {venue.mapUrl && showMap ? (
+      {embedUrl && mapOpen ? (
         <div style={{ position: "relative" }} aria-busy={!mapReady}>
           {!mapReady && (
             <div
@@ -373,7 +375,7 @@ function Venue({
           <S.InvitationMap
             key={mapAttempt}
             onLoad={() => setMapReady(true)}
-            src={venue.mapUrl}
+            src={embedUrl}
             title={venue.name}
             loading="lazy"
             referrerPolicy="no-referrer"

@@ -66,6 +66,10 @@ A **Guest** whose identity the **Organizer** does not know in advance (PL: "osob
 
 A distinct scheduled part of an occasion (e.g., Ceremony, Reception, Poprawiny) defined in the **Site** configuration (up to 50 events). **Variant** event permissions control which **Events** an **Invitation** sees in the schedule and calendar (and which **Events** are eligible for per-event **RSVP**).
 
+### Venue
+
+A physical location defined in a **Site** configuration (name, address, optional description, and map preview toggle), referenced by `venue` **Sections** and **Events** (including calendar exports). Both the external navigation link and the optional embedded map preview are derived from the **Venue**'s name and address.
+
 ### RSVP
 
 The whole response of an **Invitation**: the **Attendance** of each **Guest**, the **Question Answers**, and a free-text note. Kept outside **Releases**, so it survives new publications and **Template** resets.

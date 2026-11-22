@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  mapEmbedUrl,
+  navigationUrl,
   siteConfigSchema,
   parseSiteConfig,
   themeDesigns,
@@ -73,41 +75,24 @@ test("reject malformed JSON shape and dangerous URLs with field names", () => {
   assert.equal(siteConfigSchema.safeParse(config).success, false);
 });
 test("incomplete URLs produce field errors instead of throwing while editing", () => {
-  for (const field of ["event", "navigation", "map"] as const) {
-    for (const value of [
-      "d",
-      "https:",
-      "https://",
-      "https://[",
-      "example.com",
-    ]) {
-      const config = createDemo();
-      const path =
-        field === "event"
-          ? ["events", 0, "url"]
-          : ["venues", 0, field === "map" ? "mapUrl" : "navigationUrl"];
-      if (field === "event") config.events[0].url = value;
-      else if (field === "map") config.venues[0].mapUrl = value;
-      else config.venues[0].navigationUrl = value;
-      const result = siteConfigSchema.safeParse(config);
-      assert.equal(result.success, false, `${field}: ${value}`);
-      if (!result.success) {
-        assert.ok(
-          result.error.issues.some(
-            (issue) => JSON.stringify(issue.path) === JSON.stringify(path),
-          ),
-        );
-      }
+  for (const value of ["d", "https:", "https://", "https://[", "example.com"]) {
+    const config = createDemo();
+    config.events[0].url = value;
+    const result = siteConfigSchema.safeParse(config);
+    assert.equal(result.success, false, `event: ${value}`);
+    if (!result.success) {
+      assert.ok(
+        result.error.issues.some(
+          (issue) =>
+            JSON.stringify(issue.path) === JSON.stringify(["events", 0, "url"]),
+        ),
+      );
     }
   }
   const config = createDemo();
   config.events[0].url = "https://example.com/event";
-  config.venues[0].navigationUrl = "https://maps.google.com/";
-  config.venues[0].mapUrl = "https://www.google.com/maps/embed?pb=example";
   assert.equal(siteConfigSchema.safeParse(config).success, true);
   config.events[0].url = "";
-  config.venues[0].navigationUrl = "";
-  config.venues[0].mapUrl = "";
   assert.equal(siteConfigSchema.safeParse(config).success, true);
 });
 
@@ -165,12 +150,31 @@ test("every variant has independent explicit references", () => {
   config.variants[1].eventIds = ["ceremony", "ceremony"];
   assert.throws(() => parseSiteConfig(config), /Powt/);
 });
-test("only allow trusted Google embeds; reject paths escaping media directory", () => {
+test("derives navigation and embed URLs from venue text and showMap", () => {
+  const venue = {
+    id: "ceremony",
+    name: "Dwór Oliwski",
+    address: "ul. Bytowska 4, Gdańsk",
+    description: "",
+    showMap: true,
+  };
+  assert.equal(
+    navigationUrl(venue),
+    "https://www.google.com/maps/search/?api=1&query=Dw%C3%B3r%20Oliwski%2C%20ul.%20Bytowska%204%2C%20Gda%C5%84sk",
+  );
+  assert.equal(
+    mapEmbedUrl(venue),
+    "https://www.google.com/maps?q=Dw%C3%B3r%20Oliwski%2C%20ul.%20Bytowska%204%2C%20Gda%C5%84sk&output=embed",
+  );
+  assert.equal(mapEmbedUrl({ ...venue, showMap: false }), null);
+  assert.equal(mapEmbedUrl({ ...venue, address: "   " }), null);
+});
+test("reject paths escaping media directory and legacy venue URL fields", () => {
   const config = createDemo();
-  config.venues[0].mapUrl = "https://www.google.com.evil.example/maps/embed";
-  assert.throws(() => parseSiteConfig(config), /mapUrl/);
-  config.venues[0].mapUrl = "https://www.google.com/maps/embed?pb=test";
-  assert.doesNotThrow(() => parseSiteConfig(config));
+  const withLegacyUrl = structuredClone(config) as Record<string, unknown>;
+  (withLegacyUrl.venues as Record<string, unknown>[])[0].mapUrl =
+    "https://www.google.com/maps/embed?pb=test";
+  assert.throws(() => parseSiteConfig(withLegacyUrl));
   config.media = [
     {
       id: "photo",
@@ -186,7 +190,7 @@ test("only allow trusted Google embeds; reject paths escaping media directory", 
 });
 test("optional maps and descriptions do not disable sections", () => {
   const config = createDemo();
-  config.venues[1].mapUrl = "";
+  config.venues[1].showMap = false;
   config.venues[1].description = "";
   const parsed = parseSiteConfig(config);
   assert.equal(

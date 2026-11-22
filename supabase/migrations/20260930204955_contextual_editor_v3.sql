@@ -56,7 +56,7 @@ begin
  end loop;
  result:=result||jsonb_build_object('metadata',(content->'metadata')||jsonb_build_object('indexing',coalesce(content#>'{metadata,indexing}','false'::jsonb)),
  'events',coalesce((select jsonb_agg(e||jsonb_build_object('dateLabel',coalesce(e->'dateLabel','""'::jsonb),'url',coalesce(e->'url','""'::jsonb))) from jsonb_array_elements(content->'events') e),'[]'::jsonb),
- 'venues',coalesce((select jsonb_agg(v||jsonb_build_object('description',coalesce(v->'description','""'::jsonb),'mapUrl',coalesce(v->'mapUrl','""'::jsonb),'navigationUrl',coalesce(v->'navigationUrl','""'::jsonb))) from jsonb_array_elements(content->'venues') v),'[]'::jsonb));
+ 'venues',coalesce((select jsonb_agg((v-array['mapUrl','navigationUrl'])||jsonb_build_object('description',coalesce(v->'description','""'::jsonb),'showMap',coalesce(v->'showMap','true'::jsonb))) from jsonb_array_elements(content->'venues') v),'[]'::jsonb));
  return result||jsonb_build_object('schemaVersion',3,'sections',sections,'variants',variants,'media',photos,'hero',(content->'hero')||jsonb_build_object('description',coalesce(content#>'{hero,description}','""'::jsonb),'crops',crops));
 end $$;
 revoke all on function private.editor_crop(jsonb,text),private.editor_crops(jsonb),private.convert_editor_v3(jsonb) from public,anon,authenticated;
