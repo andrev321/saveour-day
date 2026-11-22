@@ -8,6 +8,7 @@ import {
 } from "../packages/renderer/src/index.tsx";
 import { createDemo } from "../packages/domain/src/demo.ts";
 import {
+  applyTheme,
   mediaSchema,
   parseSiteConfig,
   themeDesigns,
@@ -208,4 +209,70 @@ test("renders subtle admin promo link in footer when createHref is provided", ()
     }),
   );
   assert.doesNotMatch(focusedFooterHtml, /invitation-footer-promo/);
+});
+
+test("formats phone numbers for display while preserving raw tel and sms hrefs", () => {
+  const config = createDemo();
+  config.contacts[0].phone = "+48501234567";
+  const html = renderToStaticMarkup(createElement(Invitation, { config }));
+  assert.match(html, /href="tel:\+48501234567"[^>]*>\+48 501 234 567<\/a>/);
+  assert.match(html, /href="sms:\+48501234567"/);
+});
+
+test("marks only trailing unpaired venue sections with data-span=full", () => {
+  const sectionTag = (html: string, id: string) => {
+    const match = html.match(
+      new RegExp(`<section[^>]*id="section-${id}"[^>]*>`),
+    );
+    assert.ok(match, `Expected section-${id} in rendered markup`);
+    return match[0];
+  };
+
+  const config = createDemo();
+  const threeVenuesHtml = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.doesNotMatch(
+    sectionTag(threeVenuesHtml, "ceremony"),
+    /data-span="full"/,
+  );
+  assert.doesNotMatch(sectionTag(threeVenuesHtml, "party"), /data-span="full"/);
+  assert.match(sectionTag(threeVenuesHtml, "parking"), /data-span="full"/);
+
+  config.variants[0].sections = config.variants[0].sections.map((entry) =>
+    entry.sectionId === "parking" ? { ...entry, visible: false } : entry,
+  );
+  const pairedVenuesHtml = renderToStaticMarkup(
+    createElement(Invitation, { config }),
+  );
+  assert.doesNotMatch(pairedVenuesHtml, /data-span="full"/);
+});
+
+test("renders editorial bracketed indices and gallery data-count with zero svgs when disabled", () => {
+  const config = applyTheme(createDemo(), "editorial");
+  config.appearance = { icons: false, decorations: "none" };
+  config.media = ["photo-1", "photo-2", "photo-3"].map((id) =>
+    mediaSchema.parse({
+      id,
+      src: `/media/${id}.webp`,
+      width: 1200,
+      height: 800,
+    }),
+  );
+  config.sections.push({
+    id: "gallery-1",
+    type: "gallery",
+    title: "Galeria",
+    body: "",
+    mediaIds: ["photo-1", "photo-2", "photo-3"],
+    crops: {},
+  });
+  config.variants[0].sections.push({ sectionId: "gallery-1", visible: true });
+
+  const html = renderToStaticMarkup(createElement(Invitation, { config }));
+  assert.match(html, />\[01\]<\/span>/);
+  assert.doesNotMatch(html, />01 \/<\/span>/);
+  assert.match(html, /data-count="3"/);
+  assert.match(html, /data-ui="reading-progress"/);
+  assert.doesNotMatch(html, /<svg/);
 });
