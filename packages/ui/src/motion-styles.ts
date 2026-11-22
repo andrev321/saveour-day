@@ -27,13 +27,30 @@ export const subtleControls = css`
   .content-disclosure-chevron {
     transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
+  [data-ui="invitation-action"] > span[aria-hidden="true"],
+  [data-ui="invitation-header"] nav > a > span[aria-hidden="true"] {
+    display: inline-block;
+    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    [data-ui="invitation-action"]:hover > span[aria-hidden="true"],
+    [data-ui="invitation-header"] nav > a:hover > span[aria-hidden="true"] {
+      transform: translate(2.5px, -2.5px);
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     .mantine-Button-root,
     .mantine-ActionIcon-root,
     [data-ui="invitation-action"],
     [data-ui="guest-card"] button,
-    .content-disclosure-chevron {
+    .content-disclosure-chevron,
+    [data-ui="invitation-action"] > span[aria-hidden="true"],
+    [data-ui="invitation-header"] nav > a > span[aria-hidden="true"] {
       transition: none !important;
+    }
+    [data-ui="invitation-action"]:hover > span[aria-hidden="true"],
+    [data-ui="invitation-header"] nav > a:hover > span[aria-hidden="true"] {
+      transform: none !important;
     }
   }
 `;
