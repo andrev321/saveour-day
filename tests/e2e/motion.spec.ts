@@ -31,7 +31,9 @@ for (const [width, reducedMotion] of [
     await expect(dialog).toBeVisible();
     const input = dialog.getByLabel("Główny napis", { exact: true });
     await expect(input).toBeVisible();
+    await input.click();
     await input.fill("Nasze spotkanie");
+    await expect(input).toHaveValue("Nasze spotkanie");
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
     await toggle.click();
