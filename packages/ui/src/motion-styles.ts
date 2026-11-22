@@ -1,5 +1,7 @@
 import { css } from "styled-components";
 
+export const MOTION_EASE_CSS = "cubic-bezier(0.22, 1, 0.36, 1)";
+
 /** Small feedback shared by the studio, invitations and portalled dialogs. */
 export const subtleControls = css`
   .mantine-Button-root,
@@ -25,12 +27,12 @@ export const subtleControls = css`
     opacity: 0.88;
   }
   .content-disclosure-chevron {
-    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 220ms ${MOTION_EASE_CSS};
   }
   [data-ui="invitation-action"] > span[aria-hidden="true"],
   [data-ui="invitation-header"] nav > a > span[aria-hidden="true"] {
     display: inline-block;
-    transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+    transition: transform 220ms ${MOTION_EASE_CSS};
   }
   @media (hover: hover) and (pointer: fine) {
     [data-ui="invitation-action"]:hover > span[aria-hidden="true"],

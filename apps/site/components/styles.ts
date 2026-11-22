@@ -1,9 +1,14 @@
 "use client";
 import { createGlobalStyle, keyframes, styled } from "styled-components";
-import { subtleControls } from "@invitations/ui/motion-styles";
+import { INVITATION_DATA_UI } from "@invitations/renderer";
+import { MOTION_EASE_CSS, subtleControls } from "@invitations/ui/motion-styles";
+
+const DEFAULT_PAPER = "#faf7f1";
+const DEFAULT_INK = "#34322d";
+
 export const SiteGlobalStyles = createGlobalStyle`body {margin: 0;
-background: #faf7f1;
-color: #34322d;
+background: ${DEFAULT_PAPER};
+color: ${DEFAULT_INK};
 font-family: Inter, sans-serif;}
 ${subtleControls}
 html { scroll-behavior: smooth; }
@@ -11,8 +16,6 @@ html { scroll-behavior: smooth; }
   html { scroll-behavior: auto; }
 }
 `;
-
-const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 
 const paperRise = keyframes`
   from {
@@ -42,8 +45,8 @@ export const SiteLoadingScreen = styled.main.attrs<{ "data-ui"?: string }>({
   place-items: center;
   padding: 24px;
   box-sizing: border-box;
-  background: #faf7f1;
-  color: #34322d;
+  background: ${DEFAULT_PAPER};
+  color: ${DEFAULT_INK};
 `;
 
 export const SiteStage = styled.div`
@@ -56,8 +59,8 @@ export const SitePaperCurtain = styled.div`
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background: var(--guest-paper, #faf7f1);
-  animation: ${paperRise} 360ms ${EASE} both;
+  background: var(--guest-paper, ${DEFAULT_PAPER});
+  animation: ${paperRise} 360ms ${MOTION_EASE_CSS} both;
   @media (prefers-reduced-motion: reduce) {
     animation: none;
     clip-path: none;
@@ -67,20 +70,20 @@ export const SitePaperCurtain = styled.div`
 export const SiteRevealContent = styled.div`
   position: relative;
   z-index: 1;
-  animation: ${riseReveal} 380ms ${EASE} 340ms both;
+  animation: ${riseReveal} 380ms ${MOTION_EASE_CSS} 340ms both;
 
-  [data-ui="invitation-hero"]
+  [data-ui="${INVITATION_DATA_UI.hero}"]
     :is(
-      [data-ui="invitation-photo-fallback"],
+      [data-ui="${INVITATION_DATA_UI.photoFallback}"],
       picture,
-      [data-ui="invitation-action"]
+      [data-ui="${INVITATION_DATA_UI.action}"]
     ) {
-    animation: ${riseReveal} 380ms ${EASE} 430ms both;
+    animation: ${riseReveal} 380ms ${MOTION_EASE_CSS} 430ms both;
   }
 
   @media (prefers-reduced-motion: reduce) {
     &,
-    [data-ui="invitation-hero"] * {
+    [data-ui="${INVITATION_DATA_UI.hero}"] * {
       animation: none;
     }
   }

@@ -10,6 +10,7 @@ import {
 } from "react";
 import { styled, keyframes } from "styled-components";
 import { BrandLogo } from "./brand";
+import { MOTION_EASE_CSS } from "./motion-styles";
 
 const breathe = keyframes`0%,100%{opacity:.45}50%{opacity:1}`;
 const reveal = keyframes`from{opacity:0}to{opacity:1}`;
@@ -53,7 +54,7 @@ const ProgressBar = styled.div`
   height: 100%;
   border-radius: inherit;
   background: color-mix(in srgb, currentColor 68%, transparent);
-  animation: ${progressSlide} 1.5s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation: ${progressSlide} 1.5s ${MOTION_EASE_CSS} infinite;
   @media (prefers-reduced-motion: reduce) {
     width: 100%;
     opacity: 0.45;

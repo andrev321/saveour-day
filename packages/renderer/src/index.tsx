@@ -1140,3 +1140,5 @@ function ThemeOrnament({ config }: { config: SiteConfig }) {
     </S.Ornament>
   );
 }
+
+export { INVITATION_DATA_UI } from "./lib/styles";

@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { createDemo } from "../../packages/domain/src/demo";
+import { guestContent } from "../../packages/domain/src/guest";
 const admin = process.env.E2E_ADMIN_URL || "http://127.0.0.1:3000";
 const id = "20000000-0000-4000-8000-000000000001";
 function editorData() {
@@ -155,4 +156,34 @@ test("project load error offers direct navigation to sign-in and projects", asyn
   await expect(page.getByText("Session expired", { exact: true })).toHaveCount(
     0,
   );
+});
+
+test("guest site shows minimal loading screen before revealing invitation", async ({
+  page,
+}) => {
+  const pending = gate();
+  const config = createDemo();
+  const visible = guestContent(config, config.defaultVariant);
+  await page.route("**/api/guest/s/reveal", async (route) => {
+    await pending.promise;
+    return route.fulfill({
+      json: {
+        authorized: true,
+        mode: "public",
+        locale: "pl-PL",
+        config: visible,
+      },
+    });
+  });
+  await page.goto("/s/reveal");
+  await expect(page.locator('[data-ui="site-loading"]')).toBeVisible();
+  await expect(page.locator('[data-ui="guest-card"]')).toHaveCount(0);
+  pending.release();
+  await expect(page.locator('[data-ui="site-loading"]')).toHaveCount(0);
+  await expect(page.locator('[data-ui="invitation"]')).toBeVisible();
+  await expect(
+    page
+      .locator('[data-ui="invitation-hero"] [data-ui="invitation-action"]')
+      .first(),
+  ).toBeVisible();
 });

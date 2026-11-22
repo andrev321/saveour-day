@@ -24,3 +24,8 @@ Single-context domain model at [`GLOSSARY.md`](./GLOSSARY.md) and [`docs/adr/`](
 - Unit & integration tests: `npm test`
 - Module boundary check: `npm run lint:boundaries`
 - E2E tests (Chromium): `npm run test:e2e:chromium` (on Windows, run outside the sandbox / with `BypassSandbox: true`, because the sandbox blocks loopback connections to `127.0.0.1` needed by Playwright's `webServer`)
+
+## Environment (Windows)
+
+- Search with `git grep` (`rg` is not installed).
+- Git network and `.git/` write operations (`git pull`, `git commit`, `git push`) require `BypassSandbox: true`; keep `git commit` and `git push` sequential because `.githooks/pre-commit` runs `typecheck` and `lint:boundaries`.

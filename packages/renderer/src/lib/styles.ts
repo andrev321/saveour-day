@@ -3,6 +3,14 @@ import { Box, Card, Text, Title } from "@mantine/core";
 import { subtleControls } from "@invitations/ui/motion-styles";
 import { keyframes, styled } from "styled-components";
 
+export const INVITATION_DATA_UI = {
+  root: "invitation",
+  header: "invitation-header",
+  hero: "invitation-hero",
+  photoFallback: "invitation-photo-fallback",
+  action: "invitation-action",
+} as const;
+
 const GRAIN_SVG = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E")`;
 
 const ornamentDraw = keyframes`
@@ -90,7 +98,7 @@ export const PreviewEditControl = styled.div.attrs<{ "data-ui"?: string }>({
 export const InvitationPhotoFallback = styled(Box).attrs<{
   "data-ui"?: string;
 }>({
-  "data-ui": "invitation-photo-fallback",
+  "data-ui": INVITATION_DATA_UI.photoFallback,
 })`
   height: 100%;
   min-height: 240px;
@@ -268,7 +276,7 @@ export const Invitation = styled(Box).attrs<{ "data-ui"?: string }>({
   }
 `;
 export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
-  "data-ui": "invitation-header",
+  "data-ui": INVITATION_DATA_UI.header,
 })`
   position: sticky;
   top: 0;
@@ -370,7 +378,7 @@ export const InvitationHeader = styled.header.attrs<{ "data-ui"?: string }>({
   }
 `;
 export const InvitationHero = styled.section.attrs<{ "data-ui"?: string }>({
-  "data-ui": "invitation-hero",
+  "data-ui": INVITATION_DATA_UI.hero,
 })`
   position: relative;
   display: grid;
@@ -551,7 +559,7 @@ export const HeroDate = styled(Text).attrs<{ "data-ui"?: string }>({
   letter-spacing: 0.075em;
 `;
 export const HeroAction = styled.a.attrs<{ "data-ui"?: string }>({
-  "data-ui": "invitation-action",
+  "data-ui": INVITATION_DATA_UI.action,
 })`
   display: inline-flex;
   align-items: center;
