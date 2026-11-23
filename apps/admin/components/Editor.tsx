@@ -70,6 +70,7 @@ import { deviceWidths } from "./DeviceSelector";
 import { PhotoLibrary } from "./PhotoLibrary";
 import { ThemePicker } from "./ThemePicker";
 import { TemplateDialog } from "./TemplateDialog";
+import { FormRow } from "./form-layout.styles";
 import { ModalStickyFooter } from "./modal-layout.styles";
 type RevisionResponse = { revision: number };
 const draftFieldLabelKeys: Partial<Record<keyof SiteConfig, string>> = {
@@ -973,8 +974,23 @@ export function Editor({
               )}
 
               <ModalStickyFooter justify="flex-end">
+                <Button
+                  variant="default"
+                  disabled={busy}
+                  onClick={() => setConfirm(null)}
+                >
+                  {label("Anuluj", "Cancel", "Abbrechen")}
+                </Button>
                 <Button onClick={publish} disabled={dirty || busy}>
-                  {demo ? t("startSimulation") : t("confirmPublish")}
+                  {demo
+                    ? t("startSimulation")
+                    : confirm === "publish"
+                      ? t("confirmPublish")
+                      : label(
+                          "Przywróć wydanie",
+                          "Restore release",
+                          "Version wiederherstellen",
+                        )}
                 </Button>
               </ModalStickyFooter>
             </Stack>
@@ -1027,7 +1043,7 @@ export function Editor({
       <Tabs.Panel value="appearance" pt="lg">
         <Stack>
           <ThemePicker config={config} onChange={setConfig} />
-          <Title order={3}>{t("colors")}</Title>
+          <Title order={2}>{t("colors")}</Title>
           <Fields
             config={config}
             value={config.design}
@@ -1107,13 +1123,13 @@ export function Editor({
       </Tabs.Panel>
       <Tabs.Panel value="settings" pt="lg">
         <Stack>
-          <Title order={3}>{t("sharing")}</Title>
+          <Title order={2}>{t("sharing")}</Title>
           <Fields
             config={config}
             value={config.metadata}
             onChange={(v) => replace("metadata", v)}
           />
-          <Title order={3}>{t("labelsFooter")}</Title>
+          <Title order={2}>{t("labelsFooter")}</Title>
           <Fields
             config={config}
             value={Object.fromEntries(
@@ -1132,8 +1148,16 @@ export function Editor({
               </Accordion.Control>
               <Accordion.Panel>
                 <Stack>
-                  {!!data.snapshots?.length && (
-                    <Group align="end">
+                  {!data.snapshots?.length ? (
+                    <Text size="sm" c="dimmed">
+                      {label(
+                        "Brak zapisanych kopii. Kopie powstają automatycznie przed zmianą szablonu.",
+                        "No saved backups yet. Backups are created automatically before resetting a template.",
+                        "Noch keine Sicherungen vorhanden. Sicherungen werden vor dem Zurücksetzen einer Vorlage automatisch erstellt.",
+                      )}
+                    </Text>
+                  ) : (
+                    <FormRow>
                       <Select
                         label={tt.snapshot}
                         placeholder={tt.chooseSnapshot}
@@ -1141,7 +1165,15 @@ export function Editor({
                         onChange={setSnapshotId}
                         data={data.snapshots.map((s) => ({
                           value: s.id,
-                          label: `${tt.revision} ${s.revision} · ${new Date(s.created_at).toLocaleString()}`,
+                          label: `${tt.revision} ${s.revision} · ${new Date(
+                            s.created_at,
+                          ).toLocaleString(
+                            language === "pl"
+                              ? "pl-PL"
+                              : language === "de"
+                                ? "de-DE"
+                                : "en-GB",
+                          )}`,
                         }))}
                       />
                       <Button
@@ -1153,7 +1185,7 @@ export function Editor({
                       >
                         {tt.restore}
                       </Button>
-                    </Group>
+                    </FormRow>
                   )}
                 </Stack>
               </Accordion.Panel>

@@ -11,6 +11,7 @@ import {
   MultiSelect,
   SegmentedControl,
   Select,
+  SimpleGrid,
   Stack,
   Switch,
   Text,
@@ -168,7 +169,7 @@ function RsvpQuestionForm({
           maxLength={QUESTION_POLICY.maxHelpLength}
           onChange={(e) => update({ help: e.currentTarget.value || null })}
         />
-        <Group grow>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <div>
             <Text size="xs" fw={500} mb={4}>
               {labelText("Kogo dotyczy", "Scope", "Bereich")}
@@ -228,7 +229,7 @@ function RsvpQuestionForm({
               { value: "number", label: typeLabel("number") },
             ]}
           />
-        </Group>
+        </SimpleGrid>
         {isImmutable && (
           <Text size="xs" c="dimmed">
             {labelText(

@@ -3,9 +3,9 @@ import { useState, type ReactNode } from "react";
 import {
   Button,
   Checkbox,
-  Group,
   Modal,
   Select,
+  SimpleGrid,
   Stack,
   Switch,
   Text,
@@ -247,7 +247,7 @@ export function EventFormFields({
         data-autofocus={autoFocus || undefined}
         onChange={(e) => onPatch({ title: e.currentTarget.value })}
       />
-      <Group grow>
+      <SimpleGrid cols={{ base: 1, sm: 2 }}>
         <TextInput
           type="date"
           label={t("Data", "Date", "Datum")}
@@ -262,7 +262,7 @@ export function EventFormFields({
           value={value.time}
           onChange={(e) => onPatch({ time: e.currentTarget.value })}
         />
-      </Group>
+      </SimpleGrid>
       <TextInput
         label={t(
           "Opis daty (opcjonalny)",

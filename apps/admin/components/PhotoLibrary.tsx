@@ -108,7 +108,7 @@ export function PhotoLibrary({
   }
   return (
     <Stack>
-      <Title order={3}>{copy.scenes}</Title>
+      <Title order={2}>{copy.scenes}</Title>
       <Text size="sm" c="dimmed">
         {copy.scenesHelp}
       </Text>
@@ -168,7 +168,7 @@ export function PhotoLibrary({
         })}
       </S.Grid>
       <Group gap="xs" align="center">
-        <Title order={3}>{copy.title}</Title>
+        <Title order={2}>{copy.title}</Title>
         {config.media.length >= 30 && (
           <NoticePopover color="orange" label={copy.limit}>
             {copy.limit}

@@ -1195,7 +1195,7 @@ export function ContentEditor(props: ContentEditorProps) {
     }));
   return (
     <Stack>
-      <Title order={3}>
+      <Title order={2}>
         {t("Treść zaproszenia", "Invitation content", "Einladungsinhalt")}
       </Title>
       <Text size="sm" c="dimmed">
@@ -1460,38 +1460,38 @@ function Resources({
                   )}
                 </Button>
               </Group>
+              {removing === item.id && (
+                <Alert color="red" mt="sm">
+                  <Stack>
+                    <Text size="sm">
+                      {t(
+                        "Usunięcie obejmie wszystkie odwołania w szkicu. Usunięcie miejsca usunie też jego sekcje. Historyczne wydania i odpowiedzi RSVP pozostaną zachowane.",
+                        "Deletion removes all draft references and venue sections. Historical releases and RSVP answers remain.",
+                        "Alle Entwurfsverweise und Ortsabschnitte werden entfernt. Historische Veröffentlichungen und RSVP bleiben erhalten.",
+                      )}
+                    </Text>
+                    <Button
+                      color="red"
+                      onClick={() => {
+                        onChange((c) => removeEntity(c, kind, item.id));
+                        setRemoving(null);
+                      }}
+                    >
+                      {t(
+                        "Usuń i uporządkuj powiązania",
+                        "Delete and clean references",
+                        "Löschen und Verweise bereinigen",
+                      )}
+                    </Button>
+                    <Button variant="default" onClick={() => setRemoving(null)}>
+                      {t("Anuluj", "Cancel", "Abbrechen")}
+                    </Button>
+                  </Stack>
+                </Alert>
+              )}
             </Card>
           );
         })}
-        {removing && (
-          <Alert color="red">
-            <Stack>
-              <Text size="sm">
-                {t(
-                  "Usunięcie obejmie wszystkie odwołania w szkicu. Usunięcie miejsca usunie też jego sekcje. Historyczne wydania i odpowiedzi RSVP pozostaną zachowane.",
-                  "Deletion removes all draft references and venue sections. Historical releases and RSVP answers remain.",
-                  "Alle Entwurfsverweise und Ortsabschnitte werden entfernt. Historische Veröffentlichungen und RSVP bleiben erhalten.",
-                )}
-              </Text>
-              <Button
-                color="red"
-                onClick={() => {
-                  onChange((c) => removeEntity(c, kind, removing));
-                  setRemoving(null);
-                }}
-              >
-                {t(
-                  "Usuń i uporządkuj powiązania",
-                  "Delete and clean references",
-                  "Löschen und Verweise bereinigen",
-                )}
-              </Button>
-              <Button variant="default" onClick={() => setRemoving(null)}>
-                {t("Anuluj", "Cancel", "Abbrechen")}
-              </Button>
-            </Stack>
-          </Alert>
-        )}
       </Stack>
     </Modal>
   );

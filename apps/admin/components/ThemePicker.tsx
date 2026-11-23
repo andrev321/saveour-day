@@ -16,6 +16,7 @@ import {
   Switch,
   Select,
   Text,
+  Title,
   Group,
   Badge,
 } from "@mantine/core";
@@ -145,7 +146,7 @@ const Swatches = styled.div`
   display: flex;
   height: 28px;
   overflow: hidden;
-  border: 1px solid #00000020;
+  border: 1px solid var(--panel-border);
   border-radius: 3px;
   margin-bottom: 8px;
   > span {
@@ -205,11 +206,11 @@ export function ThemePicker({
       : language === "en"
         ? {
             title: "Page theme",
-            palettes: "Colour palette",
-            custom: "Custom colours",
+            palettes: "Color palette",
+            custom: "Custom colors",
             preview: "Your event",
             paletteHint:
-              "A palette changes colours only. Adjust them below for any kind of event.",
+              "A palette changes colors only. Adjust them below for any kind of event.",
             icons: "Section icons",
             decorations: "Decorations",
             levels: ["None", "Subtle", "Full"],
@@ -229,7 +230,7 @@ export function ThemePicker({
           };
   return (
     <Stack>
-      <Text fw={600}>{text.title}</Text>
+      <Title order={2}>{text.title}</Title>
       <SimpleGrid cols={{ base: 1, sm: 2 }}>
         {themeNames.map((theme) => (
           <Choice

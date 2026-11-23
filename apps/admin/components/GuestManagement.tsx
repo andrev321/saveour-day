@@ -1436,6 +1436,13 @@ export function GuestManagement({ siteId }: { siteId: string }) {
               )}
             </Text>
             <ModalStickyFooter justify="flex-end">
+              <Button
+                variant="default"
+                disabled={busy}
+                onClick={() => setImportOpen(false)}
+              >
+                {labelText("Anuluj", "Cancel", "Abbrechen")}
+              </Button>
               <ActionButton
                 loading={operation === "import"}
                 pendingLabel={loadingText(language, "import")}

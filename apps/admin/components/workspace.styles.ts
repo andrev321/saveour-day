@@ -81,26 +81,6 @@ export const EditorWorkspace = styled.div.attrs<{ "data-ui"?: string }>({
       --nav-width: 76px;
     }
   }
-  @media (pointer: coarse) {
-    & .mantine-Input-input {
-      min-height: 44px;
-    }
-  }
-  @media (pointer: coarse) {
-    & .mantine-Button-root {
-      min-height: 44px;
-    }
-  }
-  @media (pointer: coarse) {
-    & .mantine-ActionIcon-root {
-      min-height: 44px;
-    }
-  }
-  @media (pointer: coarse) {
-    & .mantine-ActionIcon-root {
-      min-width: 44px;
-    }
-  }
   @media (prefers-reduced-motion: reduce) {
     & * {
       animation: none !important;
@@ -529,8 +509,14 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   & .mantine-Tabs-panel {
     padding-top: 16px;
   }
-  & h3 {
+  & h2 {
     font-size: 18px;
+    line-height: 1.3;
+    margin-top: 4px;
+  }
+  & h3 {
+    font-size: 16px;
+    line-height: 1.35;
     margin-top: 4px;
   }
   & .mantine-Input-input {
@@ -593,6 +579,12 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   @media (max-width: 767px) {
     & {
       padding: 12px;
+    }
+    & h2 {
+      font-size: 16px;
+    }
+    & h3 {
+      font-size: 15px;
     }
   }
   @media (max-width: 767px) {
@@ -674,49 +666,30 @@ export const WorkspacePreview = styled.section.attrs<{ "data-ui"?: string }>({
     flex-direction: column;
     min-width: 0;
     min-height: 0;
-    padding: 24px;
-    gap: 18px;
+    padding: 12px;
+    gap: 10px;
+    container-type: inline-size;
     background: var(--panel-preview);
   }
   & h2 {
     font-size: 18px;
-  }
-  @media (min-width: 1100px) and (max-width: 1599px) {
-    & {
-      padding: 18px;
-    }
   }
   @media (max-width: 1099px) {
     & {
       height: 100%;
       width: 100%;
     }
-  }
-  @media (max-width: 1099px) {
     [data-view="edit"] & {
       display: none;
     }
   }
   @media (max-width: 767px) {
     & {
-      padding: 14px;
-      gap: 12px;
-    }
-  }
-  @media (max-width: 767px) {
-    & h2 {
-      font-size: 16px;
-    }
-  }
-  & {
-    padding: 12px;
-    gap: 10px;
-    container-type: inline-size;
-  }
-  @media (max-width: 767px) {
-    & {
       padding: 8px;
       gap: 8px;
+    }
+    & h2 {
+      font-size: 16px;
     }
   }
 `;
