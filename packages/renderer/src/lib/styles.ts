@@ -199,7 +199,7 @@ export const InvitationMap = styled.iframe.attrs<{ "data-ui"?: string }>({
   border: 0;
   width: 100%;
   height: 280px;
-  border-radius: 2px;
+  border-radius: var(--inv-card-radius, 0px);
 `;
 export const Invitation = styled(Box).attrs<{ "data-ui"?: string }>({
   "data-ui": "invitation",
@@ -570,6 +570,7 @@ export const HeroAction = styled.a.attrs<{ "data-ui"?: string }>({
   padding: 14px 24px;
   min-height: 48px;
   border: 1px solid var(--ink);
+  border-radius: var(--inv-pill-radius, 0px);
   background: var(--ink);
   color: var(--paper);
   text-decoration: none;
@@ -940,12 +941,12 @@ export const InvitationFooterPromo = styled.a.attrs<{ "data-ui"?: string }>({
 })`
   display: inline-block;
   margin-top: 12px;
+  padding-block: 6px;
   font-size: 12px;
   letter-spacing: 0.02em;
-  color: var(--ink);
-  opacity: 0.45;
+  color: var(--muted);
   text-decoration: none;
-  transition: opacity 160ms ease;
+  transition: color 160ms ease;
 
   &:first-child {
     margin-top: 0;
@@ -953,7 +954,7 @@ export const InvitationFooterPromo = styled.a.attrs<{ "data-ui"?: string }>({
 
   &:hover,
   &:focus-visible {
-    opacity: 0.8;
+    color: var(--ink);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
@@ -975,18 +976,25 @@ export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
       var(--mantine-font-family-headings);
     margin: 0 0 12px;
   }
-  & label {
+  & :where(label) {
     display: block;
     margin: 12px 0;
     font-size: 14px;
   }
-  & p {
+  & :where(p) {
     line-height: 1.55;
     margin: 0 0 10px;
   }
-  & input:not([type="radio"]):not([type="checkbox"]),
-  & select,
-  & textarea {
+  & :where(p[role="alert"], p[role="status"]) {
+    padding: 10px 14px;
+    margin: 12px 0;
+    border-radius: var(--inv-card-radius, 6px);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    font-size: 13.5px;
+  }
+  & :where(input:not([type="radio"]):not([type="checkbox"]), select, textarea) {
     display: block;
     width: 100%;
     padding: 9px 12px;
@@ -998,19 +1006,18 @@ export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
     font: inherit;
     font-size: 14px;
   }
-  & input[type="radio"],
-  & input[type="checkbox"] {
+  & :where(input[type="radio"], input[type="checkbox"]) {
     width: auto;
     display: inline-block;
     margin: 0;
     padding: 0;
     accent-color: var(--accent);
   }
-  & textarea {
+  & :where(textarea) {
     min-height: 76px;
     resize: vertical;
   }
-  & fieldset {
+  & :where(fieldset) {
     border: 1px solid var(--line);
     border-radius: var(--inv-card-radius, 6px);
     margin: 14px 0;
@@ -1018,12 +1025,12 @@ export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
     min-width: 0;
     background: var(--surface);
   }
-  & legend {
+  & :where(legend) {
     padding-inline: 6px;
     font-weight: 600;
     font-size: 14px;
   }
-  & button {
+  & :where(button) {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1044,19 +1051,19 @@ export const InvitationResponse = styled.section.attrs<{ "data-ui"?: string }>({
       background-color 140ms ease,
       border-color 140ms ease;
   }
-  & button[type="button"] {
+  & :where(button[type="button"]) {
     color: var(--ink);
     background: transparent;
     border-color: var(--line);
   }
-  & button[type="button"]:hover:not(:disabled) {
+  & :where(button[type="button"]:hover:not(:disabled)) {
     border-color: var(--ink);
     background: color-mix(in srgb, var(--ink) 6%, transparent);
   }
-  & button:not([type="button"]):hover:not(:disabled) {
+  & :where(button:not([type="button"]):hover:not(:disabled)) {
     opacity: 0.9;
   }
-  & button:disabled {
+  & :where(button:disabled) {
     opacity: 0.45;
     cursor: default;
   }
@@ -1307,6 +1314,7 @@ export const ThemedInvitation = styled(Invitation)`
   &[data-theme="editorial"] ${InvitationHero}[data-layout="split"] ${HeroAction} {
     border: 0;
     border-bottom: 1px solid var(--ink);
+    border-radius: 0;
     background: transparent;
     color: var(--ink);
     padding-inline: 0;
@@ -1655,7 +1663,7 @@ export const ThemedInvitation = styled(Invitation)`
       padding-top: 44px;
     }
     &[data-theme="celebration"] ${InvitationHero}[data-layout="split"][data-has-photo="true"] ${InvitationHeroCopy} {
-      padding: 38px 24px;
+      padding: 38px var(--gutter);
     }
     &[data-theme="celebration"] ${InvitationHero}[data-layout="split"] ${InvitationHeroPhoto} {
       min-height: 360px;

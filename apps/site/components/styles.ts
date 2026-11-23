@@ -245,21 +245,24 @@ export const GuestLink = styled.a.attrs<{ "data-ui"?: string }>({
 `;
 
 export const CalendarButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  margin-top: 10px;
-  padding: 8px 14px;
-  border: 0;
-  background: var(--ink, var(--guest-ink, #34322d));
-  color: var(--paper, var(--guest-paper, white));
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
   && {
-    border-radius: var(--inv-radius, 5px);
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: var(--inv-pill-radius, 5px);
+    background: var(--ink, var(--guest-ink, #34322d));
+    color: var(--paper, var(--guest-paper, white));
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
   }
-  &:focus-visible {
+  &&:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+  &&:focus-visible {
     outline: 2px solid var(--ink, var(--guest-accent, #6c501b));
     outline-offset: 2px;
   }
@@ -376,6 +379,11 @@ export const RsvpGuestCard = styled.fieldset`
     clear: both;
     border-top: 0;
     margin-top: 0;
+  }
+  & input:not([type="radio"]):not([type="checkbox"]),
+  & select,
+  & textarea {
+    background: var(--paper);
   }
 `;
 
@@ -627,12 +635,12 @@ export const QuestionStepper = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  & button {
+  && button {
     min-height: 34px;
     min-width: 34px;
     padding: 4px 10px;
   }
-  & input[type="number"] {
+  && input[type="number"] {
     width: 68px;
     margin: 0;
     padding: 6px 8px;
@@ -682,5 +690,11 @@ export const QuestionPillButton = styled.button`
     border-color: var(--ink);
     color: var(--paper);
     font-weight: 500;
+  }
+  &&[aria-checked="true"]:hover:not(:disabled) {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+    opacity: 0.9;
   }
 `;

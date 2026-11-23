@@ -349,7 +349,7 @@ export const themes: Record<ThemeName, ThemeDefinition> = {
     design: themePalettes.celebration[0].design,
     headingFont: "Fraunces, Georgia, serif",
     bodyFont: '"DM Sans", sans-serif',
-    radius: "2px",
+    radius: "8px",
     layout: "split",
     appearance: { icons: false, decorations: "subtle" },
   },
