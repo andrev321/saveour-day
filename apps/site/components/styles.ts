@@ -33,7 +33,7 @@ const riseReveal = keyframes`
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 `;
 
@@ -70,7 +70,7 @@ export const SitePaperCurtain = styled.div`
 export const SiteRevealContent = styled.div`
   position: relative;
   z-index: 1;
-  animation: ${riseReveal} 380ms ${MOTION_EASE_CSS} 340ms both;
+  animation: ${riseReveal} 380ms ${MOTION_EASE_CSS} 340ms backwards;
 
   [data-ui="${INVITATION_DATA_UI.hero}"]
     :is(
@@ -395,6 +395,7 @@ export const RsvpEventList = styled.div`
 
 export const RsvpEventRow = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 10px 14px;
@@ -409,12 +410,14 @@ export const RsvpEventTitle = styled.span`
   font-size: 14px;
   line-height: 1.35;
   color: var(--ink);
-  flex: 1 1 auto;
+  flex: 1 1 140px;
   min-width: 0;
 `;
 
 export const RsvpChoiceGroup = styled.div`
   display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   gap: 6px;
   flex-shrink: 0;
   margin-left: auto;

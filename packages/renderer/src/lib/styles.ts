@@ -265,6 +265,21 @@ export const Invitation = styled(Box).attrs<{ "data-ui"?: string }>({
     color: var(--ink);
     text-underline-offset: 4px;
   }
+  & .mantine-Menu-dropdown {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--inv-radius, 4px);
+  }
+  & .mantine-Menu-item {
+    color: var(--ink);
+    font-family: var(--mantine-font-family);
+    border-radius: var(--inv-radius, 4px);
+  }
+  & .mantine-Menu-item:hover,
+  & .mantine-Menu-item[data-hovered],
+  & .mantine-Menu-item[data-menu-active] {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
   @media (prefers-reduced-motion: reduce) {
     & *,
     & *::before,
@@ -756,11 +771,21 @@ export const Gallery = styled.div`
       height: 100%;
     }
   }
-  &[data-odd-many="true"] > :last-child {
-    grid-column: 1 / -1;
+  @media (min-width: 30.01em) and (max-width: 47.99em) {
+    &[data-count="3"] > :last-child {
+      grid-column: 1 / -1;
+    }
+    &[data-count="3"] > :last-child ${PhotoFrame} {
+      aspect-ratio: 16 / 9;
+    }
   }
-  &[data-odd-many="true"] > :last-child ${PhotoFrame} {
-    aspect-ratio: 16 / 9;
+  @media (min-width: 30.01em) {
+    &[data-odd-many="true"] > :last-child {
+      grid-column: 1 / -1;
+    }
+    &[data-odd-many="true"] > :last-child ${PhotoFrame} {
+      aspect-ratio: 16 / 9;
+    }
   }
   & ${InvitationPhoto} {
     transition:
@@ -1296,7 +1321,7 @@ export const ThemedInvitation = styled(Invitation)`
     border-color: var(--surface);
   }
 
-  &[data-theme="editorial"] ${InvitationHero} {
+  &[data-theme="editorial"] ${InvitationHero}[data-layout="split"] {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
     min-height: 610px;
   }
@@ -1308,7 +1333,9 @@ export const ThemedInvitation = styled(Invitation)`
   &[data-theme="editorial"] ${InvitationHero} h1[data-long="true"] {
     font-size: clamp(2.4rem, 4.9vw, 5.1rem);
   }
-  &[data-theme="editorial"] ${InvitationHeroPhoto} {
+  &[data-theme="editorial"]
+    ${InvitationHero}[data-layout="split"]
+    ${InvitationHeroPhoto} {
     min-height: 450px;
   }
   &[data-theme="editorial"] ${InvitationHero}[data-layout="split"] ${HeroAction} {
@@ -1358,7 +1385,7 @@ export const ThemedInvitation = styled(Invitation)`
     max-width: 1120px;
     padding-top: 180px;
   }
-  &[data-theme="evening"]
+  &[data-theme="evening"][data-color-scheme="dark"]
     ${InvitationHero}[data-layout="overlay"][data-has-photo="true"]
     ${HeroAction} {
     border-color: var(--accent);
@@ -1652,7 +1679,12 @@ export const ThemedInvitation = styled(Invitation)`
     &[data-theme="celebration"] ${InvitationSection}[data-kind="timeline"] {
       padding: 28px 24px;
     }
-    &[data-theme="editorial"] ${InvitationHeroPhoto} {
+    &[data-theme="editorial"] ${InvitationHero}[data-layout="split"] {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    &[data-theme="editorial"]
+      ${InvitationHero}[data-layout="split"]
+      ${InvitationHeroPhoto} {
       min-height: 310px;
       height: 340px;
     }

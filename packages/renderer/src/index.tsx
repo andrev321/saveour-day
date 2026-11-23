@@ -359,6 +359,7 @@ function Venue({
               <LoadingState
                 label={loadingText(config.locale.slice(0, 2), "loading")}
                 slowLabel={loadingText(config.locale.slice(0, 2), "slow")}
+                tone={isDarkColor(config.design.paper) ? "dark" : "light"}
               />
               {mapSlow && (
                 <Button

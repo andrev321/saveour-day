@@ -122,11 +122,13 @@ export function LoadingState({
   label,
   slowLabel,
   compact = false,
+  tone,
   children,
 }: {
   label: string;
   slowLabel?: string;
   compact?: boolean;
+  tone?: "light" | "dark";
   children?: ReactNode;
 }) {
   const [slow, setSlow] = useState(false);
@@ -141,7 +143,12 @@ export function LoadingState({
       aria-live="polite"
       data-compact={compact}
     >
-      <BrandLogo variant="mark" height={compact ? 26 : 38} decorative />
+      <BrandLogo
+        variant="mark"
+        height={compact ? 26 : 38}
+        tone={tone}
+        decorative
+      />
       <ProgressTrack data-compact={compact} aria-hidden="true">
         <ProgressBar />
       </ProgressTrack>
