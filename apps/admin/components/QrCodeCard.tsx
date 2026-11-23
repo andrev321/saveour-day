@@ -91,7 +91,8 @@ export function QrCodeCard({ url, title }: { url: string; title?: string }) {
               position: "absolute",
               inset: 0,
               zIndex: 1,
-              background: "white",
+              background: "var(--panel-surface)",
+              color: "var(--panel-text)",
               display: "grid",
               placeContent: "center",
             }}

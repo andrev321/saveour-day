@@ -21,6 +21,7 @@ import {
   CaretUpIcon,
   CopyIcon,
   DotsThreeIcon,
+  XIcon,
 } from "@phosphor-icons/react";
 import {
   OVERALL_EVENT_ID,
@@ -588,13 +589,18 @@ export function InvitationTable({
                                   >
                                     {labelText("Zapisz", "Save", "Speichern")}
                                   </Button>
-                                  <Button
-                                    size="compact-xs"
+                                  <ActionIcon
+                                    size="sm"
                                     variant="subtle"
+                                    aria-label={labelText(
+                                      "Anuluj",
+                                      "Cancel",
+                                      "Abbrechen",
+                                    )}
                                     onClick={() => setConvertingGuestId(null)}
                                   >
-                                    ✕
-                                  </Button>
+                                    <XIcon size={16} />
+                                  </ActionIcon>
                                 </Group>
                               ) : (
                                 <Button

@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Badge,
   Button,
@@ -10,6 +11,12 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  CaretDownIcon,
+  TrashIcon,
+} from "@phosphor-icons/react";
 import { loadingText } from "@invitations/ui/loading-copy";
 import {
   QUESTION_POLICY,
@@ -162,14 +169,15 @@ export function RsvpQuestionsEditor({
               <Button
                 size="xs"
                 variant="light"
+                rightSection={<CaretDownIcon size={14} />}
                 disabled={
                   busy || questions.length >= QUESTION_POLICY.maxQuestions
                 }
               >
                 {labelText(
-                  "Dodaj z gotowych ▾",
-                  "Add from presets ▾",
-                  "Aus Vorlagen ▾",
+                  "Dodaj z gotowych",
+                  "Add from presets",
+                  "Aus Vorlagen",
                 )}
               </Button>
             </Menu.Target>
@@ -246,22 +254,32 @@ export function RsvpQuestionsEditor({
                   )}
                 </Group>
                 <Group gap={4}>
-                  <Button
-                    size="compact-xs"
+                  <ActionIcon
+                    size="sm"
                     variant="subtle"
                     disabled={busy || index === 0}
+                    aria-label={labelText(
+                      "Przesuń w górę",
+                      "Move up",
+                      "Nach oben",
+                    )}
                     onClick={() => moveQuestion(index, -1)}
                   >
-                    ↑
-                  </Button>
-                  <Button
-                    size="compact-xs"
+                    <ArrowUpIcon size={16} />
+                  </ActionIcon>
+                  <ActionIcon
+                    size="sm"
                     variant="subtle"
                     disabled={busy || index === questions.length - 1}
+                    aria-label={labelText(
+                      "Przesuń w dół",
+                      "Move down",
+                      "Nach unten",
+                    )}
                     onClick={() => moveQuestion(index, 1)}
                   >
-                    ↓
-                  </Button>
+                    <ArrowDownIcon size={16} />
+                  </ActionIcon>
                   <Button
                     size="compact-xs"
                     variant="light"
@@ -275,11 +293,16 @@ export function RsvpQuestionsEditor({
                   >
                     {labelText("Edytuj", "Edit", "Bearbeiten")}
                   </Button>
-                  <Button
-                    size="compact-xs"
+                  <ActionIcon
+                    size="sm"
                     variant="subtle"
                     color="red"
                     disabled={busy}
+                    aria-label={labelText(
+                      "Usuń pytanie",
+                      "Delete question",
+                      "Frage löschen",
+                    )}
                     onClick={() => {
                       if (answerCount > 0) {
                         setConfirmDelete({ id: q.id, count: answerCount });
@@ -290,8 +313,8 @@ export function RsvpQuestionsEditor({
                       }
                     }}
                   >
-                    ✕
-                  </Button>
+                    <TrashIcon size={16} />
+                  </ActionIcon>
                 </Group>
               </Group>
 

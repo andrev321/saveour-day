@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import {
+  ActionIcon,
   Alert,
   Button,
   Card,
@@ -15,6 +16,7 @@ import {
   Text,
   TextInput,
 } from "@mantine/core";
+import { TrashIcon } from "@phosphor-icons/react";
 import {
   QUESTION_POLICY,
   type QuestionScope,
@@ -261,11 +263,16 @@ function RsvpQuestionForm({
                         });
                       }}
                     />
-                    <Button
-                      size="xs"
+                    <ActionIcon
+                      size="sm"
                       variant="subtle"
                       color="red"
                       disabled={q.options.length <= 1}
+                      aria-label={labelText(
+                        "Usuń opcję",
+                        "Remove option",
+                        "Option entfernen",
+                      )}
                       onClick={() => {
                         if (optCount > 0) {
                           setConfirmDeleteOption({
@@ -279,8 +286,8 @@ function RsvpQuestionForm({
                         }
                       }}
                     >
-                      ✕
-                    </Button>
+                      <TrashIcon size={16} />
+                    </ActionIcon>
                   </Group>
                   {confirmDeleteOption?.optionId === opt.id && (
                     <Alert color="red">

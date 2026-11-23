@@ -80,7 +80,10 @@ export function SectionPreview({
         <div
           style={{
             position: "absolute",
-            inset: 0,
+            inset: 1,
+            background: "var(--panel-surface)",
+            color: "var(--panel-text)",
+            borderRadius: 7,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",

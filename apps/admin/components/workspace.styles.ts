@@ -447,10 +447,50 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
   & {
     margin-top: auto;
     padding-top: 16px;
+    border-top: 1px solid var(--panel-separator);
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+  & .mantine-Button-root {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    height: auto;
+    min-height: 44px;
+    color: var(--panel-muted);
+    font-weight: 400;
+    transition:
+      background-color 160ms,
+      color 160ms;
+  }
+  & .mantine-Button-root[data-active] {
+    background: var(--panel-selected);
+    color: var(--panel-selected-text);
+    font-weight: 600;
+  }
+  & .mantine-Button-root:hover:not([data-active]) {
+    background: var(--panel-hover);
+    color: var(--panel-muted);
+  }
+  & .mantine-Button-section {
+    margin-inline-end: 12px;
+  }
+  & .mantine-Button-label {
+    white-space: normal;
+    text-align: left;
+    line-height: 1.4;
+    overflow: visible;
+  }
+  & .mantine-ActionIcon-root {
+    align-self: flex-start;
+    border-radius: 10px;
+    color: var(--panel-muted);
+  }
+  & .mantine-ActionIcon-root:hover {
+    background: var(--panel-hover);
+    color: var(--panel-muted);
   }
   [data-collapsed="true"] & {
     flex-direction: column;
@@ -460,6 +500,7 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
   }
   [data-collapsed="true"] & .mantine-Button-root,
   [data-collapsed="true"] & .mantine-ActionIcon-root {
+    align-self: center;
     width: 44px;
     height: 44px;
     min-width: 44px;

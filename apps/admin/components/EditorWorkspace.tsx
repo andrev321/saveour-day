@@ -217,11 +217,19 @@ export function EditorWorkspace({
           </Tabs.List>
           <S.WorkspaceNavFooter>
             {tools.map(({ value, label, icon: Icon }) => (
-              <Tooltip key={value} label={label}>
+              <Tooltip
+                key={value}
+                label={label}
+                disabled={!collapsed}
+                position="right"
+              >
                 <Button
                   variant="subtle"
                   aria-label={label}
-                  leftSection={<Icon size={22} />}
+                  data-active={value === active || undefined}
+                  aria-current={value === active ? "page" : undefined}
+                  justify={collapsed ? "center" : "flex-start"}
+                  leftSection={<Icon size={22} weight="duotone" />}
                   onClick={() => onActive(value)}
                 >
                   {!collapsed &&

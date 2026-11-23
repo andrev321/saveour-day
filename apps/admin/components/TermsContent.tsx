@@ -14,7 +14,7 @@ import {
   Title,
 } from "@mantine/core";
 import { BrandLogo } from "@invitations/ui/brand";
-import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
 
 export function TermsContent({ initialLang = "pl" }: { initialLang?: string }) {
