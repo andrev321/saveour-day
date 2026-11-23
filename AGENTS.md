@@ -29,3 +29,4 @@ Single-context domain model at [`GLOSSARY.md`](./GLOSSARY.md) and [`docs/adr/`](
 
 - Search with `git grep` (`rg` is not installed).
 - Git network and `.git/` write operations (`git pull`, `git commit`, `git push`) require `BypassSandbox: true`; keep `git commit` and `git push` sequential because `.githooks/pre-commit` runs `typecheck` and `lint:boundaries`.
+- For Vercel operations (deployments, logs, env, projects, domains), use the `vercel` CLI with `BypassSandbox: true` (it reads `%APPDATA%\com.vercel.cli` and accesses the network).
