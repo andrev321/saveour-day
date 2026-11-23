@@ -69,7 +69,7 @@ const pl = {
   lookupDisambiguator: "Kod zaproszenia lub imię drugiej osoby",
   lookupConfirm: "Potwierdź",
   lookupLocked:
-    "Odpowiedź dla tego zaproszenia została już zapisana z innego urządzenia. Podaj kod zaproszenia (short code), aby odblokować edycję, albo otwórz swój indywidualny link.",
+    "Odpowiedź dla tego zaproszenia została już zapisana z innego urządzenia. Podaj kod zaproszenia, aby odblokować edycję, albo otwórz swój indywidualny link.",
   lookupUnlockCode: "Kod zaproszenia",
   lookupUnlockAction: "Odblokuj edycję",
   lookupChange: "Zmień zaproszenie",
@@ -193,10 +193,10 @@ const de: Copy = {
   companionNameOptional: "Name der Begleitperson (optional)",
   withCompanionCheckbox: "Ich komme mit Begleitperson",
   allNamedAttending: "Wir kommen alle",
-  questionsSection: "Einige Fragen an euch",
+  questionsSection: "Einige Fragen an Sie",
   otherOption: "Sonstiges",
   otherPlaceholder: "Antwort eingeben",
-  requiredMissing: "Bitte fülle alle Pflichtfragen aus.",
+  requiredMissing: "Bitte füllen Sie alle Pflichtfragen aus.",
   and: "und",
   refreshWarning:
     "Beim Aktualisieren werden ungespeicherte Änderungen durch Serverantworten ersetzt.",

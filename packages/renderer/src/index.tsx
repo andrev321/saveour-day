@@ -52,12 +52,16 @@ import {
 
 function PreviewEditButton({
   title,
+  locale,
   onClick,
 }: {
   title: string;
+  locale: SiteConfig["locale"];
   onClick: () => void;
 }) {
-  const label = `Edytuj: ${title}`;
+  const prefix =
+    locale === "de-DE" ? "Bearbeiten" : locale === "en-GB" ? "Edit" : "Edytuj";
+  const label = `${prefix}: ${title}`;
   return (
     <S.PreviewEditControl>
       <Tooltip
@@ -651,11 +655,17 @@ export function CalendarMenu({
           outlook: "Outlook",
           apple: "Apple Kalender (.ics)",
         }
-      : {
-          google: "Google Calendar",
-          outlook: "Outlook",
-          apple: "Apple Calendar (.ics)",
-        };
+      : config.locale === "pl-PL"
+        ? {
+            google: "Kalendarz Google",
+            outlook: "Outlook",
+            apple: "Kalendarz Apple (.ics)",
+          }
+        : {
+            google: "Google Calendar",
+            outlook: "Outlook",
+            apple: "Apple Calendar (.ics)",
+          };
   return (
     <Menu position={position} shadow="md" withinPortal={false}>
       <Menu.Target>{children}</Menu.Target>
@@ -887,7 +897,14 @@ export function Invitation({
           >
             {onEditSection && (
               <PreviewEditButton
-                title="Nagłówek"
+                title={
+                  config.locale === "de-DE"
+                    ? "Kopfbereich"
+                    : config.locale === "en-GB"
+                      ? "Header"
+                      : "Nagłówek"
+                }
+                locale={config.locale}
                 onClick={() => onEditSection("hero")}
               />
             )}
@@ -959,6 +976,7 @@ export function Invitation({
                   {onEditSection && (
                     <PreviewEditButton
                       title={section.title}
+                      locale={config.locale}
                       onClick={() => onEditSection(section.id)}
                     />
                   )}

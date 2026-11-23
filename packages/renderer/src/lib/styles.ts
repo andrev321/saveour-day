@@ -212,6 +212,7 @@ export const Invitation = styled(Box).attrs<{ "data-ui"?: string }>({
   --mantine-color-dimmed: var(--muted);
   background-color: var(--paper);
   color: var(--ink);
+  font-family: var(--mantine-font-family);
   min-height: 100vh;
   overflow-x: clip;
   overflow-wrap: anywhere;
