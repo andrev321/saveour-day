@@ -39,9 +39,24 @@ jobs:
       - run: npm run lint
       - run: npm run lint:boundaries
       - run: npm test
+      - uses: actions/cache@v4
+        with:
+          path: |
+            apps/site/.next/cache
+            apps/admin/.next/cache
+          key: next-${{ hashFiles('package-lock.json') }}-${{ hashFiles('apps/**/*.ts', 'apps/**/*.tsx', 'packages/**/*.ts', 'packages/**/*.tsx') }}
+          restore-keys: next-${{ hashFiles('package-lock.json') }}-
       - run: npm run build:demo
       - run: npm run build:admin
+      - uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
       - run: npx playwright install --with-deps chromium webkit
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - run: npx playwright install-deps chromium webkit
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
       - run: npm run test:e2e
       - uses: actions/upload-artifact@v7
         if: failure()

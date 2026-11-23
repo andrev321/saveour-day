@@ -15,11 +15,14 @@ export default defineConfig({
     },
   ],
   workers: process.env.CI ? 3 : undefined,
+  // One retry on CI surfaces flakes as "flaky" (with a trace) instead of failing the job.
+  retries: process.env.CI ? 1 : 0,
   timeout: 60000,
   expect: { timeout: 15000 },
   use: {
     baseURL: siteUrl,
     headless: true,
+    trace: "on-first-retry",
     launchOptions: process.env.E2E_CHROMIUM_PATH
       ? {
           executablePath: process.env.E2E_CHROMIUM_PATH,

@@ -19,11 +19,11 @@ Single-context domain model at [`GLOSSARY.md`](./GLOSSARY.md) and [`docs/adr/`](
 
 ## Verification Commands
 
-- Full check (typecheck + lint + boundaries + unit tests): `npm run check`
-- Typecheck only: `npm run typecheck`
-- Unit & integration tests: `npm test`
-- Module boundary check: `npm run lint:boundaries`
-- E2E tests (Chromium): `npm run test:e2e:chromium` (on Windows, run outside the sandbox / with `BypassSandbox: true`, because the sandbox blocks loopback connections to `127.0.0.1` needed by Playwright's `webServer`)
+- Iterate with targeted runs: `npm test`, `npx playwright test <spec> --project=chromium`, `npm run typecheck`.
+- Fast full check (parallel, cached format/typecheck/lint/boundaries/unit tests): `npm run check`. Its ESLint cache can miss type-aware errors in unchanged callers; `lint` (uncached) is what CI runs.
+- Before pushing, mirror CI: `npm run check:ci` = `check:static:ci` (audit, uncached lint, Deno check) + `test:e2e:ci` (production builds, `next start`, Chromium + WebKit, `CI=1`). Stop any local `next dev` first. For a quick WebKit pass: `npm run test:e2e:ci -- --project=webkit`.
+- On Windows, run any Playwright command outside the sandbox (`BypassSandbox: true`): the sandbox blocks loopback connections to `127.0.0.1` needed by Playwright's `webServer`.
+- `tests/media-concurrency.test.ts` is skipped unless `TEST_DATABASE_URL` points at Postgres 17 (CI sets it up as a service).
 
 ## Environment (Windows)
 

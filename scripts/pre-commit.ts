@@ -29,10 +29,17 @@ if (staged.length > 0) {
       !file.startsWith("supabase/functions/"),
   );
   if (tsFiles.length > 0) {
-    run("npx", ["eslint", ...tsFiles]);
+    run("npx", [
+      "eslint",
+      "--cache",
+      "--cache-strategy",
+      "content",
+      "--cache-location",
+      "node_modules/.cache/eslint/",
+      ...tsFiles,
+    ]);
   }
   run("git", ["add", ...staged]);
 }
 
-run("npm", ["run", "typecheck"]);
-run("npm", ["run", "lint:boundaries"]);
+run("npx", ["tsx", "scripts/run-parallel.ts", "typecheck", "lint:boundaries"]);
