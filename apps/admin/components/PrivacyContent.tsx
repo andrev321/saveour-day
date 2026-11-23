@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Anchor,
   Button,
@@ -16,6 +16,7 @@ import {
 import { BrandLogo } from "@invitations/ui/brand";
 import { ArrowLeftIcon } from "@phosphor-icons/react";
 import { usePanelI18n } from "../lib/i18n";
+import { PanelPreferences } from "./PanelPreferences";
 
 export function PrivacyContent({
   initialLang = "pl",
@@ -23,14 +24,24 @@ export function PrivacyContent({
   initialLang?: string;
 }) {
   const { language, setLanguage } = usePanelI18n();
-  const [overrideLang, setOverrideLang] = useState<"pl" | "en" | null>(
+  const [initialOverride, setInitialOverride] = useState<"en" | null>(
     initialLang === "en" ? "en" : null,
   );
-  const lang = overrideLang ?? (language === "en" ? "en" : "pl");
+  useEffect(() => {
+    if (!initialOverride) return;
+    const clear = () => setInitialOverride(null);
+    window.addEventListener("panel-language-change", clear);
+    window.addEventListener("storage", clear);
+    return () => {
+      window.removeEventListener("panel-language-change", clear);
+      window.removeEventListener("storage", clear);
+    };
+  }, [initialOverride]);
+  const lang = initialOverride ?? (language === "pl" ? "pl" : "en");
 
   const handleLangChange = (next: string) => {
     if (next === "pl" || next === "en") {
-      setOverrideLang(next);
+      setInitialOverride(null);
       setLanguage(next);
     }
   };
@@ -40,7 +51,8 @@ export function PrivacyContent({
       <Stack gap="xl">
         <Group justify="space-between" align="center" wrap="wrap" gap="md">
           <BrandLogo height={40} />
-          <Group gap="md">
+          <Group gap="md" wrap="wrap">
+            <PanelPreferences compact />
             <SegmentedControl
               size="xs"
               value={lang}
@@ -442,7 +454,10 @@ export function PrivacyContent({
 
         <Group justify="space-between" align="center" mt="md">
           <Text size="xs" c="dimmed">
-            © {new Date().getFullYear()} saveour.day. All rights reserved.
+            © {new Date().getFullYear()} saveour.day.{" "}
+            {lang === "pl"
+              ? "Wszelkie prawa zastrzeżone."
+              : "All rights reserved."}
           </Text>
           <Group gap="md">
             <Anchor href="/terms" size="xs">

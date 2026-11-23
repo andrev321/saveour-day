@@ -40,7 +40,16 @@ export function DemoWorkspace() {
         </Text>
         <Button
           variant="subtle"
-          onClick={() => open(createDemo(), "Przykładowe zaproszenie")}
+          onClick={() =>
+            open(
+              createDemo(),
+              language === "pl"
+                ? "Przykładowe zaproszenie"
+                : language === "en"
+                  ? "Sample invitation"
+                  : "Beispieleinladung",
+            )
+          }
         >
           {language === "pl"
             ? "Otwórz gotowy przykład"

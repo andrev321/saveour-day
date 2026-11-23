@@ -53,9 +53,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <StyledRegistry>
           <AdminGlobalStyles />
-          <PanelTheme>
-            <PanelI18nProvider>{children}</PanelI18nProvider>
-          </PanelTheme>
+          <PanelI18nProvider>
+            <PanelTheme>{children}</PanelTheme>
+          </PanelI18nProvider>
         </StyledRegistry>
       </body>
     </html>

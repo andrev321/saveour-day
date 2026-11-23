@@ -449,7 +449,14 @@ export function Editor({
           requested === "publish"
             ? structuredClone(data.draft.config)
             : demoSnapshots.current.get(requested!);
-        if (!snapshot) throw new Error("Brak wydania demonstracyjnego");
+        if (!snapshot)
+          throw new Error(
+            label(
+              "Brak wydania demonstracyjnego",
+              "Demo release not found",
+              "Demo-Version nicht gefunden",
+            ),
+          );
         demoSnapshots.current.set(id, structuredClone(snapshot));
         setData({
           ...data,
@@ -469,7 +476,17 @@ export function Editor({
       );
       await reload();
       toast.success(
-        "Opublikowano. Stały adres strony jest gotowy do udostępnienia.",
+        requested === "publish"
+          ? label(
+              "Opublikowano. Stały adres strony jest gotowy do udostępnienia.",
+              "Published. The permanent site link is ready to share.",
+              "Veröffentlicht. Der feste Seitenlink kann jetzt geteilt werden.",
+            )
+          : label(
+              "Przywrócono wybrane wydanie.",
+              "Selected release restored.",
+              "Ausgewählte Version wiederhergestellt.",
+            ),
       );
     });
   }
@@ -592,6 +609,8 @@ export function Editor({
           <Group gap="xs" wrap="nowrap">
             <Tooltip label={label("Cofnij", "Undo", "Rückgängig")}>
               <ActionIcon
+                variant="subtle"
+                size="lg"
                 aria-label={label("Cofnij", "Undo", "Rückgängig")}
                 disabled={!canUndo}
                 onClick={undo}
@@ -601,6 +620,8 @@ export function Editor({
             </Tooltip>
             <Tooltip label={label("Ponów", "Redo", "Wiederholen")}>
               <ActionIcon
+                variant="subtle"
+                size="lg"
                 aria-label={label("Ponów", "Redo", "Wiederholen")}
                 disabled={!canRedo}
                 onClick={redo}
@@ -1056,7 +1077,14 @@ export function Editor({
             onChange={setConfig}
             canDelete={!dirty && !busy}
             onDelete={async (id) => {
-              if (dirty || busy) throw new Error("Najpierw zapisz szkic.");
+              if (dirty || busy)
+                throw new Error(
+                  label(
+                    "Najpierw zapisz szkic.",
+                    "Save the draft first.",
+                    "Zuerst den Entwurf speichern.",
+                  ),
+                );
               if (demo) {
                 setData((current) => ({
                   ...current,

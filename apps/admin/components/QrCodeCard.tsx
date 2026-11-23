@@ -15,6 +15,13 @@ const background = "#FFFFFF";
 
 export function QrCodeCard({ url, title }: { url: string; title?: string }) {
   const { language } = usePanelI18n();
+  const labelText = (pl: string, en: string, de: string) =>
+    language === "pl" ? pl : language === "en" ? en : de;
+  const copyLabel = labelText(
+    "Kopiuj kod QR jako obraz",
+    "Copy QR code as image",
+    "QR-Code als Bild kopieren",
+  );
   const { busy, start, end } = useOperation();
   const [attempt, setAttempt] = useState(0);
   const [failure, setFailure] = useState<string | null>(null);
@@ -67,10 +74,20 @@ export function QrCodeCard({ url, title }: { url: string; title?: string }) {
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": png.blob }),
       ]);
-      toast.success("Skopiowano kod QR jako obraz PNG.");
+      toast.success(
+        labelText(
+          "Skopiowano kod QR jako obraz PNG.",
+          "QR code copied as PNG image.",
+          "QR-Code als PNG-Bild kopiert.",
+        ),
+      );
     } catch {
       toast.error(
-        "Przeglądarka nie pozwoliła skopiować obrazu. Spróbuj w Chrome lub Edge i zezwól na dostęp do schowka.",
+        labelText(
+          "Przeglądarka nie pozwoliła skopiować obrazu. Spróbuj w Chrome lub Edge i zezwól na dostęp do schowka.",
+          "The browser could not copy the image. Try Chrome or Edge and allow clipboard access.",
+          "Der Browser konnte das Bild nicht kopieren. Versuchen Sie Chrome oder Edge und erlauben Sie den Zugriff auf die Zwischenablage.",
+        ),
       );
     } finally {
       end();
@@ -114,20 +131,20 @@ export function QrCodeCard({ url, title }: { url: string; title?: string }) {
         )}
         <div
           ref={container}
-          aria-label="Podgląd kodu QR"
+          aria-label={labelText(
+            "Podgląd kodu QR",
+            "QR code preview",
+            "QR-Code-Vorschau",
+          )}
           style={{ width: "100%" }}
         />
         {png?.key === qrKey && (
-          <Tooltip
-            label={
-              busy ? loadingText(language, "copy") : "Kopiuj kod QR jako obraz"
-            }
-          >
+          <Tooltip label={busy ? loadingText(language, "copy") : copyLabel}>
             <ActionIcon
               data-qr-copy=""
               size="lg"
               variant="default"
-              aria-label="Kopiuj kod QR jako obraz"
+              aria-label={copyLabel}
               loading={busy}
               aria-busy={busy}
               disabled={busy}

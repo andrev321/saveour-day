@@ -77,6 +77,26 @@ export class ApiError extends Error {
     super(message);
   }
 }
+const genericErrors = {
+  pl: "Nie udało się wykonać operacji",
+  en: "The operation could not be completed",
+  de: "Der Vorgang konnte nicht ausgeführt werden",
+} as const;
+
+function readGenericError() {
+  if (typeof window === "undefined") return genericErrors.pl;
+  try {
+    const stored =
+      window.localStorage.getItem("invitations-panel-language") ||
+      window.localStorage.getItem("wedding-panel-language");
+    return stored === "en" || stored === "de"
+      ? genericErrors[stored]
+      : genericErrors.pl;
+  } catch {
+    return genericErrors.pl;
+  }
+}
+
 export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
@@ -97,7 +117,7 @@ export async function apiFetch<T>(url: string, init?: RequestInit): Promise<T> {
   if (!response.ok)
     throw new ApiError(
       response.status,
-      (result.error || "The operation could not be completed") +
+      (result.error || readGenericError()) +
         (response.status >= 500 && response.headers.get("x-request-id")
           ? ` [${response.headers.get("x-request-id")}]`
           : ""),
@@ -124,12 +144,15 @@ export function Dashboard({
   const [reload, setReload] = useState(0);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [message, setMessage] = useState(() => {
-    if (!authError) return "";
-    if (authError === "access_denied") return copy.oauthCancelled;
-    if (authError === "expired") return copy.linkExpired;
-    return copy.oauthError;
+  const [authErrorKind, setAuthErrorKind] = useState<
+    "access_denied" | "expired" | "oauth" | null
+  >(() => {
+    if (!authError) return null;
+    if (authError === "access_denied") return "access_denied";
+    if (authError === "expired") return "expired";
+    return "oauth";
   });
+  const [message, setMessage] = useState("");
   const [messageKind, setMessageKind] = useState<
     "error" | "success" | "warning"
   >("error");
@@ -140,6 +163,15 @@ export function Dashboard({
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const logged = status === "ready";
+  const activeMessage =
+    message ||
+    (authErrorKind === "access_denied"
+      ? copy.oauthCancelled
+      : authErrorKind === "expired"
+        ? copy.linkExpired
+        : authErrorKind === "oauth"
+          ? copy.oauthError
+          : "");
   useEffect(() => {
     if (!authError) return;
     const url = new URL(window.location.href);
@@ -175,6 +207,7 @@ export function Dashboard({
   }
   async function login() {
     if (!start("login")) return;
+    setAuthErrorKind(null);
     setMessage("");
     setMessageKind("error");
     const emailKey = email.trim().toLowerCase();
@@ -289,6 +322,7 @@ export function Dashboard({
                 disabled={busy}
                 onClick={async () => {
                   if (!start("logout")) return;
+                  setAuthErrorKind(null);
                   setMessage("");
                   setMessageKind("error");
                   try {
@@ -318,7 +352,7 @@ export function Dashboard({
               </Button>
             </Alert>
           )}
-          {message && (
+          {activeMessage && (
             <Alert
               mt="lg"
               color={
@@ -328,7 +362,7 @@ export function Dashboard({
               }
               role={messageKind === "success" ? "status" : "alert"}
             >
-              {message}
+              {activeMessage}
             </Alert>
           )}
           {status === "loading" && (
@@ -396,6 +430,7 @@ export function Dashboard({
                       pendingLabel={loadingText(language, "login")}
                       onClick={async () => {
                         if (!start("google")) return;
+                        setAuthErrorKind(null);
                         setMessage("");
                         setMessageKind("error");
                         try {
@@ -458,6 +493,7 @@ export function Dashboard({
                           disabled={busy || !email || password.length < 12}
                           onClick={async () => {
                             if (!start("signup")) return;
+                            setAuthErrorKind(null);
                             setMessage("");
                             setMessageKind("error");
                             const emailKey = email.trim().toLowerCase();
@@ -504,6 +540,7 @@ export function Dashboard({
                           disabled={busy || !email}
                           onClick={async () => {
                             if (!start("reset")) return;
+                            setAuthErrorKind(null);
                             setMessage("");
                             setMessageKind("error");
                             try {

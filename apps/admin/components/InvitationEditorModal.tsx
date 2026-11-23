@@ -380,9 +380,11 @@ function InvitationEditorForm({
                 "Invitations list",
                 "Einladungsliste",
               )}
-              placeholder={
-                "Anna Kowalska +1\nRodzina Nowaków: Jan Nowak, Ewa Nowak +2\nPiotr Wiśniewski"
-              }
+              placeholder={labelText(
+                "Anna Kowalska +1\nRodzina Nowaków: Jan Nowak, Ewa Nowak +2\nPiotr Wiśniewski",
+                "Anna Smith +1\nThe Smiths: John Smith, Emma Smith +2\nPeter Brown",
+                "Anna Schmidt +1\nFamilie Müller: Jan Müller, Eva Müller +2\nPeter Weber",
+              )}
               autosize
               minRows={4}
               value={quickText}

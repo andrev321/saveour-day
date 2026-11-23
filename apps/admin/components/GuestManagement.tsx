@@ -52,7 +52,7 @@ import {
   type InvitationRow,
   type Management,
 } from "../lib/guest-management";
-import { usePanelI18n } from "../lib/i18n";
+import { usePanelI18n, type PanelLanguage } from "../lib/i18n";
 import { copyToClipboard } from "../lib/clipboard";
 import {
   InvitationEditorModal,
@@ -86,7 +86,7 @@ function localDeadline(iso: string | null) {
   );
   return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
 }
-function deadlineIso(value: string) {
+function deadlineIso(value: string, language: PanelLanguage) {
   if (!value) return null;
   let result = Date.parse(value + "Z");
   for (let n = 0; n < 3; n++)
@@ -95,7 +95,11 @@ function deadlineIso(value: string) {
       Date.parse(localDeadline(new Date(result).toISOString()) + "Z");
   if (localDeadline(new Date(result).toISOString()) !== value)
     throw new Error(
-      "Ta godzina nie istnieje w strefie Europe/Warsaw. Wybierz inną.",
+      language === "pl"
+        ? "Ta godzina nie istnieje w strefie Europe/Warsaw. Wybierz inną."
+        : language === "en"
+          ? "This time does not exist in the Europe/Warsaw time zone. Choose another."
+          : "Diese Uhrzeit existiert in der Zeitzone Europe/Warsaw nicht. Bitte eine andere wählen.",
     );
   return new Date(result).toISOString();
 }
@@ -591,7 +595,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                             mode,
                             code: code || undefined,
                             variant,
-                            deadline: deadlineIso(deadline),
+                            deadline: deadlineIso(deadline, language),
                             version: data.site.access_version,
                           });
                         } catch (error) {
@@ -1298,9 +1302,9 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     action: "rotate",
                     payload: { id: inv.id },
                     description: labelText(
-                      "Poprzedni link przestanie dzia�a�. Nowy link trzeba przekaza� ponownie.",
+                      "Poprzedni link przestanie działać. Nowy link trzeba przekazać ponownie.",
                       "The previous link will stop working. Share the new link again.",
-                      "Der bisherige Link wird ung�ltig. Den neuen Link erneut weitergeben.",
+                      "Der bisherige Link wird ungültig. Den neuen Link erneut weitergeben.",
                     ),
                   })
                 }
@@ -1309,7 +1313,7 @@ export function GuestManagement({ siteId }: { siteId: string }) {
                     action: "revoke",
                     payload: { id: inv.id },
                     description: labelText(
-                      "To zaproszenie utraci dost�p. Dotychczasowe odpowiedzi zostan� zachowane.",
+                      "To zaproszenie utraci dostęp. Dotychczasowe odpowiedzi zostaną zachowane.",
                       "This invitation will lose access. Existing answers will be kept.",
                       "Diese Einladung verliert den Zugang. Antworten bleiben erhalten.",
                     ),
