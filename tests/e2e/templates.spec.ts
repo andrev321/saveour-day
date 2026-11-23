@@ -6,7 +6,7 @@ async function closeDialog(page: Page) {
   await expect(page.getByRole("dialog")).toHaveCount(0);
 }
 
-test("templates reset only on confirmation, blank starts empty and saved draft can be restored", async ({
+test("templates reset only on confirmation and preserve unsaved edits when canceled", async ({
   page,
 }) => {
   await page.goto(`${admin}/demo`);
@@ -54,6 +54,28 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
       .getByRole("heading", { name: "Zofia", exact: true })
       .first(),
   ).toBeVisible();
+});
+
+test("restoring a saved draft backup reverts template changes", async ({
+  page,
+}) => {
+  await page.goto(`${admin}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
+  await page
+    .getByRole("combobox", { name: "Szablon startowy", exact: true })
+    .click();
+  await page.getByRole("option", { name: "Urodziny", exact: true }).click();
+  await page.getByRole("button", { name: "Zastąp konfigurację" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(
+    page
+      .frameLocator("iframe")
+      .getByRole("heading", { name: "Zofia", exact: true })
+      .first(),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Ustawienia", exact: true }).click();
   await page.getByRole("button", { name: "Kopie szkicu", exact: true }).click();
   await page.getByRole("combobox", { name: "Kopia zapisanego szkicu" }).click();
@@ -66,6 +88,15 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
       .frameLocator("iframe")
       .getByRole("heading", { name: "Anna & Jan", exact: true }),
   ).toBeVisible();
+});
+
+test("blank starter begins empty and can be edited and saved", async ({
+  page,
+}) => {
+  await page.goto(`${admin}/demo`);
+  await page
+    .getByRole("button", { name: "Otwórz gotowy przykład", exact: true })
+    .click();
   await page.getByRole("button", { name: "Zmień szablon startowy" }).click();
   await page
     .getByRole("combobox", { name: "Szablon startowy", exact: true })
@@ -82,6 +113,7 @@ test("templates reset only on confirmation, blank starts empty and saved draft c
   await page
     .getByRole("button", { name: "Początek zaproszenia", exact: true })
     .click();
+  const heading = page.getByLabel("Główny napis", { exact: true });
   await expect(heading).toHaveValue("");
   await heading.fill("Spotkanie zespołu");
   await closeDialog(page);
