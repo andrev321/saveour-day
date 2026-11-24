@@ -5,6 +5,31 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      mantine:
+        patterns:
+          - "@mantine/*"
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react"
+          - "@types/react-dom"
+      eslint:
+        patterns:
+          - "eslint"
+          - "@eslint/*"
+          - "eslint-plugin-*"
+          - "typescript-eslint"
+      dnd-kit:
+        patterns:
+          - "@dnd-kit/*"
+      fontsource:
+        patterns:
+          - "@fontsource/*"
+      supabase:
+        patterns:
+          - "@supabase/*"
     ignore:
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
