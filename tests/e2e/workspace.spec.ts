@@ -139,6 +139,91 @@ test("view settings persist, resize is keyboard accessible, and controls remain 
   ).toHaveAttribute("aria-pressed", "true");
 });
 
+test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, aligns icons, and respects reduced motion", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1920, height: 1000 });
+  await openEditor(page);
+
+  const workspace = page.locator('[data-ui="editor-workspace"]');
+  const header = page.locator('[data-ui="workspace-header"]');
+  const brand = header.locator('[data-ui="workspace-brand"]');
+  const project = header.locator('[data-ui="workspace-project"]');
+  const collapseButton = header.getByRole("button", {
+    name: "Zwiń nawigację",
+  });
+
+  await expect(collapseButton).toBeVisible();
+  const toggleBoxBefore = await collapseButton.boundingBox();
+  const brandBoxBefore = await brand.boundingBox();
+  const projectBoxBefore = await project.boundingBox();
+  expect(toggleBoxBefore!.x).toBeLessThan(brandBoxBefore!.x);
+
+  const nav = page.locator('[data-ui="workspace-nav"]');
+  const firstTabIcon = nav.locator(".mantine-Tabs-tabSection").first();
+  const iconBoxBefore = await firstTabIcon.boundingBox();
+
+  await collapseButton.click();
+  await expect(workspace).toHaveAttribute("data-collapsed", "true");
+
+  const expandButton = header.getByRole("button", {
+    name: "Rozwiń nawigację",
+  });
+  await expect(expandButton).toBeVisible();
+  await expect(async () => {
+    const toggleBoxAfter = await expandButton.boundingBox();
+    const projectBoxAfter = await project.boundingBox();
+    const iconBoxAfter = await firstTabIcon.boundingBox();
+    expect(
+      Math.abs(toggleBoxAfter!.x - toggleBoxBefore!.x),
+    ).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(projectBoxAfter!.x - projectBoxBefore!.x),
+    ).toBeLessThanOrEqual(1);
+    expect(Math.abs(iconBoxAfter!.x - iconBoxBefore!.x)).toBeLessThanOrEqual(1);
+  }).toPass({ timeout: 2000 });
+
+  // Labels remain in the DOM (not display: none or omitted)
+  await expect(nav.locator(".mantine-Tabs-tabLabel").first()).toBeAttached();
+  await expect(
+    nav
+      .locator('[data-ui="workspace-nav-footer"] .mantine-Button-label')
+      .first(),
+  ).toBeAttached();
+  const labelDisplay = await nav
+    .locator('[data-ui="workspace-nav-footer"] .mantine-Button-label')
+    .first()
+    .evaluate((el) => getComputedStyle(el).display);
+  expect(labelDisplay).not.toBe("none");
+
+  // Persists in localStorage across reload
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("invitations-view-v1-collapsed"),
+    ),
+  ).toBe("true");
+  await page.reload();
+  await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+  await expect(workspace).toHaveAttribute("data-collapsed", "true");
+  await expect(
+    header.getByRole("button", { name: "Rozwiń nawigację" }),
+  ).toBeVisible();
+
+  // Hidden on mobile (< 1100px)
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(
+    header.getByRole("button", { name: "Rozwiń nawigację" }),
+  ).not.toBeVisible();
+
+  // Reduced motion disables sidebar transitions
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const bodyTransition = await page
+    .locator('[data-ui="workspace-body"]')
+    .evaluate((el) => getComputedStyle(el).transitionDuration);
+  expect(bodyTransition).toBe("0s");
+});
+
 test("preview toolbar stays in one row in both views and switches device frames", async ({
   page,
 }) => {
