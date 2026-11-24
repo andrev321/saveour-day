@@ -113,7 +113,7 @@ export const WorkspaceHeader = styled.header.attrs<{ "data-ui"?: string }>({
     gap: 20px;
     min-height: 60px;
     flex-shrink: 0;
-    padding: 8px 20px 8px 0;
+    padding: 8px 20px 8px 16px;
     border-bottom: 1px solid var(--panel-border);
   }
   @media (min-width: 1100px) and (max-width: 1599px) {
@@ -137,42 +137,73 @@ export const WorkspaceHeader = styled.header.attrs<{ "data-ui"?: string }>({
   }
 `;
 
+export const WorkspaceCollapseToggle = styled(ActionIcon).attrs<{
+  "data-ui"?: string;
+}>({
+  "data-ui": "workspace-collapse-toggle",
+})`
+  & {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: 10px;
+    color: var(--panel-muted);
+    flex-shrink: 0;
+  }
+  &:hover {
+    background: var(--panel-hover);
+    color: var(--panel-muted);
+  }
+  @media (max-width: 1099px) {
+    & {
+      display: none;
+    }
+  }
+`;
+
 export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
   "data-ui": "workspace-brand",
 })`
   & {
-    width: var(--nav-width);
+    width: auto;
     flex-shrink: 0;
-    padding: 0 20px;
-    display: flex;
+    padding: 0;
+    position: relative;
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
     color: var(--panel-accent);
     text-decoration: none;
     font-size: 13px;
     font-weight: 600;
   }
+  & .brand-lockup {
+    opacity: 1;
+    transition: opacity 220ms ease;
+  }
   & .brand-symbol {
-    display: none !important;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 220ms ease;
   }
   [data-collapsed="true"] & .brand-lockup {
-    display: none !important;
+    opacity: 0;
   }
   [data-collapsed="true"] & .brand-symbol {
-    display: block !important;
-  }
-  @media (max-width: 1099px) {
-    & {
-      width: auto;
-      padding: 0;
-    }
+    opacity: 1;
   }
   @media (max-width: 1599px) {
     & .brand-lockup {
-      display: none !important;
+      display: none;
     }
     & .brand-symbol {
-      display: block !important;
+      position: static;
+      transform: none;
+      opacity: 1;
     }
   }
   @media (max-width: 767px) {
@@ -336,6 +367,10 @@ export const WorkspaceBody = styled(Tabs).attrs<{ "data-ui"?: string }>({
     grid-template-columns:
       var(--nav-width) clamp(380px, var(--form-width), 460px)
       8px minmax(0, 1fr);
+    transition: grid-template-columns 360ms cubic-bezier(0.34, 1.32, 0.64, 1);
+  }
+  [data-resizing="true"] & {
+    transition: none;
   }
   @media (min-width: 1600px) {
     & {
@@ -349,6 +384,7 @@ export const WorkspaceBody = styled(Tabs).attrs<{ "data-ui"?: string }>({
       display: flex;
       position: relative;
       overflow: hidden;
+      transition: none;
     }
   }
 `;
@@ -360,7 +396,7 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     display: flex;
     flex-direction: column;
     min-height: 0;
-    padding: 16px 8px 12px;
+    padding: 16px 16px 12px;
     border-right: 1px solid var(--panel-border);
   }
   & .mantine-Tabs-list {
@@ -376,12 +412,17 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
     flex-shrink: 0;
     border: 0;
     border-radius: 10px;
-    padding: 10px 12px;
+    padding: 10px 10.5px;
     color: var(--panel-muted);
     min-height: 44px;
+    height: 44px;
+    width: 100%;
+    overflow: hidden;
     transition:
       background-color 160ms,
-      color 160ms;
+      color 160ms,
+      width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   & .mantine-Tabs-tab[data-active] {
     background: var(--panel-selected);
@@ -393,27 +434,38 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Tabs-tabSection {
     margin-inline-end: 12px;
+    flex-shrink: 0;
+    transition: margin-inline-end 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   & .mantine-Tabs-tabLabel {
-    white-space: normal;
+    white-space: nowrap;
     text-align: left;
     line-height: 1.4;
+    max-width: 160px;
+    opacity: 1;
+    transform: translateX(0);
+    overflow: hidden;
+    transition:
+      opacity 200ms ease,
+      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   [data-collapsed="true"] & .mantine-Tabs-tabLabel {
-    display: none;
+    opacity: 0;
+    transform: translateX(-6px);
+    max-width: 0;
+    pointer-events: none;
   }
   [data-collapsed="true"] & .mantine-Tabs-list {
-    align-items: center;
     gap: 4px;
   }
   [data-collapsed="true"] & .mantine-Tabs-tab {
     width: 44px;
     height: 44px;
-    padding: 0;
-    justify-content: center;
+    padding: 0 10.5px;
   }
   [data-collapsed="true"] & .mantine-Tabs-tabSection {
-    margin: 0;
+    margin-inline-end: 0;
   }
   @media (max-width: 1099px) {
     & {
@@ -437,14 +489,18 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
   & .mantine-Button-root {
     border: 0;
     border-radius: 10px;
-    padding: 10px 12px;
-    height: auto;
+    padding: 10px 11px;
+    height: 44px;
     min-height: 44px;
+    width: 100%;
+    overflow: hidden;
     color: var(--panel-muted);
     font-weight: 400;
     transition:
       background-color 160ms,
-      color 160ms;
+      color 160ms,
+      width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+      padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   & .mantine-Button-root[data-active] {
     background: var(--panel-selected);
@@ -457,43 +513,38 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Button-section {
     margin-inline-end: 12px;
+    flex-shrink: 0;
+    transition: margin-inline-end 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   & .mantine-Button-label {
-    white-space: normal;
+    white-space: nowrap;
     text-align: left;
     line-height: 1.4;
-    overflow: visible;
+    max-width: 160px;
+    opacity: 1;
+    transform: translateX(0);
+    overflow: hidden;
+    transition:
+      opacity 200ms ease,
+      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+      max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  & .mantine-ActionIcon-root {
-    align-self: flex-start;
-    border-radius: 10px;
-    color: var(--panel-muted);
-  }
-  & .mantine-ActionIcon-root:hover {
-    background: var(--panel-hover);
-    color: var(--panel-muted);
-  }
-  [data-collapsed="true"] & {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    align-items: center;
-    gap: 4px;
-  }
-  [data-collapsed="true"] & .mantine-Button-root,
-  [data-collapsed="true"] & .mantine-ActionIcon-root {
-    align-self: center;
+  [data-collapsed="true"] & .mantine-Button-root {
     width: 44px;
     height: 44px;
     min-width: 44px;
     min-height: 44px;
-    padding: 0;
+    padding: 0 11px;
     flex-shrink: 0;
   }
   [data-collapsed="true"] & .mantine-Button-section {
-    margin: 0;
+    margin-inline-end: 0;
   }
   [data-collapsed="true"] & .mantine-Button-label {
-    display: none;
+    opacity: 0;
+    transform: translateX(-6px);
+    max-width: 0;
+    pointer-events: none;
   }
 `;
 

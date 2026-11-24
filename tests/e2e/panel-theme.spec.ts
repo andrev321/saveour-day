@@ -34,18 +34,20 @@ test("panel theme persists and works in editor across desktop and mobile", async
   ).not.toHaveCSS("background-color", "rgb(28, 39, 57)");
   await page.getByRole("button", { name: "Zwiń nawigację" }).click();
   const footer = page.locator('[data-ui="workspace-nav-footer"]');
-  const boxes = await footer.getByRole("button").evaluateAll((buttons) =>
-    buttons.map((button) => {
-      const { x, width, height } = button.getBoundingClientRect();
-      return { x, width, height };
-    }),
-  );
-  expect(boxes).toHaveLength(3);
-  for (const box of boxes) {
-    expect(box.width).toBe(44);
-    expect(box.height).toBe(44);
-    expect(box.x).toBe(boxes[0].x);
-  }
+  await expect(async () => {
+    const boxes = await footer.getByRole("button").evaluateAll((buttons) =>
+      buttons.map((button) => {
+        const { x, width, height } = button.getBoundingClientRect();
+        return { x, width, height };
+      }),
+    );
+    expect(boxes).toHaveLength(2);
+    for (const box of boxes) {
+      expect(box.width).toBe(44);
+      expect(box.height).toBe(44);
+      expect(box.x).toBe(boxes[0].x);
+    }
+  }).toPass({ timeout: 2000 });
   await page.setViewportSize({ width: 390, height: 900 });
   await page.getByRole("button", { name: "Opcje projektu" }).click();
   await page.getByRole("button", { name: "Wygląd panelu" }).click();

@@ -1,12 +1,5 @@
 "use client";
-import {
-  ActionIcon,
-  Button,
-  Drawer,
-  Popover,
-  Tabs,
-  Tooltip,
-} from "@mantine/core";
+import { Button, Drawer, Popover, Tabs, Tooltip } from "@mantine/core";
 import { useLocalStorage, useMediaQuery } from "@mantine/hooks";
 import {
   ClockCounterClockwiseIcon,
@@ -75,6 +68,7 @@ export function EditorWorkspace({
     key: "invitations-view-v1-collapsed",
     defaultValue: false,
   });
+  const [resizing, setResizing] = useState(false);
   const [panelWidth, setPanelWidth] = useLocalStorage({
     key: "invitations-view-v1-width",
     defaultValue: 460,
@@ -120,6 +114,7 @@ export function EditorWorkspace({
   return (
     <S.EditorWorkspace
       data-collapsed={collapsed}
+      data-resizing={resizing || undefined}
       data-view={view}
       style={
         {
@@ -129,6 +124,16 @@ export function EditorWorkspace({
       }
     >
       <S.WorkspaceHeader>
+        <Tooltip label={collapsed ? ui.expand : ui.collapse} position="bottom">
+          <S.WorkspaceCollapseToggle
+            variant="subtle"
+            size="lg"
+            aria-label={collapsed ? ui.expand : ui.collapse}
+            onClick={() => setCollapsed(!collapsed)}
+          >
+            <SidebarSimpleIcon size={23} weight="duotone" />
+          </S.WorkspaceCollapseToggle>
+        </Tooltip>
         <S.WorkspaceBrand href="/" aria-label={t("projects")}>
           <BrandLogo
             variant="full"
@@ -225,34 +230,20 @@ export function EditorWorkspace({
                   aria-label={label}
                   data-active={value === active || undefined}
                   aria-current={value === active ? "page" : undefined}
-                  justify={collapsed ? "center" : "flex-start"}
+                  justify="flex-start"
                   leftSection={<Icon size={22} weight="duotone" />}
                   onClick={() => onActive(value)}
                 >
-                  {!collapsed &&
-                    (value === "history"
-                      ? language === "pl"
-                        ? "Historia"
-                        : language === "de"
-                          ? "Verlauf"
-                          : "History"
-                      : label)}
+                  {value === "history"
+                    ? language === "pl"
+                      ? "Historia"
+                      : language === "de"
+                        ? "Verlauf"
+                        : "History"
+                    : label}
                 </Button>
               </Tooltip>
             ))}
-            <Tooltip
-              label={collapsed ? ui.expand : ui.collapse}
-              position="right"
-            >
-              <ActionIcon
-                variant="subtle"
-                size="lg"
-                aria-label={collapsed ? ui.expand : ui.collapse}
-                onClick={() => setCollapsed(!collapsed)}
-              >
-                <SidebarSimpleIcon size={23} weight="duotone" />
-              </ActionIcon>
-            </Tooltip>
           </S.WorkspaceNavFooter>
         </S.WorkspaceNav>
         <S.WorkspaceForm
@@ -290,6 +281,7 @@ export function EditorWorkspace({
           onPointerDown={(event) => {
             event.currentTarget.setPointerCapture(event.pointerId);
             event.currentTarget.dataset.start = `${event.clientX},${width}`;
+            setResizing(true);
           }}
           onPointerMove={(event) => {
             if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
@@ -298,9 +290,11 @@ export function EditorWorkspace({
               .map(Number);
             setPanelWidth(clamp(start + event.clientX - x));
           }}
-          onPointerUp={(event) =>
-            event.currentTarget.releasePointerCapture(event.pointerId)
-          }
+          onPointerUp={(event) => {
+            event.currentTarget.releasePointerCapture(event.pointerId);
+            setResizing(false);
+          }}
+          onPointerCancel={() => setResizing(false)}
         />
         <S.WorkspacePreview
           id="workspace-preview"
