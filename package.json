@@ -43,7 +43,7 @@
     "@fontsource/nunito-sans": "^5.3.0",
     "@fontsource/playfair-display": "^5.3.0",
     "@mantine/core": "9.8.0",
-    "@mantine/form": "9.8.0",
+    "@mantine/form": "9.8.2",
     "@mantine/hooks": "9.8.0",
     "@mantine/notifications": "^9.8.0",
     "@phosphor-icons/react": "^2.1.10",
