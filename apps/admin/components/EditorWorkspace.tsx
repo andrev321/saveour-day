@@ -64,14 +64,11 @@ export function EditorWorkspace({
   const view = viewState.request === editRequest ? viewState.mode : "edit";
   const setView = (mode: string) =>
     setViewState({ mode, request: editRequest });
-  const formMotion = useViewMotion(
-    `${active}:${view}`,
-    '[role="tabpanel"]:not([hidden])',
-  );
-  const previewMotion = useViewMotion(view);
+  const formMotion = useViewMotion(active, '[role="tabpanel"]:not([hidden])');
   useEffect(() => {
     formMotion.current?.scrollTo({ top: 0, behavior: "instant" });
   }, [active, formMotion]);
+  const mobile = useMediaQuery("(max-width: 1099px)");
   const [menu, setMenu] = useState(false);
   const [projectOptions, setProjectOptions] = useState(false);
   const [collapsed, setCollapsed] = useLocalStorage({
@@ -258,7 +255,12 @@ export function EditorWorkspace({
             </Tooltip>
           </S.WorkspaceNavFooter>
         </S.WorkspaceNav>
-        <S.WorkspaceForm ref={formMotion} id="workspace-edit">
+        <S.WorkspaceForm
+          ref={formMotion}
+          id="workspace-edit"
+          inert={mobile && view === "preview" ? true : undefined}
+          aria-hidden={mobile && view === "preview" ? true : undefined}
+        >
           <S.WorkspaceNotices>{notices}</S.WorkspaceNotices>
           {headerTools}
           {children}
@@ -301,9 +303,10 @@ export function EditorWorkspace({
           }
         />
         <S.WorkspacePreview
-          ref={previewMotion}
           id="workspace-preview"
           aria-label={ui.live}
+          inert={mobile && view === "edit" ? true : undefined}
+          aria-hidden={mobile && view === "edit" ? true : undefined}
         >
           {preview}
         </S.WorkspacePreview>
@@ -343,6 +346,11 @@ export function EditorWorkspace({
         onClose={() => setMenu(false)}
         title={<BrandLogo height={28} />}
         size="min(320px, 90vw)"
+        transitionProps={{
+          transition: "slide-right",
+          duration: 260,
+          timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+        }}
         styles={{
           content: { display: "flex", flexDirection: "column" },
           body: { flex: 1, display: "flex", flexDirection: "column" },

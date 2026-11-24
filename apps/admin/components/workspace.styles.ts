@@ -346,8 +346,9 @@ export const WorkspaceBody = styled(Tabs).attrs<{ "data-ui"?: string }>({
   }
   @media (max-width: 1099px) {
     & {
-      display: block;
+      display: flex;
       position: relative;
+      overflow: hidden;
     }
   }
 `;
@@ -562,18 +563,15 @@ export const WorkspaceForm = styled.main.attrs<{ "data-ui"?: string }>({
   }
   @media (max-width: 1099px) {
     & {
+      flex: 0 0 100%;
       height: 100%;
       width: 100%;
-    }
-  }
-  @media (max-width: 1099px) {
-    & {
       padding: 16px max(16px, calc((100% - 720px) / 2));
+      transform: translateX(0);
+      transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-  }
-  @media (max-width: 1099px) {
     [data-view="preview"] & {
-      display: none;
+      transform: translateX(-100%);
     }
   }
   @media (max-width: 767px) {
@@ -676,11 +674,14 @@ export const WorkspacePreview = styled.section.attrs<{ "data-ui"?: string }>({
   }
   @media (max-width: 1099px) {
     & {
+      flex: 0 0 100%;
       height: 100%;
       width: 100%;
+      transform: translateX(0);
+      transition: transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-    [data-view="edit"] & {
-      display: none;
+    [data-view="preview"] & {
+      transform: translateX(-100%);
     }
   }
   @media (max-width: 767px) {
@@ -714,6 +715,9 @@ export const WorkspaceMobileNav = styled.nav.attrs<{ "data-ui"?: string }>({
   @media (max-width: 1099px) {
     & .mantine-Button-root {
       min-height: 44px;
+      transition:
+        background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+        color 180ms cubic-bezier(0.22, 1, 0.36, 1);
     }
   }
   @media (max-width: 767px) {

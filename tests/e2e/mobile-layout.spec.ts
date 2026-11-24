@@ -264,3 +264,70 @@ test("project dashboard fits a 320px touch screen", async ({ page }) => {
     fullPage: true,
   });
 });
+
+test("mobile Edycja and Podgląd slide horizontally, preserve scroll, and isolate off-screen panel", async ({
+  page,
+}) => {
+  const width = 390;
+  await page.setViewportSize({ width, height: 740 });
+  await page.goto(`${admin}/demo`);
+  await page.getByRole("button", { name: "Otwórz gotowy przykład" }).click();
+
+  const workspace = page.locator('[data-ui="editor-workspace"]');
+  const editPanel = page.locator("#workspace-edit");
+  const previewPanel = page.locator("#workspace-preview");
+
+  await expect(workspace).toHaveAttribute("data-view", "edit");
+  await expect(editPanel).not.toHaveAttribute("inert", "");
+  await expect(editPanel).not.toHaveAttribute("aria-hidden", "true");
+  await expect(previewPanel).toHaveAttribute("inert", "");
+  await expect(previewPanel).toHaveAttribute("aria-hidden", "true");
+
+  const initialEditBox = (await editPanel.boundingBox())!;
+  const initialPreviewBox = (await previewPanel.boundingBox())!;
+  expect(initialEditBox.x).toBe(0);
+  expect(initialEditBox.width).toBe(width);
+  expect(initialPreviewBox.x).toBeGreaterThanOrEqual(width);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - innerWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+
+  const scrolled = await editPanel.evaluate((el) => {
+    el.scrollTop = 180;
+    return el.scrollTop;
+  });
+  expect(scrolled).toBeGreaterThan(0);
+
+  await page.getByRole("button", { name: "Podgląd", exact: true }).click();
+  await expect(workspace).toHaveAttribute("data-view", "preview");
+  await expect(previewPanel).not.toHaveAttribute("inert", "");
+  await expect(previewPanel).not.toHaveAttribute("aria-hidden", "true");
+  await expect(editPanel).toHaveAttribute("inert", "");
+  await expect(editPanel).toHaveAttribute("aria-hidden", "true");
+
+  await expect.poll(async () => (await previewPanel.boundingBox())!.x).toBe(0);
+  const activePreviewBox = (await previewPanel.boundingBox())!;
+  const hiddenEditBox = (await editPanel.boundingBox())!;
+  expect(activePreviewBox.width).toBe(width);
+  expect(hiddenEditBox.x + hiddenEditBox.width).toBeLessThanOrEqual(0);
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - innerWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+
+  await page.getByRole("button", { name: "Edycja", exact: true }).click();
+  await expect(workspace).toHaveAttribute("data-view", "edit");
+  await expect.poll(async () => (await editPanel.boundingBox())!.x).toBe(0);
+  expect(await editPanel.evaluate((el) => el.scrollTop)).toBe(scrolled);
+  await expect(previewPanel).toHaveAttribute("inert", "");
+  await expect(previewPanel).toHaveAttribute("aria-hidden", "true");
+
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer).toBeVisible();
+  await drawer.getByRole("button", { name: "Zamknij nawigację" }).click();
+  await expect(drawer).toHaveCount(0);
+});
