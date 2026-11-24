@@ -21,7 +21,6 @@ const labels: Record<string, [string, string, string]> = {
     "Suchmaschinenindexierung",
   ],
   navigate: ["Przycisk nawigacji", "Navigation button", "Navigation"],
-  showMap: ["Przycisk mapy", "Map button", "Kartenbutton"],
   eventLink: ["Przycisk wydarzenia", "Event link", "Veranstaltungslink"],
   call: ["Przycisk połączenia", "Call button", "Anrufen"],
   sms: ["Przycisk SMS", "SMS button", "SMS"],

@@ -34,8 +34,6 @@ import {
   type CSSProperties,
   type ReactNode,
 } from "react";
-import { LoadingState } from "@invitations/ui/loading";
-import { loadingText } from "@invitations/ui/loading-copy";
 import * as S from "./lib/styles";
 import { useInvitationMotion } from "@invitations/ui/motion";
 import {
@@ -313,15 +311,6 @@ function Venue({
   config: SiteConfig;
 }) {
   const embedUrl = mapEmbedUrl(venue);
-  const [mapOpen, setMapOpen] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
-  const [mapSlow, setMapSlow] = useState(false);
-  const [mapAttempt, setMapAttempt] = useState(0);
-  useEffect(() => {
-    if (!mapOpen || mapReady) return;
-    const timer = setTimeout(() => setMapSlow(true), 20000);
-    return () => clearTimeout(timer);
-  }, [mapOpen, mapReady, mapAttempt]);
   return (
     <Stack gap="md">
       <Title order={3} size="h2">
@@ -341,51 +330,14 @@ function Venue({
         >
           {config.copy.navigate}
         </Button>
-        {embedUrl && !mapOpen ? (
-          <Button variant="subtle" onClick={() => setMapOpen(true)}>
-            {config.copy.showMap}
-          </Button>
-        ) : null}
       </Group>
-      {embedUrl && mapOpen ? (
-        <div style={{ position: "relative" }} aria-busy={!mapReady}>
-          {!mapReady && (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                zIndex: 1,
-                display: "grid",
-                placeContent: "center",
-                background: "var(--paper)",
-              }}
-            >
-              <LoadingState
-                label={loadingText(config.locale.slice(0, 2), "loading")}
-                slowLabel={loadingText(config.locale.slice(0, 2), "slow")}
-                tone={isDarkColor(config.design.paper) ? "dark" : "light"}
-              />
-              {mapSlow && (
-                <Button
-                  onClick={() => {
-                    setMapSlow(false);
-                    setMapAttempt((n) => n + 1);
-                  }}
-                >
-                  {loadingText(config.locale.slice(0, 2), "retry")}
-                </Button>
-              )}
-            </div>
-          )}
-          <S.InvitationMap
-            key={mapAttempt}
-            onLoad={() => setMapReady(true)}
-            src={embedUrl}
-            title={venue.name}
-            loading="lazy"
-            referrerPolicy="no-referrer"
-          />
-        </div>
+      {embedUrl ? (
+        <S.InvitationMap
+          src={embedUrl}
+          title={venue.name}
+          loading="lazy"
+          referrerPolicy="no-referrer"
+        />
       ) : null}
     </Stack>
   );

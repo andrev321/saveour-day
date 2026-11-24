@@ -120,11 +120,12 @@ test("render descriptions, contacts and optional-map reception for every theme",
     assert.match(html, /Widoczny opis przyjęcia/);
     assert.match(html, /Parking dla gości/);
     assert.match(html, /tel:\+48000000000/);
-    assert.doesNotMatch(html, /<iframe/);
+    assert.equal(html.match(/<iframe\b/g)?.length ?? 0, 1);
+    assert.doesNotMatch(html, /Pokaż mapę/);
     assert.ok(html.includes(`data-theme="${theme}"`));
   }
 });
-test("venue map preview button follows address and showMap toggle", () => {
+test("venue map renders immediately when showMap is enabled and hides when disabled", () => {
   const config = createDemo();
   config.venues[0].showMap = true;
   config.venues[0].address = "ul. Przykładowa 1, Warszawa";
@@ -133,13 +134,17 @@ test("venue map preview button follows address and showMap toggle", () => {
   const withMapHtml = renderToStaticMarkup(
     createElement(Invitation, { config }),
   );
-  assert.match(withMapHtml, /Pokaż mapę/);
+  assert.doesNotMatch(withMapHtml, /Pokaż mapę/);
+  assert.match(withMapHtml, /<iframe[^>]*data-ui="invitation-map"/);
+  assert.match(withMapHtml, /output=embed/);
+  assert.equal(withMapHtml.match(/<iframe\b/g)?.length ?? 0, 1);
 
   config.venues[0].showMap = false;
   const withoutMapHtml = renderToStaticMarkup(
     createElement(Invitation, { config }),
   );
   assert.doesNotMatch(withoutMapHtml, /Pokaż mapę/);
+  assert.doesNotMatch(withoutMapHtml, /<iframe\b/);
   assert.match(withoutMapHtml, /maps\/search\/\?api=1&amp;query=/);
 });
 test("decorations and section icons can be disabled independently", () => {
