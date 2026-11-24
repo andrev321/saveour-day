@@ -148,7 +148,7 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
   const workspace = page.locator('[data-ui="editor-workspace"]');
   const header = page.locator('[data-ui="workspace-header"]');
   const brand = header.locator('[data-ui="workspace-brand"]');
-  const project = header.locator('[data-ui="workspace-project"]');
+  const siteTitle = header.locator('[data-ui="workspace-project"]');
   const collapseButton = header.getByRole("button", {
     name: "Zwiń nawigację",
   });
@@ -156,7 +156,7 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
   await expect(collapseButton).toBeVisible();
   const toggleBoxBefore = await collapseButton.boundingBox();
   const brandBoxBefore = await brand.boundingBox();
-  const projectBoxBefore = await project.boundingBox();
+  const siteTitleBoxBefore = await siteTitle.boundingBox();
   expect(toggleBoxBefore!.x).toBeLessThan(brandBoxBefore!.x);
 
   const nav = page.locator('[data-ui="workspace-nav"]');
@@ -172,13 +172,13 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
   await expect(expandButton).toBeVisible();
   await expect(async () => {
     const toggleBoxAfter = await expandButton.boundingBox();
-    const projectBoxAfter = await project.boundingBox();
+    const siteTitleBoxAfter = await siteTitle.boundingBox();
     const iconBoxAfter = await firstTabIcon.boundingBox();
     expect(
       Math.abs(toggleBoxAfter!.x - toggleBoxBefore!.x),
     ).toBeLessThanOrEqual(1);
     expect(
-      Math.abs(projectBoxAfter!.x - projectBoxBefore!.x),
+      Math.abs(siteTitleBoxAfter!.x - siteTitleBoxBefore!.x),
     ).toBeLessThanOrEqual(1);
     expect(Math.abs(iconBoxAfter!.x - iconBoxBefore!.x)).toBeLessThanOrEqual(1);
   }).toPass({ timeout: 2000 });
