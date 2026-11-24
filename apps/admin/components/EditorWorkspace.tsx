@@ -135,18 +135,12 @@ export function EditorWorkspace({
           </S.WorkspaceCollapseToggle>
         </Tooltip>
         <S.WorkspaceBrand href="/" aria-label={t("projects")}>
-          <BrandLogo
-            variant="full"
-            height={36}
-            decorative
-            className="brand-lockup"
-          />
-          <BrandLogo
-            variant="mark"
-            height={32}
-            decorative
-            className="brand-symbol"
-          />
+          <span className="brand-full">
+            <BrandLogo variant="full" height={36} decorative />
+          </span>
+          <span className="brand-mark">
+            <BrandLogo variant="mark" height={32} decorative />
+          </span>
         </S.WorkspaceBrand>
         <S.WorkspaceProject>
           {title}

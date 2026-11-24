@@ -344,3 +344,112 @@ test("expanded preview fills the viewport after resize and clips the entire phon
     .evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await page.screenshot({ path: "test-results/phone-rounded-bottom.png" });
 });
+
+test("workspace topbar keeps a single brand variant, never hides brand on sidebar collapse, and avoids awkward wrapping", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openEditor(page);
+
+  const workspace = page.locator('[data-ui="editor-workspace"]');
+  const header = page.locator('[data-ui="workspace-header"]');
+  const collapseToggle = header.locator(
+    '[data-ui="workspace-collapse-toggle"]',
+  );
+
+  const widths = [320, 390, 480, 767, 768, 1099, 1100, 1279, 1280, 1440, 1920];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 900 });
+    const states = width >= 1100 ? [false, true] : [false];
+    for (const collapsed of states) {
+      if (width >= 1100) {
+        const current =
+          (await workspace.getAttribute("data-collapsed")) === "true";
+        if (current !== collapsed) {
+          await collapseToggle.click();
+          await expect(workspace).toHaveAttribute(
+            "data-collapsed",
+            String(collapsed),
+          );
+        }
+      }
+
+      const metrics = await header.evaluate((el) => {
+        const headerRect = el.getBoundingClientRect();
+        const visibleBrands = Array.from(
+          el.querySelectorAll<SVGElement>('[data-ui="workspace-brand"] svg'),
+        )
+          .filter((svg) => {
+            const rect = svg.getBoundingClientRect();
+            const style = getComputedStyle(svg);
+            return (
+              rect.width > 0 &&
+              rect.height > 0 &&
+              style.display !== "none" &&
+              parseFloat(style.opacity) > 0.9
+            );
+          })
+          .map((svg) => svg.getAttribute("data-brand"));
+
+        const h1 = el.querySelector<HTMLElement>(
+          '[data-ui="workspace-project"] h1',
+        );
+        const badge = el.querySelector<HTMLElement>(
+          '[data-ui="workspace-project"] .mantine-Badge-root',
+        );
+        const h1Rect = h1?.getBoundingClientRect();
+        const badgeRect = badge?.getBoundingClientRect();
+
+        return {
+          overflow: el.scrollWidth - el.clientWidth,
+          height: headerRect.height,
+          visibleBrands,
+          sameRow:
+            !!h1Rect &&
+            !!badgeRect &&
+            Math.abs(
+              h1Rect.top +
+                h1Rect.height / 2 -
+                (badgeRect.top + badgeRect.height / 2),
+            ) <= 6,
+          stacked:
+            !!h1Rect && !!badgeRect && badgeRect.top >= h1Rect.bottom - 2,
+        };
+      });
+
+      expect(
+        metrics.overflow,
+        `overflow at ${width}px (collapsed=${collapsed})`,
+      ).toBeLessThanOrEqual(1);
+      expect(
+        metrics.height,
+        `height at ${width}px (collapsed=${collapsed})`,
+      ).toBeLessThanOrEqual(64);
+
+      if (width < 768) {
+        expect(metrics.visibleBrands, `brand at ${width}px`).toEqual([]);
+      } else if (width < 1280) {
+        expect(
+          metrics.visibleBrands,
+          `brand at ${width}px (collapsed=${collapsed})`,
+        ).toEqual(["mark"]);
+      } else {
+        expect(
+          metrics.visibleBrands,
+          `brand at ${width}px (collapsed=${collapsed})`,
+        ).toEqual(["full"]);
+      }
+
+      if (width >= 480) {
+        expect(
+          metrics.sameRow,
+          `single-row project header at ${width}px (collapsed=${collapsed})`,
+        ).toBe(true);
+      } else {
+        expect(metrics.stacked, `stacked project header at ${width}px`).toBe(
+          true,
+        );
+      }
+    }
+  }
+});

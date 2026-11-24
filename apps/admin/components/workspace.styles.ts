@@ -166,10 +166,8 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
   "data-ui": "workspace-brand",
 })`
   & {
-    width: auto;
     flex-shrink: 0;
     padding: 0;
-    position: relative;
     display: inline-flex;
     align-items: center;
     color: var(--panel-accent);
@@ -177,33 +175,18 @@ export const WorkspaceBrand = styled.a.attrs<{ "data-ui"?: string }>({
     font-size: 13px;
     font-weight: 600;
   }
-  & .brand-lockup {
-    opacity: 1;
-    transition: opacity 220ms ease;
+  & .brand-full {
+    display: inline-flex;
   }
-  & .brand-symbol {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 220ms ease;
+  & .brand-mark {
+    display: none;
   }
-  [data-collapsed="true"] & .brand-lockup {
-    opacity: 0;
-  }
-  [data-collapsed="true"] & .brand-symbol {
-    opacity: 1;
-  }
-  @media (max-width: 1599px) {
-    & .brand-lockup {
+  @media (max-width: 1279px) {
+    & .brand-full {
       display: none;
     }
-    & .brand-symbol {
-      position: static;
-      transform: none;
-      opacity: 1;
+    & .brand-mark {
+      display: inline-flex;
     }
   }
   @media (max-width: 767px) {
@@ -220,12 +203,14 @@ export const WorkspaceProject = styled.div.attrs<{ "data-ui"?: string }>({
     display: flex;
     flex: 1;
     min-width: 0;
+    flex-wrap: nowrap;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
   & h1 {
+    min-width: 0;
     font-size: 18px;
-    line-height: 1.4;
+    line-height: 1.3;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -234,27 +219,26 @@ export const WorkspaceProject = styled.div.attrs<{ "data-ui"?: string }>({
     flex-shrink: 0;
     max-width: 100%;
   }
-  @media (min-width: 1100px) and (max-width: 1599px) {
-    & {
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-  }
-  @media (max-width: 1099px) {
-    & {
-      flex-wrap: wrap;
-      gap: 4px;
-    }
-  }
   @media (max-width: 767px) {
+    & {
+      gap: 8px;
+    }
     & h1 {
       font-size: 15px;
-      max-width: 100%;
     }
-  }
-  @media (max-width: 767px) {
     & .mantine-Badge-root {
       font-size: 9px;
+    }
+  }
+  @media (max-width: 479px) {
+    & {
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 2px;
+    }
+    & h1 {
+      max-width: 100%;
     }
   }
 `;
