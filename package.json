@@ -10,6 +10,7 @@
     "build": "npm run typecheck && npm run build --workspace @invitations/site",
     "build:admin": "npm run build --workspace @invitations/admin",
     "build:demo": "tsx scripts/build-demo.ts",
+    "docs:screenshots": "tsx scripts/capture-docs-screenshots.ts",
     "prepare": "git config core.hooksPath .githooks || true",
     "check:production-env": "tsx scripts/check-production-env.ts",
     "format": "prettier --write \"apps/**/*.{ts,tsx,js,json,css}\" \"packages/**/*.{ts,tsx,js,json}\" \"scripts/**/*.{ts,js}\" \"tests/**/*.{ts,tsx}\" \"*.{js,ts,json,md}\" \".github/**/*.yml\"",

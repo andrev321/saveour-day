@@ -6,16 +6,16 @@ The original layout direction was called Focus × Paper. The current panel uses 
 
 ## Adaptive layout
 
-| Desktop (`1440 px`) | Mobile (`390 px`) |
-| --- | --- |
-| ![Admin editor on desktop](images/admin-editor-desktop.png) | ![Admin editor on mobile](images/admin-editor-mobile.png) |
+| Desktop (`1440 px`)                                               | Mobile (`390 px`)                                         |
+| ----------------------------------------------------------------- | --------------------------------------------------------- |
+| ![Admin editor on desktop](images/admin-editor-desktop-light.png) | ![Admin editor on mobile](images/admin-editor-mobile.png) |
 
-| Window width | Behavior |
-| --- | --- |
-| 1600 px and above | Labeled navigation, 440–560 px form, remaining space for preview |
-| 1100–1599 px | Narrower navigation, 380–460 px form, flexible preview |
-| 768–1099 px | Edit/Preview switch and drawer navigation |
-| Below 768 px | Single-column form, bottom Menu/Edit/Preview controls, save in the header, other actions in project options |
+| Window width      | Behavior                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| 1600 px and above | Labeled navigation, 440–560 px form, remaining space for preview                                            |
+| 1100–1599 px      | Narrower navigation, 380–460 px form, flexible preview                                                      |
+| 768–1099 px       | Edit/Preview switch and drawer navigation                                                                   |
+| Below 768 px      | Single-column form, bottom Menu/Edit/Preview controls, save in the header, other actions in project options |
 
 Desktop form and preview scroll independently. Navigation can collapse to icons with tooltips. Drag the divider or focus it and use arrows/Home/End; the preferred width is clamped to the current screen.
 
