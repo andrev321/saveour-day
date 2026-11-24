@@ -25,6 +25,7 @@ test("selected designs support real photos, non-wedding copy and every palette a
   page,
 }) => {
   test.setTimeout(120000);
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const garden = await readFile("assets/theme-redesign/media/gathering.png");

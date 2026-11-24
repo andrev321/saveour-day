@@ -64,7 +64,7 @@ for (const [index, theme] of themeNames.entries()) {
 }
 layers.push({
   input: Buffer.from(
-    '<svg width="1770" height="105"><text x="30" y="48" font-family="Arial" font-size="32" fill="#252b28">5 designów · 20 palet · wiele okazji</text><text x="30" y="82" font-family="Arial" font-size="17" fill="#52615b">Podglądy działającej aplikacji — jubileusz, warsztaty, spotkanie firmowe i urodziny</text></svg>',
+    '<svg width="1770" height="105"><text x="30" y="48" font-family="Arial" font-size="32" fill="#252b28">5 designs · 20 palettes · any occasion</text><text x="30" y="82" font-family="Arial" font-size="17" fill="#52615b">Live renderer previews — anniversary, workshop, company event, and birthday</text></svg>',
   ),
   left: 0,
   top: 0,
