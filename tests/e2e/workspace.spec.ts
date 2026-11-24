@@ -161,7 +161,9 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
 
   const nav = page.locator('[data-ui="workspace-nav"]');
   const firstTabIcon = nav.locator(".mantine-Tabs-tabSection").first();
+  const secondTabIcon = nav.locator(".mantine-Tabs-tabSection").nth(1);
   const iconBoxBefore = await firstTabIcon.boundingBox();
+  const secondIconBoxBefore = await secondTabIcon.boundingBox();
 
   await collapseButton.click();
   await expect(workspace).toHaveAttribute("data-collapsed", "true");
@@ -174,6 +176,11 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
     const toggleBoxAfter = await expandButton.boundingBox();
     const siteTitleBoxAfter = await siteTitle.boundingBox();
     const iconBoxAfter = await firstTabIcon.boundingBox();
+    const secondIconBoxAfter = await secondTabIcon.boundingBox();
+    const tabsListOverflow = await nav
+      .locator(".mantine-Tabs-list")
+      .evaluate((el) => el.scrollWidth <= el.clientWidth);
+    expect(tabsListOverflow).toBe(true);
     expect(
       Math.abs(toggleBoxAfter!.x - toggleBoxBefore!.x),
     ).toBeLessThanOrEqual(1);
@@ -181,6 +188,9 @@ test("desktop top-bar collapse toggle stays fixed, keeps site title stationary, 
       Math.abs(siteTitleBoxAfter!.x - siteTitleBoxBefore!.x),
     ).toBeLessThanOrEqual(1);
     expect(Math.abs(iconBoxAfter!.x - iconBoxBefore!.x)).toBeLessThanOrEqual(1);
+    expect(
+      Math.abs(secondIconBoxAfter!.y - secondIconBoxBefore!.y),
+    ).toBeLessThanOrEqual(1);
   }).toPass({ timeout: 2000 });
 
   // Labels remain in the DOM (not display: none or omitted)

@@ -404,17 +404,16 @@ function collapsibleNavItemStyles({
     & ${itemSelector} {
       border: 0;
       border-radius: 10px;
-      padding: 10px ${paddingX};
+      padding: 0 ${paddingX};
       color: var(--panel-muted);
       min-height: 44px;
       height: 44px;
       width: 100%;
+      min-width: 0;
       overflow: hidden;
       transition:
         background-color 160ms,
-        color 160ms,
-        width 320ms cubic-bezier(0.22, 1, 0.36, 1),
-        padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
+        color 160ms;
     }
     & ${itemSelector}[data-active] {
       background: var(--panel-selected);
@@ -439,11 +438,6 @@ function collapsibleNavItemStyles({
         transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
         max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
     }
-    [data-collapsed="true"] & ${itemSelector} {
-      width: 44px;
-      height: 44px;
-      padding: 0 ${paddingX};
-    }
     [data-collapsed="true"] & ${sectionSelector} {
       margin-inline-end: 0;
     }
@@ -462,14 +456,17 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   & {
     display: flex;
     flex-direction: column;
+    min-width: 0;
     min-height: 0;
-    padding: 16px 16px 12px;
+    overflow: hidden;
+    padding: 16px 15px 12px 16px;
     border-right: 1px solid var(--panel-border);
   }
   & .mantine-Tabs-list {
     gap: 8px;
     flex-wrap: nowrap;
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
   & .mantine-Tabs-list::before {
     display: none;
@@ -486,9 +483,6 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   }
   & .mantine-Tabs-tab:hover {
     background: var(--panel-hover);
-  }
-  [data-collapsed="true"] & .mantine-Tabs-list {
-    gap: 4px;
   }
   @media (max-width: 1099px) {
     & {
@@ -521,11 +515,6 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
   & .mantine-Button-root:hover:not([data-active]) {
     background: var(--panel-hover);
     color: var(--panel-muted);
-  }
-  [data-collapsed="true"] & .mantine-Button-root {
-    min-width: 44px;
-    min-height: 44px;
-    flex-shrink: 0;
   }
 `;
 
