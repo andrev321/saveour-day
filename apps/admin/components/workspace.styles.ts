@@ -1,6 +1,6 @@
 "use client";
 import { ActionIcon, Tabs } from "@mantine/core";
-import { createGlobalStyle, styled } from "styled-components";
+import { createGlobalStyle, css, styled } from "styled-components";
 import { subtleControls } from "@invitations/ui/motion-styles";
 export const AdminGlobalStyles = createGlobalStyle`body {margin: 0;
 background: var(--panel-shell);
@@ -389,6 +389,73 @@ export const WorkspaceBody = styled(Tabs).attrs<{ "data-ui"?: string }>({
   }
 `;
 
+function collapsibleNavItemStyles({
+  itemSelector,
+  sectionSelector,
+  labelSelector,
+  paddingX,
+}: {
+  itemSelector: string;
+  sectionSelector: string;
+  labelSelector: string;
+  paddingX: string;
+}) {
+  return css`
+    & ${itemSelector} {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px ${paddingX};
+      color: var(--panel-muted);
+      min-height: 44px;
+      height: 44px;
+      width: 100%;
+      overflow: hidden;
+      transition:
+        background-color 160ms,
+        color 160ms,
+        width 320ms cubic-bezier(0.22, 1, 0.36, 1),
+        padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    & ${itemSelector}[data-active] {
+      background: var(--panel-selected);
+      color: var(--panel-selected-text);
+      font-weight: 600;
+    }
+    & ${sectionSelector} {
+      margin-inline-end: 12px;
+      flex-shrink: 0;
+      transition: margin-inline-end 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    & ${labelSelector} {
+      white-space: nowrap;
+      text-align: left;
+      line-height: 1.4;
+      max-width: 160px;
+      opacity: 1;
+      transform: translateX(0);
+      overflow: hidden;
+      transition:
+        opacity 200ms ease,
+        transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+        max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    [data-collapsed="true"] & ${itemSelector} {
+      width: 44px;
+      height: 44px;
+      padding: 0 ${paddingX};
+    }
+    [data-collapsed="true"] & ${sectionSelector} {
+      margin-inline-end: 0;
+    }
+    [data-collapsed="true"] & ${labelSelector} {
+      opacity: 0;
+      transform: translateX(-6px);
+      max-width: 0;
+      pointer-events: none;
+    }
+  `;
+}
+
 export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   "data-ui": "workspace-nav",
 })`
@@ -407,65 +474,21 @@ export const WorkspaceNav = styled.aside.attrs<{ "data-ui"?: string }>({
   & .mantine-Tabs-list::before {
     display: none;
   }
+  ${collapsibleNavItemStyles({
+    itemSelector: ".mantine-Tabs-tab",
+    sectionSelector: ".mantine-Tabs-tabSection",
+    labelSelector: ".mantine-Tabs-tabLabel",
+    paddingX: "10.5px",
+  })}
   & .mantine-Tabs-tab {
     justify-content: flex-start;
     flex-shrink: 0;
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 10.5px;
-    color: var(--panel-muted);
-    min-height: 44px;
-    height: 44px;
-    width: 100%;
-    overflow: hidden;
-    transition:
-      background-color 160ms,
-      color 160ms,
-      width 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  & .mantine-Tabs-tab[data-active] {
-    background: var(--panel-selected);
-    color: var(--panel-selected-text);
-    font-weight: 600;
   }
   & .mantine-Tabs-tab:hover {
     background: var(--panel-hover);
   }
-  & .mantine-Tabs-tabSection {
-    margin-inline-end: 12px;
-    flex-shrink: 0;
-    transition: margin-inline-end 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  & .mantine-Tabs-tabLabel {
-    white-space: nowrap;
-    text-align: left;
-    line-height: 1.4;
-    max-width: 160px;
-    opacity: 1;
-    transform: translateX(0);
-    overflow: hidden;
-    transition:
-      opacity 200ms ease,
-      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
-      max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  [data-collapsed="true"] & .mantine-Tabs-tabLabel {
-    opacity: 0;
-    transform: translateX(-6px);
-    max-width: 0;
-    pointer-events: none;
-  }
   [data-collapsed="true"] & .mantine-Tabs-list {
     gap: 4px;
-  }
-  [data-collapsed="true"] & .mantine-Tabs-tab {
-    width: 44px;
-    height: 44px;
-    padding: 0 10.5px;
-  }
-  [data-collapsed="true"] & .mantine-Tabs-tabSection {
-    margin-inline-end: 0;
   }
   @media (max-width: 1099px) {
     & {
@@ -486,65 +509,23 @@ export const WorkspaceNavFooter = styled.div.attrs<{ "data-ui"?: string }>({
     align-items: stretch;
     gap: 4px;
   }
+  ${collapsibleNavItemStyles({
+    itemSelector: ".mantine-Button-root",
+    sectionSelector: ".mantine-Button-section",
+    labelSelector: ".mantine-Button-label",
+    paddingX: "11px",
+  })}
   & .mantine-Button-root {
-    border: 0;
-    border-radius: 10px;
-    padding: 10px 11px;
-    height: 44px;
-    min-height: 44px;
-    width: 100%;
-    overflow: hidden;
-    color: var(--panel-muted);
     font-weight: 400;
-    transition:
-      background-color 160ms,
-      color 160ms,
-      width 320ms cubic-bezier(0.22, 1, 0.36, 1),
-      padding 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  & .mantine-Button-root[data-active] {
-    background: var(--panel-selected);
-    color: var(--panel-selected-text);
-    font-weight: 600;
   }
   & .mantine-Button-root:hover:not([data-active]) {
     background: var(--panel-hover);
     color: var(--panel-muted);
   }
-  & .mantine-Button-section {
-    margin-inline-end: 12px;
-    flex-shrink: 0;
-    transition: margin-inline-end 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  & .mantine-Button-label {
-    white-space: nowrap;
-    text-align: left;
-    line-height: 1.4;
-    max-width: 160px;
-    opacity: 1;
-    transform: translateX(0);
-    overflow: hidden;
-    transition:
-      opacity 200ms ease,
-      transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
-      max-width 280ms cubic-bezier(0.22, 1, 0.36, 1);
-  }
   [data-collapsed="true"] & .mantine-Button-root {
-    width: 44px;
-    height: 44px;
     min-width: 44px;
     min-height: 44px;
-    padding: 0 11px;
     flex-shrink: 0;
-  }
-  [data-collapsed="true"] & .mantine-Button-section {
-    margin-inline-end: 0;
-  }
-  [data-collapsed="true"] & .mantine-Button-label {
-    opacity: 0;
-    transform: translateX(-6px);
-    max-width: 0;
-    pointer-events: none;
   }
 `;
 
